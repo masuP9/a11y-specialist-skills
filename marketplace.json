@@ -1,0 +1,17 @@
+{
+  "version": "1.0",
+  "marketplace": {
+    "name": "a11y-specialist-skills",
+    "description": "Accessibility specialist skills for Claude Code",
+    "owner": "masuP9"
+  },
+  "plugins": [
+    {
+      "name": "a11y-specialist-skills",
+      "source": ".",
+      "version": "1.0.0",
+      "description": "Accessibility specialist skills for Claude Code. WCAG & WAI-ARIA APG compliant review tools.",
+      "author": "masuP9"
+    }
+  ]
+}
