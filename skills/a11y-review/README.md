@@ -1,13 +1,15 @@
 # a11y-review
 
-Webページ、コンポーネント実装、デザイン案、仕様書をWCAG 2.2・WAI-ARIA APG観点でレビューするスキル。
+[日本語版 (Japanese)](./README.ja.md)
+
+A skill for reviewing web pages, component implementations, design mockups, and specifications from WCAG 2.2 and WAI-ARIA APG perspectives.
 
 ## Features
 
-- **複数の対象に対応**: Webページ（URL）、ローカルファイル、デザイン案、仕様書
-- **自動チェック**: セマンティクス、代替テキスト、フォーム、ARIA属性など
-- **構造化された出力**: 良い点、問題点（重要度別）、手動確認推奨項目
-- **WCAG準拠**: 各問題にWCAG達成基準を紐付け
+- **Multiple target support**: Web pages (URL), local files, design mockups, specifications
+- **Automated checks**: Semantics, alternative text, forms, ARIA attributes, etc.
+- **Structured output**: Positive findings, issues (by severity), manual check recommendations
+- **WCAG compliant**: Each issue is linked to WCAG success criteria
 
 ## Check Items
 
@@ -37,22 +39,22 @@ Webページ、コンポーネント実装、デザイン案、仕様書をWCAG 
 
 ```
 # Web page
-https://example.com のa11yレビューして
+Review a11y for https://example.com
 
 # Local component
-src/components/Modal.tsx のアクセシビリティを確認
+Check accessibility of src/components/Modal.tsx
 
 # Design
-このデザイン案をa11y観点でレビュー
+Review this design mockup from a11y perspective
 
 # Specification
-この仕様書のアクセシビリティ要件をチェック
+Check accessibility requirements in this specification
 ```
 
 ## Output Format
 
 ```markdown
-### Good Points
+### Positive Findings
 - [Specific implementation] is well done because [reason]
 
 ### Issues
@@ -61,7 +63,7 @@ src/components/Modal.tsx のアクセシビリティを確認
 - **Location**: [element/code]
 - **Issue**: [description]
 - **WCAG**: [success criterion]
-- **Fix**: [suggestion]
+- **Suggested fix**: [suggestion]
 
 **Major**
 ...

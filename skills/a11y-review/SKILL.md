@@ -1,98 +1,113 @@
 ---
 name: a11y-review
-description: アクセシビリティレビュー。Webページ、コンポーネント実装、デザイン案、仕様書をWCAG・WAI-ARIA APG観点でレビュー。「a11yレビューして」「アクセシビリティ確認」「accessibility review」などで起動
+description: Accessibility review. Reviews web pages, component implementations, design mockups, and specifications from WCAG and WAI-ARIA APG perspectives. Trigger with "a11y review", "accessibility check", "accessibility review", etc.
 allowed-tools: Read, Grep, Glob, WebFetch, mcp__playwright__browser_snapshot, mcp__playwright__browser_navigate, mcp__playwright__browser_click
 ---
 
-# アクセシビリティレビュー
+# Accessibility Review
 
-Webページ、コンポーネント実装、デザイン案、仕様書をWCAG 2.2およびWAI-ARIA APG観点でレビューする。
+Review web pages, component implementations, design mockups, and specifications from WCAG 2.2 and WAI-ARIA APG perspectives.
 
-## レビュー対象の判別と方法
+## Identifying Review Targets and Methods
 
-| 対象 | 判別 | 方法 |
-|------|------|------|
-| Webページ | URL | Playwrightでスナップショット取得、DOM構造確認 |
-| ローカル実装 | ファイルパス | コード読み取り、静的解析 |
-| デザイン案 | 画像/FigmaURL | 視覚的確認 |
-| 仕様書 | ドキュメント | 仕様内容チェック |
+| Target | Identification | Method |
+|--------|----------------|--------|
+| Web page | URL | Capture snapshot with Playwright, verify DOM structure |
+| Local implementation | File path | Read code, static analysis |
+| Design mockup | Image/Figma URL | Visual verification |
+| Specification | Document | Check specification content |
 
-## チェック観点
+## Check Points
 
-### 自動チェック項目
+### Automated Check Items
 
-| カテゴリ | チェック内容 |
-|----------|-------------|
-| セマンティクス | 見出し構造（h1-h6の順序）、ランドマーク（main, nav, header等）、適切なHTML要素選択 |
-| 代替テキスト | img, svg, アイコンのalt/aria-label有無と適切さ |
-| フォーム | label関連付け、必須フィールド明示、グループ化（fieldset/legend） |
-| ARIA | role属性の正しさ、aria-*属性の適切な使用、冗長なARIA回避 |
-| インタラクティブ要素 | アクセシブルネーム、キーボードフォーカス可能性、tabindex |
-| リンク・ボタン | 目的が明確なテキスト、空リンクの回避 |
-| 見出し・構造 | スキップリンク、コンテンツの論理的順序 |
+| Category | Check Content |
+|----------|---------------|
+| Semantics | Heading structure (h1-h6 order), landmarks (main, nav, header, etc.), appropriate HTML element selection |
+| Alternative text | Presence and appropriateness of alt/aria-label for img, svg, icons |
+| Forms | Label association, required field indication, grouping (fieldset/legend) |
+| ARIA | Correct role attributes, appropriate use of aria-* attributes, avoiding redundant ARIA |
+| Interactive elements | Accessible name, keyboard focusability, tabindex |
+| Links & buttons | Clear purpose text, avoiding empty links |
+| Headings & structure | Skip links, logical content order |
 
-### 手動確認を促す項目（指摘のみ）
+### Items Requiring Manual Verification (Note Only)
 
-| カテゴリ | 理由 |
-|----------|------|
-| 一貫したナビゲーション | 複数ページ比較が必要 |
-| エラー表示・説明 | フォーム操作が必要 |
-| 色コントラスト | 測定ツールが必要（指摘時に確認を推奨） |
-| キーボード操作完全性 | 全操作パスのテストが必要 |
-| 動的コンテンツ更新 | 状態変化の観察が必要 |
-| フォーカス管理 | モーダル、SPA遷移等の実操作確認が必要 |
+| Category | Reason |
+|----------|--------|
+| Consistent navigation | Requires comparison across multiple pages |
+| Error display & explanation | Requires form interaction |
+| Color contrast | Requires measurement tools (recommend verification when flagged) |
+| Complete keyboard operability | Requires testing all operation paths |
+| Dynamic content updates | Requires observing state changes |
+| Focus management | Requires actual operation verification for modals, SPA transitions, etc. |
 
-## 出力フォーマット
+## Output Format
 
-### 良い点
+### Positive Findings
 
-アクセシビリティの観点で良くできている点を挙げる。具体的な実装箇所を示しながら、なぜ良いのかを説明する。
+List what is done well from an accessibility perspective. Explain why it's good while pointing to specific implementation locations.
 
-### 問題点
+### Issues
 
-重要度で分類して列挙する。
+Categorize and list by severity.
 
-**Critical（致命的）**
-- 操作不能、情報にアクセスできない等
-- スクリーンリーダーで認識できない重要な情報
-- キーボードで操作できないインタラクティブ要素
+**Critical** - Access to information or functionality is completely blocked
 
-**Major（重大）**
-- 操作困難、理解しにくい等
-- 不適切なARIA使用
-- 見出し構造の大きな問題
+| Pattern | Examples |
+|---------|----------|
+| Missing alternative text | Informative image without alt, icon button without label |
+| Missing form labels | input/select without associated label |
+| Keyboard inaccessible | Click-only elements, unfocusable interactive elements |
+| Fatal ARIA misuse | aria-labelledby pointing to non-existent ID, role="presentation" hiding important info |
+| Hidden content | Important information hidden with display:none or aria-hidden="true" |
 
-**Minor（軽微）**
-- 改善推奨、ベストプラクティス等
-- より良い実装方法の提案
+**Major** - Accessible but causes significant difficulty or confusion
 
-各問題は以下の形式で記述する：
+| Pattern | Examples |
+|---------|----------|
+| Missing/broken heading structure | Section heading not using heading element, level skipping like h1→h4 |
+| Missing landmarks | No main/nav/header, duplicate landmarks |
+| Inappropriate ARIA | Wrong role, invalid aria-* values, contradictory ARIA states |
+| Focus order issues | tabindex drastically different from visual order, positive tabindex values |
+| Unclear links/buttons | Only "click here" or "details", ambiguous text without context |
+| Table structure issues | Missing th/scope, complex tables without headers/id |
+
+**Minor** - Accessible with room for improvement
+
+| Pattern | Examples |
+|---------|----------|
+| Better element choice | button instead of div with onclick, strong/em instead of span |
+| Redundant ARIA | role duplicating native semantics, unnecessary aria-label |
+| Best practice deviation | Missing lang attribute, no skip link |
+| Minor heading hierarchy issues | Using h3 where only one h2 exists, minor level issues |
+
+Describe each issue in the following format:
 
 ```
-- **箇所**: 該当要素・コード・行番号
-- **問題**: 具体的な内容
-- **WCAG**: 関連する達成基準（例: 1.1.1 非テキストコンテンツ）
-- **修正案**: 推奨される対応
+- **Location**: Relevant element, code, line number
+- **Issue**: Specific content
+- **WCAG**: Related success criterion (e.g., 1.1.1 Non-text Content)
+- **Suggested fix**: Recommended action
 ```
 
-### 手動確認の推奨
+### Recommendations for Manual Verification
 
-自動チェックできなかった項目のリストと確認方法のヒントを提供する。
+Provide a list of items that could not be automatically checked and hints for verification methods.
 
-## WCAG達成基準の参照形式
+## WCAG Success Criteria Reference Format
 
-問題を報告する際は、以下の形式でWCAG達成基準を参照する：
+When reporting issues, reference WCAG success criteria in the following format:
 
-- 1.1.1 非テキストコンテンツ (A)
-- 1.3.1 情報及び関係性 (A)
-- 1.4.3 コントラスト (最低限) (AA)
-- 2.1.1 キーボード (A)
-- 2.4.6 見出し及びラベル (AA)
-- 4.1.2 名前 (name)・役割 (role)・値 (value) (A)
+- 1.1.1 Non-text Content (A)
+- 1.3.1 Info and Relationships (A)
+- 1.4.3 Contrast (Minimum) (AA)
+- 2.1.1 Keyboard (A)
+- 2.4.6 Headings and Labels (AA)
+- 4.1.2 Name, Role, Value (A)
 
-## 参考リソース
+## Reference Resources
 
 - WCAG 2.2: https://www.w3.org/TR/WCAG22/
-- WCAG 2.2 日本語訳: https://waic.jp/translations/WCAG22/
 - WAI-ARIA APG: https://www.w3.org/WAI/ARIA/apg/
-- WCAG達成基準早見表: https://www.w3.org/WAI/WCAG22/quickref/
+- WCAG Quick Reference: https://www.w3.org/WAI/WCAG22/quickref/
