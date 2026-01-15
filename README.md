@@ -1,25 +1,27 @@
 # a11y-specialist-skills
 
+[日本語版 (Japanese)](./README.ja.md)
+
 Accessibility specialist skills plugin for [Claude Code](https://claude.ai/claude-code).
 
-WCAG 2.2 & WAI-ARIA APG に基づいたアクセシビリティレビューを行うスキルを提供します。
+Provides accessibility review skills based on WCAG 2.2 & WAI-ARIA APG.
 
 ## Skills
 
 | Skill | Description |
 |-------|-------------|
-| [a11y-review](./skills/a11y-review/) | Webページ、コンポーネント実装、デザイン案、仕様書のアクセシビリティレビュー |
+| [a11y-review](./skills/a11y-review/) | Accessibility review for web pages, component implementations, design mockups, and specifications |
 
 ## Installation
 
 ### As a Plugin (Recommended)
 
 ```bash
-# Add marketplace (if not already added)
-claude marketplace add https://raw.githubusercontent.com/masuP9/a11y-specialist-skills/main/marketplace.json
+# Add marketplace
+/plugin marketplace add masuP9/a11y-specialist-skills
 
 # Install plugin
-claude plugin install a11y-specialist-skills
+/plugin install a11y-specialist-skills@a11y-specialist-skills
 ```
 
 ### As a Standalone Skill (Symlink)
@@ -45,30 +47,29 @@ Claude will automatically detect when to use the skill based on your request:
 
 ```
 # Examples
-a11yレビューして
-アクセシビリティ確認して
-このページのアクセシビリティをチェックして
-Review accessibility of this component
+Review accessibility
+Check a11y
+Accessibility review please
 ```
 
 You can also provide specific targets:
 
 ```
 # URL
-https://example.com のa11yレビューして
+Review a11y for https://example.com
 
 # Local file
-src/components/Button.tsx のアクセシビリティを確認して
+Check accessibility of src/components/Button.tsx
 
 # Design spec
-このデザイン案のa11y観点でレビューして
+Review this design mockup from a11y perspective
 ```
 
 ## Review Output
 
 The skill provides structured feedback including:
 
-- **Good Points**: What's done well from an accessibility perspective
+- **Positive Findings**: What's done well from an accessibility perspective
 - **Issues**: Problems categorized by severity (Critical / Major / Minor)
   - Location in code/page
   - Description of the issue
@@ -79,7 +80,6 @@ The skill provides structured feedback including:
 ## References
 
 - [WCAG 2.2](https://www.w3.org/TR/WCAG22/)
-- [WCAG 2.2 日本語訳](https://waic.jp/translations/WCAG22/)
 - [WAI-ARIA Authoring Practices Guide](https://www.w3.org/WAI/ARIA/apg/)
 
 ## License
