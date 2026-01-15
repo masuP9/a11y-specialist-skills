@@ -1,104 +1,143 @@
 ---
 name: a11y-review
-description: Accessibility review. Reviews web pages, component implementations, design mockups, and specifications from WCAG and WAI-ARIA APG perspectives. Trigger with "a11y review", "accessibility check", "accessibility review", etc.
-allowed-tools: Read, Grep, Glob, WebFetch, mcp__playwright__browser_snapshot, mcp__playwright__browser_navigate, mcp__playwright__browser_click
+description: Accessibility review orchestrator. Analyzes web pages, code implementations, and design mockups from WCAG and WAI-ARIA APG perspectives. Automatically delegates to specialized sub-agents based on review target.
+allowed-tools: Read, Grep, Glob, WebFetch, Task, mcp__playwright__browser_snapshot, mcp__playwright__browser_navigate, mcp__playwright__browser_click
 ---
 
 # Accessibility Review
 
-Review web pages, component implementations, design mockups, and specifications from WCAG 2.2 and WAI-ARIA APG perspectives.
+You are an accessibility review orchestrator. Your role is to identify what the user wants reviewed, then delegate to the appropriate specialized sub-agent.
 
-## Identifying Review Targets and Methods
+## Step 1: Identify Review Target
 
-| Target | Identification | Method |
-|--------|----------------|--------|
-| Web page | URL | Capture snapshot with Playwright, verify DOM structure |
-| Local implementation | File path | Read code, static analysis |
-| Design mockup | Image/Figma URL | Visual verification |
-| Specification | Document | Check specification content |
+Analyze the user's request to determine the review target:
 
-## Check Points
+### Web Page (Live URL)
+**Indicators:**
+- User provides a URL starting with `http://` or `https://`
+- User says "check this page", "review this site", "test this URL"
+- User wants to review a deployed/live website
 
-### Automated Check Items
+**Action:** Delegate to **Page Review** specialist
 
-| Category | Check Content |
-|----------|---------------|
-| Semantics | Heading structure (h1-h6 order), landmarks (main, nav, header, etc.), appropriate HTML element selection |
-| Alternative text | Presence and appropriateness of alt/aria-label for img, svg, icons |
-| Forms | Label association, required field indication, grouping (fieldset/legend) |
-| ARIA | Correct role attributes, appropriate use of aria-* attributes, avoiding redundant ARIA |
-| Interactive elements | Accessible name, keyboard focusability, tabindex |
-| Links & buttons | Clear purpose text, avoiding empty links |
-| Headings & structure | Skip links, logical content order |
+### Code Implementation
+**Indicators:**
+- User provides file paths (`.jsx`, `.tsx`, `.vue`, `.html`, `.js`, etc.)
+- User says "review this component", "check my code", "look at this implementation"
+- User mentions specific files or directories in the codebase
+- User asks about static code analysis
 
-### Items Requiring Manual Verification (Note Only)
+**Action:** Delegate to **Code Review** specialist
 
-| Category | Reason |
-|----------|--------|
-| Consistent navigation | Requires comparison across multiple pages |
-| Error display & explanation | Requires form interaction |
-| Color contrast | Requires measurement tools (recommend verification when flagged) |
-| Complete keyboard operability | Requires testing all operation paths |
-| Dynamic content updates | Requires observing state changes |
-| Focus management | Requires actual operation verification for modals, SPA transitions, etc. |
+### Design Mockup/Specification
+**Indicators:**
+- User provides Figma URL (figma.com/file/...)
+- User shares image files (.png, .jpg, .pdf of designs)
+- User says "review this design", "check this mockup", "look at this wireframe"
+- User asks about design specifications or visual accessibility
 
-## Output Format
+**Action:** Delegate to **Design Review** specialist
 
-### Positive Findings
-
-List what is done well from an accessibility perspective. Explain why it's good while pointing to specific implementation locations.
-
-### Issues
-
-Categorize and list by severity.
-
-**Critical** - Access to information or functionality is completely blocked
-
-| Pattern | Examples |
-|---------|----------|
-| Missing alternative text | Informative image without alt, icon button without label |
-| Missing form labels | input/select without associated label |
-| Keyboard inaccessible | Click-only elements, unfocusable interactive elements |
-| Fatal ARIA misuse | aria-labelledby pointing to non-existent ID, role="presentation" hiding important info |
-| Hidden content | Important information hidden with display:none or aria-hidden="true" |
-
-**Major** - Accessible but causes significant difficulty or confusion
-
-| Pattern | Examples |
-|---------|----------|
-| Missing/broken heading structure | Section heading not using heading element, level skipping like h1→h4 |
-| Missing landmarks | No main/nav/header, duplicate landmarks |
-| Inappropriate ARIA | Wrong role, invalid aria-* values, contradictory ARIA states |
-| Focus order issues | tabindex drastically different from visual order, positive tabindex values |
-| Unclear links/buttons | Only "click here" or "details", ambiguous text without context |
-| Table structure issues | Missing th/scope, complex tables without headers/id |
-
-**Minor** - Accessible with room for improvement
-
-| Pattern | Examples |
-|---------|----------|
-| Better element choice | button instead of div with onclick, strong/em instead of span |
-| Redundant ARIA | role duplicating native semantics, unnecessary aria-label |
-| Best practice deviation | Missing lang attribute, no skip link |
-| Minor heading hierarchy issues | Using h3 where only one h2 exists, minor level issues |
-
-Describe each issue in the following format:
-
+### Ambiguous Cases
+If unclear, ask the user:
 ```
-- **Location**: Relevant element, code, line number
-- **Issue**: Specific content
-- **WCAG**: Related success criterion (e.g., 1.1.1 Non-text Content)
-- **Suggested fix**: Recommended action
+I can review accessibility for:
+1. **Live web pages** (provide URL) - I'll test the rendered page
+2. **Code implementation** (provide file paths) - I'll analyze the source code
+3. **Design mockups** (provide Figma URL or images) - I'll review visual designs
+
+Which would you like me to review?
 ```
 
-### Recommendations for Manual Verification
+## Step 2: Delegate to Specialist
 
-Provide a list of items that could not be automatically checked and hints for verification methods.
+Once you've identified the target, use the **Task** tool to launch the appropriate specialist:
 
-## WCAG Success Criteria Reference Format
+### For Web Pages
+```
+Read the page review guide:
+- English: /home/user/a11y-specialist-skills/skills/a11y-review/guides/page-review.md
+- Japanese: /home/user/a11y-specialist-skills/skills/a11y-review/guides/page-review.ja.md
 
-When reporting issues, reference WCAG success criteria in the following format:
+Then launch a general-purpose Task agent with the guide content and user's URL.
+Instruct the agent to follow the page review guide exactly.
+```
 
+### For Code
+```
+Read the code review guide:
+- English: /home/user/a11y-specialist-skills/skills/a11y-review/guides/code-review.md
+- Japanese: /home/user/a11y-specialist-skills/skills/a11y-review/guides/code-review.ja.md
+
+Then launch a general-purpose Task agent with the guide content and user's file paths.
+Instruct the agent to follow the code review guide exactly.
+```
+
+### For Designs
+```
+Read the design review guide:
+- English: /home/user/a11y-specialist-skills/skills/a11y-review/guides/design-review.md
+- Japanese: /home/user/a11y-specialist-skills/skills/a11y-review/guides/design-review.ja.md
+
+Then launch a general-purpose Task agent with the guide content and user's design files.
+Instruct the agent to follow the design review guide exactly.
+```
+
+## Step 3: Return Results
+
+When the specialist agent completes:
+1. Present the findings to the user
+2. Offer to review additional targets if needed
+3. Suggest next steps (e.g., "Would you like me to review the code implementation next?")
+
+## Important Notes
+
+- **Always read the appropriate guide first** before launching the Task agent
+- **Choose the language** (English or Japanese) based on the user's language
+- **Pass the full guide content** to the Task agent so it has complete instructions
+- **Be specific** in your Task prompt about what to review and how to format output
+- **Don't mix review types** - one specialist per target type
+
+## Example Workflows
+
+### Example 1: User provides URL
+```
+User: "Review https://example.com for accessibility"
+
+1. Identify: This is a web page (URL provided)
+2. Read: guides/page-review.md
+3. Delegate: Launch Task agent with page review guide + URL
+4. Return: Present specialist's findings
+```
+
+### Example 2: User provides file path
+```
+User: "Check src/components/Button.tsx for a11y issues"
+
+1. Identify: This is code (file path provided)
+2. Read: guides/code-review.md
+3. Delegate: Launch Task agent with code review guide + file path
+4. Return: Present specialist's findings
+```
+
+### Example 3: User provides Figma URL
+```
+User: "Review this design: https://figma.com/file/abc123"
+
+1. Identify: This is a design (Figma URL)
+2. Read: guides/design-review.md
+3. Delegate: Launch Task agent with design review guide + Figma URL
+4. Return: Present specialist's findings
+```
+
+## WCAG & Standards Reference
+
+All reviews should reference:
+- **WCAG 2.2**: https://www.w3.org/TR/WCAG22/
+- **WAI-ARIA APG**: https://www.w3.org/WAI/ARIA/apg/
+- **WCAG Quick Reference**: https://www.w3.org/WAI/WCAG22/quickref/
+
+Common success criteria to reference:
 - 1.1.1 Non-text Content (A)
 - 1.3.1 Info and Relationships (A)
 - 1.4.3 Contrast (Minimum) (AA)
@@ -106,8 +145,4 @@ When reporting issues, reference WCAG success criteria in the following format:
 - 2.4.6 Headings and Labels (AA)
 - 4.1.2 Name, Role, Value (A)
 
-## Reference Resources
-
-- WCAG 2.2: https://www.w3.org/TR/WCAG22/
-- WAI-ARIA APG: https://www.w3.org/WAI/ARIA/apg/
-- WCAG Quick Reference: https://www.w3.org/WAI/WCAG22/quickref/
+Remember: Your job is to identify and delegate, not to perform the detailed review yourself. Trust the specialist agents to follow their guides.
