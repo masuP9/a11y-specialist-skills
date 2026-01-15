@@ -26,17 +26,17 @@ This skill uses an **orchestrator pattern** with specialized sub-agents:
 
 ### Specialists
 
-1. **Page Review** (`guides/page-review.md`)
+1. **Page Review** (`references/page-review.md`)
    - Target: Live web pages (URLs)
    - Method: Playwright browser snapshots
    - Focus: Rendered output, runtime behavior
 
-2. **Code Review** (`guides/code-review.md`)
+2. **Code Review** (`references/code-review.md`)
    - Target: Source files (.jsx, .tsx, .vue, .html)
    - Method: Static code analysis
    - Focus: Implementation patterns, semantic structure
 
-3. **Design Review** (`guides/design-review.md`)
+3. **Design Review** (`references/design-review.md`)
    - Target: Design files (Figma, images, PDFs)
    - Method: Visual inspection, spec analysis
    - Focus: Design decisions, visual accessibility
@@ -148,13 +148,15 @@ skills/a11y-review/
 ├── SKILL.ja.md                   # Main orchestrator (Japanese)
 ├── README.md                     # This file
 ├── README.ja.md                  # Japanese README
-└── guides/                       # Specialist guides
-    ├── page-review.md            # Page review specialist
+└── references/                       # Reference documents
+    ├── page-review.md            # Page review guide
     ├── page-review.ja.md         # (Japanese)
-    ├── code-review.md            # Code review specialist
+    ├── code-review.md            # Code review guide
     ├── code-review.ja.md         # (Japanese)
-    ├── design-review.md          # Design review specialist
-    └── design-review.ja.md       # (Japanese)
+    ├── design-review.md          # Design review guide
+    ├── design-review.ja.md       # (Japanese)
+    ├── wcag-checklist.md         # WCAG checklist
+    └── wcag-checklist.ja.md      # (Japanese)
 ```
 
 ## References

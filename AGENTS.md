@@ -34,7 +34,7 @@ This project maintains documentation in both English and Japanese.
 |-------------------|----------|
 | `SKILL.md` | `SKILL.ja.md` |
 | `README.md` | `README.ja.md` |
-| `guides/*.md` | `guides/*.ja.md` |
+| `references/*.md` | `references/*.ja.md` |
 
 ### Sync Rules
 
