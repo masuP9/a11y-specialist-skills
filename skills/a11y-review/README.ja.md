@@ -26,17 +26,17 @@ Webページ、コンポーネント実装、デザイン案、仕様書をWCAG 
 
 ### スペシャリスト
 
-1. **ページレビュー** (`guides/page-review.ja.md`)
+1. **ページレビュー** (`references/page-review.ja.md`)
    - 対象: 実際のWebページ（URL）
    - 方法: Playwrightブラウザスナップショット
    - 焦点: レンダリング出力、実行時の挙動
 
-2. **コードレビュー** (`guides/code-review.ja.md`)
+2. **コードレビュー** (`references/code-review.ja.md`)
    - 対象: ソースファイル（.jsx、.tsx、.vue、.html）
    - 方法: 静的コード解析
    - 焦点: 実装パターン、セマンティック構造
 
-3. **デザインレビュー** (`guides/design-review.ja.md`)
+3. **デザインレビュー** (`references/design-review.ja.md`)
    - 対象: デザインファイル（Figma、画像、PDF）
    - 方法: 視覚検査、仕様分析
    - 焦点: デザインの決定、視覚的アクセシビリティ
@@ -148,13 +148,15 @@ skills/a11y-review/
 ├── SKILL.ja.md                   # メインオーケストレーター（日本語）
 ├── README.md                     # 英語版README
 ├── README.ja.md                  # このファイル
-└── guides/                       # スペシャリストガイド
-    ├── page-review.md            # ページレビュースペシャリスト
+└── references/                       # リファレンス
+    ├── page-review.md            # ページレビューガイド
     ├── page-review.ja.md         # （日本語）
-    ├── code-review.md            # コードレビュースペシャリスト
+    ├── code-review.md            # コードレビューガイド
     ├── code-review.ja.md         # （日本語）
-    ├── design-review.md          # デザインレビュースペシャリスト
-    └── design-review.ja.md       # （日本語）
+    ├── design-review.md          # デザインレビューガイド
+    ├── design-review.ja.md       # （日本語）
+    ├── wcag-checklist.md         # WCAGチェックリスト
+    └── wcag-checklist.ja.md      # （日本語）
 ```
 
 ## 参考リソース

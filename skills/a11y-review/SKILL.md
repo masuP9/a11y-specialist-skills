@@ -1,7 +1,11 @@
 ---
 name: a11y-review
 description: Accessibility review orchestrator. Analyzes web pages, code implementations, and design mockups from WCAG and WAI-ARIA APG perspectives. Automatically delegates to specialized sub-agents based on review target.
-allowed-tools: Read, Grep, Glob, WebFetch, Task, mcp__playwright__browser_snapshot, mcp__playwright__browser_navigate, mcp__playwright__browser_click
+license: MIT
+metadata:
+  author: masuP9
+  version: "1.0.0"
+allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mcp__playwright__browser_navigate mcp__playwright__browser_click
 ---
 
 # Accessibility Review
@@ -56,8 +60,8 @@ Once you've identified the target, use the **Task** tool to launch the appropria
 ### For Web Pages
 ```
 Read the page review guide:
-- English: /home/user/a11y-specialist-skills/skills/a11y-review/guides/page-review.md
-- Japanese: /home/user/a11y-specialist-skills/skills/a11y-review/guides/page-review.ja.md
+- English: references/page-review.md
+- Japanese: references/page-review.ja.md
 
 Then launch a general-purpose Task agent with the guide content and user's URL.
 Instruct the agent to follow the page review guide exactly.
@@ -66,8 +70,8 @@ Instruct the agent to follow the page review guide exactly.
 ### For Code
 ```
 Read the code review guide:
-- English: /home/user/a11y-specialist-skills/skills/a11y-review/guides/code-review.md
-- Japanese: /home/user/a11y-specialist-skills/skills/a11y-review/guides/code-review.ja.md
+- English: references/code-review.md
+- Japanese: references/code-review.ja.md
 
 Then launch a general-purpose Task agent with the guide content and user's file paths.
 Instruct the agent to follow the code review guide exactly.
@@ -76,8 +80,8 @@ Instruct the agent to follow the code review guide exactly.
 ### For Designs
 ```
 Read the design review guide:
-- English: /home/user/a11y-specialist-skills/skills/a11y-review/guides/design-review.md
-- Japanese: /home/user/a11y-specialist-skills/skills/a11y-review/guides/design-review.ja.md
+- English: references/design-review.md
+- Japanese: references/design-review.ja.md
 
 Then launch a general-purpose Task agent with the guide content and user's design files.
 Instruct the agent to follow the design review guide exactly.
@@ -105,7 +109,7 @@ When the specialist agent completes:
 User: "Review https://example.com for accessibility"
 
 1. Identify: This is a web page (URL provided)
-2. Read: guides/page-review.md
+2. Read: references/page-review.md
 3. Delegate: Launch Task agent with page review guide + URL
 4. Return: Present specialist's findings
 ```
@@ -115,7 +119,7 @@ User: "Review https://example.com for accessibility"
 User: "Check src/components/Button.tsx for a11y issues"
 
 1. Identify: This is code (file path provided)
-2. Read: guides/code-review.md
+2. Read: references/code-review.md
 3. Delegate: Launch Task agent with code review guide + file path
 4. Return: Present specialist's findings
 ```
@@ -125,7 +129,7 @@ User: "Check src/components/Button.tsx for a11y issues"
 User: "Review this design: https://figma.com/file/abc123"
 
 1. Identify: This is a design (Figma URL)
-2. Read: guides/design-review.md
+2. Read: references/design-review.md
 3. Delegate: Launch Task agent with design review guide + Figma URL
 4. Return: Present specialist's findings
 ```

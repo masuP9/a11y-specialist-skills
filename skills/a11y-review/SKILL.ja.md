@@ -1,7 +1,11 @@
 ---
 name: a11y-review
 description: アクセシビリティレビューのオーケストレーター。Webページ、コード実装、デザインモックアップをWCAG・WAI-ARIA APG観点でレビュー。レビュー対象に応じて専門サブエージェントに自動委譲。
-allowed-tools: Read, Grep, Glob, WebFetch, Task, mcp__playwright__browser_snapshot, mcp__playwright__browser_navigate, mcp__playwright__browser_click
+license: MIT
+metadata:
+  author: masuP9
+  version: "1.0.0"
+allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mcp__playwright__browser_navigate mcp__playwright__browser_click
 ---
 
 # アクセシビリティレビュー
@@ -56,8 +60,8 @@ allowed-tools: Read, Grep, Glob, WebFetch, Task, mcp__playwright__browser_snapsh
 ### Webページの場合
 ```
 ページレビューガイドを読む：
-- 英語: /home/user/a11y-specialist-skills/skills/a11y-review/guides/page-review.md
-- 日本語: /home/user/a11y-specialist-skills/skills/a11y-review/guides/page-review.ja.md
+- 英語: references/page-review.md
+- 日本語: references/page-review.ja.md
 
 次に、ガイド内容とユーザーのURLでgeneral-purpose Taskエージェントを起動。
 エージェントにページレビューガイドに正確に従うよう指示。
@@ -66,8 +70,8 @@ allowed-tools: Read, Grep, Glob, WebFetch, Task, mcp__playwright__browser_snapsh
 ### コードの場合
 ```
 コードレビューガイドを読む：
-- 英語: /home/user/a11y-specialist-skills/skills/a11y-review/guides/code-review.md
-- 日本語: /home/user/a11y-specialist-skills/skills/a11y-review/guides/code-review.ja.md
+- 英語: references/code-review.md
+- 日本語: references/code-review.ja.md
 
 次に、ガイド内容とユーザーのファイルパスでgeneral-purpose Taskエージェントを起動。
 エージェントにコードレビューガイドに正確に従うよう指示。
@@ -76,8 +80,8 @@ allowed-tools: Read, Grep, Glob, WebFetch, Task, mcp__playwright__browser_snapsh
 ### デザインの場合
 ```
 デザインレビューガイドを読む：
-- 英語: /home/user/a11y-specialist-skills/skills/a11y-review/guides/design-review.md
-- 日本語: /home/user/a11y-specialist-skills/skills/a11y-review/guides/design-review.ja.md
+- 英語: references/design-review.md
+- 日本語: references/design-review.ja.md
 
 次に、ガイド内容とユーザーのデザインファイルでgeneral-purpose Taskエージェントを起動。
 エージェントにデザインレビューガイドに正確に従うよう指示。
@@ -105,7 +109,7 @@ allowed-tools: Read, Grep, Glob, WebFetch, Task, mcp__playwright__browser_snapsh
 ユーザー: 「https://example.com のアクセシビリティをレビューして」
 
 1. 特定: これはWebページ（URL提供）
-2. 読み込み: guides/page-review.ja.md
+2. 読み込み: references/page-review.ja.md
 3. 委譲: ページレビューガイド + URLでTaskエージェントを起動
 4. 返却: スペシャリストの発見事項を提示
 ```
@@ -115,7 +119,7 @@ allowed-tools: Read, Grep, Glob, WebFetch, Task, mcp__playwright__browser_snapsh
 ユーザー: 「src/components/Button.tsx のa11y問題をチェックして」
 
 1. 特定: これはコード（ファイルパス提供）
-2. 読み込み: guides/code-review.ja.md
+2. 読み込み: references/code-review.ja.md
 3. 委譲: コードレビューガイド + ファイルパスでTaskエージェントを起動
 4. 返却: スペシャリストの発見事項を提示
 ```
@@ -125,7 +129,7 @@ allowed-tools: Read, Grep, Glob, WebFetch, Task, mcp__playwright__browser_snapsh
 ユーザー: 「このデザインをレビューして: https://figma.com/file/abc123」
 
 1. 特定: これはデザイン（Figma URL）
-2. 読み込み: guides/design-review.ja.md
+2. 読み込み: references/design-review.ja.md
 3. 委譲: デザインレビューガイド + Figma URLでTaskエージェントを起動
 4. 返却: スペシャリストの発見事項を提示
 ```
