@@ -49,7 +49,7 @@ This skill assumes Claude already knows:
 - **Standard accessibility patterns**: Semantic HTML, form accessibility, keyboard navigation
 - **Common issues and fixes**: Missing alt text, improper ARIA usage, keyboard traps, etc.
 
-The guides focus on **how to review** using specific tools, not **what to check** (which Claude already understands).
+The guides primarily focus on **how to review** using specific tools and workflows, building on Claude's existing accessibility knowledge.
 
 For human reference, detailed WCAG checklists are available in `references/wcag-checklist.md`.
 
