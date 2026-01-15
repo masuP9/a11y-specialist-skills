@@ -41,6 +41,18 @@ This skill uses an **orchestrator pattern** with specialized sub-agents:
    - Method: Visual inspection, spec analysis
    - Focus: Design decisions, visual accessibility
 
+## Prerequisites (Claude's Existing Knowledge)
+
+This skill assumes Claude already knows:
+- **WCAG 2.2** success criteria, levels (A, AA, AAA), and their meanings
+- **WAI-ARIA** authoring practices, roles, states, and properties
+- **Standard accessibility patterns**: Semantic HTML, form accessibility, keyboard navigation
+- **Common issues and fixes**: Missing alt text, improper ARIA usage, keyboard traps, etc.
+
+The guides focus on **how to review** using specific tools, not **what to check** (which Claude already understands).
+
+For human reference, detailed WCAG checklists are available in `references/wcag-checklist.md`.
+
 ## Features
 
 - **Automatic delegation**: Identifies review target and routes to appropriate specialist
