@@ -10,7 +10,8 @@ WCAG 2.2 & WAI-ARIA APG に基づいたアクセシビリティレビューを�
 
 | スキル | 説明 |
 |--------|------|
-| [a11y-review](./skills/a11y-review/) | Webページ、コンポーネント実装、デザイン案、仕様書のアクセシビリティレビュー |
+| [reviewing-a11y](./skills/reviewing-a11y/) | Webページ、コンポーネント実装、デザイン案、仕様書のアクセシビリティレビュー |
+| [planning-a11y-improvement](./skills/planning-a11y-improvement/) | 成熟度評価、ロードマップ、KPI設計によるアクセシビリティ改善計画 |
 
 ## インストール
 
@@ -31,7 +32,7 @@ WCAG 2.2 & WAI-ARIA APG に基づいたアクセシビリティレビューを�
 git clone https://github.com/masuP9/a11y-specialist-skills.git
 
 # skillsディレクトリにシンボリックリンクを作成
-ln -s /path/to/a11y-specialist-skills/skills/a11y-review ~/.claude/skills/a11y-review
+ln -s /path/to/a11y-specialist-skills/skills/reviewing-a11y ~/.claude/skills/reviewing-a11y
 ```
 
 ### 開発用

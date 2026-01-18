@@ -1,4 +1,4 @@
-# a11y-review
+# reviewing-a11y
 
 [日本語版 (Japanese)](./README.ja.md)
 
@@ -10,7 +10,7 @@ This skill uses an **orchestrator pattern** with specialized sub-agents:
 
 ```
 ┌─────────────────────────────────────┐
-│   a11y-review (Orchestrator)       │
+│   reviewing-a11y (Orchestrator)       │
 │   - Identifies review target        │
 │   - Delegates to specialist         │
 └──────────┬──────────────────────────┘
@@ -143,7 +143,7 @@ All specialists produce consistent output:
 ## File Structure
 
 ```
-skills/a11y-review/
+skills/reviewing-a11y/
 ├── SKILL.md                      # Main orchestrator (English)
 ├── SKILL.ja.md                   # Main orchestrator (Japanese)
 ├── README.md                     # This file

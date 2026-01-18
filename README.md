@@ -10,7 +10,8 @@ Provides accessibility review skills based on WCAG 2.2 & WAI-ARIA APG.
 
 | Skill | Description |
 |-------|-------------|
-| [a11y-review](./skills/a11y-review/) | Accessibility review for web pages, component implementations, design mockups, and specifications |
+| [reviewing-a11y](./skills/reviewing-a11y/) | Accessibility review for web pages, component implementations, design mockups, and specifications |
+| [planning-a11y-improvement](./skills/planning-a11y-improvement/) | Accessibility improvement planning with maturity assessment, roadmap, KPI design |
 
 ## Installation
 
@@ -31,7 +32,7 @@ Provides accessibility review skills based on WCAG 2.2 & WAI-ARIA APG.
 git clone https://github.com/masuP9/a11y-specialist-skills.git
 
 # Create symlink to your skills directory
-ln -s /path/to/a11y-specialist-skills/skills/a11y-review ~/.claude/skills/a11y-review
+ln -s /path/to/a11y-specialist-skills/skills/reviewing-a11y ~/.claude/skills/reviewing-a11y
 ```
 
 ### For Development
