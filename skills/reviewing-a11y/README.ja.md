@@ -1,4 +1,4 @@
-# a11y-review
+# reviewing-a11y
 
 [English](./README.md)
 
@@ -10,7 +10,7 @@ Webページ、コンポーネント実装、デザイン案、仕様書をWCAG 
 
 ```
 ┌─────────────────────────────────────┐
-│   a11y-review (オーケストレーター)  │
+│   reviewing-a11y (オーケストレーター)  │
 │   - レビュー対象を特定              │
 │   - スペシャリストに委譲            │
 └──────────┬──────────────────────────┘
@@ -143,7 +143,7 @@ src/pages/Login.vue のa11yをレビュー
 ## ファイル構造
 
 ```
-skills/a11y-review/
+skills/reviewing-a11y/
 ├── SKILL.md                      # メインオーケストレーター（英語）
 ├── SKILL.ja.md                   # メインオーケストレーター（日本語）
 ├── README.md                     # 英語版README

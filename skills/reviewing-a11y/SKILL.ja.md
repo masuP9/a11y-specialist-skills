@@ -1,10 +1,10 @@
 ---
-name: a11y-review
+name: reviewing-a11y
 description: アクセシビリティレビューのオーケストレーター。Webページ、コード実装、デザインモックアップをWCAG・WAI-ARIA APG観点でレビュー。レビュー対象に応じて専門サブエージェントに自動委譲。
 license: MIT
 metadata:
   author: masuP9
-  version: "1.0.0"
+  version: "2.0.0"
 allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mcp__playwright__browser_navigate mcp__playwright__browser_click
 ---
 
