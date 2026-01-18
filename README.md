@@ -44,6 +44,8 @@ claude --plugin-dir /path/to/a11y-specialist-skills
 
 ## Usage
 
+### reviewing-a11y (Accessibility Review)
+
 Claude will automatically detect when to use the skill based on your request:
 
 ```
@@ -66,7 +68,13 @@ Check accessibility of src/components/Button.tsx
 Review this design mockup from a11y perspective
 ```
 
-## Review Output
+You can also invoke directly with slash command:
+
+```
+/reviewing-a11y
+```
+
+#### Review Output
 
 The skill provides structured feedback including:
 
@@ -77,6 +85,32 @@ The skill provides structured feedback including:
   - Related WCAG success criterion
   - Suggested fix
 - **Manual Checks**: Items that require human verification
+
+### planning-a11y-improvement (Improvement Planning)
+
+Create organizational accessibility improvement plans:
+
+```
+# Examples
+Help me plan accessibility improvements
+Create an a11y strategy
+Assess our organization's a11y maturity
+```
+
+You can also invoke directly with slash command:
+
+```
+/planning-a11y-improvement
+```
+
+#### Planning Output
+
+Collects information through interview format and generates:
+
+- **Maturity Assessment**: Current level (L1-L4) with rationale
+- **Roadmap**: Phased initiatives with owners
+- **KPI Design**: Leading and lagging indicators
+- **Stakeholder Materials**: Business impact and ROI
 
 ## References
 
