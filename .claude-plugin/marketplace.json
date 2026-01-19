@@ -4,21 +4,21 @@
     "name": "masuP9"
   },
   "metadata": {
-    "description": "Accessibility specialist skills for Claude Code. WCAG & WAI-ARIA APG compliant review tools.",
-    "version": "1.0.0"
+    "description": "Accessibility specialist skills for Claude Code. WCAG & WAI-ARIA APG compliant review and improvement planning tools.",
+    "version": "2.0.0"
   },
   "plugins": [
     {
       "name": "a11y-specialist-skills",
-      "description": "Accessibility review skills for web pages, code, and designs. Reviews from WCAG 2.2 and WAI-ARIA APG perspectives.",
+      "description": "Accessibility skills: reviewing-a11y (WCAG reviews for pages/code/designs) and planning-a11y-improvement (maturity assessment + roadmap).",
       "source": "./",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": {
         "name": "masuP9"
       },
       "repository": "https://github.com/masuP9/a11y-specialist-skills",
       "license": "MIT",
-      "keywords": ["accessibility", "a11y", "wcag", "aria", "review"],
+      "keywords": ["accessibility", "a11y", "wcag", "aria", "review", "planning", "maturity", "audit", "compliance", "roadmap"],
       "category": "productivity"
     }
   ]
