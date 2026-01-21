@@ -112,6 +112,8 @@ Collects information through interview format and generates:
 - **KPI Design**: Leading and lagging indicators
 - **Stakeholder Materials**: Business impact and ROI
 
+You can also load documents such as accessibility test results or initiative history for more accurate planning.
+
 ## References
 
 - [WCAG 2.2](https://www.w3.org/TR/WCAG22/)

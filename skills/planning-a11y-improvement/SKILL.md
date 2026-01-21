@@ -4,7 +4,7 @@ description: Accessibility improvement planning support. Generates organizationa
 license: MIT
 metadata:
   author: masuP9
-  version: "1.0.0"
+  version: "1.1.0"
 allowed-tools: Read Grep Glob AskUserQuestion Write
 ---
 
@@ -96,6 +96,28 @@ I'll help develop an accessibility improvement strategy. Which situation is clos
 ## Step 2: Gather Information
 
 Once the scenario is identified, collect information in the following order. Use the `AskUserQuestion` tool to ask questions efficiently.
+
+### Stage 0: Reference Documents (Check first)
+
+If documentation about prior initiatives exists, reading it first enables more accurate planning.
+
+**Example documents to read:**
+- Accessibility test results / conformance reports
+- History of prior initiatives / retrospective documents
+- Existing a11y guidelines / policies
+- Tech stack or organizational structure descriptions
+
+**Example question:**
+```
+Do you have any reference documents for planning?
+(e.g., test results, initiative history, guidelines, etc.)
+
+Please provide the file path and I'll review the contents.
+For multiple files, separate paths with commas.
+If none, reply "none".
+```
+
+If file paths are provided, use the `Read` tool to load the content and keep it as context. The information will be used for maturity assessment and roadmap creation.
 
 ### Stage 1: Required Items (Always confirm first)
 
