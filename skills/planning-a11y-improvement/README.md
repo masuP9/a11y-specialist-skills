@@ -51,6 +51,18 @@ For organizations needing urgent response to regulations or audits. Prioritizes 
 | KPI/Metrics Design | Leading and lagging indicator proposals |
 | Stakeholder Persuasion Materials | Business impact, risks, ROI |
 
+## Reference Document Input
+
+You can load documents about prior initiatives to create more accurate plans.
+
+**Supported documents:**
+- Accessibility test results / conformance reports
+- History of prior initiatives
+- Existing a11y guidelines / policies
+- Tech stack or organizational structure descriptions
+
+During the information gathering phase, specify file paths and the content will be used for maturity assessment and roadmap creation.
+
 ## Usage
 
 ```
@@ -60,7 +72,7 @@ For organizations needing urgent response to regulations or audits. Prioritizes 
 When the skill starts, it develops plan through:
 
 1. **Scenario Identification**: Confirm purpose
-2. **Information Gathering**: Interview about business, technical, organizational situation
+2. **Information Gathering**: Load reference documents + interview about business, technical, organizational situation
 3. **Maturity Assessment**: Evaluate current state on 5 axes
 4. **Strategy Draft Generation**: Generate roadmap, KPIs, persuasion materials
 5. **Review and Adjustment**: Dialogue with user to refine plan
