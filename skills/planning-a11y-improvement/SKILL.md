@@ -4,7 +4,7 @@ description: Accessibility improvement planning support. Generates organizationa
 license: MIT
 metadata:
   author: masuP9
-  version: "1.1.0"
+  version: "1.2.0"
 allowed-tools: Read Grep Glob AskUserQuestion Write
 ---
 
@@ -240,7 +240,31 @@ Create a phased improvement plan:
 | Mid-term | 4-6 months | Automation, scaling |
 | Long-term | 7-12 months | Culture building, continuous improvement |
 
-**Note**: Adjust timelines flexibly based on situation.
+**Scope Recommendation**: For organizations in **New Introduction phase** with **limited resources** or **large/legacy codebases**, strongly recommend limiting the initial scope:
+
+- **Pilot scope selection criteria**:
+  - High-traffic features used by many users
+  - Critical features like login, checkout
+  - Prioritize new development over legacy code (easier to improve, easier to create success stories)
+- **Rationale**: Showing results each quarter is critical for sustaining initiatives. Smaller scope enables hitting milestones on schedule rather than extending timelines.
+- **Pattern**: "Succeed with one first" → "Scale horizontally" is more sustainable than attempting organization-wide change from day one.
+
+When recommending scope limitation, explain to the user:
+```
+Given your situation (new to accessibility + [limited resources / large codebase / legacy code]),
+I recommend starting with a limited scope:
+
+Recommended pilot scope: [specific recommendation based on their context]
+- Start with high-traffic features used by many users, or critical features like login
+- Prioritizing new development over legacy makes it easier to show results
+
+Benefits of this approach:
+- Show concrete results each quarter (important for continued investment)
+- Build internal expertise before scaling
+- Create a success story that makes horizontal expansion easier
+
+Once the pilot succeeds, you can expand scope in subsequent cycles.
+```
 
 ### 4.2 KPI/Metrics Design
 
