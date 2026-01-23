@@ -1,3 +1,4 @@
 .playwright-mcp/
 .claude/settings.local.json
 /tmp
+.codex-pane-id
