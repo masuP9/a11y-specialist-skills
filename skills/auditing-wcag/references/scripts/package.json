@@ -1,21 +1,37 @@
 {
-  "name": "scripts",
+  "name": "wcag-audit-scripts",
   "version": "1.0.0",
-  "description": "",
+  "description": "WCAG audit automation scripts using Playwright",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:axe": "node run-test.js axe-audit.ts",
+    "test:focus": "node run-test.js focus-indicator-check.ts",
+    "test:reflow": "node run-test.js reflow-check.ts",
+    "test:text-spacing": "node run-test.js text-spacing-check.ts",
+    "test:orientation": "node run-test.js orientation-check.ts",
+    "test:autocomplete": "node run-test.js autocomplete-audit.ts",
+    "test:target-size": "node run-test.js target-size-check.ts",
+    "test:time-limit": "node run-test.js time-limit-detector.ts",
+    "test:zoom": "node run-test.js zoom-200-check.ts",
+    "test:auto-play": "node run-test.js auto-play-detection.ts",
+    "test:all": "node run-test.js \"axe-audit.ts focus-indicator-check.ts reflow-check.ts text-spacing-check.ts orientation-check.ts autocomplete-audit.ts target-size-check.ts\"",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@axe-core/playwright": "^4.11.0",
     "@playwright/test": "^1.58.0",
     "pixelmatch": "^7.1.0",
     "pngjs": "^7.0.0"
   },
   "devDependencies": {
-    "@types/pngjs": "^6.0.5"
+    "@types/pngjs": "^6.0.5",
+    "typescript": "^5.9.3"
   }
 }

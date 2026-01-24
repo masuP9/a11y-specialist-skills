@@ -34,7 +34,7 @@ export async function detectPauseControls(page: Page): Promise<PauseControlInfo>
   };
 
   return await page.evaluate((cfg) => {
-    const controls: Array<{ element: string; name: string; matchedBy: string; selector: string }> = [];
+    const controls: Array<{ element: string; name: string; matchedBy: 'accessible-name' | 'class-name-near-carousel' | 'svg-icon-pattern'; selector: string }> = [];
     const carouselIndicators: Array<{ element: string; name: string }> = [];
     let hasAccessibleName = false;
 

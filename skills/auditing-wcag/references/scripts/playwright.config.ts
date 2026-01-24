@@ -6,7 +6,7 @@ export default defineConfig({
   testIgnore: ['**/types.ts', '**/constants.ts', '**/utils/**', '**/detectors/**'],
   timeout: 60000,
   use: {
-    baseURL: 'https://www.cyberagent.co.jp',
+    baseURL: process.env.TEST_PAGE || 'https://a11yc.com/city-komaru/practice/',
     headless: true,
   },
 });

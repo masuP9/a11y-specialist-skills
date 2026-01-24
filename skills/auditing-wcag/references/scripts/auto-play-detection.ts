@@ -43,13 +43,13 @@ import {
 } from './detectors';
 
 test('auto-play content detection', async ({ page }) => {
+  const targetUrl = process.env.TEST_PAGE || '?preset=ng-terrible1&wcagver=22';
   const outputDir = DEFAULT_AUTO_PLAY_OUTPUT_DIR;
 
   ensureOutputDir(outputDir);
 
   // Navigate to target page
-  await page.goto('/target-page');
-  await page.waitForLoadState('networkidle');
+  await page.goto(targetUrl, { waitUntil: 'networkidle' });
 
   // Take screenshots at intervals
   const screenshots = await captureScreenshots(page, outputDir);
@@ -173,11 +173,15 @@ async function getPauseVerification(
     return verifyPauseControl(page, pauseControls, outputDir, CHANGE_THRESHOLD);
   }
 
-  const reason = !hasAnyChange
-    ? 'No auto-play detected'
-    : stopsWithin5Seconds
-      ? 'Content stops within 5 seconds'
-      : 'No pause controls found';
+  // Determine why verification was skipped
+  let reason: string;
+  if (!hasAnyChange) {
+    reason = 'No auto-play detected';
+  } else if (stopsWithin5Seconds) {
+    reason = 'Content stops within 5 seconds';
+  } else {
+    reason = 'No pause controls found';
+  }
 
   return createSkippedVerification(reason);
 }
