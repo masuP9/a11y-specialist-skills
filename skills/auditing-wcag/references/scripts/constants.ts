@@ -3,6 +3,24 @@
  */
 
 // =============================================================================
+// Common Disclaimer
+// =============================================================================
+
+/** Disclaimer to include in all audit results */
+export const AUDIT_DISCLAIMER = {
+  message: '自動テストで検出できるのはWCAG違反の一部です。完全な準拠確認には手動テストが必須です。',
+  messageEn: 'Automated testing can only detect a subset of WCAG violations. Manual testing is required for full compliance.',
+  coverage: 'approximately 30-40%',
+  moreInfo: 'https://www.w3.org/WAI/test-evaluate/preliminary/',
+} as const;
+
+/** Console disclaimer message */
+export const DISCLAIMER_CONSOLE = `
+Note: Automated testing detects only ~30-40% of WCAG issues.
+      Manual testing is required for complete accessibility evaluation.
+`;
+
+// =============================================================================
 // Auto-play Detection Constants
 // =============================================================================
 
@@ -66,6 +84,7 @@ export const MAX_PARENT_LEVELS = 5;
 /** CSS properties to check for focus style changes */
 export const FOCUS_STYLE_PROPERTIES = [
   'outline',
+  'outlineStyle',
   'outlineColor',
   'outlineWidth',
   'outlineOffset',
@@ -87,9 +106,312 @@ export const FOCUSABLE_SELECTOR = `
 export const EXTRA_TAB_ITERATIONS = 10;
 
 // =============================================================================
+// Focus Obscured Detection Constants (WCAG 2.4.12)
+// =============================================================================
+
+/**
+ * Minimum overlap ratio to report as obscured (0-1)
+ * 0.2 means 20% of the focused element must be covered
+ */
+export const FOCUS_OBSCURED_MIN_OVERLAP_RATIO = 0.2;
+
+/**
+ * Minimum overlap area in pixels to report
+ * Ignores tiny overlaps (e.g., 1px border touches)
+ */
+export const FOCUS_OBSCURED_MIN_OVERLAP_PX = 8;
+
+/**
+ * Selectors to exclude from obscurer detection
+ * These elements should not be considered as obscurers
+ */
+export const FOCUS_OBSCURED_EXCLUDE_SELECTORS = [
+  '#focus-audit-overlay',
+  '.focus-audit-box',
+  '[data-focus-visited]',
+] as const;
+
+// =============================================================================
 // Output Paths
 // =============================================================================
 
 export const DEFAULT_AUTO_PLAY_OUTPUT_DIR = './auto-play-screenshots';
 export const DEFAULT_FOCUS_OUTPUT_PATH = 'focus-indicators.png';
 export const DETECTION_RESULT_FILENAME = 'detection-result.json';
+
+// =============================================================================
+// Reflow Check Constants (WCAG 1.4.10)
+// =============================================================================
+
+/** Viewport size for reflow test (320 CSS px width at 400% zoom equivalent) */
+export const REFLOW_VIEWPORT = { width: 320, height: 256 } as const;
+
+/** Tolerance for overflow detection in pixels */
+export const REFLOW_OVERFLOW_TOLERANCE = 5;
+
+/** Selector for elements to check for overflow */
+export const REFLOW_CHECK_SELECTOR = `
+  p, h1, h2, h3, h4, h5, h6, li, td, th, span, div, section, article,
+  a, button, input, select, textarea, label,
+  img, svg, table, nav, header, footer, main, aside
+`.trim();
+
+/** Elements that are allowed to have horizontal scroll */
+export const REFLOW_ALLOWED_OVERFLOW_SELECTORS = [
+  'pre',
+  'code',
+  'table[role="presentation"]',
+  '.data-table',
+  '[data-allow-scroll]',
+] as const;
+
+// =============================================================================
+// Text Spacing Check Constants (WCAG 1.4.12)
+// =============================================================================
+
+/**
+ * CSS overrides for text spacing test per WCAG 1.4.12
+ * - Line height: at least 1.5 times the font size
+ * - Letter spacing: at least 0.12 times the font size
+ * - Word spacing: at least 0.16 times the font size
+ * - Paragraph spacing: at least 2 times the font size
+ */
+export const TEXT_SPACING_CSS = `
+  * {
+    line-height: 1.5 !important;
+    letter-spacing: 0.12em !important;
+    word-spacing: 0.16em !important;
+  }
+  p, div, span, li, td, th, dd, dt, label, blockquote {
+    margin-bottom: 2em !important;
+  }
+`;
+
+/** Tolerance for detecting clipping after text spacing changes */
+export const TEXT_SPACING_CLIP_TOLERANCE = 2;
+
+/** Selector for text-containing elements to check */
+export const TEXT_SPACING_CHECK_SELECTOR = `
+  p, h1, h2, h3, h4, h5, h6, li, td, th, span, div,
+  a, button, label, dd, dt, blockquote, figcaption
+`.trim();
+
+// =============================================================================
+// Zoom 200% Check Constants (WCAG 1.4.4)
+// =============================================================================
+
+/** Zoom factor for resize text test */
+export const ZOOM_FACTOR = 2;
+
+/** Base viewport size before zoom (standard desktop) */
+export const ZOOM_BASE_VIEWPORT = { width: 1280, height: 720 } as const;
+
+/** Tolerance for detecting clipping at zoom */
+export const ZOOM_CLIP_TOLERANCE = 5;
+
+// =============================================================================
+// Orientation Check Constants (WCAG 1.3.4)
+// =============================================================================
+
+/** Viewport sizes for orientation tests */
+export const ORIENTATION_VIEWPORTS = {
+  portrait: { width: 375, height: 667 },
+  landscape: { width: 667, height: 375 },
+} as const;
+
+/** Keywords indicating orientation lock messages (EN/JP) */
+export const ORIENTATION_LOCK_KEYWORDS = [
+  // English
+  'rotate device',
+  'rotate your device',
+  'rotate your phone',
+  'turn your device',
+  'landscape only',
+  'portrait only',
+  'please rotate',
+  'best viewed in',
+  'for best experience',
+  // Japanese
+  '画面を回転',
+  '端末を回転',
+  'デバイスを回転',
+  '横向きにして',
+  '縦向きにして',
+  '横画面でご覧',
+  '縦画面でご覧',
+  '回転してください',
+] as const;
+
+/** Main content selectors to check visibility */
+export const MAIN_CONTENT_SELECTORS = [
+  'main',
+  '[role="main"]',
+  '#main',
+  '#content',
+  '.main-content',
+  'article',
+] as const;
+
+// =============================================================================
+// Autocomplete Audit Constants (WCAG 1.3.5)
+// =============================================================================
+
+/**
+ * Mapping of field patterns to expected autocomplete tokens
+ * Based on HTML autocomplete attribute values
+ */
+export const AUTOCOMPLETE_FIELD_PATTERNS: Record<string, RegExp> = {
+  // Name fields
+  'name': /^(full.?name|your.?name|氏名|お名前|名前)$/i,
+  'given-name': /^(first.?name|given.?name|名|ファーストネーム|名前)$/i,
+  'family-name': /^(last.?name|family.?name|surname|姓|ラストネーム|苗字)$/i,
+  'honorific-prefix': /^(prefix|title|敬称)$/i,
+  'honorific-suffix': /^(suffix|様|さん)$/i,
+
+  // Contact fields
+  'email': /^(e.?mail|メール|メールアドレス)$/i,
+  'tel': /^(phone|tel|telephone|電話|電話番号|携帯)$/i,
+  'tel-national': /^(phone.?national|国内電話)$/i,
+
+  // Address fields
+  'street-address': /^(address|street|住所|番地)$/i,
+  'address-line1': /^(address.?1|address.?line.?1|住所1)$/i,
+  'address-line2': /^(address.?2|address.?line.?2|住所2)$/i,
+  'postal-code': /^(zip|postal|郵便番号|〒)$/i,
+  'country': /^(country|国|国名)$/i,
+  'country-name': /^(country.?name|国名)$/i,
+
+  // Organization fields
+  'organization': /^(company|org|organization|会社|組織|会社名)$/i,
+  'organization-title': /^(title|position|役職|肩書き)$/i,
+
+  // Username/password
+  'username': /^(user.?name|login|ユーザー名|ログインID)$/i,
+  'current-password': /^(password|pass|current.?password|パスワード|現在のパスワード)$/i,
+  'new-password': /^(new.?password|新しいパスワード)$/i,
+
+  // Payment
+  'cc-name': /^(card.?name|cc.?name|カード名義)$/i,
+  'cc-number': /^(card.?number|cc.?number|カード番号)$/i,
+  'cc-exp': /^(expir|cc.?exp|有効期限)$/i,
+  'cc-exp-month': /^(exp.?month|有効期限.?月)$/i,
+  'cc-exp-year': /^(exp.?year|有効期限.?年)$/i,
+  'cc-csc': /^(cvc|cvv|csc|security.?code|セキュリティコード)$/i,
+
+  // Dates
+  'bday': /^(birth.?day|birthday|dob|生年月日|誕生日)$/i,
+  'bday-day': /^(birth.?day.?day|日)$/i,
+  'bday-month': /^(birth.?day.?month|月)$/i,
+  'bday-year': /^(birth.?day.?year|年)$/i,
+  'sex': /^(sex|gender|性別)$/i,
+
+  // Other
+  'url': /^(url|website|homepage|ウェブサイト|ホームページ)$/i,
+  'photo': /^(photo|avatar|写真|アバター)$/i,
+} as const;
+
+/** Valid autocomplete token values */
+export const VALID_AUTOCOMPLETE_TOKENS = [
+  'off', 'on',
+  'name', 'honorific-prefix', 'given-name', 'additional-name', 'family-name', 'honorific-suffix', 'nickname',
+  'email', 'username', 'new-password', 'current-password', 'one-time-code',
+  'organization-title', 'organization',
+  'street-address', 'address-line1', 'address-line2', 'address-line3',
+  'address-level1', 'address-level2', 'address-level3', 'address-level4',
+  'country', 'country-name', 'postal-code',
+  'cc-name', 'cc-given-name', 'cc-additional-name', 'cc-family-name', 'cc-number', 'cc-exp', 'cc-exp-month', 'cc-exp-year', 'cc-csc', 'cc-type',
+  'transaction-currency', 'transaction-amount',
+  'language', 'bday', 'bday-day', 'bday-month', 'bday-year', 'sex',
+  'tel', 'tel-country-code', 'tel-national', 'tel-area-code', 'tel-local', 'tel-local-prefix', 'tel-local-suffix', 'tel-extension',
+  'impp', 'url', 'photo',
+] as const;
+
+// =============================================================================
+// Time Limit Detector Constants (WCAG 2.2.1)
+// =============================================================================
+
+/** Keywords indicating countdown or time limit in visible text (EN/JP) */
+export const TIME_LIMIT_KEYWORDS = [
+  // English
+  'session expires',
+  'session timeout',
+  'time remaining',
+  'time left',
+  'countdown',
+  'expires in',
+  'will timeout',
+  'auto logout',
+  'automatic logout',
+  // Japanese
+  'セッション終了',
+  'セッションタイムアウト',
+  '残り時間',
+  'タイムアウト',
+  '自動ログアウト',
+  '有効期限',
+  '制限時間',
+  'カウントダウン',
+] as const;
+
+/** Timer threshold for reporting (10 minutes in ms) */
+export const TIME_LIMIT_THRESHOLD_MS = 600000;
+
+/** Minimum timer to report (10 seconds in ms, to filter out UI animations) */
+export const TIME_LIMIT_MIN_MS = 10000;
+
+// =============================================================================
+// Target Size Check Constants (WCAG 2.5.5 / 2.5.8)
+// =============================================================================
+
+/**
+ * Target Size thresholds in CSS pixels
+ * - AA (2.5.8 Minimum): 24x24 px
+ * - AAA (2.5.5 Enhanced): 44x44 px
+ */
+export const TARGET_SIZE_AA = 24;
+export const TARGET_SIZE_AAA = 44;
+
+/**
+ * Selector for interactive elements (tap/click targets)
+ * Includes all elements that users may tap/click to perform actions
+ */
+export const INTERACTIVE_SELECTOR = `
+  a[href],
+  button:not([disabled]),
+  input:not([type="hidden"]):not([disabled]),
+  select:not([disabled]),
+  textarea:not([disabled]),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="link"]:not([aria-disabled="true"]),
+  [role="checkbox"]:not([aria-disabled="true"]),
+  [role="radio"]:not([aria-disabled="true"]),
+  [role="switch"]:not([aria-disabled="true"]),
+  [role="menuitem"]:not([aria-disabled="true"]),
+  [role="tab"]:not([aria-disabled="true"]),
+  [role="slider"]:not([aria-disabled="true"]),
+  [role="option"]:not([aria-disabled="true"]),
+  [tabindex]:not([tabindex="-1"]):not([disabled]),
+  summary,
+  label[for],
+  [onclick]:not([disabled])
+`.trim();
+
+/**
+ * Tags that indicate inline context (for inline exception)
+ */
+export const INLINE_CONTEXT_TAGS = [
+  'p', 'li', 'dd', 'td', 'th', 'span', 'blockquote', 'cite', 'figcaption',
+] as const;
+
+/**
+ * Native input types controlled by user agent (for ua-control exception)
+ */
+export const UA_CONTROLLED_INPUT_TYPES = [
+  'checkbox', 'radio', 'range', 'color', 'date', 'datetime-local',
+  'month', 'week', 'time', 'file',
+] as const;
+
+/**
+ * Minimum text length around inline link to qualify for inline exception
+ */
+export const INLINE_CONTEXT_MIN_TEXT = 10;
