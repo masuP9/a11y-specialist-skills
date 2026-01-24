@@ -77,3 +77,29 @@ Confirm and get agreement on:
 - `references/content-checks.md`
 - `references/output-format.md`
 - `references/coverage-matrix.md`
+
+## Automated Test Scripts
+
+The `references/scripts/` directory contains Playwright-based test scripts for detailed automated checks. These scripts generate JSON results and annotated screenshots.
+
+| Script | Criterion | Description |
+|---|---|---|
+| `axe-audit.ts` | Multiple | axe-core comprehensive check |
+| `reflow-check.ts` | 1.4.10 | Horizontal scroll at 320px |
+| `text-spacing-check.ts` | 1.4.12 | Text spacing override clipping |
+| `zoom-200-check.ts` | 1.4.4 | 200% zoom content loss |
+| `orientation-check.ts` | 1.3.4 | Orientation lock detection |
+| `autocomplete-audit.ts` | 1.3.5 | Missing/invalid autocomplete |
+| `time-limit-detector.ts` | 2.2.1 | Timer/meta refresh detection |
+| `auto-play-detection.ts` | 1.4.2, 2.2.2 | Auto-play content detection |
+| `focus-indicator-check.ts` | 2.4.7 | Focus indicator visibility |
+| `target-size-check.ts` | 2.5.5, 2.5.8 | Target size measurement |
+
+**Usage:**
+```bash
+cd references/scripts
+npm install
+TEST_PAGE="https://example.com" npx playwright test <script-name>.ts
+```
+
+See `references/scripts/README.md` for detailed documentation.

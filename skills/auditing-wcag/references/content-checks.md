@@ -4,6 +4,13 @@
 
 Checks that depend on content quality and availability. Validate presence and adequacy of alternatives such as captions and transcripts.
 
+## Non-text Content
+| Criterion | Check | Evidence | Fail rule |
+|---|---|---|---|
+| 1.1.1 | Alt text quality for images | image list + alt text | Alt text missing, empty for informative images, or insufficient description |
+
+> **Note:** Automated checks verify presence of alt text. Content review evaluates whether the alt text adequately describes the image content and purpose. See [automated-checks.md](./automated-checks.md) for automated alt text detection.
+
 ## Multimedia
 | Criterion | Check | Evidence | Fail rule |
 |---|---|---|---|

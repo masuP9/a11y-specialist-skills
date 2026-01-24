@@ -77,3 +77,29 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 - `references/content-checks.ja.md`
 - `references/output-format.ja.md`
 - `references/coverage-matrix.ja.md`
+
+## 自動テストスクリプト
+
+`references/scripts/` ディレクトリには、詳細な自動チェック用のPlaywrightベースのテストスクリプトが含まれています。各スクリプトはJSON結果とアノテーション付きスクリーンショットを生成します。
+
+| スクリプト | 達成基準 | 説明 |
+|---|---|---|
+| `axe-audit.ts` | 複数 | axe-coreによる包括的チェック |
+| `reflow-check.ts` | 1.4.10 | 320pxでの水平スクロール検出 |
+| `text-spacing-check.ts` | 1.4.12 | テキストスペーシング変更後のクリッピング |
+| `zoom-200-check.ts` | 1.4.4 | 200%ズーム時のコンテンツ損失 |
+| `orientation-check.ts` | 1.3.4 | 画面の向き制限の検出 |
+| `autocomplete-audit.ts` | 1.3.5 | autocomplete属性の欠落・不正値 |
+| `time-limit-detector.ts` | 2.2.1 | タイマー・meta refresh検出 |
+| `auto-play-detection.ts` | 1.4.2, 2.2.2 | 自動再生コンテンツの検出 |
+| `focus-indicator-check.ts` | 2.4.7 | フォーカスインジケーターの視認性 |
+| `target-size-check.ts` | 2.5.5, 2.5.8 | ターゲットサイズの測定 |
+
+**使用方法:**
+```bash
+cd references/scripts
+npm install
+TEST_PAGE="https://example.com" npx playwright test <script-name>.ts
+```
+
+詳細は `references/scripts/README.md` を参照してください。

@@ -4,6 +4,33 @@
 
 Reports must follow this template. Keep entries concise and always attach evidence and rationale.
 
+## Output Procedure
+
+### 1. Ask for Save Location
+Before generating the report, ask the user where to save the output:
+```
+Where should I save the audit report?
+Default: ./[domain]-[YYYY-MM-DD]/
+```
+
+### 2. Create Output Directory
+Create a directory with the format: `[domain]-[YYYY-MM-DD]/`
+
+Example: `a11yc.com-2026-01-24/`
+
+### 3. Generate Files
+Save the following files in the output directory:
+
+| File | Description |
+|------|-------------|
+| `report.md` | Main audit report (Markdown) |
+| `axe-result.json` | axe-core raw results |
+| `*.json` | Other script results |
+| `screenshots/` | Evidence screenshots |
+
+### 4. Copy Script Outputs
+Move generated JSON files and screenshots to the output directory.
+
 ## Report Template
 
 ```markdown
