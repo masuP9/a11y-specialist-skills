@@ -1,10 +1,6 @@
 ---
 name: planning-wcag-audit
 description: WCAG audit planning support based on WAIC test guidelines. Helps determine audit scope, page selection method, and generates audit plan documents.
-license: MIT
-metadata:
-  author: masuP9
-  version: "1.0.0"
 allowed-tools: Read Grep Glob AskUserQuestion Write
 ---
 

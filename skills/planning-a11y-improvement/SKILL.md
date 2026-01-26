@@ -1,10 +1,6 @@
 ---
 name: planning-a11y-improvement
 description: Accessibility improvement planning support. Generates organizational maturity assessment, phased roadmap, KPI design, and stakeholder persuasion materials.
-license: MIT
-metadata:
-  author: masuP9
-  version: "1.2.0"
 allowed-tools: Read Grep Glob AskUserQuestion Write
 ---
 

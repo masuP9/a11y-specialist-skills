@@ -1,10 +1,6 @@
 ---
 name: planning-a11y-improvement
 description: アクセシビリティ改善計画の策定支援。組織の成熟度評価、フェーズ別ロードマップ、KPI設計、ステークホルダー説得資料を生成。
-license: MIT
-metadata:
-  author: masuP9
-  version: "1.2.0"
 allowed-tools: Read Grep Glob AskUserQuestion Write
 ---
 

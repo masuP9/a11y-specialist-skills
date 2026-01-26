@@ -1,10 +1,6 @@
 ---
 name: reviewing-a11y
 description: Accessibility review orchestrator. Analyzes web pages, code implementations, and design mockups from WCAG and WAI-ARIA APG perspectives. Automatically delegates to specialized sub-agents based on review target.
-license: MIT
-metadata:
-  author: masuP9
-  version: "2.0.0"
 allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mcp__playwright__browser_navigate mcp__playwright__browser_click
 ---
 
