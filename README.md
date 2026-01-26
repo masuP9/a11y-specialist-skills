@@ -11,6 +11,8 @@ Provides accessibility review skills based on WCAG 2.2 & WAI-ARIA APG.
 | Skill | Description |
 |-------|-------------|
 | [reviewing-a11y](./skills/reviewing-a11y/) | Accessibility review for web pages, component implementations, design mockups, and specifications |
+| [auditing-wcag](./skills/auditing-wcag/) | Systematic WCAG 2.2 AA conformance auditing with automated test scripts |
+| [planning-wcag-audit](./skills/planning-wcag-audit/) | WCAG audit planning based on WAIC guidelines (page selection, test methods) |
 | [planning-a11y-improvement](./skills/planning-a11y-improvement/) | Accessibility improvement planning with maturity assessment, roadmap, KPI design |
 
 ## Installation
@@ -85,6 +87,62 @@ The skill provides structured feedback including:
   - Related WCAG success criterion
   - Suggested fix
 - **Manual Checks**: Items that require human verification
+
+### auditing-wcag (WCAG Conformance Audit)
+
+Perform systematic WCAG 2.2 AA conformance audits:
+
+```
+# Examples
+Audit this page for WCAG compliance
+Run WCAG audit on https://example.com
+Check WCAG 2.2 AA conformance
+```
+
+You can also invoke directly with slash command:
+
+```
+/auditing-wcag
+```
+
+#### Audit Process
+
+The skill guides through a 4-phase audit:
+
+1. **Automated Checks**: axe-core + custom Playwright scripts
+2. **Interactive Checks**: Keyboard, focus, pointer operations
+3. **Manual Checks**: Human verification items
+4. **Content Review**: Alt text, labels, headings quality
+
+Includes automated test scripts for:
+- Focus indicators (2.4.7, 2.4.12, 3.2.1)
+- Reflow at 320px (1.4.10)
+- Text spacing (1.4.12)
+- Target size (2.5.5, 2.5.8)
+- And more...
+
+### planning-wcag-audit (Audit Planning)
+
+Plan WCAG audits based on WAIC guidelines:
+
+```
+# Examples
+Help me plan a WCAG audit
+Create audit plan for our website
+Select pages for accessibility testing
+```
+
+You can also invoke directly with slash command:
+
+```
+/planning-wcag-audit
+```
+
+#### Planning Output
+
+- **Page Selection**: Representative pages based on WAIC methodology
+- **Test Methods**: Automated vs manual test allocation
+- **Audit Plan Document**: Formal audit plan template
 
 ### planning-a11y-improvement (Improvement Planning)
 
