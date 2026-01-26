@@ -1,3 +1,21 @@
 .playwright-mcp/
 .claude/settings.local.json
 /tmp
+.codex-pane-id
+
+# Scripts output
+node_modules/
+test-results/
+focus-indicators.png
+auto-play-screenshots/
+reflow-result.json
+reflow-screenshot.png
+text-spacing-result.json
+text-spacing-screenshot.png
+zoom-200-result.json
+zoom-200-screenshot.png
+orientation-result.json
+orientation-screenshot-*.png
+autocomplete-result.json
+time-limit-result.json
+axe-result.json
