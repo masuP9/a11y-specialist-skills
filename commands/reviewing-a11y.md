@@ -1,4 +1,5 @@
 ---
+name: reviewing-a11y
 description: Accessibility review orchestrator. Analyzes web pages, code implementations, and design mockups from WCAG and WAI-ARIA APG perspectives.
 argument-hint: URL, file path, or Figma URL to review
 ---
