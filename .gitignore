@@ -5,7 +5,6 @@
 
 # Scripts output
 node_modules/
-package-lock.json
 test-results/
 focus-indicators.png
 auto-play-screenshots/
