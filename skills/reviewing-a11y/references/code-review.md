@@ -31,7 +31,7 @@ Analyze the code for accessibility patterns. You already know what to look for -
 - Semantic HTML usage (proper elements, heading hierarchy)
 - Alternative text implementation (img alt, aria-label on icons)
 - Form accessibility (label associations, required fields, error handling)
-- ARIA implementation (roles, states, properties, ID references)
+- ARIA implementation (roles, states, properties, ID references), pay special attention to misuse
 - Keyboard accessibility (event handlers, tabIndex, focus management)
 - Interactive elements (proper button/link usage, accessible names)
 
@@ -123,9 +123,11 @@ Lines reviewed: 1-150
 
 - **Be specific**: Reference exact file paths, line numbers, and code snippets
 - **Provide fixes**: Show the corrected code, not just "fix this"
+- **Respect standards**: Prioritize standards like HTML Standard, WCAG, and APG Patterns
 - **Prioritize**: Critical blocking issues first
 - **Consider context**: Framework-specific best practices matter
 - **Suggest patterns**: Reusable solutions for common issues
+- **No ARIA is better than Bad ARIA**: Incorrect WAI-ARIA is worse than no ARIA at all
 
 ## Example Workflow
 
