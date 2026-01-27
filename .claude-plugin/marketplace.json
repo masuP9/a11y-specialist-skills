@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "Accessibility specialist skills for Claude Code. WCAG 2.2 review, conformance auditing, and improvement planning tools.",
-    "version": "2.3.0"
+    "version": "2.5.1"
   },
   "plugins": [
     {
       "name": "a11y-specialist-skills",
       "description": "Accessibility skills: reviewing-a11y (WCAG reviews), auditing-wcag (conformance audits with automated scripts), planning-wcag-audit (audit planning), planning-a11y-improvement (maturity + roadmap).",
       "source": "./",
-      "version": "2.3.0",
+      "version": "2.5.1",
       "author": {
         "name": "masuP9"
       },
