@@ -1,6 +1,7 @@
 ---
 name: planning-a11y-improvement
 description: アクセシビリティ改善計画の策定支援。組織の成熟度評価、フェーズ別ロードマップ、KPI設計、ステークホルダー説得資料を生成。
+argument-hint: Organization context or goal (optional)
 allowed-tools: Read Grep Glob AskUserQuestion Write
 ---
 

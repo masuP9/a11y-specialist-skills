@@ -1,6 +1,7 @@
 ---
 name: planning-a11y-improvement
 description: Accessibility improvement planning support. Generates organizational maturity assessment, phased roadmap, KPI design, and stakeholder persuasion materials.
+argument-hint: Organization context or goal (optional)
 allowed-tools: Read Grep Glob AskUserQuestion Write
 ---
 
