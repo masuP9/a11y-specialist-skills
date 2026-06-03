@@ -1,0 +1,24 @@
+{
+  "name": "a11y-specialist-skills-monorepo",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Monorepo for a11y-specialist-skills: Claude Code skill plugin + @masup9/a11y-audit npm package",
+  "license": "MIT",
+  "author": {
+    "name": "masuP9",
+    "url": "https://github.com/masuP9"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/masuP9/a11y-specialist-skills"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present"
+  }
+}

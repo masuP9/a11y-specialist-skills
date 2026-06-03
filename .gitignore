@@ -4,9 +4,14 @@
 .codex-pane-id
 collab.sock
 
+# Build output
+dist/
+
 # Scripts output
 node_modules/
 test-results/
+playwright-report/
+*.tsbuildinfo
 focus-indicators.png
 auto-play-screenshots/
 reflow-result.json
