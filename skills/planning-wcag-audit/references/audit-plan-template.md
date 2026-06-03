@@ -28,13 +28,15 @@
 - [ ] Edge (latest)
 - [ ] Other: _____________
 
-### Assistive Technologies (Optional)
-If extended testing is needed, specify AT combinations here.
+### Assistive Technologies (intended environment)
+List the assistive technologies assumed as the intended usage environment (accessibility-supported context).
 
 ### Devices
 - [ ] Desktop
 - [ ] Mobile (iOS/Android)
 - [ ] Other: _____________
+
+> **Note**: Direct operation testing with assistive technologies is not itself a required step for WCAG success-criteria conformance judgment. Whether the techniques used are accessibility-supported in the intended environment may be confirmed as technical justification where needed. Plan AT operation testing done for improvement purposes as a separate task outside this audit.
 
 ## 5. Test Tools (Optional)
 - [ ] axe DevTools or equivalent automated checker

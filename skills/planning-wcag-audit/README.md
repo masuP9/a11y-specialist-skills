@@ -59,9 +59,10 @@ This skill uses an **integrated pattern** with interactive information gathering
    - Page type classification
 
 4. **Test Environment Confirmation**
-   - Browser/AT combinations
+   - Browsers / assistive technologies (intended usage environment)
    - Mobile/Desktop
    - Test tools (optional, with alternatives)
+   - Note: AT operation testing is not a required step for conformance judgment; plan it as a separate, improvement-focused task
 
 5. **Audit Plan Document Generation**
    - Test overview (purpose, scope, method)

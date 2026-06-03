@@ -82,9 +82,11 @@ Clarify the environment for reproducibility.
 
 **Items to confirm**
 - Browsers (target coverage)
-- Assistive technologies (AT)
+- Assistive technologies (intended usage environment / accessibility-supported context)
 - Devices (desktop / mobile)
 - Tools used (automated checks, contrast tools, etc.)
+
+> **Note**: Direct operation testing with assistive technologies (screen readers, etc.) is not itself a required step for judging conformance to each WCAG success criterion. Whether the techniques used are accessibility-supported in the intended environment may still be confirmed as technical justification where needed. Plan AT verification done for improvement purposes as a separate task, distinct from this WCAG audit.
 
 **Example prompt**
 ```
