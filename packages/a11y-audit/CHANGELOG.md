@@ -15,8 +15,10 @@ downstream feedback.
   context; supports `contextOptions`).
 - `runReflowCheck` — WCAG 1.4.10.
 - `runTargetSizeCheck` — WCAG 2.5.5 / 2.5.8.
-- Compatibility `test-entries/*` for use with Playwright `testMatch`
-  (`TEST_PAGE` / `A11Y_OUTPUT_DIR`).
+- Compatibility `test-entries/*`, run via a one-line local re-export spec
+  (`TEST_PAGE` / `A11Y_OUTPUT_DIR`). Note: Playwright excludes `node_modules`
+  from test collection, so a `testMatch` glob into `node_modules` finds no
+  tests — use the re-export spec instead.
 - `schemas` subpath: result types + hand-written JSON Schemas.
 - Output path resolution: `outputDir` option → `A11Y_OUTPUT_DIR` env →
   `process.cwd()`, with `outputPath`/`outputDir` exclusivity (promoted from

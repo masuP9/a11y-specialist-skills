@@ -57,10 +57,10 @@ export function resolveOutputPath(
     return path.resolve(outputPath);
   }
 
-  if (outputFile !== undefined && path.isAbsolute(outputFile)) {
+  if (outputFile !== undefined && path.basename(outputFile) !== outputFile) {
     throw new Error(
-      '`outputFile` must be a file name, not an absolute path. ' +
-        'Use `outputPath` to write to an absolute location.'
+      '`outputFile` must be a bare file name (no path separators or `..`). ' +
+        'Use `outputDir` for the directory, or `outputPath` for a full path.'
     );
   }
 

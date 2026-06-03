@@ -145,13 +145,15 @@ export async function runFocusIndicatorCheck(
   let finalFocusHistory: FocusRecord[] = [];
   let retryCount = 0;
   let finalPage: Page | null = null;
-  let finalContext: BrowserContext | null = null;
+  // The context for the current attempt. Held outside the loop so it is always
+  // closed in `finally`, including if an attempt throws mid-way.
+  let context: BrowserContext | null = null;
 
   try {
     // Retry loop - restart test when navigation violation is detected
     while (retryCount < MAX_RETRIES) {
       // Create a fresh context for each attempt to reset init scripts
-      const context = await browser.newContext(contextOptions);
+      context = await browser.newContext(contextOptions);
       const page = await context.newPage();
 
       const focusHistory: FocusRecord[] = [];
@@ -322,7 +324,6 @@ export async function runFocusIndicatorCheck(
         // Test completed successfully without navigation
         finalFocusHistory = focusHistory;
         finalPage = page;
-        finalContext = context;
         break;
       }
 
@@ -334,12 +335,12 @@ export async function runFocusIndicatorCheck(
         // Keep this page with its annotations for the screenshot
         finalFocusHistory = focusHistory;
         finalPage = page;
-        finalContext = context;
         break;
       }
 
       // Close context before retry (only if we're going to retry)
       await context.close();
+      context = null;
     }
 
     // Ensure finalPage is set (should always be set by this point)
@@ -450,10 +451,11 @@ export async function runFocusIndicatorCheck(
 
     return result;
   } finally {
-    // Close the context this function created (the other contexts are closed
-    // on retry inside the loop).
-    if (finalContext) {
-      await finalContext.close();
+    // Close the context for the final/in-flight attempt. Contexts from earlier
+    // retries are already closed inside the loop; this also covers the case
+    // where an attempt throws mid-way.
+    if (context) {
+      await context.close();
     }
   }
 }

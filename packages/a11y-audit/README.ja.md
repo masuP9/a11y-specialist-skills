@@ -82,6 +82,11 @@ test("focus indicators", async ({ browser }, testInfo) => {
 スクリーンショット（有効時）は結果ファイルの隣に書き出します。`outputFile` はファイル名のみ
 指定可能です。絶対パスを使う場合は `outputPath` を使ってください。
 
+> **リフローの注意.** `runReflowCheck` は自身で狭い viewport を設定するため、遷移済みの
+> page でも動作します。load 時にのみ viewport を読むページでは、legacy スクリプトと完全に
+> 同じ結果を得るために `page.goto(...)` の**前**に viewport を設定してください（互換 entry
+> はこれを行っています）。
+
 ## 使い方 — 互換 test entry
 
 テスト本体を書きたくない場合は、同梱 entry を 1 行のローカル spec から re-export します。

@@ -5,8 +5,8 @@
  *
  * - Main subpath (`@masup9/a11y-audit`): shared types & constants.
  * - `@masup9/a11y-audit/playwright`: the `runXxx()` function API.
- * - `@masup9/a11y-audit/test-entries/*`: ready-to-run compatibility entries
- *   for use with Playwright `testMatch`.
+ * - `@masup9/a11y-audit/test-entries/*`: ready-to-run compatibility entries,
+ *   run via a one-line local re-export spec (`import "...test-entries/axe-audit"`).
  * - `@masup9/a11y-audit/schemas`: result types & JSON Schemas.
  */
 

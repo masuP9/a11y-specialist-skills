@@ -65,6 +65,9 @@
     "README.ja.md",
     "CHANGELOG.md"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "clean": "rm -rf dist",
     "build": "tsc -p tsconfig.json",

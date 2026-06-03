@@ -83,6 +83,11 @@ For every check:
 Screenshots (when enabled) are written next to the result file. `outputFile`
 must be a bare filename; use `outputPath` for an absolute location.
 
+> **Reflow note.** `runReflowCheck` sets the narrow viewport itself, so it works
+> on an already-navigated page. For pages that read the viewport only at load
+> time, set the viewport *before* `page.goto(...)` for results identical to the
+> legacy script (the compatibility entry does this).
+
 ## Usage — compatibility test entries
 
 If you prefer not to write test bodies, re-export the bundled entries from a
