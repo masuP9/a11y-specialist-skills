@@ -1,0 +1,126 @@
+# @masup9/a11y-audit
+
+Playwright + axe-core based WCAG 2.2 accessibility audit functions.
+
+This package is the functional core extracted from the
+[`auditing-wcag`](https://github.com/masuP9/a11y-specialist-skills) Claude Code
+skill. It ships four checks as plain functions plus ready-to-run Playwright
+test entries.
+
+> **日本語版は [README.ja.md](./README.ja.md) を参照してください。**
+
+> **Scope.** Automated testing detects only ~30–40% of WCAG issues. Manual
+> testing is required for full conformance. This package automates a subset.
+
+## Checks (v0.1.0)
+
+| Function | WCAG |
+| --- | --- |
+| `runAxeAudit` | axe-core broad coverage (2.0/2.1/2.2 A & AA) |
+| `runFocusIndicatorCheck` | 2.4.7 Focus Visible / 2.4.12 Focus Not Obscured / 3.2.1 On Focus |
+| `runReflowCheck` | 1.4.10 Reflow |
+| `runTargetSizeCheck` | 2.5.5 / 2.5.8 Target Size |
+
+## Install
+
+```sh
+npm install -D @masup9/a11y-audit @playwright/test @axe-core/playwright
+```
+
+`@playwright/test` and `@axe-core/playwright` are **peer dependencies**.
+
+> ESM only. This package does not ship a CommonJS build; import it from ESM
+> (or a TypeScript project compiled to ESM).
+
+## Usage — function API (recommended)
+
+You navigate the page; the function runs the check, writes a result JSON, and
+returns the parsed result.
+
+```ts
+import { test } from "@playwright/test";
+import { runAxeAudit } from "@masup9/a11y-audit/playwright";
+
+test("axe audit", async ({ page }, testInfo) => {
+  await page.goto("https://example.com");
+  const result = await runAxeAudit({
+    page,
+    outputDir: testInfo.outputDir,   // where to write axe-result.json
+    // outputFile: "axe-result.json", // optional override
+    // tags: ["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"],
+  });
+  expect(result.violationCount).toBe(0);
+});
+```
+
+The focus indicator check owns its browser context (it restarts in a fresh
+context when focus triggers a navigation), so it takes a `browser` and a
+`targetUrl` instead of a `page`:
+
+```ts
+import { runFocusIndicatorCheck } from "@masup9/a11y-audit/playwright";
+
+test("focus indicators", async ({ browser }, testInfo) => {
+  const result = await runFocusIndicatorCheck({
+    browser,
+    targetUrl: "https://example.com", // or set TEST_PAGE env var
+    outputDir: testInfo.outputDir,
+    screenshot: true,                 // default: false
+    // contextOptions: { locale: "ja-JP" }, // forwarded to browser.newContext()
+  });
+  expect(result.elementsWithoutFocusStyle).toBe(0);
+});
+```
+
+### Output location resolution
+
+For every check:
+
+1. `outputPath` — full path (mutually exclusive with `outputDir`/`outputFile`).
+2. otherwise `outputDir` → `A11Y_OUTPUT_DIR` env → `process.cwd()`, joined with
+   `outputFile` → the check's default filename.
+
+Screenshots (when enabled) are written next to the result file. `outputFile`
+must be a bare filename; use `outputPath` for an absolute location.
+
+## Usage — compatibility test entries
+
+If you prefer not to write test files, point Playwright's `testMatch` at the
+bundled entries. They read `TEST_PAGE` (target URL) and `A11Y_OUTPUT_DIR`
+(output directory) and capture screenshots, reproducing the legacy script
+behavior.
+
+```ts
+// playwright.config.ts
+import { defineConfig } from "@playwright/test";
+
+export default defineConfig({
+  testMatch: ["**/node_modules/@masup9/a11y-audit/dist/test-entries/*.js"],
+});
+```
+
+```sh
+TEST_PAGE=https://example.com A11Y_OUTPUT_DIR=./a11y-results npx playwright test
+```
+
+If `testMatch` against `node_modules` is awkward in your setup, add a one-line
+local spec instead:
+
+```ts
+// tests/a11y/axe.spec.ts
+import "@masup9/a11y-audit/test-entries/axe-audit";
+```
+
+## Result types & schemas
+
+```ts
+import type { AxeAuditResult, FocusCheckResult } from "@masup9/a11y-audit/schemas";
+import { RESULT_SCHEMAS } from "@masup9/a11y-audit/schemas";
+```
+
+`RESULT_SCHEMAS` maps each check id to a hand-written JSON Schema for validating
+the `*-result.json` files at runtime.
+
+## License
+
+MIT

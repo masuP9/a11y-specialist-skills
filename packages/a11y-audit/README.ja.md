@@ -1,0 +1,123 @@
+# @masup9/a11y-audit
+
+Playwright + axe-core ベースの WCAG 2.2 アクセシビリティ検査関数。
+
+本パッケージは [`auditing-wcag`](https://github.com/masuP9/a11y-specialist-skills)
+Claude Code skill から機能本体を切り出したものです。4 つの検査を関数として提供し、
+すぐ実行できる Playwright 用の互換 test entry も同梱します。
+
+> **English: see [README.md](./README.md).**
+
+> **スコープ.** 自動テストで検出できるのは WCAG 違反の約 30〜40% です。完全な準拠確認には
+> 手動テストが必須です。本パッケージはその一部を自動化します。
+
+## 検査一覧 (v0.1.0)
+
+| 関数 | WCAG |
+| --- | --- |
+| `runAxeAudit` | axe-core による広範な検出 (2.0/2.1/2.2 A & AA) |
+| `runFocusIndicatorCheck` | 2.4.7 フォーカスの可視化 / 2.4.12 フォーカスの非遮蔽 / 3.2.1 オンフォーカス |
+| `runReflowCheck` | 1.4.10 リフロー |
+| `runTargetSizeCheck` | 2.5.5 / 2.5.8 ターゲットのサイズ |
+
+## インストール
+
+```sh
+npm install -D @masup9/a11y-audit @playwright/test @axe-core/playwright
+```
+
+`@playwright/test` と `@axe-core/playwright` は **peer dependencies** です。
+
+> ESM 専用です。CommonJS ビルドは同梱しません。ESM（または ESM 出力の TypeScript）から
+> import してください。
+
+## 使い方 — 関数 API（推奨）
+
+ページの遷移は呼び出し側で行い、関数は検査の実行・結果 JSON の書き出し・結果オブジェクトの
+return を担います。
+
+```ts
+import { test } from "@playwright/test";
+import { runAxeAudit } from "@masup9/a11y-audit/playwright";
+
+test("axe audit", async ({ page }, testInfo) => {
+  await page.goto("https://example.com");
+  const result = await runAxeAudit({
+    page,
+    outputDir: testInfo.outputDir,   // axe-result.json の出力先
+    // outputFile: "axe-result.json", // 任意で上書き
+    // tags: ["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"],
+  });
+  expect(result.violationCount).toBe(0);
+});
+```
+
+フォーカス表示検査は、フォーカスで遷移が起きた際に新しい context で再試行するため、
+自身の browser context を所有します。そのため `page` ではなく `browser` と `targetUrl`
+を受け取ります。
+
+```ts
+import { runFocusIndicatorCheck } from "@masup9/a11y-audit/playwright";
+
+test("focus indicators", async ({ browser }, testInfo) => {
+  const result = await runFocusIndicatorCheck({
+    browser,
+    targetUrl: "https://example.com", // または TEST_PAGE 環境変数
+    outputDir: testInfo.outputDir,
+    screenshot: true,                 // 既定: false
+    // contextOptions: { locale: "ja-JP" }, // browser.newContext() に転送
+  });
+  expect(result.elementsWithoutFocusStyle).toBe(0);
+});
+```
+
+### 出力先の解決順
+
+各検査共通:
+
+1. `outputPath` — フルパス（`outputDir`/`outputFile` とは排他）。
+2. それ以外は `outputDir` → `A11Y_OUTPUT_DIR` 環境変数 → `process.cwd()` に、
+   `outputFile` → 各検査の既定ファイル名を結合。
+
+スクリーンショット（有効時）は結果ファイルの隣に書き出します。`outputFile` はファイル名のみ
+指定可能です。絶対パスを使う場合は `outputPath` を使ってください。
+
+## 使い方 — 互換 test entry
+
+テストファイルを書きたくない場合は、Playwright の `testMatch` を同梱 entry に向けます。
+`TEST_PAGE`（対象 URL）と `A11Y_OUTPUT_DIR`（出力先）を読み、スクリーンショットも撮る、
+従来スクリプトと同等の挙動です。
+
+```ts
+// playwright.config.ts
+import { defineConfig } from "@playwright/test";
+
+export default defineConfig({
+  testMatch: ["**/node_modules/@masup9/a11y-audit/dist/test-entries/*.js"],
+});
+```
+
+```sh
+TEST_PAGE=https://example.com A11Y_OUTPUT_DIR=./a11y-results npx playwright test
+```
+
+`node_modules` への `testMatch` が扱いにくい場合は、1 行のローカル spec を置く方法もあります。
+
+```ts
+// tests/a11y/axe.spec.ts
+import "@masup9/a11y-audit/test-entries/axe-audit";
+```
+
+## 結果型とスキーマ
+
+```ts
+import type { AxeAuditResult, FocusCheckResult } from "@masup9/a11y-audit/schemas";
+import { RESULT_SCHEMAS } from "@masup9/a11y-audit/schemas";
+```
+
+`RESULT_SCHEMAS` は各検査 id に手書きの JSON Schema を対応付けており、`*-result.json`
+を実行時に検証できます。
+
+## ライセンス
+
+MIT
