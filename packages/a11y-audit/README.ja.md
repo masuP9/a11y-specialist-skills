@@ -84,29 +84,29 @@ test("focus indicators", async ({ browser }, testInfo) => {
 
 ## 使い方 — 互換 test entry
 
-テストファイルを書きたくない場合は、Playwright の `testMatch` を同梱 entry に向けます。
-`TEST_PAGE`（対象 URL）と `A11Y_OUTPUT_DIR`（出力先）を読み、スクリーンショットも撮る、
-従来スクリプトと同等の挙動です。
+テスト本体を書きたくない場合は、同梱 entry を 1 行のローカル spec から re-export します。
+entry は import 時に `test(...)` を呼び、`TEST_PAGE`（対象 URL）と `A11Y_OUTPUT_DIR`
+（出力先）を読み、スクリーンショットも撮ります（従来スクリプトと同等の挙動）。
 
 ```ts
-// playwright.config.ts
-import { defineConfig } from "@playwright/test";
-
-export default defineConfig({
-  testMatch: ["**/node_modules/@masup9/a11y-audit/dist/test-entries/*.js"],
-});
+// tests/a11y/axe.spec.ts
+import "@masup9/a11y-audit/test-entries/axe-audit";
+// tests/a11y/focus.spec.ts
+import "@masup9/a11y-audit/test-entries/focus-indicator-check";
+// tests/a11y/reflow.spec.ts
+import "@masup9/a11y-audit/test-entries/reflow-check";
+// tests/a11y/target-size.spec.ts
+import "@masup9/a11y-audit/test-entries/target-size-check";
 ```
 
 ```sh
 TEST_PAGE=https://example.com A11Y_OUTPUT_DIR=./a11y-results npx playwright test
 ```
 
-`node_modules` への `testMatch` が扱いにくい場合は、1 行のローカル spec を置く方法もあります。
-
-```ts
-// tests/a11y/axe.spec.ts
-import "@masup9/a11y-audit/test-entries/axe-audit";
-```
+> **`node_modules` への `testMatch` が使えない理由.** Playwright はテスト収集から
+> `node_modules` を除外するため、`**/node_modules/@masup9/a11y-audit/dist/test-entries/*.js`
+> を `testMatch` に指定してもテストは見つかりません。上記の 1 行 re-export spec が
+> entry を実行する正式な方法です。
 
 ## 結果型とスキーマ
 

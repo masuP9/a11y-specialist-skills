@@ -85,31 +85,30 @@ must be a bare filename; use `outputPath` for an absolute location.
 
 ## Usage — compatibility test entries
 
-If you prefer not to write test files, point Playwright's `testMatch` at the
-bundled entries. They read `TEST_PAGE` (target URL) and `A11Y_OUTPUT_DIR`
-(output directory) and capture screenshots, reproducing the legacy script
-behavior.
+If you prefer not to write test bodies, re-export the bundled entries from a
+one-line local spec. The entries call `test(...)` at import time and read
+`TEST_PAGE` (target URL) and `A11Y_OUTPUT_DIR` (output directory), capturing
+screenshots — reproducing the legacy script behavior.
 
 ```ts
-// playwright.config.ts
-import { defineConfig } from "@playwright/test";
-
-export default defineConfig({
-  testMatch: ["**/node_modules/@masup9/a11y-audit/dist/test-entries/*.js"],
-});
+// tests/a11y/axe.spec.ts
+import "@masup9/a11y-audit/test-entries/axe-audit";
+// tests/a11y/focus.spec.ts
+import "@masup9/a11y-audit/test-entries/focus-indicator-check";
+// tests/a11y/reflow.spec.ts
+import "@masup9/a11y-audit/test-entries/reflow-check";
+// tests/a11y/target-size.spec.ts
+import "@masup9/a11y-audit/test-entries/target-size-check";
 ```
 
 ```sh
 TEST_PAGE=https://example.com A11Y_OUTPUT_DIR=./a11y-results npx playwright test
 ```
 
-If `testMatch` against `node_modules` is awkward in your setup, add a one-line
-local spec instead:
-
-```ts
-// tests/a11y/axe.spec.ts
-import "@masup9/a11y-audit/test-entries/axe-audit";
-```
+> **Why not `testMatch` into `node_modules`?** Playwright excludes
+> `node_modules` from test collection, so pointing `testMatch` at
+> `**/node_modules/@masup9/a11y-audit/dist/test-entries/*.js` finds no tests.
+> The one-line re-export specs above are the supported way to run the entries.
 
 ## Result types & schemas
 
