@@ -4,6 +4,9 @@
 .codex-pane-id
 collab.sock
 
+# Local planning doc (kept out of version control)
+PLAN-npm-publish.md
+
 # Build output
 dist/
 
