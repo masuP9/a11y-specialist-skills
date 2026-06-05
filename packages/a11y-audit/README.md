@@ -4,7 +4,7 @@ Playwright + axe-core based WCAG 2.2 accessibility audit functions.
 
 This package is the functional core extracted from the
 [`auditing-wcag`](https://github.com/masuP9/a11y-specialist-skills) Claude Code
-skill. It ships four checks as plain functions plus ready-to-run Playwright
+skill. It ships ten checks as plain functions plus ready-to-run Playwright
 test entries.
 
 > **日本語版は [README.ja.md](./README.ja.md) を参照してください。**
@@ -12,7 +12,7 @@ test entries.
 > **Scope.** Automated testing detects only ~30–40% of WCAG issues. Manual
 > testing is required for full conformance. This package automates a subset.
 
-## Checks (v0.1.0)
+## Checks
 
 | Function | WCAG |
 | --- | --- |
@@ -20,6 +20,18 @@ test entries.
 | `runFocusIndicatorCheck` | 2.4.7 Focus Visible / 2.4.12 Focus Not Obscured / 3.2.1 On Focus |
 | `runReflowCheck` | 1.4.10 Reflow |
 | `runTargetSizeCheck` | 2.5.5 / 2.5.8 Target Size |
+| `runTextSpacingCheck` | 1.4.12 Text Spacing |
+| `runZoomCheck` | 1.4.4 Resize Text (200% zoom) |
+| `runOrientationCheck` | 1.3.4 Orientation |
+| `runAutocompleteAudit` | 1.3.5 Identify Input Purpose |
+| `runTimeLimitDetector` | 2.2.1 Timing Adjustable |
+| `runAutoPlayDetection` | 1.4.2 Audio Control / 2.2.2 Pause, Stop, Hide |
+
+Most checks take an already-navigated `page`. A few own navigation and take a
+`targetUrl` instead (or `TEST_PAGE`): `runOrientationCheck` and
+`runTimeLimitDetector` (and `runZoomCheck` when a URL is given).
+`runFocusIndicatorCheck` takes a `browser`. `runAutoPlayDetection` needs the
+optional `pixelmatch` + `pngjs` deps (see Install).
 
 ## Install
 
@@ -28,6 +40,14 @@ npm install -D @a11y-skills/audit @playwright/test @axe-core/playwright
 ```
 
 `@playwright/test` and `@axe-core/playwright` are **peer dependencies**.
+
+`runAutoPlayDetection` additionally needs `pixelmatch` and `pngjs` (declared as
+**optional dependencies**, installed by default). They are loaded lazily, so
+the other nine checks work even if you install with `--omit=optional`:
+
+```sh
+npm install -D pixelmatch pngjs   # only if you use runAutoPlayDetection
+```
 
 > ESM only. This package does not ship a CommonJS build; import it from ESM
 > (or a TypeScript project compiled to ESM).
@@ -104,6 +124,9 @@ import "@a11y-skills/audit/test-entries/focus-indicator-check";
 import "@a11y-skills/audit/test-entries/reflow-check";
 // tests/a11y/target-size.spec.ts
 import "@a11y-skills/audit/test-entries/target-size-check";
+// ...also: text-spacing-check, zoom-200-check, orientation-check,
+// autocomplete-audit, time-limit-detector, auto-play-detection
+import "@a11y-skills/audit/test-entries/text-spacing-check";
 ```
 
 ```sh

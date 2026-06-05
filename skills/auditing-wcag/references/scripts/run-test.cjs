@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Cross-platform test runner
- * Usage: node run-test.js <test-file(s)> [url]
+ * Usage: node run-test.cjs <test-file(s)> [url]
  */
 const { execFileSync } = require('child_process');
 

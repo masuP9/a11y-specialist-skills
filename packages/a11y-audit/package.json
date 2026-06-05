@@ -1,7 +1,7 @@
 {
   "name": "@a11y-skills/audit",
-  "version": "0.1.0",
-  "description": "Playwright + axe-core based WCAG 2.2 accessibility audit functions (axe, focus indicator, reflow, target size).",
+  "version": "0.2.0",
+  "description": "Playwright + axe-core based WCAG 2.2 accessibility audit functions (axe, focus indicator, reflow, target size, text spacing, zoom, orientation, autocomplete, time limit, auto-play).",
   "type": "module",
   "license": "MIT",
   "author": {
@@ -57,6 +57,30 @@
     "./test-entries/target-size-check": {
       "types": "./dist/test-entries/target-size-check.d.ts",
       "import": "./dist/test-entries/target-size-check.js"
+    },
+    "./test-entries/text-spacing-check": {
+      "types": "./dist/test-entries/text-spacing-check.d.ts",
+      "import": "./dist/test-entries/text-spacing-check.js"
+    },
+    "./test-entries/zoom-200-check": {
+      "types": "./dist/test-entries/zoom-200-check.d.ts",
+      "import": "./dist/test-entries/zoom-200-check.js"
+    },
+    "./test-entries/orientation-check": {
+      "types": "./dist/test-entries/orientation-check.d.ts",
+      "import": "./dist/test-entries/orientation-check.js"
+    },
+    "./test-entries/autocomplete-audit": {
+      "types": "./dist/test-entries/autocomplete-audit.d.ts",
+      "import": "./dist/test-entries/autocomplete-audit.js"
+    },
+    "./test-entries/time-limit-detector": {
+      "types": "./dist/test-entries/time-limit-detector.d.ts",
+      "import": "./dist/test-entries/time-limit-detector.js"
+    },
+    "./test-entries/auto-play-detection": {
+      "types": "./dist/test-entries/auto-play-detection.d.ts",
+      "import": "./dist/test-entries/auto-play-detection.js"
     }
   },
   "files": [
@@ -80,10 +104,15 @@
     "@axe-core/playwright": "^4.10.0",
     "@playwright/test": "^1.50.0"
   },
+  "optionalDependencies": {
+    "pixelmatch": "^7.1.0",
+    "pngjs": "^7.0.0"
+  },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.0",
     "@playwright/test": "^1.50.0",
     "@types/node": "^22.10.0",
+    "@types/pngjs": "^6.0.5",
     "typescript": "^5.6.0"
   },
   "engines": {

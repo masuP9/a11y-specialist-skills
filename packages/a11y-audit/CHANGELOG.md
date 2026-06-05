@@ -3,6 +3,27 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## 0.2.0
+
+Phase 2 checks added (additive). Still a `0.x` preview — the function API may
+change before `1.0.0` based on downstream feedback.
+
+### Added
+
+- `runTextSpacingCheck` — WCAG 1.4.12.
+- `runZoomCheck` — WCAG 1.4.4.
+- `runOrientationCheck` — WCAG 1.3.4 (owns navigation: takes `page` + `targetUrl`,
+  loads the page at portrait and landscape viewports).
+- `runAutocompleteAudit` — WCAG 1.3.5.
+- `runTimeLimitDetector` — WCAG 2.2.1 (owns navigation: installs a timer hook
+  before `goto`, so takes `page` + `targetUrl`).
+- `runAutoPlayDetection` — WCAG 1.4.2 / 2.2.2. Requires the **optional**
+  dependencies `pixelmatch` + `pngjs` (for pixel-diffing screenshot frames);
+  they are loaded lazily, so importing the package without them keeps the other
+  nine checks working. Throws a clear error if invoked without them.
+- `test-entries/*` and JSON Schemas (`RESULT_SCHEMAS`) for all six new checks.
+- `getTargetUrl(defaultPath)` exported from `@a11y-skills/audit/playwright`.
+
 ## 0.1.0
 
 Initial preview release. The function API may change before `1.0.0` based on

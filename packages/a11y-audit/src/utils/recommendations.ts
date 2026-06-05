@@ -1,10 +1,10 @@
 /**
- * Recommendation generation for auto-play detection
+ * Recommendation generation for auto-play detection.
  */
 
-import type { PauseControlInfo, PauseVerificationResult } from '../types';
+import type { PauseControlInfo, PauseVerificationResult } from '../types.js';
 
-interface RecommendationContext {
+export interface RecommendationContext {
   hasAutoPlayContent: boolean;
   stopsWithin5Seconds: boolean;
   pauseControls: PauseControlInfo;
@@ -12,10 +12,11 @@ interface RecommendationContext {
 }
 
 /**
- * Generate a recommendation based on detection results
+ * Generate a recommendation based on detection results.
  */
 export function generateRecommendation(ctx: RecommendationContext): string {
-  const { hasAutoPlayContent, stopsWithin5Seconds, pauseControls, pauseVerification } = ctx;
+  const { hasAutoPlayContent, stopsWithin5Seconds, pauseControls, pauseVerification } =
+    ctx;
 
   if (!hasAutoPlayContent) {
     return 'No auto-playing content detected in viewport.';
@@ -46,10 +47,14 @@ export function generateRecommendation(ctx: RecommendationContext): string {
 }
 
 /**
- * Print summary to console
+ * Print summary to console.
  */
-export function printSummary(ctx: RecommendationContext, outputDir: string): void {
-  const { hasAutoPlayContent, stopsWithin5Seconds, pauseControls, pauseVerification } = ctx;
+export function printSummary(
+  ctx: RecommendationContext,
+  outputDir: string
+): void {
+  const { hasAutoPlayContent, stopsWithin5Seconds, pauseControls, pauseVerification } =
+    ctx;
 
   console.log('\n--- Summary ---');
 
@@ -68,7 +73,9 @@ export function printSummary(ctx: RecommendationContext, outputDir: string): voi
   if (pauseControls.found) {
     console.log(`✓ Pause controls found: ${pauseControls.controls.length}`);
     pauseControls.controls.forEach((ctrl, i) => {
-      console.log(`  ${i + 1}. <${ctrl.element}> "${ctrl.name}" (matched by: ${ctrl.matchedBy})`);
+      console.log(
+        `  ${i + 1}. <${ctrl.element}> "${ctrl.name}" (matched by: ${ctrl.matchedBy})`
+      );
     });
     if (!pauseControls.hasAccessibleName) {
       console.log('⚠ Warning: Pause control lacks accessible name (aria-label)');
@@ -93,7 +100,9 @@ export function printSummary(ctx: RecommendationContext, outputDir: string): voi
   }
 
   if (pauseControls.carouselIndicators.length > 0) {
-    console.log(`\nCarousel navigation controls found: ${pauseControls.carouselIndicators.length}`);
+    console.log(
+      `\nCarousel navigation controls found: ${pauseControls.carouselIndicators.length}`
+    );
   }
 
   // Manual verification checklist

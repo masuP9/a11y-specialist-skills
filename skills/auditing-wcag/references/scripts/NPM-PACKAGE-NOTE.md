@@ -1,29 +1,34 @@
-# Heads up: these scripts are being consolidated into `@a11y-skills/audit`
+# These scripts are thin wrappers around `@a11y-skills/audit`
 
-The four checks here — `axe-audit.ts`, `focus-indicator-check.ts`,
-`reflow-check.ts`, `target-size-check.ts` (plus `utils/`, `constants.ts`,
-`types.ts`) — have been ported into the npm package
-[`packages/a11y-audit`](../../../../packages/a11y-audit) (`@a11y-skills/audit`).
+Every check here (`axe-audit.ts`, `focus-indicator-check.ts`, `reflow-check.ts`,
+`target-size-check.ts`, `text-spacing-check.ts`, `zoom-200-check.ts`,
+`orientation-check.ts`, `autocomplete-audit.ts`, `time-limit-detector.ts`,
+`auto-play-detection.ts`) is now a **thin wrapper** that calls the published npm
+package [`@a11y-skills/audit`](../../../../packages/a11y-audit). The check logic
+lives in the package (`packages/a11y-audit/src/`); these files only wire the
+package's `runXxx()` functions into Playwright tests with this skill's preset
+defaults.
 
-**Until that package reaches `1.0.0` and Block B replaces these scripts with
-thin wrappers, the same logic lives in two places.** Treat
-`packages/a11y-audit/src/**` as the place where new work should land.
+## To change a check's behavior
 
-## If you change a check here
+Edit it in `packages/a11y-audit/src/**`, release a new `@a11y-skills/audit`
+version, and bump the dependency in `package.json`. Do **not** reintroduce
+check logic here.
 
-Keep the behavior in sync with the package, or you will break the parity
-drift guard:
+## Running
 
-- `packages/a11y-audit/test/parity.spec.ts` runs **both** copies against an
-  identical fixture and asserts the result JSON matches (currently axe +
-  reflow). CI runs it in the `a11y-audit-package` job.
+```sh
+npm install
+npx playwright install chromium
+TEST_PAGE="https://example.com" npx playwright test <check>.ts
+# or: npm run test:axe  (etc.)
+```
 
-If a change is intentional and should diverge, update the package side too (or
-adjust the parity test) in the same PR.
+`npm install` pulls `@a11y-skills/audit` and its optional `pixelmatch`/`pngjs`
+deps (needed by `auto-play-detection`). The scripts are ESM (`"type": "module"`);
+the cross-platform runner is `run-test.cjs`.
 
-## Scope of the duplication
+## Vendoring note
 
-- Ported (kept in sync): the 4 checks above + their utils/constants/types.
-- Not ported (skill-only, Phase 2): `text-spacing-check.ts`,
-  `zoom-200-check.ts`, `orientation-check.ts`, `autocomplete-audit.ts`,
-  `time-limit-detector.ts`, `auto-play-detection.ts`, `detectors/`.
+If you vendor-copy this directory, you must also have `@a11y-skills/audit`
+available (via `npm install`); these files no longer work standalone.

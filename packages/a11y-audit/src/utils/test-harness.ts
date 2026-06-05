@@ -159,6 +159,15 @@ export function requireTargetUrl(explicit?: string): string {
   return url;
 }
 
+/**
+ * Resolve the target URL from the `TEST_PAGE` env var, falling back to the
+ * given default. Useful for callers that want a sensible default (e.g. a test
+ * fixture URL or preset) instead of throwing when `TEST_PAGE` is unset.
+ */
+export function getTargetUrl(defaultPath: string): string {
+  return process.env.TEST_PAGE || defaultPath;
+}
+
 // =============================================================================
 // Console Logging
 // =============================================================================

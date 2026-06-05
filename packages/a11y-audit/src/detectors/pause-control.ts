@@ -1,12 +1,16 @@
 /**
- * Pause/Stop control detection for auto-playing content
+ * Pause/Stop control detection for auto-playing content.
  * WCAG 1.4.2 (Audio Control) / 2.2.2 (Pause, Stop, Hide)
  */
 
-import * as path from 'path';
+import * as path from 'node:path';
 import type { Page } from '@playwright/test';
-import type { PauseControlInfo, PauseVerificationResult } from '../types';
-import { compareImages, formatDiffPercent, hasSignificantChange } from '../utils';
+import type { PauseControlInfo, PauseVerificationResult } from '../types.js';
+import {
+  compareImages,
+  formatDiffPercent,
+  hasSignificantChange,
+} from '../utils/image-compare.js';
 import {
   PAUSE_KEYWORDS,
   CONTROL_CLASS_PATTERNS,
@@ -16,14 +20,12 @@ import {
   MAX_PARENT_LEVELS,
   PAUSE_CLICK_WAIT,
   SCREENSHOT_COMPARISON_WAIT,
-} from '../constants';
+} from '../constants.js';
 
 /**
- * Detect pause/stop controls in the page
- * Searches for buttons and controls that likely control auto-play content
+ * Detect pause/stop controls in the page.
  */
 export async function detectPauseControls(page: Page): Promise<PauseControlInfo> {
-  // Pass constants to browser context
   const config = {
     pauseKeywords: [...PAUSE_KEYWORDS],
     controlClassPatterns: [...CONTROL_CLASS_PATTERNS],
@@ -34,14 +36,23 @@ export async function detectPauseControls(page: Page): Promise<PauseControlInfo>
   };
 
   return await page.evaluate((cfg) => {
-    const controls: Array<{ element: string; name: string; matchedBy: 'accessible-name' | 'class-name-near-carousel' | 'svg-icon-pattern'; selector: string }> = [];
+    const controls: Array<{
+      element: string;
+      name: string;
+      matchedBy: 'accessible-name' | 'class-name-near-carousel' | 'svg-icon-pattern';
+      selector: string;
+    }> = [];
     const carouselIndicators: Array<{ element: string; name: string }> = [];
     let hasAccessibleName = false;
 
     const getSelector = (el: HTMLElement): string => {
       if (el.id) return `#${el.id}`;
       if (el.className) {
-        const classes = el.className.toString().split(' ').filter(c => c).join('.');
+        const classes = el.className
+          .toString()
+          .split(' ')
+          .filter((c) => c)
+          .join('.');
         if (classes) return `${el.tagName.toLowerCase()}.${classes}`;
       }
       return el.tagName.toLowerCase();
@@ -58,7 +69,6 @@ export async function detectPauseControls(page: Page): Promise<PauseControlInfo>
       const textContent = element.textContent?.trim() || '';
       const className = element.className?.toString() || '';
 
-      // Check accessible name, excluding SVG metadata
       let accessibleName = ariaLabel || textContent;
       const isSvgMetadata = cfg.svgMetadataPatterns.some((pattern: string) =>
         accessibleName.toLowerCase().includes(pattern)
@@ -69,7 +79,6 @@ export async function detectPauseControls(page: Page): Promise<PauseControlInfo>
       const lowerName = accessibleName.toLowerCase();
       const lowerClass = className.toLowerCase();
 
-      // Check for keyword matches
       const nameMatch = cfg.pauseKeywords.some((kw: string) =>
         lowerName.includes(kw.toLowerCase())
       );
@@ -78,7 +87,6 @@ export async function detectPauseControls(page: Page): Promise<PauseControlInfo>
         lowerClass.includes(pattern)
       );
 
-      // Check carousel context
       const isNearCarousel = cfg.carouselPatterns.some((pattern: string) => {
         if (lowerClass.includes(pattern)) return true;
         let parent = element.parentElement;
@@ -91,7 +99,6 @@ export async function detectPauseControls(page: Page): Promise<PauseControlInfo>
         return false;
       });
 
-      // Check SVG pause icon pattern
       const hasSvg = element.querySelector('svg');
       let hasPauseIconPattern = false;
       if (hasSvg) {
@@ -101,7 +108,6 @@ export async function detectPauseControls(page: Page): Promise<PauseControlInfo>
         }
       }
 
-      // Classify control
       if (nameMatch) {
         controls.push({
           element: tagName,
@@ -128,9 +134,8 @@ export async function detectPauseControls(page: Page): Promise<PauseControlInfo>
         if (accessibleName) hasAccessibleName = true;
       }
 
-      // Track carousel navigation controls
-      const isNavControl = cfg.navKeywords.some((kw: string) =>
-        lowerName.includes(kw) || lowerClass.includes(kw)
+      const isNavControl = cfg.navKeywords.some(
+        (kw: string) => lowerName.includes(kw) || lowerClass.includes(kw)
       );
       if (isNavControl && isNearCarousel) {
         carouselIndicators.push({
@@ -150,7 +155,7 @@ export async function detectPauseControls(page: Page): Promise<PauseControlInfo>
 }
 
 /**
- * Verify if clicking the pause control actually stops the auto-play
+ * Verify if clicking the pause control actually stops the auto-play.
  */
 export async function verifyPauseControl(
   page: Page,
@@ -158,7 +163,8 @@ export async function verifyPauseControl(
   outputDir: string,
   changeThreshold: number
 ): Promise<PauseVerificationResult> {
-  if (!pauseControls.found || pauseControls.controls.length === 0) {
+  const control = pauseControls.controls[0];
+  if (!pauseControls.found || !control) {
     return {
       attempted: false,
       controlClicked: null,
@@ -169,7 +175,6 @@ export async function verifyPauseControl(
     };
   }
 
-  const control = pauseControls.controls[0];
   const selector = control.selector;
 
   if (!selector) {
@@ -184,7 +189,6 @@ export async function verifyPauseControl(
   }
 
   try {
-    // Take screenshots before clicking
     const beforePath1 = path.join(outputDir, 'verify-before-1.png');
     const beforePath2 = path.join(outputDir, 'verify-before-2.png');
 
@@ -198,7 +202,6 @@ export async function verifyPauseControl(
       path.join(outputDir, 'verify-before-diff.png')
     );
 
-    // Click pause control
     const element = await page.$(selector);
     if (!element) {
       return {
@@ -214,7 +217,6 @@ export async function verifyPauseControl(
     await element.click();
     await page.waitForTimeout(PAUSE_CLICK_WAIT);
 
-    // Take screenshots after clicking
     const afterPath1 = path.join(outputDir, 'verify-after-1.png');
     const afterPath2 = path.join(outputDir, 'verify-after-2.png');
 
@@ -228,9 +230,14 @@ export async function verifyPauseControl(
       path.join(outputDir, 'verify-after-diff.png')
     );
 
-    // Determine if pause worked
-    const hadChangeBefore = hasSignificantChange(beforeDiff.diffPercent, changeThreshold);
-    const hasChangeAfter = hasSignificantChange(afterDiff.diffPercent, changeThreshold);
+    const hadChangeBefore = hasSignificantChange(
+      beforeDiff.diffPercent,
+      changeThreshold
+    );
+    const hasChangeAfter = hasSignificantChange(
+      afterDiff.diffPercent,
+      changeThreshold
+    );
     const pauseWorked = hadChangeBefore && !hasChangeAfter;
 
     return {
@@ -254,7 +261,7 @@ export async function verifyPauseControl(
 }
 
 /**
- * Create a skipped verification result
+ * Create a skipped verification result.
  */
 export function createSkippedVerification(reason: string): PauseVerificationResult {
   return {
