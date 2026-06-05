@@ -1,0 +1,92 @@
+{
+  "name": "@a11y-skills/audit",
+  "version": "0.1.0",
+  "description": "Playwright + axe-core based WCAG 2.2 accessibility audit functions (axe, focus indicator, reflow, target size).",
+  "type": "module",
+  "license": "MIT",
+  "author": {
+    "name": "masuP9",
+    "url": "https://github.com/masuP9"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/masuP9/a11y-specialist-skills",
+    "directory": "packages/a11y-audit"
+  },
+  "homepage": "https://github.com/masuP9/a11y-specialist-skills/tree/main/packages/a11y-audit",
+  "bugs": {
+    "url": "https://github.com/masuP9/a11y-specialist-skills/issues"
+  },
+  "keywords": [
+    "accessibility",
+    "a11y",
+    "wcag",
+    "wcag22",
+    "playwright",
+    "axe-core",
+    "audit",
+    "focus-indicator",
+    "reflow",
+    "target-size"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./playwright": {
+      "types": "./dist/playwright/index.d.ts",
+      "import": "./dist/playwright/index.js"
+    },
+    "./schemas": {
+      "types": "./dist/schemas/index.d.ts",
+      "import": "./dist/schemas/index.js"
+    },
+    "./test-entries/axe-audit": {
+      "types": "./dist/test-entries/axe-audit.d.ts",
+      "import": "./dist/test-entries/axe-audit.js"
+    },
+    "./test-entries/focus-indicator-check": {
+      "types": "./dist/test-entries/focus-indicator-check.d.ts",
+      "import": "./dist/test-entries/focus-indicator-check.js"
+    },
+    "./test-entries/reflow-check": {
+      "types": "./dist/test-entries/reflow-check.d.ts",
+      "import": "./dist/test-entries/reflow-check.js"
+    },
+    "./test-entries/target-size-check": {
+      "types": "./dist/test-entries/target-size-check.d.ts",
+      "import": "./dist/test-entries/target-size-check.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "README.ja.md",
+    "CHANGELOG.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "pretest": "npm run build",
+    "test": "playwright test",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "peerDependencies": {
+    "@axe-core/playwright": "^4.10.0",
+    "@playwright/test": "^1.50.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.0",
+    "@playwright/test": "^1.50.0",
+    "@types/node": "^22.10.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
