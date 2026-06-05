@@ -121,6 +121,13 @@ Includes automated test scripts for:
 - Target size (2.5.5, 2.5.8)
 - And more...
 
+> **npm package.** The automated checks are published as
+> [`@a11y-skills/audit`](./packages/a11y-audit) (this repo is a monorepo). The
+> `auditing-wcag` skill's scripts are thin wrappers around it, and you can use
+> the checks directly in your own Playwright project:
+> `npm install -D @a11y-skills/audit`. See the
+> [package README](./packages/a11y-audit/README.md).
+
 ### planning-wcag-audit (Audit Planning)
 
 Plan WCAG audits based on WAIC guidelines:

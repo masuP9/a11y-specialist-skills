@@ -121,6 +121,12 @@ WCAG 2.2 AA適合性をチェックして
 - ターゲットサイズ（2.5.5, 2.5.8）
 - その他多数...
 
+> **npm パッケージ.** 自動チェックは
+> [`@a11y-skills/audit`](./packages/a11y-audit) として公開されています（本リポジトリは
+> monorepo）。`auditing-wcag` スキルのスクリプトはその薄い wrapper で、自前の Playwright
+> プロジェクトから直接利用することもできます: `npm install -D @a11y-skills/audit`。詳細は
+> [パッケージ README](./packages/a11y-audit/README.md) を参照してください。
+
 ### planning-wcag-audit（監査計画）
 
 WAICガイドラインに基づくWCAG監査計画を策定します：

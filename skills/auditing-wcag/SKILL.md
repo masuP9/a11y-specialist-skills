@@ -79,6 +79,8 @@ Confirm and get agreement on:
 
 The `references/scripts/` directory contains Playwright-based test scripts for detailed automated checks. These scripts generate JSON results and annotated screenshots.
 
+> The check logic now lives in the npm package [`@a11y-skills/audit`](../../packages/a11y-audit); each script here is a thin wrapper. `npm install` (below) pulls the package and its optional `pixelmatch`/`pngjs` deps automatically. To consume the checks directly in your own project, see the package README.
+
 | Script | Criterion | Description |
 |---|---|---|
 | `axe-audit.ts` | Multiple | axe-core comprehensive check |

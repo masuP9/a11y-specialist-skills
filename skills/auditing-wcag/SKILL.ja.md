@@ -79,6 +79,8 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 
 `references/scripts/` ディレクトリには、詳細な自動チェック用のPlaywrightベースのテストスクリプトが含まれています。各スクリプトはJSON結果とアノテーション付きスクリーンショットを生成します。
 
+> チェックのロジックは npm パッケージ [`@a11y-skills/audit`](../../packages/a11y-audit) に集約されており、ここの各スクリプトは薄い wrapper です。下記の `npm install` でパッケージと optional な `pixelmatch`/`pngjs` が自動的に入ります。自前のプロジェクトで直接利用する場合はパッケージの README を参照してください。
+
 | スクリプト | 達成基準 | 説明 |
 |---|---|---|
 | `axe-audit.ts` | 複数 | axe-coreによる包括的チェック |

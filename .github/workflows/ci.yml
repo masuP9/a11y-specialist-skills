@@ -35,10 +35,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install skill script deps (for parity drift guard)
-        run: npm ci
-        working-directory: skills/auditing-wcag/references/scripts
-
       - name: Type-check & build
         run: npm run build --workspace @a11y-skills/audit
 
@@ -46,11 +42,7 @@ jobs:
         run: npx playwright install --with-deps chromium
         working-directory: packages/a11y-audit
 
-      - name: Install Playwright browsers (skill, for parity)
-        run: npx playwright install chromium
-        working-directory: skills/auditing-wcag/references/scripts
-
-      - name: Run smoke + parity tests
+      - name: Run smoke tests
         run: npm test --workspace @a11y-skills/audit
 
       - name: Verify publish payload
@@ -74,6 +66,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Type-check (wrappers resolve @a11y-skills/audit)
+        run: npm run typecheck
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
