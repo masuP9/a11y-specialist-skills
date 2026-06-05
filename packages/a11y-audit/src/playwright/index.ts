@@ -23,8 +23,31 @@ export {
   runTargetSizeCheck,
   type RunTargetSizeCheckOptions,
 } from './runTargetSizeCheck.js';
+export {
+  runTextSpacingCheck,
+  type RunTextSpacingCheckOptions,
+} from './runTextSpacingCheck.js';
+export { runZoomCheck, type RunZoomCheckOptions } from './runZoomCheck.js';
+export {
+  runOrientationCheck,
+  type RunOrientationCheckOptions,
+} from './runOrientationCheck.js';
+export {
+  runAutocompleteAudit,
+  type RunAutocompleteAuditOptions,
+} from './runAutocompleteAudit.js';
+export {
+  runTimeLimitDetector,
+  type RunTimeLimitDetectorOptions,
+} from './runTimeLimitDetector.js';
+export {
+  runAutoPlayDetection,
+  type RunAutoPlayDetectionOptions,
+} from './runAutoPlayDetection.js';
 
 export {
   resolveOutputPath,
+  getTargetUrl,
+  requireTargetUrl,
   type OutputLocationOptions,
 } from '../utils/test-harness.js';
