@@ -4,7 +4,7 @@
  * Run it from a one-line local spec (Playwright excludes node_modules from
  * test collection, so a `testMatch` glob into node_modules finds nothing):
  *   // tests/a11y/axe.spec.ts
- *   import "@masup9/a11y-audit/test-entries/axe-audit";
+ *   import "@a11y-skills/audit/test-entries/axe-audit";
  *
  * Target URL comes from the `TEST_PAGE` env var; output dir from
  * `A11Y_OUTPUT_DIR` (falling back to cwd). This is a thin wrapper around

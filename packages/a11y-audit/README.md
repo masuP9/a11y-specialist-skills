@@ -1,4 +1,4 @@
-# @masup9/a11y-audit
+# @a11y-skills/audit
 
 Playwright + axe-core based WCAG 2.2 accessibility audit functions.
 
@@ -24,7 +24,7 @@ test entries.
 ## Install
 
 ```sh
-npm install -D @masup9/a11y-audit @playwright/test @axe-core/playwright
+npm install -D @a11y-skills/audit @playwright/test @axe-core/playwright
 ```
 
 `@playwright/test` and `@axe-core/playwright` are **peer dependencies**.
@@ -39,7 +39,7 @@ returns the parsed result.
 
 ```ts
 import { test } from "@playwright/test";
-import { runAxeAudit } from "@masup9/a11y-audit/playwright";
+import { runAxeAudit } from "@a11y-skills/audit/playwright";
 
 test("axe audit", async ({ page }, testInfo) => {
   await page.goto("https://example.com");
@@ -58,7 +58,7 @@ context when focus triggers a navigation), so it takes a `browser` and a
 `targetUrl` instead of a `page`:
 
 ```ts
-import { runFocusIndicatorCheck } from "@masup9/a11y-audit/playwright";
+import { runFocusIndicatorCheck } from "@a11y-skills/audit/playwright";
 
 test("focus indicators", async ({ browser }, testInfo) => {
   const result = await runFocusIndicatorCheck({
@@ -97,13 +97,13 @@ screenshots — reproducing the legacy script behavior.
 
 ```ts
 // tests/a11y/axe.spec.ts
-import "@masup9/a11y-audit/test-entries/axe-audit";
+import "@a11y-skills/audit/test-entries/axe-audit";
 // tests/a11y/focus.spec.ts
-import "@masup9/a11y-audit/test-entries/focus-indicator-check";
+import "@a11y-skills/audit/test-entries/focus-indicator-check";
 // tests/a11y/reflow.spec.ts
-import "@masup9/a11y-audit/test-entries/reflow-check";
+import "@a11y-skills/audit/test-entries/reflow-check";
 // tests/a11y/target-size.spec.ts
-import "@masup9/a11y-audit/test-entries/target-size-check";
+import "@a11y-skills/audit/test-entries/target-size-check";
 ```
 
 ```sh
@@ -112,14 +112,14 @@ TEST_PAGE=https://example.com A11Y_OUTPUT_DIR=./a11y-results npx playwright test
 
 > **Why not `testMatch` into `node_modules`?** Playwright excludes
 > `node_modules` from test collection, so pointing `testMatch` at
-> `**/node_modules/@masup9/a11y-audit/dist/test-entries/*.js` finds no tests.
+> `**/node_modules/@a11y-skills/audit/dist/test-entries/*.js` finds no tests.
 > The one-line re-export specs above are the supported way to run the entries.
 
 ## Result types & schemas
 
 ```ts
-import type { AxeAuditResult, FocusCheckResult } from "@masup9/a11y-audit/schemas";
-import { RESULT_SCHEMAS } from "@masup9/a11y-audit/schemas";
+import type { AxeAuditResult, FocusCheckResult } from "@a11y-skills/audit/schemas";
+import { RESULT_SCHEMAS } from "@a11y-skills/audit/schemas";
 ```
 
 `RESULT_SCHEMAS` maps each check id to a hand-written JSON Schema for validating

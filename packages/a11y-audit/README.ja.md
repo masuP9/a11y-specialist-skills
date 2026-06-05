@@ -1,4 +1,4 @@
-# @masup9/a11y-audit
+# @a11y-skills/audit
 
 Playwright + axe-core ベースの WCAG 2.2 アクセシビリティ検査関数。
 
@@ -23,7 +23,7 @@ Claude Code skill から機能本体を切り出したものです。4 つの検
 ## インストール
 
 ```sh
-npm install -D @masup9/a11y-audit @playwright/test @axe-core/playwright
+npm install -D @a11y-skills/audit @playwright/test @axe-core/playwright
 ```
 
 `@playwright/test` と `@axe-core/playwright` は **peer dependencies** です。
@@ -38,7 +38,7 @@ return を担います。
 
 ```ts
 import { test } from "@playwright/test";
-import { runAxeAudit } from "@masup9/a11y-audit/playwright";
+import { runAxeAudit } from "@a11y-skills/audit/playwright";
 
 test("axe audit", async ({ page }, testInfo) => {
   await page.goto("https://example.com");
@@ -57,7 +57,7 @@ test("axe audit", async ({ page }, testInfo) => {
 を受け取ります。
 
 ```ts
-import { runFocusIndicatorCheck } from "@masup9/a11y-audit/playwright";
+import { runFocusIndicatorCheck } from "@a11y-skills/audit/playwright";
 
 test("focus indicators", async ({ browser }, testInfo) => {
   const result = await runFocusIndicatorCheck({
@@ -95,13 +95,13 @@ entry は import 時に `test(...)` を呼び、`TEST_PAGE`（対象 URL）と `
 
 ```ts
 // tests/a11y/axe.spec.ts
-import "@masup9/a11y-audit/test-entries/axe-audit";
+import "@a11y-skills/audit/test-entries/axe-audit";
 // tests/a11y/focus.spec.ts
-import "@masup9/a11y-audit/test-entries/focus-indicator-check";
+import "@a11y-skills/audit/test-entries/focus-indicator-check";
 // tests/a11y/reflow.spec.ts
-import "@masup9/a11y-audit/test-entries/reflow-check";
+import "@a11y-skills/audit/test-entries/reflow-check";
 // tests/a11y/target-size.spec.ts
-import "@masup9/a11y-audit/test-entries/target-size-check";
+import "@a11y-skills/audit/test-entries/target-size-check";
 ```
 
 ```sh
@@ -109,15 +109,15 @@ TEST_PAGE=https://example.com A11Y_OUTPUT_DIR=./a11y-results npx playwright test
 ```
 
 > **`node_modules` への `testMatch` が使えない理由.** Playwright はテスト収集から
-> `node_modules` を除外するため、`**/node_modules/@masup9/a11y-audit/dist/test-entries/*.js`
+> `node_modules` を除外するため、`**/node_modules/@a11y-skills/audit/dist/test-entries/*.js`
 > を `testMatch` に指定してもテストは見つかりません。上記の 1 行 re-export spec が
 > entry を実行する正式な方法です。
 
 ## 結果型とスキーマ
 
 ```ts
-import type { AxeAuditResult, FocusCheckResult } from "@masup9/a11y-audit/schemas";
-import { RESULT_SCHEMAS } from "@masup9/a11y-audit/schemas";
+import type { AxeAuditResult, FocusCheckResult } from "@a11y-skills/audit/schemas";
+import { RESULT_SCHEMAS } from "@a11y-skills/audit/schemas";
 ```
 
 `RESULT_SCHEMAS` は各検査 id に手書きの JSON Schema を対応付けており、`*-result.json`

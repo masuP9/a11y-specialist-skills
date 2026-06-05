@@ -3,7 +3,7 @@ import { defineConfig, devices } from '@playwright/test';
 /**
  * Playwright config for this package's own smoke tests.
  *
- * Consumers of @masup9/a11y-audit do NOT use this config — they wire the
+ * Consumers of @a11y-skills/audit do NOT use this config — they wire the
  * package's functions (or `test-entries/*`) into their own Playwright setup.
  */
 export default defineConfig({

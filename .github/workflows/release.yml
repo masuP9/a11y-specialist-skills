@@ -1,6 +1,6 @@
 name: Release a11y-audit
 
-# Publishes @masup9/a11y-audit to npm when a tag like `a11y-audit-v0.1.0` is
+# Publishes @a11y-skills/audit to npm when a tag like `a11y-audit-v0.1.0` is
 # pushed. Requires an `NPM_TOKEN` repository secret with publish rights.
 on:
   push:
@@ -27,11 +27,11 @@ jobs:
         run: npm ci
 
       - name: Build
-        run: npm run build --workspace @masup9/a11y-audit
+        run: npm run build --workspace @a11y-skills/audit
 
       - name: Publish (dry-run on workflow_dispatch)
         if: github.event_name == 'workflow_dispatch'
-        run: npm publish --workspace @masup9/a11y-audit --access public --dry-run
+        run: npm publish --workspace @a11y-skills/audit --access public --dry-run
 
       # Idempotent: skip publishing a version that is already on npm (e.g. when
       # a tag is pushed for a version that was published manually).
@@ -39,15 +39,15 @@ jobs:
         id: published
         run: |
           VERSION=$(node -p "require('./packages/a11y-audit/package.json').version")
-          if npm view "@masup9/a11y-audit@$VERSION" version >/dev/null 2>&1; then
+          if npm view "@a11y-skills/audit@$VERSION" version >/dev/null 2>&1; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "@masup9/a11y-audit@$VERSION is already published; skipping publish."
+            echo "@a11y-skills/audit@$VERSION is already published; skipping publish."
           else
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Publish to npm
         if: github.event_name == 'push' && steps.published.outputs.exists != 'true'
-        run: npm publish --workspace @masup9/a11y-audit --access public --provenance
+        run: npm publish --workspace @a11y-skills/audit --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

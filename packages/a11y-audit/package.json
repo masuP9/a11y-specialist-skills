@@ -1,5 +1,5 @@
 {
-  "name": "@masup9/a11y-audit",
+  "name": "@a11y-skills/audit",
   "version": "0.1.0",
   "description": "Playwright + axe-core based WCAG 2.2 accessibility audit functions (axe, focus indicator, reflow, target size).",
   "type": "module",

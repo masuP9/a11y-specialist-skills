@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to `@masup9/a11y-audit` are documented here. This project
+All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
 ## 0.1.0

@@ -4,7 +4,7 @@
  * Import these to wire the checks into your own Playwright tests:
  *
  * ```ts
- * import { runAxeAudit } from "@masup9/a11y-audit/playwright";
+ * import { runAxeAudit } from "@a11y-skills/audit/playwright";
  *
  * test("axe", async ({ page }, testInfo) => {
  *   await page.goto(url);

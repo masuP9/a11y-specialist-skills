@@ -1,5 +1,5 @@
 /**
- * Type definitions for the WCAG audit checks shipped in @masup9/a11y-audit.
+ * Type definitions for the WCAG audit checks shipped in @a11y-skills/audit.
  */
 
 import type { AUDIT_DISCLAIMER } from './constants.js';

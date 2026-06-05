@@ -1,13 +1,13 @@
 /**
- * @masup9/a11y-audit
+ * @a11y-skills/audit
  *
  * Playwright + axe-core based WCAG 2.2 accessibility audit functions.
  *
- * - Main subpath (`@masup9/a11y-audit`): shared types & constants.
- * - `@masup9/a11y-audit/playwright`: the `runXxx()` function API.
- * - `@masup9/a11y-audit/test-entries/*`: ready-to-run compatibility entries,
+ * - Main subpath (`@a11y-skills/audit`): shared types & constants.
+ * - `@a11y-skills/audit/playwright`: the `runXxx()` function API.
+ * - `@a11y-skills/audit/test-entries/*`: ready-to-run compatibility entries,
  *   run via a one-line local re-export spec (`import "...test-entries/axe-audit"`).
- * - `@masup9/a11y-audit/schemas`: result types & JSON Schemas.
+ * - `@a11y-skills/audit/schemas`: result types & JSON Schemas.
  */
 
 export * from './types.js';

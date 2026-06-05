@@ -1,9 +1,9 @@
-# Heads up: these scripts are being consolidated into `@masup9/a11y-audit`
+# Heads up: these scripts are being consolidated into `@a11y-skills/audit`
 
 The four checks here — `axe-audit.ts`, `focus-indicator-check.ts`,
 `reflow-check.ts`, `target-size-check.ts` (plus `utils/`, `constants.ts`,
 `types.ts`) — have been ported into the npm package
-[`packages/a11y-audit`](../../../../packages/a11y-audit) (`@masup9/a11y-audit`).
+[`packages/a11y-audit`](../../../../packages/a11y-audit) (`@a11y-skills/audit`).
 
 **Until that package reaches `1.0.0` and Block B replaces these scripts with
 thin wrappers, the same logic lives in two places.** Treat

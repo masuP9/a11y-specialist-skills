@@ -1,5 +1,5 @@
 /**
- * Smoke tests for @masup9/a11y-audit.
+ * Smoke tests for @a11y-skills/audit.
  *
  * These import from the BUILT `dist/` output (run `npm run build` first; the
  * `pretest` script does this automatically) so they exercise the actual

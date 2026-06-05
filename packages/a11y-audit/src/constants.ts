@@ -1,5 +1,5 @@
 /**
- * Constants for the WCAG audit checks shipped in @masup9/a11y-audit.
+ * Constants for the WCAG audit checks shipped in @a11y-skills/audit.
  *
  * Only the constants used by the four checks (axe / focus indicator / reflow /
  * target size) are included here. Constants for the Phase 2 checks remain in the
