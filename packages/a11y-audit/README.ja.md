@@ -3,7 +3,7 @@
 Playwright + axe-core ベースの WCAG 2.2 アクセシビリティ検査関数。
 
 本パッケージは [`auditing-wcag`](https://github.com/masuP9/a11y-specialist-skills)
-Claude Code skill から機能本体を切り出したものです。4 つの検査を関数として提供し、
+Claude Code skill から機能本体を切り出したものです。10 個の検査を関数として提供し、
 すぐ実行できる Playwright 用の互換 test entry も同梱します。
 
 > **English: see [README.md](./README.md).**
@@ -11,7 +11,7 @@ Claude Code skill から機能本体を切り出したものです。4 つの検
 > **スコープ.** 自動テストで検出できるのは WCAG 違反の約 30〜40% です。完全な準拠確認には
 > 手動テストが必須です。本パッケージはその一部を自動化します。
 
-## 検査一覧 (v0.1.0)
+## 検査一覧
 
 | 関数 | WCAG |
 | --- | --- |
@@ -19,6 +19,17 @@ Claude Code skill から機能本体を切り出したものです。4 つの検
 | `runFocusIndicatorCheck` | 2.4.7 フォーカスの可視化 / 2.4.12 フォーカスの非遮蔽 / 3.2.1 オンフォーカス |
 | `runReflowCheck` | 1.4.10 リフロー |
 | `runTargetSizeCheck` | 2.5.5 / 2.5.8 ターゲットのサイズ |
+| `runTextSpacingCheck` | 1.4.12 テキストの間隔 |
+| `runZoomCheck` | 1.4.4 テキストのサイズ変更（200% ズーム） |
+| `runOrientationCheck` | 1.3.4 表示の向き |
+| `runAutocompleteAudit` | 1.3.5 入力目的の特定 |
+| `runTimeLimitDetector` | 2.2.1 タイミング調整可能 |
+| `runAutoPlayDetection` | 1.4.2 音声制御 / 2.2.2 一時停止、停止、非表示 |
+
+多くの検査は遷移済みの `page` を受けます。一部は navigation を所有し `targetUrl`
+（または `TEST_PAGE`）を受けます: `runOrientationCheck` と `runTimeLimitDetector`
+（`runZoomCheck` は URL 指定時）。`runFocusIndicatorCheck` は `browser` を受けます。
+`runAutoPlayDetection` は optional 依存 `pixelmatch` + `pngjs` が必要です（インストール参照）。
 
 ## インストール
 
@@ -27,6 +38,14 @@ npm install -D @a11y-skills/audit @playwright/test @axe-core/playwright
 ```
 
 `@playwright/test` と `@axe-core/playwright` は **peer dependencies** です。
+
+`runAutoPlayDetection` は追加で `pixelmatch` と `pngjs` を必要とします（**optional
+dependencies** として宣言、既定でインストールされます）。遅延ロードされるため、
+`--omit=optional` でインストールしても他の9検査は動作します:
+
+```sh
+npm install -D pixelmatch pngjs   # runAutoPlayDetection を使う場合のみ
+```
 
 > ESM 専用です。CommonJS ビルドは同梱しません。ESM（または ESM 出力の TypeScript）から
 > import してください。
@@ -102,6 +121,9 @@ import "@a11y-skills/audit/test-entries/focus-indicator-check";
 import "@a11y-skills/audit/test-entries/reflow-check";
 // tests/a11y/target-size.spec.ts
 import "@a11y-skills/audit/test-entries/target-size-check";
+// 他にも: text-spacing-check, zoom-200-check, orientation-check,
+// autocomplete-audit, time-limit-detector, auto-play-detection
+import "@a11y-skills/audit/test-entries/text-spacing-check";
 ```
 
 ```sh
