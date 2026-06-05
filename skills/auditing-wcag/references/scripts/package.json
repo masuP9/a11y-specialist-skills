@@ -17,7 +17,7 @@
     "test:time-limit": "node run-test.cjs time-limit-detector.ts",
     "test:zoom": "node run-test.cjs zoom-200-check.ts",
     "test:auto-play": "node run-test.cjs auto-play-detection.ts",
-    "test:all": "node run-test.cjs \"axe-audit.ts focus-indicator-check.ts reflow-check.ts text-spacing-check.ts orientation-check.ts autocomplete-audit.ts target-size-check.ts\"",
+    "test:all": "node run-test.cjs \"axe-audit.ts focus-indicator-check.ts reflow-check.ts text-spacing-check.ts zoom-200-check.ts orientation-check.ts autocomplete-audit.ts target-size-check.ts time-limit-detector.ts auto-play-detection.ts\"",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [],

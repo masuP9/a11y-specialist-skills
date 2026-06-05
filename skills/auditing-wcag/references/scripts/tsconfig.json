@@ -11,6 +11,6 @@
     "types": ["node"],
     "downlevelIteration": true
   },
-  "include": ["*.ts", "utils/*.ts", "detectors/*.ts"],
+  "include": ["*.ts"],
   "exclude": ["node_modules"]
 }
