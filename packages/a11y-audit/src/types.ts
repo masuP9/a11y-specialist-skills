@@ -252,3 +252,195 @@ export interface TargetSizeCheckResult {
   /** Summary counts */
   summary: TargetSizeSummary;
 }
+
+// =============================================================================
+// Text Spacing Check Types (WCAG 1.4.12)
+// =============================================================================
+
+export interface TextSpacingIssue {
+  selector: string;
+  tagName: string;
+  beforeMetrics: {
+    scrollWidth: number;
+    scrollHeight: number;
+    clientWidth: number;
+    clientHeight: number;
+  };
+  afterMetrics: {
+    scrollWidth: number;
+    scrollHeight: number;
+    clientWidth: number;
+    clientHeight: number;
+  };
+  overflow: string;
+  overflowX: string;
+  overflowY: string;
+  issueType: 'horizontal-clip' | 'vertical-clip' | 'both';
+}
+
+export interface TextSpacingCheckResult {
+  url: string;
+  clippedElements: TextSpacingIssue[];
+  totalElementsChecked: number;
+}
+
+// =============================================================================
+// Zoom 200% Check Types (WCAG 1.4.4)
+// =============================================================================
+
+export interface ZoomIssue {
+  selector: string;
+  tagName: string;
+  scrollWidth: number;
+  clientWidth: number;
+  scrollHeight: number;
+  clientHeight: number;
+  issueType: 'horizontal-scroll' | 'clipped-content';
+}
+
+export interface ZoomCheckResult {
+  url: string;
+  zoomFactor: number;
+  viewport: { width: number; height: number };
+  hasHorizontalScroll: boolean;
+  documentScrollWidth: number;
+  documentClientWidth: number;
+  clippedElements: ZoomIssue[];
+}
+
+// =============================================================================
+// Orientation Check Types (WCAG 1.3.4)
+// =============================================================================
+
+export interface OrientationState {
+  lockMessageFound: boolean;
+  lockMessageText: string | null;
+  mainContentHidden: boolean;
+  bodyWidth: number;
+  bodyHeight: number;
+  visibleTextLength: number;
+}
+
+export interface OrientationCheckResult {
+  url: string;
+  portrait: OrientationState;
+  landscape: OrientationState;
+  hasOrientationLock: boolean;
+  lockDetectedIn: 'portrait' | 'landscape' | 'both' | 'none';
+}
+
+// =============================================================================
+// Autocomplete Audit Types (WCAG 1.3.5)
+// =============================================================================
+
+export interface AutocompleteIssue {
+  selector: string;
+  tagName: string;
+  inputType: string;
+  name: string | null;
+  id: string | null;
+  labelText: string | null;
+  currentAutocomplete: string | null;
+  expectedToken: string;
+  matchedBy: 'name' | 'id' | 'label' | 'placeholder';
+  issueType: 'missing' | 'invalid';
+}
+
+export interface AutocompleteAuditResult {
+  url: string;
+  totalFieldsChecked: number;
+  missingAutocomplete: AutocompleteIssue[];
+  invalidAutocomplete: AutocompleteIssue[];
+}
+
+// =============================================================================
+// Time Limit Detector Types (WCAG 2.2.1)
+// =============================================================================
+
+export interface MetaRefreshInfo {
+  content: string;
+  seconds: number;
+  url: string | null;
+}
+
+export interface TimerInfo {
+  type: 'setTimeout' | 'setInterval';
+  delayMs: number;
+  callStack: string | null;
+}
+
+export interface CountdownIndicator {
+  selector: string;
+  text: string;
+  tagName: string;
+}
+
+export interface TimeLimitDetectorResult {
+  url: string;
+  metaRefresh: MetaRefreshInfo[];
+  timers: TimerInfo[];
+  countdownIndicators: CountdownIndicator[];
+  hasTimeLimits: boolean;
+}
+
+// =============================================================================
+// Auto-play Detection Types (WCAG 1.4.2 / 2.2.2)
+// =============================================================================
+
+export interface ScreenshotRecord {
+  time: string;
+  path: string;
+}
+
+export interface ComparisonResult {
+  compare: string;
+  diffPixels: number;
+  totalPixels: number;
+  diffPercent: string;
+  hasChange: boolean;
+}
+
+export interface ImageDiffResult {
+  diffPixels: number;
+  totalPixels: number;
+  diffPercent: number;
+}
+
+export interface PauseControl {
+  element: string;
+  name: string;
+  matchedBy: 'accessible-name' | 'class-name-near-carousel' | 'svg-icon-pattern';
+  selector: string;
+}
+
+export interface CarouselIndicator {
+  element: string;
+  name: string;
+}
+
+export interface PauseControlInfo {
+  found: boolean;
+  controls: PauseControl[];
+  carouselIndicators: CarouselIndicator[];
+  hasAccessibleName: boolean;
+}
+
+export interface PauseVerificationResult {
+  attempted: boolean;
+  controlClicked: string | null;
+  beforeClickDiffPercent: string | null;
+  afterClickDiffPercent: string | null;
+  pauseWorked: boolean | null;
+  error: string | null;
+}
+
+export interface AutoPlayDetectionResult {
+  url: string;
+  screenshotRecords: ScreenshotRecord[];
+  comparisons: ComparisonResult[];
+  hasAutoPlayContent: boolean;
+  stopsWithin5Seconds: boolean;
+  pauseControls: PauseControlInfo;
+  pauseVerification: PauseVerificationResult;
+  recommendation: string;
+}

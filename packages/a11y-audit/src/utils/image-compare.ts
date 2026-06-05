@@ -1,0 +1,69 @@
+/**
+ * Image comparison utilities using pixelmatch.
+ *
+ * NOTE: `pixelmatch` and `pngjs` are optional peer/runtime deps (only the
+ * auto-play check needs them). This module top-level imports them, so it must
+ * only be loaded via a dynamic `import()` from `runAutoPlayDetection` — never
+ * statically from the package barrel. That keeps the other checks usable when
+ * the optional deps are absent.
+ */
+
+import * as fs from 'node:fs';
+import { PNG } from 'pngjs';
+import pixelmatch from 'pixelmatch';
+import type { ImageDiffResult } from '../types.js';
+import { PIXELMATCH_THRESHOLD } from '../constants.js';
+
+/**
+ * Compare two PNG images using pixel-level diff.
+ *
+ * @returns Diff statistics
+ */
+export function compareImages(
+  img1Path: string,
+  img2Path: string,
+  diffOutputPath: string
+): ImageDiffResult {
+  const img1 = PNG.sync.read(fs.readFileSync(img1Path));
+  const img2 = PNG.sync.read(fs.readFileSync(img2Path));
+
+  const { width, height } = img1;
+  const totalPixels = width * height;
+
+  const diff = new PNG({ width, height });
+
+  const diffPixels = pixelmatch(img1.data, img2.data, diff.data, width, height, {
+    threshold: PIXELMATCH_THRESHOLD,
+  });
+
+  fs.writeFileSync(diffOutputPath, PNG.sync.write(diff));
+
+  const diffPercent = (diffPixels / totalPixels) * 100;
+
+  return { diffPixels, totalPixels, diffPercent };
+}
+
+/** Format diff percentage as string with 3 decimal places */
+export function formatDiffPercent(diffPercent: number): string {
+  return diffPercent.toFixed(3) + '%';
+}
+
+/** Check if change is significant based on threshold */
+export function hasSignificantChange(
+  diffPercent: number,
+  threshold: number
+): boolean {
+  return diffPercent > threshold;
+}
+
+/** Ensure output directory exists */
+export function ensureOutputDir(outputDir: string): void {
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
+  }
+}
+
+/** Save JSON result to file */
+export function saveJsonResult(filePath: string, data: unknown): void {
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+}
