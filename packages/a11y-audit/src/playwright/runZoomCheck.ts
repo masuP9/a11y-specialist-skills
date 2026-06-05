@@ -5,9 +5,10 @@
  * `zoom` property, then detects horizontal scrolling and elements whose content
  * becomes clipped (overflow:hidden) under zoom.
  *
- * The caller is responsible for navigating the page before calling this. This
- * function sets the viewport size itself so the measurement is taken at the base
- * viewport regardless of how the page was loaded.
+ * If a `targetUrl` (or the `TEST_PAGE` env var) is available, this function
+ * owns navigation: it sets the base viewport BEFORE navigating (matching the
+ * legacy script, so pages that read the viewport at load time behave the same).
+ * Otherwise it operates on the already-navigated page (just sets the viewport).
  *
  * Limitations:
  * - CSS zoom is engine-specific; actual browser zoom may behave differently
@@ -150,8 +151,14 @@ function applyZoomAndCheck(args: ZoomCheckArgs): ZoomCheckResponse {
 }
 
 export interface RunZoomCheckOptions extends OutputLocationOptions {
-  /** A page already navigated to the target URL. */
+  /** Page to run the check on (navigated by this function if `targetUrl`/`TEST_PAGE` is set). */
   page: Page;
+  /**
+   * Target URL. If provided (or `TEST_PAGE` is set), the function sets the base
+   * viewport then navigates, for results identical to the legacy script. If
+   * omitted, the page is assumed already navigated.
+   */
+  targetUrl?: string;
   /** Base viewport applied before zoom (default: 1280x720). */
   viewport?: { width: number; height: number };
   /** Whether to capture a screenshot next to the result file (default: false). */
@@ -167,12 +174,19 @@ export async function runZoomCheck(
 ): Promise<ZoomCheckResult> {
   const {
     page,
+    targetUrl: targetUrlOption,
     viewport = ZOOM_BASE_VIEWPORT,
     screenshot = false,
     ...location
   } = options;
 
   await page.setViewportSize({ width: viewport.width, height: viewport.height });
+
+  // If a URL is available, navigate at the base viewport (legacy ordering).
+  const targetUrl = targetUrlOption ?? process.env.TEST_PAGE;
+  if (targetUrl) {
+    await page.goto(targetUrl, { waitUntil: 'networkidle' });
+  }
 
   const zoomResult = await page.evaluate(applyZoomAndCheck, {
     checkSelector: REFLOW_CHECK_SELECTOR,

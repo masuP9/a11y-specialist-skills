@@ -92,11 +92,18 @@ export async function runAutoPlayDetection(
     imageCompare = await import('../utils/image-compare.js');
     detectors = await import('../detectors/index.js');
   } catch (err) {
-    throw new Error(
-      'runAutoPlayDetection requires the optional dependencies `pixelmatch` and `pngjs`. ' +
-        'Install them: `npm install pixelmatch pngjs`.\n' +
-        `Original error: ${err instanceof Error ? err.message : String(err)}`
-    );
+    const msg = err instanceof Error ? err.message : String(err);
+    const code = (err as { code?: string }).code;
+    // Only translate a genuine missing-optional-dep error; re-throw anything
+    // else (e.g. a real bug inside image-compare/detectors) unchanged.
+    if (code === 'ERR_MODULE_NOT_FOUND' || /pixelmatch|pngjs/.test(msg)) {
+      throw new Error(
+        'runAutoPlayDetection requires the optional dependencies `pixelmatch` and `pngjs`. ' +
+          'Install them: `npm install pixelmatch pngjs`.\n' +
+          `Original error: ${msg}`
+      );
+    }
+    throw err;
   }
 
   const {
