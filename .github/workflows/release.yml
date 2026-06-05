@@ -33,8 +33,21 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         run: npm publish --workspace @masup9/a11y-audit --access public --dry-run
 
+      # Idempotent: skip publishing a version that is already on npm (e.g. when
+      # a tag is pushed for a version that was published manually).
+      - name: Check if version already published
+        id: published
+        run: |
+          VERSION=$(node -p "require('./packages/a11y-audit/package.json').version")
+          if npm view "@masup9/a11y-audit@$VERSION" version >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "@masup9/a11y-audit@$VERSION is already published; skipping publish."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Publish to npm
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && steps.published.outputs.exists != 'true'
         run: npm publish --workspace @masup9/a11y-audit --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
