@@ -67,7 +67,7 @@ test("axe audit", async ({ page }, testInfo) => {
     // outputFile: "axe-result.json", // 任意で上書き
     // tags: ["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"],
   });
-  expect(result.violationCount).toBe(0);
+  expect(result.summary.violationCount).toBe(0);
 });
 ```
 
@@ -86,7 +86,7 @@ test("focus indicators", async ({ browser }, testInfo) => {
     screenshot: true,                 // 既定: false
     // contextOptions: { locale: "ja-JP" }, // browser.newContext() に転送
   });
-  expect(result.elementsWithoutFocusStyle).toBe(0);
+  expect(result.details.elementsWithoutFocusStyle).toBe(0);
 });
 ```
 
@@ -135,6 +135,52 @@ TEST_PAGE=https://example.com A11Y_OUTPUT_DIR=./a11y-results npx playwright test
 > を `testMatch` に指定してもテストは見つかりません。上記の 1 行 re-export spec が
 > entry を実行する正式な方法です。
 
+## 結果形式
+
+すべての検査は同じ axe 風の envelope を返し、同じ形式で JSON に保存します:
+
+```ts
+interface AuditCheckResult<TDetails> {
+  source: CheckSource;            // 例: "reflow-check"
+  url: string;
+  timestamp: string;
+  violations: NormalizedRuleResult[];   // 確定した違反
+  incomplete: NormalizedRuleResult[];   // 要手動確認
+  passes: NormalizedRuleResult[];       // 実行して問題が見つからなかったルール
+  inapplicable: NormalizedRuleResult[]; // 検査対象がなかったルール
+  summary: { violationCount; incompleteCount; passCount; checkedNodes? };
+  details: TDetails;              // 検査固有の証跡（測定値・スクリーンショット等）
+  disclaimer: { ... };
+}
+```
+
+各ルール結果は axe と同じ形（`id` / `impact` / `description` / `help` /
+`helpUrl` / `tags` / `nodes[]`、`nodes[].target` / `html` / `htmlTruncated` /
+`failureSummary`）です。独自ルールは名前空間付き
+（`a11y-skills/focus-visible`、`a11y-skills/target-size-minimum` など）で、
+SC ごとに正確な WCAG バージョン・レベルタグ（`wcag2aa`、`wcag21aa`、
+`wcag22aa`、`wcag247` 形式の SC タグ）が付きます。
+
+**分類は保守的です。** 検出に死角がなく WCAG の例外が適用され得ない場合のみ
+`violations` に入ります（フォーカスによる文脈変化、テキストスペーシングの
+クリップ、autocomplete の不正トークン）。それ以外の検出 — reflow/zoom の
+オーバーフロー、meta refresh、画面方向ロック、フォーカススタイル欠如、
+小さすぎるターゲット — は `incomplete` に入ります。`incomplete` はノイズでは
+なく「要手動確認キュー」として扱ってください。
+
+同一ページに対する複数検査の結果を 1 つにまとめるには:
+
+```ts
+import { mergeNormalizedResults } from "@a11y-skills/audit";
+
+const merged = mergeNormalizedResults([axeResult, reflowResult, targetResult]);
+```
+
+`mergeNormalizedResults` は URL 不一致で例外を投げ、ノードを
+`target` + `failureSummary` で重複排除し、複数バケツに現れるルールは
+`violations > incomplete > passes > inapplicable` の優先順位で統合します。
+frame / shadow root 内の同一セレクタは区別しません。
+
 ## 結果型とスキーマ
 
 ```ts
@@ -142,8 +188,10 @@ import type { AxeAuditResult, FocusCheckResult } from "@a11y-skills/audit/schema
 import { RESULT_SCHEMAS } from "@a11y-skills/audit/schemas";
 ```
 
-`RESULT_SCHEMAS` は各検査 id に手書きの JSON Schema を対応付けており、`*-result.json`
-を実行時に検証できます。
+`RESULT_SCHEMAS` は各検査 id に手書きの JSON Schema（draft 2020-12）を
+対応付けており、`*-result.json` を実行時に検証できます。正規化マッパー
+（`normalize*`）と `buildAuditResult` はパッケージルートから export されて
+いるため、保存済み結果の `details` から 4 区分をいつでも再導出できます。
 
 ## ライセンス
 

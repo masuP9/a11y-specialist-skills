@@ -8,7 +8,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { Page } from '@playwright/test';
-import { AUDIT_DISCLAIMER, DISCLAIMER_CONSOLE } from '../constants.js';
+import { DISCLAIMER_CONSOLE } from '../constants.js';
 
 // =============================================================================
 // Output location resolution
@@ -76,12 +76,12 @@ export function resolveOutputPath(
 export interface SaveResultOptions extends OutputLocationOptions {
   /** Default file name when none is provided via options. */
   defaultFile: string;
-  /** Whether to append the disclaimer to the written JSON (default: true). */
-  includeDisclaimer?: boolean;
 }
 
 /**
  * Save an audit result to a JSON file, creating parent directories as needed.
+ * The result is written as-is — the envelope built by `buildAuditResult()`
+ * already carries the disclaimer.
  *
  * @returns the absolute path the result was written to.
  */
@@ -89,15 +89,11 @@ export function saveAuditResult<T extends object>(
   result: T,
   options: SaveResultOptions
 ): string {
-  const { defaultFile, includeDisclaimer = true, ...location } = options;
+  const { defaultFile, ...location } = options;
   const resolvedPath = resolveOutputPath({ ...location, defaultFile });
 
-  const outputData = includeDisclaimer
-    ? { ...result, disclaimer: AUDIT_DISCLAIMER }
-    : result;
-
   fs.mkdirSync(path.dirname(resolvedPath), { recursive: true });
-  fs.writeFileSync(resolvedPath, JSON.stringify(outputData, null, 2));
+  fs.writeFileSync(resolvedPath, JSON.stringify(result, null, 2));
 
   return resolvedPath;
 }

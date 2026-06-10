@@ -1,6 +1,6 @@
 {
   "name": "@a11y-skills/audit",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Playwright + axe-core based WCAG 2.2 accessibility audit functions (axe, focus indicator, reflow, target size, text spacing, zoom, orientation, autocomplete, time limit, auto-play).",
   "type": "module",
   "license": "MIT",
@@ -113,6 +113,7 @@
     "@playwright/test": "^1.50.0",
     "@types/node": "^22.10.0",
     "@types/pngjs": "^6.0.5",
+    "ajv": "^8.20.0",
     "typescript": "^5.6.0"
   },
   "engines": {

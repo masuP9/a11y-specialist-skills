@@ -24,12 +24,38 @@ Save the following files in the output directory:
 | File | Description |
 |------|-------------|
 | `report.md` | Main audit report (Markdown) |
-| `axe-result.json` | axe-core raw results |
-| `*.json` | Other script results |
+| `axe-result.json` | axe-core results (common envelope format) |
+| `*-result.json` | Other script results (same common envelope format) |
 | `screenshots/` | Evidence screenshots |
 
 ### 4. Copy Script Outputs
 Move generated JSON files and screenshots to the output directory.
+
+## Result JSON Format (@a11y-skills/audit 0.3.0+)
+
+Every script result is saved as the same axe-style envelope:
+
+- `source` / `url` / `timestamp` — identification of the check run
+- `violations[]` — **confirmed violations** (only findings whose detection has
+  no blind spot and where no WCAG exception can apply)
+- `incomplete[]` — **needs manual review**. All heuristic detections and
+  findings with possible exceptions land here. **Treat this bucket as the
+  manual-review queue, never as noise**
+- `passes[]` / `inapplicable[]` — rules with no findings / nothing to examine
+- `summary` — rule-level counts (`violationCount` / `incompleteCount` /
+  `passCount` / `checkedNodes`)
+- `details` — check-specific evidence (measurements, screenshot paths, raw
+  element records)
+
+Each rule is axe-shaped (`id` / `impact` / `tags` / `helpUrl` / `nodes[]`).
+Custom rule ids are namespaced with `a11y-skills/` (e.g.
+`a11y-skills/focus-visible`), and the `wcag247`-style tags identify the
+success criterion mechanically. `nodes[].target` holds CSS selectors
+(page-level findings use `['html']`), `nodes[].html` carries outerHTML
+evidence, and `nodes[].failureSummary` explains the finding.
+
+When writing the report, treat `violations` as Fail candidates and
+`incomplete` as manual-verification items for the per-criterion verdicts.
 
 ## Report Template
 

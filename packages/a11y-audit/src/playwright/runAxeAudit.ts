@@ -5,18 +5,19 @@
  * caller is responsible for navigating the page (e.g. `await page.goto(url)`)
  * before calling this function.
  *
+ * The normalized buckets are built from the RAW axe results (violations and
+ * incomplete keep their nodes; passes/inapplicable keep rule metadata only),
+ * and `details` records the execution configuration.
+ *
  * Axe-core cannot detect all accessibility issues — manual testing and the
  * other checks in this package are still needed for complete coverage.
  */
 
 import { AxeBuilder } from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
-import type { AxeAuditResult } from '../types.js';
-import {
-  AUDIT_DISCLAIMER,
-  DEFAULT_AXE_TAGS,
-  DEFAULT_AXE_RESULT_FILE,
-} from '../constants.js';
+import type { AxeAuditResult, AxeAuditDetails } from '../types.js';
+import { DEFAULT_AXE_TAGS, DEFAULT_AXE_RESULT_FILE } from '../constants.js';
+import { buildAuditResult, normalizeAxeResults } from '../utils/axe-format.js';
 import {
   saveAuditResult,
   logAuditHeader,
@@ -49,38 +50,32 @@ export async function runAxeAudit(
   }
   const axeResults = await builder.analyze();
 
-  const result: AxeAuditResult = {
-    url: page.url(),
-    timestamp: new Date().toISOString(),
-    violations: axeResults.violations.map((v) => ({
-      id: v.id,
-      impact: v.impact ?? null,
-      description: v.description,
-      help: v.help,
-      helpUrl: v.helpUrl,
-      tags: v.tags,
-      nodes: v.nodes.map((n) => ({
-        html: n.html,
-        target: n.target as string[],
-        failureSummary: n.failureSummary,
-      })),
-    })),
-    passes: axeResults.passes.length,
-    incomplete: axeResults.incomplete.length,
-    inapplicable: axeResults.inapplicable.length,
-    violationCount: axeResults.violations.length,
-    disclaimer: AUDIT_DISCLAIMER,
+  const buckets = normalizeAxeResults(axeResults);
+  const details: AxeAuditDetails = {
+    tagsRun: [...tags],
+    rulesOverride: rules ?? null,
+    violationRuleCount: axeResults.violations.length,
+    passRuleCount: axeResults.passes.length,
+    incompleteRuleCount: axeResults.incomplete.length,
+    inapplicableRuleCount: axeResults.inapplicable.length,
   };
+
+  const result = buildAuditResult({
+    source: 'axe-audit',
+    url: page.url(),
+    details,
+    buckets,
+  });
 
   // Output results
   logAuditHeader('Axe-core Accessibility Audit Results', 'axe-core', result.url);
 
   logSummary({
     Timestamp: result.timestamp,
-    Violations: result.violationCount,
-    Passes: result.passes,
-    'Incomplete (needs review)': result.incomplete,
-    Inapplicable: result.inapplicable,
+    Violations: result.summary.violationCount,
+    Passes: result.summary.passCount,
+    'Incomplete (needs review)': result.summary.incompleteCount,
+    Inapplicable: result.inapplicable.length,
   });
 
   if (result.violations.length > 0) {
@@ -108,7 +103,7 @@ export async function runAxeAudit(
   }
 
   console.log(`\n--- Summary ---`);
-  if (result.violationCount === 0) {
+  if (result.summary.violationCount === 0) {
     console.log('No violations detected by axe-core');
   } else {
     const totalElements = result.violations.reduce(
@@ -116,15 +111,13 @@ export async function runAxeAudit(
       0
     );
     console.log(
-      `Found ${result.violationCount} violation type(s) affecting ${totalElements} element(s)`
+      `Found ${result.summary.violationCount} violation type(s) affecting ${totalElements} element(s)`
     );
   }
 
-  // axe results already carry the disclaimer field; don't append it again.
   const resolvedPath = saveAuditResult(result, {
     ...location,
     defaultFile: DEFAULT_AXE_RESULT_FILE,
-    includeDisclaimer: false,
   });
   logOutputPaths(resolvedPath);
 

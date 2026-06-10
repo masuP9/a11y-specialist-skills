@@ -17,7 +17,7 @@
  */
 
 import type { Page } from '@playwright/test';
-import type { ZoomCheckResult, ZoomIssue } from '../types.js';
+import type { ZoomCheckResult, ZoomCheckDetails, ZoomIssue } from '../types.js';
 import {
   ZOOM_FACTOR,
   ZOOM_BASE_VIEWPORT,
@@ -25,7 +25,9 @@ import {
   REFLOW_CHECK_SELECTOR,
   DEFAULT_ZOOM_RESULT_FILE,
   DEFAULT_ZOOM_SCREENSHOT_FILE,
+  HTML_SNIPPET_MAX_LENGTH,
 } from '../constants.js';
+import { buildAuditResult, normalizeZoomCheck } from '../utils/axe-format.js';
 import {
   saveAuditResult,
   takeAuditScreenshot,
@@ -40,6 +42,7 @@ import {
 interface ZoomCheckArgs {
   checkSelector: string;
   tolerance: number;
+  htmlSnippetMaxLength: number;
 }
 
 interface ZoomCheckResponse {
@@ -51,7 +54,23 @@ interface ZoomCheckResponse {
 
 /** Apply zoom and detect issues in browser context. */
 function applyZoomAndCheck(args: ZoomCheckArgs): ZoomCheckResponse {
-  const { checkSelector, tolerance } = args;
+  const { checkSelector, tolerance, htmlSnippetMaxLength } = args;
+
+  function getHtmlSnippet(element: Element): { html: string; htmlTruncated: boolean } {
+    let html = '';
+    try {
+      html = element.outerHTML || '';
+    } catch {
+      html = '';
+    }
+    if (!html) {
+      return { html: `<${element.tagName.toLowerCase()}>`, htmlTruncated: false };
+    }
+    if (html.length > htmlSnippetMaxLength) {
+      return { html: html.slice(0, htmlSnippetMaxLength), htmlTruncated: true };
+    }
+    return { html, htmlTruncated: false };
+  }
 
   // Apply CSS zoom
   (document.documentElement.style as CSSStyleDeclaration & { zoom: string }).zoom =
@@ -133,6 +152,7 @@ function applyZoomAndCheck(args: ZoomCheckArgs): ZoomCheckResponse {
       clippedElements.push({
         selector: getUniqueSelector(element, index),
         tagName: element.tagName.toLowerCase(),
+        ...getHtmlSnippet(element),
         scrollWidth,
         clientWidth,
         scrollHeight,
@@ -191,30 +211,37 @@ export async function runZoomCheck(
   const zoomResult = await page.evaluate(applyZoomAndCheck, {
     checkSelector: REFLOW_CHECK_SELECTOR,
     tolerance: ZOOM_CLIP_TOLERANCE,
+    htmlSnippetMaxLength: HTML_SNIPPET_MAX_LENGTH,
   });
 
-  const result: ZoomCheckResult = {
-    url: page.url(),
+  const details: ZoomCheckDetails = {
     zoomFactor: ZOOM_FACTOR,
     viewport: { width: viewport.width, height: viewport.height },
     ...zoomResult,
   };
 
+  const result: ZoomCheckResult = buildAuditResult({
+    source: 'zoom-200-check',
+    url: page.url(),
+    details,
+    buckets: normalizeZoomCheck(details),
+  });
+
   // Output results
   logAuditHeader('Zoom 200% Check Results', 'WCAG 1.4.4', result.url);
 
   logSummary({
-    'Zoom factor': `${result.zoomFactor}x`,
-    'Base viewport': `${result.viewport.width}x${result.viewport.height}`,
-    'Document scroll width': `${result.documentScrollWidth}px`,
-    'Document client width': `${result.documentClientWidth}px`,
-    'Horizontal scroll': result.hasHorizontalScroll,
-    'Clipped elements': result.clippedElements.length,
+    'Zoom factor': `${details.zoomFactor}x`,
+    'Base viewport': `${details.viewport.width}x${details.viewport.height}`,
+    'Document scroll width': `${details.documentScrollWidth}px`,
+    'Document client width': `${details.documentClientWidth}px`,
+    'Horizontal scroll': details.hasHorizontalScroll,
+    'Clipped elements': details.clippedElements.length,
   });
 
   logIssueList<ZoomIssue>(
     'Clipped Elements',
-    result.clippedElements,
+    details.clippedElements,
     (el, i) => [
       `${i + 1}. <${el.tagName}> "${el.selector}"`,
       `   scrollWidth: ${el.scrollWidth}px, clientWidth: ${el.clientWidth}px`,

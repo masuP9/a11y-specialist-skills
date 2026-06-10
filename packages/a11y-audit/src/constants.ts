@@ -27,6 +27,13 @@ Note: Automated testing detects only ~30-40% of WCAG issues.
 `;
 
 // =============================================================================
+// Normalized result format
+// =============================================================================
+
+/** Maximum length of `NormalizedNode.html` / detail `html` snippets. */
+export const HTML_SNIPPET_MAX_LENGTH = 300;
+
+// =============================================================================
 // Axe Audit defaults (broad WCAG coverage)
 // =============================================================================
 

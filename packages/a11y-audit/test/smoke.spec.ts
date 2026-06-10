@@ -51,29 +51,43 @@ const FOCUS_FIXTURE = `<!doctype html>
   <button id="nofocus">no focus indicator</button>
 </body></html>`;
 
-test('runAxeAudit detects violations', async ({ page }, testInfo) => {
+test('runAxeAudit detects violations in the normalized envelope', async ({
+  page,
+}, testInfo) => {
   await page.setContent(AXE_FIXTURE);
   const result = await runAxeAudit({ page, outputDir: testInfo.outputDir });
 
-  expect(result.violationCount).toBeGreaterThan(0);
+  expect(result.source).toBe('axe-audit');
+  expect(result.summary.violationCount).toBeGreaterThan(0);
   // image-alt is a reliable, deterministic violation for the fixture above.
   const ids = result.violations.map((v) => v.id);
   expect(ids).toContain('image-alt');
+  // nodes carry html evidence and selector targets
+  const imageAlt = result.violations.find((v) => v.id === 'image-alt')!;
+  expect(imageAlt.nodes.length).toBeGreaterThan(0);
+  expect(imageAlt.nodes[0].html).toContain('img');
+  expect(imageAlt.nodes[0].target.length).toBeGreaterThan(0);
 });
 
-test('runReflowCheck detects horizontal overflow at 320px', async ({
+test('runReflowCheck reports overflow as incomplete (manual-review queue)', async ({
   page,
 }, testInfo) => {
   await page.setContent(REFLOW_FIXTURE);
   const result = await runReflowCheck({ page, outputDir: testInfo.outputDir });
 
-  expect(result.viewport).toEqual({ width: 320, height: 256 });
+  expect(result.source).toBe('reflow-check');
+  expect(result.details.viewport).toEqual({ width: 320, height: 256 });
   expect(
-    result.hasHorizontalScroll || result.overflowingElements.length > 0
+    result.details.hasHorizontalScroll ||
+      result.details.overflowingElements.length > 0
   ).toBe(true);
+  // reflow findings are never auto-confirmed violations
+  expect(result.violations).toEqual([]);
+  const incompleteIds = result.incomplete.map((r) => r.id);
+  expect(incompleteIds).toContain('a11y-skills/reflow-overflow');
 });
 
-test('runTargetSizeCheck flags undersized adjacent targets', async ({
+test('runTargetSizeCheck flags undersized adjacent targets as incomplete', async ({
   page,
 }, testInfo) => {
   await page.setContent(TARGET_FIXTURE);
@@ -82,11 +96,22 @@ test('runTargetSizeCheck flags undersized adjacent targets', async ({
     outputDir: testInfo.outputDir,
   });
 
-  expect(result.totalTargetsChecked).toBeGreaterThanOrEqual(2);
-  expect(result.summary.failAACount).toBeGreaterThan(0);
+  expect(result.details.totalTargetsChecked).toBeGreaterThanOrEqual(2);
+  expect(result.details.summary.failAACount).toBeGreaterThan(0);
+  expect(result.summary.checkedNodes).toBe(result.details.totalTargetsChecked);
+
+  const minimum = result.incomplete.find(
+    (r) => r.id === 'a11y-skills/target-size-minimum'
+  );
+  expect(minimum).toBeDefined();
+  expect(minimum!.tags).toContain('wcag22aa');
+  expect(minimum!.tags).toContain('wcag258');
+  expect(minimum!.nodes[0].html).toContain('button');
+  // heuristics cannot rule out the essential exception
+  expect(result.details.failAA[0].exceptionAssessment).not.toBe('ruled-out');
 });
 
-test('runFocusIndicatorCheck flags missing focus indicator', async ({
+test('runFocusIndicatorCheck flags missing focus indicator as incomplete', async ({
   browser,
 }, testInfo) => {
   const targetUrl = 'data:text/html,' + encodeURIComponent(FOCUS_FIXTURE);
@@ -96,6 +121,13 @@ test('runFocusIndicatorCheck flags missing focus indicator', async ({
     outputDir: testInfo.outputDir,
   });
 
-  expect(result.totalFocusableElements).toBeGreaterThan(0);
-  expect(result.elementsWithoutFocusStyle).toBeGreaterThan(0);
+  expect(result.details.totalFocusableElements).toBeGreaterThan(0);
+  expect(result.details.elementsWithoutFocusStyle).toBeGreaterThan(0);
+
+  const focusVisible = result.incomplete.find(
+    (r) => r.id === 'a11y-skills/focus-visible'
+  );
+  expect(focusVisible).toBeDefined();
+  expect(focusVisible!.nodes[0].target[0]).toContain('#nofocus');
+  expect(focusVisible!.nodes[0].html).toContain('button');
 });
