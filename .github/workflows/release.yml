@@ -1,7 +1,10 @@
 name: Release a11y-audit
 
 # Publishes @a11y-skills/audit to npm when a tag like `a11y-audit-v0.1.0` is
-# pushed. Requires an `NPM_TOKEN` repository secret with publish rights.
+# pushed. Authentication uses npm Trusted Publishing (OIDC) — no `NPM_TOKEN`
+# secret is needed. The package on npmjs.com must have a Trusted Publisher
+# configured for this repo with workflow filename `release.yml` and the
+# `npm publish` action allowed. See https://docs.npmjs.com/trusted-publishers
 on:
   push:
     tags:
@@ -13,15 +16,30 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write # npm provenance
+      id-token: write # OIDC token exchange for trusted publishing + provenance
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24' # OIDC trusted publishing needs Node >= 22.14.0
           registry-url: 'https://registry.npmjs.org'
+
+      - name: Ensure npm supports OIDC trusted publishing (>= 11.5.1)
+        run: |
+          npm install -g 'npm@^11.5.1'
+          npm --version
+
+      - name: Verify tag matches package version
+        if: github.event_name == 'push'
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#a11y-audit-v}"
+          PKG_VERSION=$(node -p "require('./packages/a11y-audit/package.json').version")
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::tag $GITHUB_REF_NAME ($TAG_VERSION) != package.json version ($PKG_VERSION)"
+            exit 1
+          fi
 
       - name: Install dependencies
         run: npm ci
@@ -34,20 +52,26 @@ jobs:
         run: npm publish --workspace @a11y-skills/audit --access public --dry-run
 
       # Idempotent: skip publishing a version that is already on npm (e.g. when
-      # a tag is pushed for a version that was published manually).
+      # a tag is pushed for a version that was published manually). Only treat a
+      # genuine 404 as "not published"; fail loudly on any other npm view error.
       - name: Check if version already published
         id: published
+        if: github.event_name == 'push'
         run: |
           VERSION=$(node -p "require('./packages/a11y-audit/package.json').version")
-          if npm view "@a11y-skills/audit@$VERSION" version >/dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "@a11y-skills/audit@$VERSION is already published; skipping publish."
-          else
+          if out=$(npm view "@a11y-skills/audit@$VERSION" version 2>&1); then
+            if [ "$out" = "$VERSION" ]; then
+              echo "exists=true" >> "$GITHUB_OUTPUT"
+              echo "@a11y-skills/audit@$VERSION is already published; skipping publish."
+            else
+              echo "::error::unexpected npm view output: $out"; exit 1
+            fi
+          elif grep -q 'E404' <<<"$out"; then
             echo "exists=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::npm view failed for a non-404 reason:"; printf '%s\n' "$out"; exit 1
           fi
 
       - name: Publish to npm
         if: github.event_name == 'push' && steps.published.outputs.exists != 'true'
         run: npm publish --workspace @a11y-skills/audit --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
