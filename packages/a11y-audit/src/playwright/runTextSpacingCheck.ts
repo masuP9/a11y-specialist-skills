@@ -9,14 +9,23 @@
  */
 
 import type { Page } from '@playwright/test';
-import type { TextSpacingCheckResult, TextSpacingIssue } from '../types.js';
+import type {
+  TextSpacingCheckResult,
+  TextSpacingCheckDetails,
+  TextSpacingIssue,
+} from '../types.js';
 import {
   TEXT_SPACING_CSS,
   TEXT_SPACING_CLIP_TOLERANCE,
   TEXT_SPACING_CHECK_SELECTOR,
   DEFAULT_TEXT_SPACING_RESULT_FILE,
   DEFAULT_TEXT_SPACING_SCREENSHOT_FILE,
+  HTML_SNIPPET_MAX_LENGTH,
 } from '../constants.js';
+import {
+  buildAuditResult,
+  normalizeTextSpacingCheck,
+} from '../utils/axe-format.js';
 import {
   saveAuditResult,
   takeAuditScreenshot,
@@ -31,6 +40,8 @@ import {
 interface ElementMetrics {
   selector: string;
   tagName: string;
+  html: string;
+  htmlTruncated: boolean;
   scrollWidth: number;
   scrollHeight: number;
   clientWidth: number;
@@ -41,8 +52,27 @@ interface ElementMetrics {
 }
 
 /** Collect metrics for elements with hidden overflow (browser context). */
-function collectElementMetrics(args: { checkSelector: string }): ElementMetrics[] {
-  const { checkSelector } = args;
+function collectElementMetrics(args: {
+  checkSelector: string;
+  htmlSnippetMaxLength: number;
+}): ElementMetrics[] {
+  const { checkSelector, htmlSnippetMaxLength } = args;
+
+  function getHtmlSnippet(element: Element): { html: string; htmlTruncated: boolean } {
+    let html = '';
+    try {
+      html = element.outerHTML || '';
+    } catch {
+      html = '';
+    }
+    if (!html) {
+      return { html: `<${element.tagName.toLowerCase()}>`, htmlTruncated: false };
+    }
+    if (html.length > htmlSnippetMaxLength) {
+      return { html: html.slice(0, htmlSnippetMaxLength), htmlTruncated: true };
+    }
+    return { html, htmlTruncated: false };
+  }
 
   function getUniqueSelector(element: Element, elementIndex: number): string {
     if (element.id) {
@@ -98,6 +128,7 @@ function collectElementMetrics(args: { checkSelector: string }): ElementMetrics[
       metrics.push({
         selector: getUniqueSelector(element, index),
         tagName: element.tagName.toLowerCase(),
+        ...getHtmlSnippet(element),
         scrollWidth: element.scrollWidth,
         scrollHeight: element.scrollHeight,
         clientWidth: element.clientWidth,
@@ -116,8 +147,9 @@ function collectElementMetrics(args: { checkSelector: string }): ElementMetrics[
 function injectSpacingAndCollect(args: {
   css: string;
   checkSelector: string;
+  htmlSnippetMaxLength: number;
 }): ElementMetrics[] {
-  const { css, checkSelector } = args;
+  const { css, checkSelector, htmlSnippetMaxLength } = args;
 
   const styleEl = document.createElement('style');
   styleEl.id = 'wcag-text-spacing-override';
@@ -126,6 +158,22 @@ function injectSpacingAndCollect(args: {
 
   // Force reflow
   void document.body.offsetHeight;
+
+  function getHtmlSnippet(element: Element): { html: string; htmlTruncated: boolean } {
+    let html = '';
+    try {
+      html = element.outerHTML || '';
+    } catch {
+      html = '';
+    }
+    if (!html) {
+      return { html: `<${element.tagName.toLowerCase()}>`, htmlTruncated: false };
+    }
+    if (html.length > htmlSnippetMaxLength) {
+      return { html: html.slice(0, htmlSnippetMaxLength), htmlTruncated: true };
+    }
+    return { html, htmlTruncated: false };
+  }
 
   function getUniqueSelector(element: Element, elementIndex: number): string {
     if (element.id) {
@@ -181,6 +229,7 @@ function injectSpacingAndCollect(args: {
       metrics.push({
         selector: getUniqueSelector(element, index),
         tagName: element.tagName.toLowerCase(),
+        ...getHtmlSnippet(element),
         scrollWidth: element.scrollWidth,
         scrollHeight: element.scrollHeight,
         clientWidth: element.clientWidth,
@@ -255,6 +304,8 @@ function detectClippingIssues(
       issues.push({
         selector: after.selector,
         tagName: after.tagName,
+        html: after.html,
+        htmlTruncated: after.htmlTruncated,
         beforeMetrics: {
           scrollWidth: beforeData.scrollWidth,
           scrollHeight: beforeData.scrollHeight,
@@ -303,11 +354,13 @@ export async function runTextSpacingCheck(
 
   const beforeMetrics = await page.evaluate(collectElementMetrics, {
     checkSelector: TEXT_SPACING_CHECK_SELECTOR,
+    htmlSnippetMaxLength: HTML_SNIPPET_MAX_LENGTH,
   });
 
   const afterMetrics = await page.evaluate(injectSpacingAndCollect, {
     css: TEXT_SPACING_CSS,
     checkSelector: TEXT_SPACING_CHECK_SELECTOR,
+    htmlSnippetMaxLength: HTML_SNIPPET_MAX_LENGTH,
   });
 
   const clippedElements = detectClippingIssues(
@@ -316,22 +369,28 @@ export async function runTextSpacingCheck(
     tolerance
   );
 
-  const result: TextSpacingCheckResult = {
-    url: page.url(),
+  const details: TextSpacingCheckDetails = {
     clippedElements,
     totalElementsChecked: afterMetrics.length,
   };
 
+  const result: TextSpacingCheckResult = buildAuditResult({
+    source: 'text-spacing-check',
+    url: page.url(),
+    details,
+    buckets: normalizeTextSpacingCheck(details),
+  });
+
   logAuditHeader('Text Spacing Check Results', 'WCAG 1.4.12', result.url);
 
   logSummary({
-    'Elements with overflow:hidden checked': result.totalElementsChecked,
-    'Elements with clipping issues': result.clippedElements.length,
+    'Elements with overflow:hidden checked': details.totalElementsChecked,
+    'Elements with clipping issues': details.clippedElements.length,
   });
 
   logIssueList<TextSpacingIssue>(
     'Clipped Elements',
-    result.clippedElements,
+    details.clippedElements,
     (el, i) => [
       `${i + 1}. <${el.tagName}> "${el.selector}"`,
       `   Issue: ${el.issueType}`,

@@ -69,7 +69,7 @@ test("axe audit", async ({ page }, testInfo) => {
     // outputFile: "axe-result.json", // optional override
     // tags: ["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"],
   });
-  expect(result.violationCount).toBe(0);
+  expect(result.summary.violationCount).toBe(0);
 });
 ```
 
@@ -88,7 +88,7 @@ test("focus indicators", async ({ browser }, testInfo) => {
     screenshot: true,                 // default: false
     // contextOptions: { locale: "ja-JP" }, // forwarded to browser.newContext()
   });
-  expect(result.elementsWithoutFocusStyle).toBe(0);
+  expect(result.details.elementsWithoutFocusStyle).toBe(0);
 });
 ```
 
@@ -138,6 +138,52 @@ TEST_PAGE=https://example.com A11Y_OUTPUT_DIR=./a11y-results npx playwright test
 > `**/node_modules/@a11y-skills/audit/dist/test-entries/*.js` finds no tests.
 > The one-line re-export specs above are the supported way to run the entries.
 
+## Result format
+
+Every check returns — and saves as JSON — the same axe-style envelope:
+
+```ts
+interface AuditCheckResult<TDetails> {
+  source: CheckSource;            // e.g. "reflow-check"
+  url: string;
+  timestamp: string;
+  violations: NormalizedRuleResult[];   // confirmed findings
+  incomplete: NormalizedRuleResult[];   // needs manual review
+  passes: NormalizedRuleResult[];       // rules that ran and found nothing
+  inapplicable: NormalizedRuleResult[]; // nothing to examine
+  summary: { violationCount; incompleteCount; passCount; checkedNodes? };
+  details: TDetails;              // check-specific evidence (measurements, screenshots, ...)
+  disclaimer: { ... };
+}
+```
+
+Each rule result is axe-shaped (`id` / `impact` / `description` / `help` /
+`helpUrl` / `tags` / `nodes[]`, with `nodes[].target` / `html` /
+`htmlTruncated` / `failureSummary`). Custom rules are namespaced
+(`a11y-skills/focus-visible`, `a11y-skills/target-size-minimum`, ...) and
+tagged with accurate WCAG version/level tags (`wcag2aa`, `wcag21aa`,
+`wcag22aa`, `wcag247`-style SC tags).
+
+**Classification is conservative.** A finding lands in `violations` only when
+the detection has no blind spot and no WCAG exception can apply (on-focus
+context change, text-spacing clipping, invalid autocomplete tokens). All other
+detections — reflow/zoom overflow, meta refresh, orientation lock, missing
+focus styles, undersized targets — are `incomplete`: treat that bucket as the
+manual-review queue, not as noise.
+
+To combine several checks for the same page into one view:
+
+```ts
+import { mergeNormalizedResults } from "@a11y-skills/audit";
+
+const merged = mergeNormalizedResults([axeResult, reflowResult, targetResult]);
+```
+
+`mergeNormalizedResults` throws on URL mismatches, deduplicates nodes by
+`target` + `failureSummary`, and resolves a rule appearing in several buckets
+by priority (`violations > incomplete > passes > inapplicable`). Identical
+selectors inside different frames or shadow roots are not distinguished.
+
 ## Result types & schemas
 
 ```ts
@@ -145,8 +191,11 @@ import type { AxeAuditResult, FocusCheckResult } from "@a11y-skills/audit/schema
 import { RESULT_SCHEMAS } from "@a11y-skills/audit/schemas";
 ```
 
-`RESULT_SCHEMAS` maps each check id to a hand-written JSON Schema for validating
-the `*-result.json` files at runtime.
+`RESULT_SCHEMAS` maps each check id to a hand-written JSON Schema
+(draft 2020-12) for validating the `*-result.json` files at runtime. The
+normalization mappers (`normalize*`) and `buildAuditResult` are exported from
+the package root, so the buckets can be re-derived from a saved result's
+`details` at any time.
 
 ## License
 

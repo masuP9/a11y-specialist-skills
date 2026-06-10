@@ -20,6 +20,7 @@ import type {
   ScreenshotRecord,
   ComparisonResult,
   AutoPlayDetectionResult,
+  AutoPlayDetectionDetails,
 } from '../types.js';
 import {
   SCREENSHOT_INTERVALS,
@@ -27,6 +28,10 @@ import {
   DEFAULT_AUTO_PLAY_OUTPUT_DIR,
   DETECTION_RESULT_FILENAME,
 } from '../constants.js';
+import {
+  buildAuditResult,
+  normalizeAutoPlayDetection,
+} from '../utils/axe-format.js';
 import { generateRecommendation, printSummary } from '../utils/recommendations.js';
 
 /** Capture screenshots at configured intervals. */
@@ -180,8 +185,7 @@ export async function runAutoPlayDetection(
     pauseVerification = createSkippedVerification(reason);
   }
 
-  const result: AutoPlayDetectionResult = {
-    url: page.url(),
+  const details: AutoPlayDetectionDetails = {
     screenshotRecords: screenshots,
     comparisons,
     hasAutoPlayContent: hasAnyChange,
@@ -195,6 +199,13 @@ export async function runAutoPlayDetection(
       pauseVerification,
     }),
   };
+
+  const result: AutoPlayDetectionResult = buildAuditResult({
+    source: 'auto-play-detection',
+    url: page.url(),
+    details,
+    buckets: normalizeAutoPlayDetection(details),
+  });
 
   console.log('\n=== Auto-play Detection Results ===\n');
   console.log(JSON.stringify(result, null, 2));

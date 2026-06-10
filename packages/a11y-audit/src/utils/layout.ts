@@ -10,6 +10,8 @@ export interface LayoutCheckOptions {
   overflowTolerance: number;
   checkSelector: string;
   allowedOverflowSelectors: readonly string[];
+  /** Maximum length of captured outerHTML snippets. */
+  htmlSnippetMaxLength: number;
 }
 
 export interface LayoutCheckResult {
@@ -30,7 +32,24 @@ export function createLayoutChecker(options: LayoutCheckOptions): LayoutCheckRes
     overflowTolerance,
     checkSelector,
     allowedOverflowSelectors,
+    htmlSnippetMaxLength,
   } = options;
+
+  function getHtmlSnippet(element: Element): { html: string; htmlTruncated: boolean } {
+    let html = '';
+    try {
+      html = element.outerHTML || '';
+    } catch {
+      html = '';
+    }
+    if (!html) {
+      return { html: `<${element.tagName.toLowerCase()}>`, htmlTruncated: false };
+    }
+    if (html.length > htmlSnippetMaxLength) {
+      return { html: html.slice(0, htmlSnippetMaxLength), htmlTruncated: true };
+    }
+    return { html, htmlTruncated: false };
+  }
 
   // Helper functions (must be defined inside for browser context)
   /**
@@ -116,6 +135,7 @@ export function createLayoutChecker(options: LayoutCheckOptions): LayoutCheckRes
       overflowingElements.push({
         selector,
         tagName: element.tagName.toLowerCase(),
+        ...getHtmlSnippet(element),
         rect: {
           left: Math.round(rect.left),
           right: Math.round(rect.right),
@@ -131,6 +151,7 @@ export function createLayoutChecker(options: LayoutCheckOptions): LayoutCheckRes
       overflowingElements.push({
         selector,
         tagName: element.tagName.toLowerCase(),
+        ...getHtmlSnippet(element),
         rect: {
           left: Math.round(rect.left),
           right: Math.round(rect.right),
@@ -170,6 +191,7 @@ export function createLayoutChecker(options: LayoutCheckOptions): LayoutCheckRes
           clippedTextElements.push({
             selector,
             tagName: element.tagName.toLowerCase(),
+            ...getHtmlSnippet(element),
             scrollWidth,
             clientWidth,
             scrollHeight,

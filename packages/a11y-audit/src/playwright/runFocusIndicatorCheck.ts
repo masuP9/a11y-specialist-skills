@@ -19,8 +19,10 @@ import type {
 } from '@playwright/test';
 import type {
   FocusRecord,
+  FocusElementRef,
   OnFocusViolation,
   FocusCheckResult,
+  FocusCheckDetails,
   FocusObscuredIssue,
 } from '../types.js';
 import {
@@ -32,7 +34,9 @@ import {
   FOCUS_OBSCURED_MIN_OVERLAP_RATIO,
   FOCUS_OBSCURED_MIN_OVERLAP_PX,
   FOCUS_OBSCURED_EXCLUDE_SELECTORS,
+  HTML_SNIPPET_MAX_LENGTH,
 } from '../constants.js';
+import { buildAuditResult, normalizeFocusCheck } from '../utils/axe-format.js';
 import {
   resolveOutputPath,
   resolveScreenshotPath,
@@ -157,29 +161,23 @@ export async function runFocusIndicatorCheck(
       const page = await context.newPage();
 
       const focusHistory: FocusRecord[] = [];
-      let lastFocusedElement: {
-        tag: string;
-        role: string | null;
-        name: string;
-        selector: string;
-      } | null = null;
+      let lastFocusedElement: FocusElementRef | null = null;
       let navigationDetected = false;
 
       // Expose function to receive focus reports from browser context
-      await page.exposeFunction(
-        'reportFocus',
-        (data: FocusRecord & { selector?: string }) => {
-          focusHistory.push(data);
-          lastFocusedElement = {
-            tag: data.tag,
-            role: data.role,
-            name: data.name,
-            selector:
-              data.selector ||
-              `${data.tag.toLowerCase()}:nth-of-type(${data.id + 1})`,
-          };
-        }
-      );
+      await page.exposeFunction('reportFocus', (data: FocusRecord) => {
+        focusHistory.push(data);
+        lastFocusedElement = {
+          tag: data.tag,
+          role: data.role,
+          name: data.name,
+          selector:
+            data.selector ||
+            `${data.tag.toLowerCase()}:nth-of-type(${data.id + 1})`,
+          html: data.html,
+          htmlTruncated: data.htmlTruncated,
+        };
+      });
 
       // Expose function to receive focus obscured reports (WCAG 2.4.12)
       await page.exposeFunction(
@@ -195,6 +193,7 @@ export async function runFocusIndicatorCheck(
         styleProperties: [...FOCUS_STYLE_PROPERTIES],
         warningStyles: WARNING_STYLES,
         skipSelectors: [...skipSelectors],
+        htmlSnippetMaxLength: HTML_SNIPPET_MAX_LENGTH,
         obscuredConfig: {
           minOverlapRatio: FOCUS_OBSCURED_MIN_OVERLAP_RATIO,
           minOverlapPx: FOCUS_OBSCURED_MIN_OVERLAP_PX,
@@ -249,14 +248,9 @@ export async function runFocusIndicatorCheck(
         await page.keyboard.press('Tab');
 
         // Get currently focused element IMMEDIATELY after Tab
-        let currentFocusedElement: {
-          tag: string;
-          role: string | null;
-          name: string;
-          selector: string;
-        } | null = null;
+        let currentFocusedElement: FocusElementRef | null = null;
         try {
-          currentFocusedElement = await page.evaluate(() => {
+          currentFocusedElement = await page.evaluate((htmlSnippetMaxLength) => {
             const el = document.activeElement;
             if (!el || el === document.body) return null;
 
@@ -273,6 +267,17 @@ export async function runFocusIndicatorCheck(
               return `${getSelector(parent)} > ${tag}:nth-of-type(${index})`;
             };
 
+            let html = '';
+            try {
+              html = el.outerHTML || '';
+            } catch {
+              html = '';
+            }
+            if (!html) {
+              html = `<${el.tagName.toLowerCase()}>`;
+            }
+            const htmlTruncated = html.length > htmlSnippetMaxLength;
+
             return {
               tag: el.tagName,
               role: el.getAttribute('role'),
@@ -281,8 +286,10 @@ export async function runFocusIndicatorCheck(
                 el.textContent?.slice(0, 30) ||
                 '',
               selector: getSelector(el),
+              html: htmlTruncated ? html.slice(0, htmlSnippetMaxLength) : html,
+              htmlTruncated,
             };
-          });
+          }, HTML_SNIPPET_MAX_LENGTH);
         } catch {
           // Page might have navigated, use lastFocusedElement as fallback
           currentFocusedElement = lastFocusedElement;
@@ -361,8 +368,7 @@ export async function runFocusIndicatorCheck(
     }
 
     // Build result
-    const result: FocusCheckResult = {
-      url: finalPage.url(),
+    const details: FocusCheckDetails = {
       totalFocusableElements: finalFocusHistory.length,
       elementsWithFocusStyle:
         finalFocusHistory.length - elementsWithoutFocusStyle.length,
@@ -371,6 +377,9 @@ export async function runFocusIndicatorCheck(
         tag: el.tag,
         role: el.role,
         name: el.name,
+        selector: el.selector,
+        html: el.html,
+        htmlTruncated: el.htmlTruncated,
       })),
       onFocusViolations,
       focusObscuredIssues,
@@ -380,19 +389,26 @@ export async function runFocusIndicatorCheck(
       screenshotPath: screenshot ? resolvedScreenshotPath : '',
     };
 
+    const result: FocusCheckResult = buildAuditResult({
+      source: 'focus-indicator-check',
+      url: finalPage.url(),
+      details,
+      buckets: normalizeFocusCheck(details),
+    });
+
     // Output results
     logAuditHeader(
       'Focus Indicator Check Results',
-      'WCAG 2.4.7 / 2.4.12 / 3.2.1',
+      'WCAG 2.4.7 / 2.4.11 / 3.2.1',
       result.url
     );
 
-    console.log(`Total focusable elements: ${result.totalFocusableElements}`);
-    console.log(`Elements with focus style: ${result.elementsWithFocusStyle}`);
+    console.log(`Total focusable elements: ${details.totalFocusableElements}`);
+    console.log(`Elements with focus style: ${details.elementsWithFocusStyle}`);
     console.log(
-      `Elements WITHOUT focus style: ${result.elementsWithoutFocusStyle}`
+      `Elements WITHOUT focus style: ${details.elementsWithoutFocusStyle}`
     );
-    console.log(`Elements with OBSCURED focus: ${result.elementsWithObscuredFocus}`);
+    console.log(`Elements with OBSCURED focus: ${details.elementsWithObscuredFocus}`);
 
     if (retryCount > 0) {
       console.log(
@@ -469,14 +485,39 @@ function createFocusTrackerScript(args: {
   styleProperties: string[];
   warningStyles: string;
   skipSelectors: string[];
+  htmlSnippetMaxLength: number;
   obscuredConfig: {
     minOverlapRatio: number;
     minOverlapPx: number;
     excludeSelectors: string[];
   };
 }): void {
-  const { focusableSelector, styleProperties, warningStyles, skipSelectors, obscuredConfig } =
-    args;
+  const {
+    focusableSelector,
+    styleProperties,
+    warningStyles,
+    skipSelectors,
+    htmlSnippetMaxLength,
+    obscuredConfig,
+  } = args;
+
+  const getHtmlSnippet = (
+    el: Element
+  ): { html: string; htmlTruncated: boolean } => {
+    let html = '';
+    try {
+      html = el.outerHTML || '';
+    } catch {
+      html = '';
+    }
+    if (!html) {
+      return { html: `<${el.tagName.toLowerCase()}>`, htmlTruncated: false };
+    }
+    if (html.length > htmlSnippetMaxLength) {
+      return { html: html.slice(0, htmlSnippetMaxLength), htmlTruncated: true };
+    }
+    return { html, htmlTruncated: false };
+  };
 
   // Add warning styles
   const styleSheet = new CSSStyleSheet();
@@ -884,6 +925,7 @@ function createFocusTrackerScript(args: {
             focusedEl.textContent?.slice(0, 30) ||
             '',
           selector: getSelector(focusedEl),
+          ...getHtmlSnippet(focusedEl),
         },
         elementRect: {
           left: focusedRect.left,
@@ -966,10 +1008,11 @@ function createFocusTrackerScript(args: {
       id,
       tag: el.tagName,
       role: el.getAttribute('role'),
-      name: el.getAttribute('aria-label') || el.textContent?.slice(0, 30),
+      name: el.getAttribute('aria-label') || el.textContent?.slice(0, 30) || '',
       hasFocusStyle,
       diff,
       selector: elementSelectors.get(el) || getSelector(el),
+      ...getHtmlSnippet(el),
     });
 
     // Check for WCAG 2.4.12 - focus obscured by fixed/sticky elements

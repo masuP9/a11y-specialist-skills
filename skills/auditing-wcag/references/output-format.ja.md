@@ -24,12 +24,34 @@
 | ファイル | 説明 |
 |----------|------|
 | `report.md` | メイン監査レポート（Markdown） |
-| `axe-result.json` | axe-core生結果 |
-| `*.json` | その他スクリプト結果 |
+| `axe-result.json` | axe-core結果（共通envelope形式） |
+| `*-result.json` | その他スクリプト結果（同じ共通envelope形式） |
 | `screenshots/` | 証跡スクリーンショット |
 
 ### 4. スクリプト出力のコピー
 生成されたJSONファイルとスクリーンショットを出力ディレクトリに移動する。
+
+## 結果JSONの形式（@a11y-skills/audit 0.3.0+）
+
+すべてのスクリプト結果は axe 風の共通 envelope で保存される:
+
+- `source` / `url` / `timestamp` — 検査の識別情報
+- `violations[]` — **確定した違反**（検出に死角がなく例外が適用され得ないもののみ）
+- `incomplete[]` — **要手動確認**。ヒューリスティック検出や例外判断が必要な検出は
+  すべてここに入る。**ノイズではなく手動確認キューとして必ずレビューする**
+- `passes[]` / `inapplicable[]` — 問題なし / 検査対象なしのルール
+- `summary` — ルール単位の件数（`violationCount` / `incompleteCount` / `passCount` /
+  `checkedNodes`）
+- `details` — 検査固有の証跡（測定値・スクリーンショットパス・全要素記録など）
+
+各ルールは axe と同じ形（`id` / `impact` / `tags` / `helpUrl` / `nodes[]`）。
+独自ルールの id は `a11y-skills/` 名前空間付き（例: `a11y-skills/focus-visible`）、
+`tags` の `wcag247` 形式タグから該当 SC を機械的に判別できる。
+`nodes[].target` はCSSセレクタ（ページ単位の検出は `['html']`）、`nodes[].html` は
+outerHTML 証跡、`nodes[].failureSummary` は判断理由の説明。
+
+レポート作成時は `violations` を Fail 候補、`incomplete` を手動確認項目として
+基準ごとの判定に反映する。
 
 ## レポートテンプレート
 

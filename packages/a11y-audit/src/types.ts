@@ -1,42 +1,119 @@
 /**
  * Type definitions for the WCAG audit checks shipped in @a11y-skills/audit.
+ *
+ * Every check returns the same axe-style envelope (`AuditCheckResult`):
+ * findings are normalized into `violations` / `incomplete` / `passes` /
+ * `inapplicable` rule arrays, while the check-specific evidence (measurements,
+ * screenshots, raw element records) lives under `details`.
+ *
+ * Classification policy: a finding is only a `violation` when the detection
+ * has no known blind spots and no WCAG exception could apply. Everything else
+ * (most heuristic detections) lands in `incomplete` — the manual-review queue.
  */
 
 import type { AUDIT_DISCLAIMER } from './constants.js';
 
 // =============================================================================
-// Axe Audit Types (broad WCAG coverage)
+// Normalized envelope (axe-style common format)
 // =============================================================================
 
-export interface AxeViolationNode {
-  html: string;
+/** Identifier of the check that produced a result. */
+export type CheckSource =
+  | 'axe-audit'
+  | 'focus-indicator-check'
+  | 'reflow-check'
+  | 'target-size-check'
+  | 'text-spacing-check'
+  | 'zoom-200-check'
+  | 'orientation-check'
+  | 'autocomplete-audit'
+  | 'time-limit-detector'
+  | 'auto-play-detection';
+
+export type NormalizedImpact = 'critical' | 'serious' | 'moderate' | 'minor';
+
+/** One affected element (or the page itself, `target: ['html']`). */
+export interface NormalizedNode {
+  /** CSS selector path. Page-level findings use `['html']`. */
   target: string[];
-  failureSummary: string | undefined;
+  /**
+   * outerHTML snippet (possibly truncated). When the source element's HTML
+   * could not be captured, a short synthetic representation is generated from
+   * the tag/role/name instead — never an empty string.
+   */
+  html: string;
+  /** Whether `html` was truncated to the snippet length limit. */
+  htmlTruncated: boolean;
+  /** Human-readable description of why this node was flagged. */
+  failureSummary: string;
 }
 
-export interface AxeViolation {
+/** One rule's outcome, axe-style. */
+export interface NormalizedRuleResult {
+  /** Namespaced rule id, e.g. `a11y-skills/focus-visible` (axe rules keep their own ids). */
   id: string;
-  impact: string | null;
+  impact: NormalizedImpact | null;
   description: string;
   help: string;
+  /** W3C Understanding document (or axe docs for axe rules). */
   helpUrl: string;
+  /** axe-style tags: `a11y-skills`, `wcag2aa` / `wcag21aa` / `wcag22aa`, `wcag247`-style SC tags. */
   tags: string[];
-  nodes: AxeViolationNode[];
+  nodes: NormalizedNode[];
 }
 
-export interface AxeAuditResult {
+/** Rule-level counts derived from the four buckets (not from `details`). */
+export interface AuditResultSummary {
+  /** Number of rules in `violations`. */
+  violationCount: number;
+  /** Number of rules in `incomplete`. */
+  incompleteCount: number;
+  /** Number of rules in `passes`. */
+  passCount: number;
+  /** Number of elements the check examined, when the check can count them. */
+  checkedNodes?: number;
+}
+
+/** Common envelope returned (and saved as JSON) by every check. */
+export interface AuditCheckResult<TDetails> {
+  source: CheckSource;
   url: string;
   timestamp: string;
-  violations: AxeViolation[];
-  passes: number;
-  incomplete: number;
-  inapplicable: number;
-  violationCount: number;
+  /** Confirmed findings — detection has no blind spot and no exception can apply. */
+  violations: NormalizedRuleResult[];
+  /** Findings that need manual confirmation (heuristic detections, possible exceptions). */
+  incomplete: NormalizedRuleResult[];
+  /** Rules that ran and found nothing (nodes omitted). */
+  passes: NormalizedRuleResult[];
+  /** Rules that had nothing to examine on this page. */
+  inapplicable: NormalizedRuleResult[];
+  summary: AuditResultSummary;
+  /** Check-specific evidence; sufficient to re-derive the buckets above. */
+  details: TDetails;
   disclaimer: typeof AUDIT_DISCLAIMER;
 }
 
 // =============================================================================
-// Focus Indicator Types (WCAG 2.4.7)
+// Axe Audit (broad WCAG coverage)
+// =============================================================================
+
+/** Execution configuration; rule/node data is fully held in the envelope buckets. */
+export interface AxeAuditDetails {
+  /** axe-core tags the run was filtered by. */
+  tagsRun: string[];
+  /** Rule overrides forwarded to axe, if any. */
+  rulesOverride: Record<string, { enabled: boolean }> | null;
+  /** Raw axe result counts (rule-level). */
+  violationRuleCount: number;
+  passRuleCount: number;
+  incompleteRuleCount: number;
+  inapplicableRuleCount: number;
+}
+
+export type AxeAuditResult = AuditCheckResult<AxeAuditDetails>;
+
+// =============================================================================
+// Focus Indicator (WCAG 2.4.7 / 2.4.11 / 3.2.1)
 // =============================================================================
 
 export interface FocusRecord {
@@ -44,8 +121,21 @@ export interface FocusRecord {
   tag: string;
   role: string | null;
   name: string;
+  selector: string;
+  html: string;
+  htmlTruncated: boolean;
   hasFocusStyle: boolean;
   diff: Record<string, string>;
+}
+
+/** Reference to an element captured in the browser context. */
+export interface FocusElementRef {
+  tag: string;
+  role: string | null;
+  name: string;
+  selector: string;
+  html: string;
+  htmlTruncated: boolean;
 }
 
 /**
@@ -53,12 +143,7 @@ export interface FocusRecord {
  */
 export interface OnFocusViolation {
   /** Element that triggered the navigation */
-  element: {
-    tag: string;
-    role: string | null;
-    name: string;
-    selector: string;
-  };
+  element: FocusElementRef;
   /** URL before focus */
   fromUrl: string;
   /** URL after focus (navigation target) */
@@ -67,20 +152,15 @@ export interface OnFocusViolation {
   changeType: 'navigation' | 'new-window' | 'dialog';
 }
 
-export interface FocusCheckResult {
-  url: string;
+export interface FocusCheckDetails {
   totalFocusableElements: number;
   elementsWithFocusStyle: number;
   elementsWithoutFocusStyle: number;
-  /** WCAG 2.4.7 violations */
-  issues: Array<{
-    tag: string;
-    role: string | null;
-    name: string;
-  }>;
+  /** WCAG 2.4.7 findings (no computed-style change on focus) */
+  issues: FocusElementRef[];
   /** WCAG 3.2.1 violations - focus triggered context change */
   onFocusViolations: OnFocusViolation[];
-  /** WCAG 2.4.12 violations - focus obscured by fixed/sticky elements */
+  /** WCAG 2.4.11/2.4.12 findings - focus obscured by fixed/sticky elements */
   focusObscuredIssues: FocusObscuredIssue[];
   elementsWithObscuredFocus: number;
   allElements: FocusRecord[];
@@ -94,8 +174,10 @@ export interface FocusCheckResult {
   screenshotPath: string;
 }
 
+export type FocusCheckResult = AuditCheckResult<FocusCheckDetails>;
+
 // =============================================================================
-// Focus Obscured Types (WCAG 2.4.12)
+// Focus Obscured (WCAG 2.4.11 / 2.4.12)
 // =============================================================================
 
 /**
@@ -126,16 +208,11 @@ export interface FocusObscuredOverlap {
 }
 
 /**
- * WCAG 2.4.12 violation - focus indicator hidden by fixed/sticky content
+ * WCAG 2.4.11/2.4.12 finding - focus indicator hidden by fixed/sticky content
  */
 export interface FocusObscuredIssue {
   /** The focused element that is obscured */
-  element: {
-    tag: string;
-    role: string | null;
-    name: string;
-    selector: string;
-  };
+  element: FocusElementRef;
   /** Bounding rect of the focused element */
   elementRect: BoundingRect;
   /** List of overlapping fixed/sticky elements */
@@ -145,12 +222,14 @@ export interface FocusObscuredIssue {
 }
 
 // =============================================================================
-// Reflow Check Types (WCAG 1.4.10)
+// Reflow Check (WCAG 1.4.10)
 // =============================================================================
 
 export interface ReflowIssue {
   selector: string;
   tagName: string;
+  html: string;
+  htmlTruncated: boolean;
   rect: {
     left: number;
     right: number;
@@ -163,6 +242,8 @@ export interface ReflowIssue {
 export interface ClippedTextElement {
   selector: string;
   tagName: string;
+  html: string;
+  htmlTruncated: boolean;
   scrollWidth: number;
   clientWidth: number;
   scrollHeight: number;
@@ -171,8 +252,7 @@ export interface ClippedTextElement {
   overflowX: string;
 }
 
-export interface ReflowCheckResult {
-  url: string;
+export interface ReflowCheckDetails {
   viewport: { width: number; height: number };
   hasHorizontalScroll: boolean;
   documentScrollWidth: number;
@@ -181,8 +261,10 @@ export interface ReflowCheckResult {
   clippedTextElements: ClippedTextElement[];
 }
 
+export type ReflowCheckResult = AuditCheckResult<ReflowCheckDetails>;
+
 // =============================================================================
-// Target Size Check Types (WCAG 2.5.5 / 2.5.8)
+// Target Size Check (WCAG 2.5.5 / 2.5.8)
 // =============================================================================
 
 /**
@@ -200,11 +282,26 @@ export type TargetSizeException =
   | 'spacing'
   | 'essential-review';
 
+/**
+ * How thoroughly the SC 2.5.8 exceptions were assessed for a target.
+ * - ruled-out: every exception was checked and none applies — the finding is a
+ *   confirmed violation
+ * - possible: a heuristic matched an exception; needs manual confirmation
+ * - not-assessed: the heuristics found no exception, but they cannot rule out
+ *   the essential exception — needs manual confirmation
+ */
+export type TargetSizeExceptionAssessment =
+  | 'ruled-out'
+  | 'possible'
+  | 'not-assessed';
+
 export interface TargetSizeIssue {
   /** CSS selector for the element */
   selector: string;
   /** HTML tag name */
   tagName: string;
+  html: string;
+  htmlTruncated: boolean;
   /** ARIA role if present */
   role: string | null;
   /** Computed accessible name */
@@ -221,6 +318,8 @@ export interface TargetSizeIssue {
   exception: TargetSizeException | null;
   /** Human-readable exception details */
   exceptionDetails: string | null;
+  /** Exception-coverage of the assessment (drives violation vs incomplete) */
+  exceptionAssessment: TargetSizeExceptionAssessment;
   /** Link href for redundancy check */
   href: string | null;
 }
@@ -236,9 +335,7 @@ export interface TargetSizeSummary {
   exceptedCount: number;
 }
 
-export interface TargetSizeCheckResult {
-  /** Page URL */
-  url: string;
+export interface TargetSizeCheckDetails {
   /** Total interactive elements checked */
   totalTargetsChecked: number;
   /** Elements failing AA threshold (< 24px) */
@@ -249,17 +346,21 @@ export interface TargetSizeCheckResult {
   passedTargets: number;
   /** Elements with possible exceptions */
   exceptedTargets: TargetSizeIssue[];
-  /** Summary counts */
+  /** Per-target counts */
   summary: TargetSizeSummary;
 }
 
+export type TargetSizeCheckResult = AuditCheckResult<TargetSizeCheckDetails>;
+
 // =============================================================================
-// Text Spacing Check Types (WCAG 1.4.12)
+// Text Spacing Check (WCAG 1.4.12)
 // =============================================================================
 
 export interface TextSpacingIssue {
   selector: string;
   tagName: string;
+  html: string;
+  htmlTruncated: boolean;
   beforeMetrics: {
     scrollWidth: number;
     scrollHeight: number;
@@ -278,19 +379,22 @@ export interface TextSpacingIssue {
   issueType: 'horizontal-clip' | 'vertical-clip' | 'both';
 }
 
-export interface TextSpacingCheckResult {
-  url: string;
+export interface TextSpacingCheckDetails {
   clippedElements: TextSpacingIssue[];
   totalElementsChecked: number;
 }
 
+export type TextSpacingCheckResult = AuditCheckResult<TextSpacingCheckDetails>;
+
 // =============================================================================
-// Zoom 200% Check Types (WCAG 1.4.4)
+// Zoom 200% Check (WCAG 1.4.4)
 // =============================================================================
 
 export interface ZoomIssue {
   selector: string;
   tagName: string;
+  html: string;
+  htmlTruncated: boolean;
   scrollWidth: number;
   clientWidth: number;
   scrollHeight: number;
@@ -298,8 +402,7 @@ export interface ZoomIssue {
   issueType: 'horizontal-scroll' | 'clipped-content';
 }
 
-export interface ZoomCheckResult {
-  url: string;
+export interface ZoomCheckDetails {
   zoomFactor: number;
   viewport: { width: number; height: number };
   hasHorizontalScroll: boolean;
@@ -308,8 +411,10 @@ export interface ZoomCheckResult {
   clippedElements: ZoomIssue[];
 }
 
+export type ZoomCheckResult = AuditCheckResult<ZoomCheckDetails>;
+
 // =============================================================================
-// Orientation Check Types (WCAG 1.3.4)
+// Orientation Check (WCAG 1.3.4)
 // =============================================================================
 
 export interface OrientationState {
@@ -321,21 +426,24 @@ export interface OrientationState {
   visibleTextLength: number;
 }
 
-export interface OrientationCheckResult {
-  url: string;
+export interface OrientationCheckDetails {
   portrait: OrientationState;
   landscape: OrientationState;
   hasOrientationLock: boolean;
   lockDetectedIn: 'portrait' | 'landscape' | 'both' | 'none';
 }
 
+export type OrientationCheckResult = AuditCheckResult<OrientationCheckDetails>;
+
 // =============================================================================
-// Autocomplete Audit Types (WCAG 1.3.5)
+// Autocomplete Audit (WCAG 1.3.5)
 // =============================================================================
 
 export interface AutocompleteIssue {
   selector: string;
   tagName: string;
+  html: string;
+  htmlTruncated: boolean;
   inputType: string;
   name: string | null;
   id: string | null;
@@ -346,21 +454,24 @@ export interface AutocompleteIssue {
   issueType: 'missing' | 'invalid';
 }
 
-export interface AutocompleteAuditResult {
-  url: string;
+export interface AutocompleteAuditDetails {
   totalFieldsChecked: number;
   missingAutocomplete: AutocompleteIssue[];
   invalidAutocomplete: AutocompleteIssue[];
 }
 
+export type AutocompleteAuditResult = AuditCheckResult<AutocompleteAuditDetails>;
+
 // =============================================================================
-// Time Limit Detector Types (WCAG 2.2.1)
+// Time Limit Detector (WCAG 2.2.1)
 // =============================================================================
 
 export interface MetaRefreshInfo {
   content: string;
   seconds: number;
   url: string | null;
+  html: string;
+  htmlTruncated: boolean;
 }
 
 export interface TimerInfo {
@@ -373,18 +484,21 @@ export interface CountdownIndicator {
   selector: string;
   text: string;
   tagName: string;
+  html: string;
+  htmlTruncated: boolean;
 }
 
-export interface TimeLimitDetectorResult {
-  url: string;
+export interface TimeLimitDetectorDetails {
   metaRefresh: MetaRefreshInfo[];
   timers: TimerInfo[];
   countdownIndicators: CountdownIndicator[];
   hasTimeLimits: boolean;
 }
 
+export type TimeLimitDetectorResult = AuditCheckResult<TimeLimitDetectorDetails>;
+
 // =============================================================================
-// Auto-play Detection Types (WCAG 1.4.2 / 2.2.2)
+// Auto-play Detection (WCAG 1.4.2 / 2.2.2)
 // =============================================================================
 
 export interface ScreenshotRecord {
@@ -434,8 +548,7 @@ export interface PauseVerificationResult {
   error: string | null;
 }
 
-export interface AutoPlayDetectionResult {
-  url: string;
+export interface AutoPlayDetectionDetails {
   screenshotRecords: ScreenshotRecord[];
   comparisons: ComparisonResult[];
   hasAutoPlayContent: boolean;
@@ -444,3 +557,5 @@ export interface AutoPlayDetectionResult {
   pauseVerification: PauseVerificationResult;
   recommendation: string;
 }
+
+export type AutoPlayDetectionResult = AuditCheckResult<AutoPlayDetectionDetails>;

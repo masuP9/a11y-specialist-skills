@@ -17,6 +17,7 @@
 import type { Page } from '@playwright/test';
 import type {
   ReflowCheckResult,
+  ReflowCheckDetails,
   ReflowIssue,
   ClippedTextElement,
 } from '../types.js';
@@ -27,8 +28,10 @@ import {
   REFLOW_ALLOWED_OVERFLOW_SELECTORS,
   DEFAULT_REFLOW_RESULT_FILE,
   DEFAULT_REFLOW_SCREENSHOT_FILE,
+  HTML_SNIPPET_MAX_LENGTH,
 } from '../constants.js';
 import { createLayoutChecker } from '../utils/layout.js';
+import { buildAuditResult, normalizeReflowCheck } from '../utils/axe-format.js';
 import {
   saveAuditResult,
   takeAuditScreenshot,
@@ -73,29 +76,36 @@ export async function runReflowCheck(
     overflowTolerance,
     checkSelector: REFLOW_CHECK_SELECTOR,
     allowedOverflowSelectors: [...REFLOW_ALLOWED_OVERFLOW_SELECTORS],
+    htmlSnippetMaxLength: HTML_SNIPPET_MAX_LENGTH,
   });
 
-  const result: ReflowCheckResult = {
-    url: page.url(),
+  const details: ReflowCheckDetails = {
     viewport: { width: viewport.width, height: viewport.height },
     ...layoutResult,
   };
+
+  const result: ReflowCheckResult = buildAuditResult({
+    source: 'reflow-check',
+    url: page.url(),
+    details,
+    buckets: normalizeReflowCheck(details),
+  });
 
   // Output results
   logAuditHeader('Reflow Check Results', 'WCAG 1.4.10', result.url);
 
   logSummary({
-    Viewport: `${result.viewport.width}x${result.viewport.height}`,
-    'Document scroll width': `${result.documentScrollWidth}px`,
-    'Document client width': `${result.documentClientWidth}px`,
-    'Horizontal scroll': result.hasHorizontalScroll,
-    'Overflowing elements': result.overflowingElements.length,
-    'Clipped text elements': result.clippedTextElements.length,
+    Viewport: `${details.viewport.width}x${details.viewport.height}`,
+    'Document scroll width': `${details.documentScrollWidth}px`,
+    'Document client width': `${details.documentClientWidth}px`,
+    'Horizontal scroll': details.hasHorizontalScroll,
+    'Overflowing elements': details.overflowingElements.length,
+    'Clipped text elements': details.clippedTextElements.length,
   });
 
   logIssueList<ReflowIssue>(
     'Overflowing Elements',
-    result.overflowingElements,
+    details.overflowingElements,
     (el, i) => [
       `${i + 1}. <${el.tagName}> "${el.selector}"`,
       `   rect.right: ${el.rect.right}px (viewport: ${el.viewportWidth}px)`,
@@ -104,7 +114,7 @@ export async function runReflowCheck(
 
   logIssueList<ClippedTextElement>(
     'Clipped Text Elements',
-    result.clippedTextElements,
+    details.clippedTextElements,
     (el, i) => [
       `${i + 1}. <${el.tagName}> "${el.selector}"`,
       `   scrollWidth: ${el.scrollWidth}px, clientWidth: ${el.clientWidth}px`,

@@ -17,7 +17,11 @@
  */
 
 import type { Page } from '@playwright/test';
-import type { OrientationCheckResult, OrientationState } from '../types.js';
+import type {
+  OrientationCheckResult,
+  OrientationCheckDetails,
+  OrientationState,
+} from '../types.js';
 import {
   ORIENTATION_VIEWPORTS,
   ORIENTATION_LOCK_KEYWORDS,
@@ -26,6 +30,10 @@ import {
   DEFAULT_ORIENTATION_PORTRAIT_SCREENSHOT_FILE,
   DEFAULT_ORIENTATION_LANDSCAPE_SCREENSHOT_FILE,
 } from '../constants.js';
+import {
+  buildAuditResult,
+  normalizeOrientationCheck,
+} from '../utils/axe-format.js';
 import {
   saveAuditResult,
   resolveOutputPath,
@@ -213,28 +221,34 @@ export async function runOrientationCheck(
   const hasOrientationLock = portraitHasLock || landscapeHasLock;
   const lockDetectedIn = determineLockLocation(portraitHasLock, landscapeHasLock);
 
-  const result: OrientationCheckResult = {
-    url: page.url(),
+  const details: OrientationCheckDetails = {
     portrait: portraitState,
     landscape: landscapeState,
     hasOrientationLock,
     lockDetectedIn,
   };
 
+  const result: OrientationCheckResult = buildAuditResult({
+    source: 'orientation-check',
+    url: page.url(),
+    details,
+    buckets: normalizeOrientationCheck(details),
+  });
+
   // Output results
   logAuditHeader('Orientation Check Results', 'WCAG 1.3.4', result.url);
-  logOrientationState('Portrait', ORIENTATION_VIEWPORTS.portrait, result.portrait);
+  logOrientationState('Portrait', ORIENTATION_VIEWPORTS.portrait, details.portrait);
   logOrientationState(
     'Landscape',
     ORIENTATION_VIEWPORTS.landscape,
-    result.landscape
+    details.landscape
   );
 
   console.log(
-    `\nOrientation lock detected: ${result.hasOrientationLock ? 'YES' : 'No'}`
+    `\nOrientation lock detected: ${details.hasOrientationLock ? 'YES' : 'No'}`
   );
-  if (result.hasOrientationLock) {
-    console.log(`Lock detected in: ${result.lockDetectedIn}`);
+  if (details.hasOrientationLock) {
+    console.log(`Lock detected in: ${details.lockDetectedIn}`);
   }
 
   const writtenPath = saveAuditResult(result, {

@@ -20,6 +20,7 @@ import type { Page } from '@playwright/test';
 import type {
   TargetSizeIssue,
   TargetSizeCheckResult,
+  TargetSizeCheckDetails,
   TargetSizeException,
 } from '../types.js';
 import {
@@ -31,7 +32,12 @@ import {
   INLINE_CONTEXT_MIN_TEXT,
   DEFAULT_TARGET_SIZE_RESULT_FILE,
   DEFAULT_TARGET_SIZE_SCREENSHOT_FILE,
+  HTML_SNIPPET_MAX_LENGTH,
 } from '../constants.js';
+import {
+  buildAuditResult,
+  normalizeTargetSizeCheck,
+} from '../utils/axe-format.js';
 import {
   saveAuditResult,
   takeAuditScreenshot,
@@ -48,6 +54,8 @@ import { addPageAnnotations, type AnnotationConfig } from '../utils/annotations.
 interface BasicTargetInfo {
   selector: string;
   tagName: string;
+  html: string;
+  htmlTruncated: boolean;
   role: string | null;
   width: number;
   height: number;
@@ -67,7 +75,28 @@ interface BasicTargetInfo {
 /**
  * Collect basic target information from DOM (runs in browser context).
  */
-function collectBasicTargetInfo(interactiveSelector: string): BasicTargetInfo[] {
+function collectBasicTargetInfo(args: {
+  interactiveSelector: string;
+  htmlSnippetMaxLength: number;
+}): BasicTargetInfo[] {
+  const { interactiveSelector, htmlSnippetMaxLength } = args;
+
+  function getHtmlSnippet(element: Element): { html: string; htmlTruncated: boolean } {
+    let html = '';
+    try {
+      html = element.outerHTML || '';
+    } catch {
+      html = '';
+    }
+    if (!html) {
+      return { html: `<${element.tagName.toLowerCase()}>`, htmlTruncated: false };
+    }
+    if (html.length > htmlSnippetMaxLength) {
+      return { html: html.slice(0, htmlSnippetMaxLength), htmlTruncated: true };
+    }
+    return { html, htmlTruncated: false };
+  }
+
   function getUniqueSelector(element: Element, elementIndex: number): string {
     if (element.id) {
       return `#${CSS.escape(element.id)}`;
@@ -130,6 +159,7 @@ function collectBasicTargetInfo(interactiveSelector: string): BasicTargetInfo[] 
     targets.push({
       selector: getUniqueSelector(element, index),
       tagName,
+      ...getHtmlSnippet(element),
       role,
       width: Math.round(rect.width * 100) / 100,
       height: Math.round(rect.height * 100) / 100,
@@ -369,6 +399,8 @@ function analyzeTargets(
     const issue: TargetSizeIssue = {
       selector: target.selector,
       tagName: target.tagName,
+      html: target.html,
+      htmlTruncated: target.htmlTruncated,
       role: target.role,
       accessibleName: target.accessibleName,
       width: target.width,
@@ -377,6 +409,9 @@ function analyzeTargets(
       level,
       exception,
       exceptionDetails,
+      // the heuristics can detect exceptions but can never rule out the
+      // essential exception, so findings are at best 'possible'/'not-assessed'.
+      exceptionAssessment: exception ? 'possible' : 'not-assessed',
       href: target.href,
     };
 
@@ -419,10 +454,10 @@ export async function runTargetSizeCheck(
   } = options;
 
   // Collect basic target info from DOM
-  const basicTargets = await page.evaluate(
-    collectBasicTargetInfo,
-    INTERACTIVE_SELECTOR
-  );
+  const basicTargets = await page.evaluate(collectBasicTargetInfo, {
+    interactiveSelector: INTERACTIVE_SELECTOR,
+    htmlSnippetMaxLength: HTML_SNIPPET_MAX_LENGTH,
+  });
 
   // Enhance with accessible names via ariaSnapshot()
   const targets: Array<BasicTargetInfo & { accessibleName: string | null }> = [];
@@ -450,8 +485,7 @@ export async function runTargetSizeCheck(
     aaaThreshold
   );
 
-  const result: TargetSizeCheckResult = {
-    url: page.url(),
+  const details: TargetSizeCheckDetails = {
     totalTargetsChecked: targets.length,
     failAA,
     failAAAOnly,
@@ -465,20 +499,27 @@ export async function runTargetSizeCheck(
     },
   };
 
+  const result: TargetSizeCheckResult = buildAuditResult({
+    source: 'target-size-check',
+    url: page.url(),
+    details,
+    buckets: normalizeTargetSizeCheck(details),
+  });
+
   // Output results
   logAuditHeader('Target Size Check Results', 'WCAG 2.5.5 / 2.5.8', result.url);
 
   logSummary({
-    'Total targets checked': result.totalTargetsChecked,
+    'Total targets checked': details.totalTargetsChecked,
   });
 
   console.log('\nSummary:');
-  console.log(`  Pass (>= ${aaaThreshold}px): ${result.summary.passCount}`);
+  console.log(`  Pass (>= ${aaaThreshold}px): ${details.summary.passCount}`);
   console.log(
-    `  Fail AAA only (${aaThreshold}-${aaaThreshold - 1}px): ${result.summary.failAAAOnlyCount}`
+    `  Fail AAA only (${aaThreshold}-${aaaThreshold - 1}px): ${details.summary.failAAAOnlyCount}`
   );
-  console.log(`  Fail AA (< ${aaThreshold}px): ${result.summary.failAACount}`);
-  console.log(`  Possible exceptions: ${result.summary.exceptedCount}`);
+  console.log(`  Fail AA (< ${aaThreshold}px): ${details.summary.failAACount}`);
+  console.log(`  Possible exceptions: ${details.summary.exceptedCount}`);
 
   logIssueList<TargetSizeIssue>(
     `Fail AA (< ${aaThreshold}px) - Requires Fix`,

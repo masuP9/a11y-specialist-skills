@@ -3,6 +3,50 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## 0.3.0
+
+**Breaking** — every check now returns (and saves) a single axe-style envelope
+instead of its own ad-hoc shape. The public API is not yet stable in `0.x`, so
+this lands as a minor release.
+
+### Changed (breaking)
+
+- All `runXxx()` functions return `AuditCheckResult<TDetails>`: findings are
+  normalized into `violations` / `incomplete` / `passes` / `inapplicable`
+  rule arrays (axe-style `id` / `impact` / `tags` / `helpUrl` / `nodes`), with
+  rule-level counts in `summary`. The former top-level fields (`issues`,
+  `failAA`, `overflowingElements`, `clippedElements`, ...) moved unchanged
+  under `details`.
+- Classification is conservative: only findings whose detection has no blind
+  spot and where no WCAG exception can apply are `violations`
+  (on-focus context change, text-spacing clipping, invalid autocomplete
+  tokens). Everything else — reflow/zoom overflow, meta refresh, orientation
+  lock, missing focus styles, undersized targets — lands in `incomplete`, the
+  manual-review queue.
+- Saved JSON files use the same envelope; the JSON Schemas were rewritten
+  accordingly (`$defs`-based shared envelope + per-check `details` schemas).
+  Pre-0.3.0 result files no longer validate.
+- `saveAuditResult()` no longer appends a disclaimer (the envelope carries it).
+- `runAxeAudit` builds the buckets from the raw axe results: violations and
+  incomplete keep their nodes, passes/inapplicable keep rule metadata only;
+  `details` records the execution configuration.
+
+### Added
+
+- `rule-registry.ts`: per-rule metadata (`sc`, accurate per-SC `wcag*` tags,
+  `impact`, `scope`, classification) — target size split into
+  `a11y-skills/target-size-minimum` (2.5.8 AA) and
+  `a11y-skills/target-size-enhanced` (2.5.5 AAA).
+- Pure normalization mappers (`normalize*`), `buildAuditResult()`, and the
+  opt-in `mergeNormalizedResults()` exported from the package root. The
+  buckets are re-derivable from a saved result's `details`.
+- Element-level evidence: detail records now carry `html` (outerHTML, capped
+  at `HTML_SNIPPET_MAX_LENGTH`) and `htmlTruncated`; focus issues gained
+  `selector`. `TargetSizeIssue.exceptionAssessment`
+  (`ruled-out`/`possible`/`not-assessed`) drives the violation promotion.
+- Tests: mapper unit tests, merge invariants, and ajv (draft 2020-12) schema
+  validation of the produced envelopes.
+
 ## 0.2.0
 
 Phase 2 checks added (additive). Still a `0.x` preview — the function API may

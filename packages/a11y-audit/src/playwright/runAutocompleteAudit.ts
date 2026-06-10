@@ -15,12 +15,21 @@
  */
 
 import type { Page } from '@playwright/test';
-import type { AutocompleteAuditResult, AutocompleteIssue } from '../types.js';
+import type {
+  AutocompleteAuditResult,
+  AutocompleteAuditDetails,
+  AutocompleteIssue,
+} from '../types.js';
 import {
   AUTOCOMPLETE_FIELD_PATTERNS,
   VALID_AUTOCOMPLETE_TOKENS,
   DEFAULT_AUTOCOMPLETE_RESULT_FILE,
+  HTML_SNIPPET_MAX_LENGTH,
 } from '../constants.js';
+import {
+  buildAuditResult,
+  normalizeAutocompleteAudit,
+} from '../utils/axe-format.js';
 import {
   saveAuditResult,
   logAuditHeader,
@@ -33,6 +42,8 @@ import {
 interface FieldInfo {
   selector: string;
   tagName: string;
+  html: string;
+  htmlTruncated: boolean;
   inputType: string;
   name: string | null;
   id: string | null;
@@ -45,6 +56,8 @@ interface FieldInfo {
 interface BasicFieldInfo {
   selector: string;
   tagName: string;
+  html: string;
+  htmlTruncated: boolean;
   inputType: string;
   name: string | null;
   id: string | null;
@@ -56,7 +69,27 @@ interface BasicFieldInfo {
  * Collect basic form field information in browser context.
  * Accessible names are retrieved separately via ariaSnapshot().
  */
-function collectBasicFieldInfo(): BasicFieldInfo[] {
+function collectBasicFieldInfo(args: {
+  htmlSnippetMaxLength: number;
+}): BasicFieldInfo[] {
+  const { htmlSnippetMaxLength } = args;
+
+  function getHtmlSnippet(element: Element): { html: string; htmlTruncated: boolean } {
+    let html = '';
+    try {
+      html = element.outerHTML || '';
+    } catch {
+      html = '';
+    }
+    if (!html) {
+      return { html: `<${element.tagName.toLowerCase()}>`, htmlTruncated: false };
+    }
+    if (html.length > htmlSnippetMaxLength) {
+      return { html: html.slice(0, htmlSnippetMaxLength), htmlTruncated: true };
+    }
+    return { html, htmlTruncated: false };
+  }
+
   function getUniqueSelector(element: Element, elementIndex: number): string {
     if (element.id) {
       return `#${element.id}`;
@@ -97,6 +130,7 @@ function collectBasicFieldInfo(): BasicFieldInfo[] {
     fields.push({
       selector: getUniqueSelector(element, index),
       tagName: el.tagName.toLowerCase(),
+      ...getHtmlSnippet(element),
       inputType,
       name: el.name || null,
       id: el.id || null,
@@ -168,6 +202,8 @@ function analyzeFields(
       missing.push({
         selector: field.selector,
         tagName: field.tagName,
+        html: field.html,
+        htmlTruncated: field.htmlTruncated,
         inputType: field.inputType,
         name: field.name,
         id: field.id,
@@ -190,6 +226,8 @@ function analyzeFields(
       invalid.push({
         selector: field.selector,
         tagName: field.tagName,
+        html: field.html,
+        htmlTruncated: field.htmlTruncated,
         inputType: field.inputType,
         name: field.name,
         id: field.id,
@@ -220,7 +258,9 @@ export async function runAutocompleteAudit(
   const { page, ...location } = options;
 
   // Collect basic field info from DOM
-  const basicFields = await page.evaluate(collectBasicFieldInfo);
+  const basicFields = await page.evaluate(collectBasicFieldInfo, {
+    htmlSnippetMaxLength: HTML_SNIPPET_MAX_LENGTH,
+  });
 
   // Enhance with accessible names via ariaSnapshot()
   const fields: FieldInfo[] = [];
@@ -251,25 +291,31 @@ export async function runAutocompleteAudit(
     VALID_AUTOCOMPLETE_TOKENS
   );
 
-  const result: AutocompleteAuditResult = {
-    url: page.url(),
+  const details: AutocompleteAuditDetails = {
     totalFieldsChecked: fields.length,
     missingAutocomplete: missing,
     invalidAutocomplete: invalid,
   };
 
+  const result: AutocompleteAuditResult = buildAuditResult({
+    source: 'autocomplete-audit',
+    url: page.url(),
+    details,
+    buckets: normalizeAutocompleteAudit(details),
+  });
+
   // Output results
   logAuditHeader('Autocomplete Audit Results', 'WCAG 1.3.5', result.url);
 
   logSummary({
-    'Total form fields': result.totalFieldsChecked,
-    'Fields missing autocomplete': result.missingAutocomplete.length,
-    'Fields with invalid autocomplete': result.invalidAutocomplete.length,
+    'Total form fields': details.totalFieldsChecked,
+    'Fields missing autocomplete': details.missingAutocomplete.length,
+    'Fields with invalid autocomplete': details.invalidAutocomplete.length,
   });
 
   logIssueList<AutocompleteIssue>(
     'Missing Autocomplete',
-    result.missingAutocomplete,
+    details.missingAutocomplete,
     (el, i) => [
       `${i + 1}. <${el.tagName}> "${el.selector}"`,
       `   name: ${el.name || 'none'}, id: ${el.id || 'none'}`,
@@ -280,7 +326,7 @@ export async function runAutocompleteAudit(
 
   logIssueList<AutocompleteIssue>(
     'Invalid Autocomplete',
-    result.invalidAutocomplete,
+    details.invalidAutocomplete,
     (el, i) => [
       `${i + 1}. <${el.tagName}> "${el.selector}"`,
       `   Current: autocomplete="${el.currentAutocomplete}"`,

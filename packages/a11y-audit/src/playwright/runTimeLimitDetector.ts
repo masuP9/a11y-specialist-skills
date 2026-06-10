@@ -14,6 +14,7 @@
 import type { Page } from '@playwright/test';
 import type {
   TimeLimitDetectorResult,
+  TimeLimitDetectorDetails,
   MetaRefreshInfo,
   TimerInfo,
   CountdownIndicator,
@@ -23,7 +24,12 @@ import {
   TIME_LIMIT_THRESHOLD_MS,
   TIME_LIMIT_MIN_MS,
   DEFAULT_TIME_LIMIT_RESULT_FILE,
+  HTML_SNIPPET_MAX_LENGTH,
 } from '../constants.js';
+import {
+  buildAuditResult,
+  normalizeTimeLimitDetector,
+} from '../utils/axe-format.js';
 import {
   saveAuditResult,
   requireTargetUrl,
@@ -103,8 +109,25 @@ interface TimeLimitIndicatorsResult {
 /** Detect meta refresh + countdown indicators (browser context). */
 function detectTimeLimitIndicators(args: {
   keywords: readonly string[];
+  htmlSnippetMaxLength: number;
 }): TimeLimitIndicatorsResult {
-  const { keywords } = args;
+  const { keywords, htmlSnippetMaxLength } = args;
+
+  function getHtmlSnippet(element: Element): { html: string; htmlTruncated: boolean } {
+    let html = '';
+    try {
+      html = element.outerHTML || '';
+    } catch {
+      html = '';
+    }
+    if (!html) {
+      return { html: `<${element.tagName.toLowerCase()}>`, htmlTruncated: false };
+    }
+    if (html.length > htmlSnippetMaxLength) {
+      return { html: html.slice(0, htmlSnippetMaxLength), htmlTruncated: true };
+    }
+    return { html, htmlTruncated: false };
+  }
 
   function getUniqueSelector(element: Element, elementIndex: number): string {
     if (element.id) {
@@ -138,6 +161,7 @@ function detectTimeLimitIndicators(args: {
           content,
           seconds: parseInt(match[1] ?? '0', 10),
           url: match[2]?.trim() || null,
+          ...getHtmlSnippet(meta),
         });
       }
     }
@@ -171,6 +195,7 @@ function detectTimeLimitIndicators(args: {
               selector: getUniqueSelector(parent, elementIndex),
               text: fullText,
               tagName: parent.tagName.toLowerCase(),
+              ...getHtmlSnippet(parent),
             });
           }
         }
@@ -225,6 +250,7 @@ export async function runTimeLimitDetector(
 
   const indicators = await page.evaluate(detectTimeLimitIndicators, {
     keywords: [...TIME_LIMIT_KEYWORDS],
+    htmlSnippetMaxLength: HTML_SNIPPET_MAX_LENGTH,
   });
 
   const hasTimeLimits =
@@ -232,24 +258,30 @@ export async function runTimeLimitDetector(
     timers.length > 0 ||
     indicators.countdownIndicators.length > 0;
 
-  const result: TimeLimitDetectorResult = {
-    url: page.url(),
+  const details: TimeLimitDetectorDetails = {
     metaRefresh: indicators.metaRefresh,
     timers,
     countdownIndicators: indicators.countdownIndicators,
     hasTimeLimits,
   };
 
+  const result: TimeLimitDetectorResult = buildAuditResult({
+    source: 'time-limit-detector',
+    url: page.url(),
+    details,
+    buckets: normalizeTimeLimitDetector(details),
+  });
+
   logAuditHeader('Time Limit Detection Results', 'WCAG 2.2.1', result.url);
 
   logSummary({
-    'Meta refresh tags': result.metaRefresh.length,
-    [`Timers detected (${minMs / 1000}s - ${maxMs / 1000}s)`]: result.timers.length,
-    'Countdown text indicators': result.countdownIndicators.length,
-    'Time limits detected': result.hasTimeLimits,
+    'Meta refresh tags': details.metaRefresh.length,
+    [`Timers detected (${minMs / 1000}s - ${maxMs / 1000}s)`]: details.timers.length,
+    'Countdown text indicators': details.countdownIndicators.length,
+    'Time limits detected': details.hasTimeLimits,
   });
 
-  logIssueList<MetaRefreshInfo>('Meta Refresh', result.metaRefresh, (meta, i) => {
+  logIssueList<MetaRefreshInfo>('Meta Refresh', details.metaRefresh, (meta, i) => {
     const lines = [
       `${i + 1}. content="${meta.content}"`,
       `   Refresh in ${meta.seconds} seconds`,
@@ -260,7 +292,7 @@ export async function runTimeLimitDetector(
     return lines;
   });
 
-  logIssueList<TimerInfo>('Detected Timers', result.timers, (timer, i) => {
+  logIssueList<TimerInfo>('Detected Timers', details.timers, (timer, i) => {
     const lines = [
       `${i + 1}. ${timer.type} - ${timer.delayMs}ms (${(timer.delayMs / 1000).toFixed(1)}s)`,
     ];
@@ -272,7 +304,7 @@ export async function runTimeLimitDetector(
 
   logIssueList<CountdownIndicator>(
     'Countdown Indicators',
-    result.countdownIndicators,
+    details.countdownIndicators,
     (indicator, i) => {
       const truncatedText =
         indicator.text.length > 80
