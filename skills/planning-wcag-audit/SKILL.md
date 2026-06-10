@@ -1,6 +1,6 @@
 ---
 name: planning-wcag-audit
-description: WCAG audit planning support based on WAIC test guidelines. Helps determine audit scope, page selection method, and generates audit plan documents.
+description: Plan WCAG audits for a specific site using WAIC test guidelines, including scope, page selection, environment, and execution plan. Use planning-a11y-improvement for organization-wide, long-term improvement planning.
 argument-hint: Site URL or description (optional)
 allowed-tools: Read Grep Glob AskUserQuestion Write
 ---
@@ -66,7 +66,7 @@ If the user does not have a URL list, follow Steps 1-6 in the guide for URL coll
 5. Deduplication and merge
 6. Final confirmation
 
-> **Note**: When using Playwright for URL collection, additional browser tools (browser_navigate, browser_snapshot, browser_run_code, etc.) are required.
+> **Note**: Collect URLs with available browser interaction, sitemap.xml, or CMS exports. If browsing is unavailable, ask the user for a URL list.
 
 **Sample Size Guidelines (Baseline: ~40 pages, majority representative)**
 
@@ -98,7 +98,7 @@ Please confirm the test environment:
 
 ## Step 5: Audit Plan Document Generation
 
-Create the plan using `references/audit-plan-template.md` and save it with the `Write` tool.
+Create the plan using `references/audit-plan-template.md` and save it as Markdown when workspace writing is available.
 
 **Output requirements**
 - Include overview, test method, target page list

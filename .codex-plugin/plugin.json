@@ -1,0 +1,40 @@
+{
+  "name": "a11y-specialist-skills",
+  "version": "2.8.0",
+  "description": "Accessibility specialist skills for WCAG review, conformance auditing, and improvement planning in Codex and Claude Code.",
+  "author": {
+    "name": "masuP9",
+    "url": "https://github.com/masuP9"
+  },
+  "homepage": "https://github.com/masuP9/a11y-specialist-skills",
+  "repository": "https://github.com/masuP9/a11y-specialist-skills",
+  "license": "MIT",
+  "keywords": [
+    "accessibility",
+    "a11y",
+    "wcag",
+    "aria",
+    "review",
+    "audit",
+    "conformance",
+    "planning"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "A11y Specialist Skills",
+    "shortDescription": "Review, audit, and plan web accessibility",
+    "longDescription": "Review web pages, code, and designs for accessibility; run WCAG 2.2 conformance audits; and create audit or organizational improvement plans.",
+    "developerName": "masuP9",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/masuP9/a11y-specialist-skills",
+    "defaultPrompt": [
+      "Review this implementation for accessibility issues.",
+      "Audit this page for WCAG 2.2 AA conformance.",
+      "Create an accessibility improvement plan."
+    ]
+  }
+}

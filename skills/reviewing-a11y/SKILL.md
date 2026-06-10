@@ -1,13 +1,15 @@
 ---
 name: reviewing-a11y
-description: Accessibility review orchestrator. Analyzes web pages, code implementations, and design mockups from WCAG and WAI-ARIA APG perspectives. Automatically delegates to specialized sub-agents based on review target.
+description: Review accessibility of web pages, code implementations, design mockups, and specifications, then report severity-ranked issues and fixes. Use auditing-wcag instead for formal conformance decisions across all success criteria.
 argument-hint: URL, file path, or Figma URL to review
 allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mcp__playwright__browser_navigate mcp__playwright__browser_click
 ---
 
+[日本語版 (Japanese)](./SKILL.ja.md)
+
 # Accessibility Review
 
-You are an accessibility review orchestrator. Your role is to identify what the user wants reviewed, then delegate to the appropriate specialized sub-agent.
+Identify what the user wants reviewed, then perform the accessibility review by following the corresponding reference guide.
 
 ## Step 1: Identify Review Target
 
@@ -19,7 +21,7 @@ Analyze the user's request to determine the review target:
 - User says "check this page", "review this site", "test this URL"
 - User wants to review a deployed/live website
 
-**Action:** Delegate to **Page Review** specialist
+**Action:** Follow the page review guide
 
 ### Code Implementation
 **Indicators:**
@@ -28,7 +30,7 @@ Analyze the user's request to determine the review target:
 - User mentions specific files or directories in the codebase
 - User asks about static code analysis
 
-**Action:** Delegate to **Code Review** specialist
+**Action:** Follow the code review guide
 
 ### Design Mockup/Specification
 **Indicators:**
@@ -37,7 +39,7 @@ Analyze the user's request to determine the review target:
 - User says "review this design", "check this mockup", "look at this wireframe"
 - User asks about design specifications or visual accessibility
 
-**Action:** Delegate to **Design Review** specialist
+**Action:** Follow the design review guide
 
 ### Ambiguous Cases
 If unclear, ask the user:
@@ -50,9 +52,9 @@ I can review accessibility for:
 Which would you like me to review?
 ```
 
-## Step 2: Delegate to Specialist
+## Step 2: Load the Guide and Review
 
-Once you've identified the target, use the **Task** tool to launch the appropriate specialist:
+Once you identify the target, read the reference guide matching the user's language and execute its process directly.
 
 ### For Web Pages
 ```
@@ -60,8 +62,7 @@ Read the page review guide:
 - English: references/page-review.md
 - Japanese: references/page-review.ja.md
 
-Then launch a general-purpose Task agent with the guide content and user's URL.
-Instruct the agent to follow the page review guide exactly.
+Follow the guide using available browser interaction, web retrieval, or user-provided content.
 ```
 
 ### For Code
@@ -70,8 +71,7 @@ Read the code review guide:
 - English: references/code-review.md
 - Japanese: references/code-review.ja.md
 
-Then launch a general-purpose Task agent with the guide content and user's file paths.
-Instruct the agent to follow the code review guide exactly.
+Follow the guide by inspecting the target files and related implementation.
 ```
 
 ### For Designs
@@ -80,24 +80,29 @@ Read the design review guide:
 - English: references/design-review.md
 - Japanese: references/design-review.ja.md
 
-Then launch a general-purpose Task agent with the guide content and user's design files.
-Instruct the agent to follow the design review guide exactly.
+Follow the guide using available image, document, or Figma retrieval capabilities.
 ```
+
+### When to Use Sub-agents
+
+- Use sub-agents only when the user explicitly requests parallel review, specialist delegation, or division across multiple targets.
+- Assign one target type to each agent and provide the relevant guide and target.
+- Wait for every result, remove duplicates, and return one consolidated report.
+- If sub-agents are unavailable, review the targets sequentially in this agent.
 
 ## Step 3: Return Results
 
-When the specialist agent completes:
+When the review completes:
 1. Present the findings to the user
 2. Offer to review additional targets if needed
 3. Suggest next steps (e.g., "Would you like me to review the code implementation next?")
 
 ## Important Notes
 
-- **Always read the appropriate guide first** before launching the Task agent
+- **Always read the appropriate guide before starting the review**
 - **Choose the language** (English or Japanese) based on the user's language
-- **Pass the full guide content** to the Task agent so it has complete instructions
-- **Be specific** in your Task prompt about what to review and how to format output
-- **Don't mix review types** - one specialist per target type
+- **Distinguish evidence from gaps** and state what could not be verified
+- **Don't mix review types** - use one guide per target type
 
 ## Example Workflows
 
@@ -107,8 +112,8 @@ User: "Review https://example.com for accessibility"
 
 1. Identify: This is a web page (URL provided)
 2. Read: references/page-review.md
-3. Delegate: Launch Task agent with page review guide + URL
-4. Return: Present specialist's findings
+3. Execute: Inspect the page by following the guide
+4. Return: Present findings
 ```
 
 ### Example 2: User provides file path
@@ -117,8 +122,8 @@ User: "Check src/components/Button.tsx for a11y issues"
 
 1. Identify: This is code (file path provided)
 2. Read: references/code-review.md
-3. Delegate: Launch Task agent with code review guide + file path
-4. Return: Present specialist's findings
+3. Execute: Inspect the target and related code by following the guide
+4. Return: Present findings
 ```
 
 ### Example 3: User provides Figma URL
@@ -127,8 +132,8 @@ User: "Review this design: https://figma.com/file/abc123"
 
 1. Identify: This is a design (Figma URL)
 2. Read: references/design-review.md
-3. Delegate: Launch Task agent with design review guide + Figma URL
-4. Return: Present specialist's findings
+3. Execute: Inspect the design by following the guide
+4. Return: Present findings
 ```
 
 ## WCAG & Standards Reference
@@ -146,4 +151,4 @@ Common success criteria to reference:
 - 2.4.6 Headings and Labels (AA)
 - 4.1.2 Name, Role, Value (A)
 
-Remember: Your job is to identify and delegate, not to perform the detailed review yourself. Trust the specialist agents to follow their guides.
+Do not turn missing evidence into a conclusive finding. List unsupported checks as manual verification.

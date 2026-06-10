@@ -6,7 +6,7 @@ Items requiring human judgment. Use screenshots/video/notes as evidence for visu
 
 ## Color/Contrast
 
-> **Note:** 1.4.1 (Use of Color), 1.4.3 (Text Contrast), and 1.4.11 (Non-text Contrast) are covered in [automated-checks.md](./automated-checks.md). For 1.4.1, Claude analyzes accessible text for color references. For charts/graphs relying solely on color differentiation, manual visual inspection is still needed.
+> **Note:** 1.4.1 (Use of Color), 1.4.3 (Text Contrast), and 1.4.11 (Non-text Contrast) are covered in [automated-checks.md](./automated-checks.md). For 1.4.1, the agent analyzes accessible text for color references. For charts/graphs relying solely on color differentiation, manual visual inspection is still needed.
 
 ## Text/Layout
 | Criterion | Check | Evidence | Fail rule |

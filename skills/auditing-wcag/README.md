@@ -72,6 +72,7 @@ Items that cannot be automated are marked as **NT (Not Tested)**.
 skills/auditing-wcag/
 ├── SKILL.md                        # Main skill (English)
 ├── SKILL.ja.md                     # Main skill (Japanese)
+├── agents/openai.yaml               # Codex UI metadata
 ├── README.md                       # This file
 ├── README.ja.md                    # Japanese README
 └── references/

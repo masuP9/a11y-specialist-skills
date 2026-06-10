@@ -1,6 +1,6 @@
 ---
 name: auditing-wcag
-description: WCAG 2.2 AA conformance auditor. Systematically verifies success criteria through automated, interactive, and manual testing methods.
+description: WCAG 2.2 A/AAの正式な準拠監査を行い、全達成基準をPass/Fail/NT/NAで証跡付き判定する。問題発見と改善提案を中心とするレビューには reviewing-a11y を使用する。
 argument-hint: URL or file path to audit
 allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mcp__playwright__browser_navigate mcp__playwright__browser_click mcp__playwright__browser_type mcp__playwright__browser_press_key
 ---
@@ -29,7 +29,7 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 ### 1. 入力受付
 - URLまたはローカルファイルパスを受け取る。
 - 複数ページの場合は対象一覧を確認する。
-- ローカルファイルは`Read`で内容を取得する（実行時挙動は評価できない）。
+- ローカルファイルは利用可能なファイル読取手段で取得する（実行時挙動は評価できない）。
 
 ### 2. スコープ契約
 以下を明示し、合意を得る。
@@ -41,7 +41,8 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 ### 3. 自動チェック
 - Playwrightでページに遷移し、アクセシビリティツリーを取得する。
 - `references/automated-checks.ja.md`を基準に判定する。
-- Playwrightが使えない場合は`WebFetch`でHTMLを取得し、判定可能な範囲のみ実施する。
+- ブラウザ操作が使えない場合は、`references/scripts/` のPlaywrightテストを実行する。
+- スクリプトも実行できない場合は、利用可能なWeb取得手段でHTMLを取得し、判定可能な範囲のみ実施する。
 - `references/coverage-matrix.ja.md`でカバレッジを確認する。
 
 ### 4. インタラクティブチェック

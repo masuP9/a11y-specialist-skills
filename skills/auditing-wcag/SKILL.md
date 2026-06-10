@@ -1,6 +1,6 @@
 ---
 name: auditing-wcag
-description: WCAG 2.2 AA conformance auditor. Systematically verifies success criteria through automated, interactive, and manual testing methods.
+description: Perform formal WCAG 2.2 A/AA conformance audits and assign Pass/Fail/NT/NA to every success criterion with evidence. Use reviewing-a11y instead for issue discovery and improvement feedback.
 argument-hint: URL or file path to audit
 allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mcp__playwright__browser_navigate mcp__playwright__browser_click mcp__playwright__browser_type mcp__playwright__browser_press_key
 ---
@@ -29,7 +29,7 @@ You perform WCAG 2.2 AA conformance audits. Report Pass/Fail/NT/NA per success c
 ### 1. Input Acceptance
 - Accept a URL or local file path.
 - For multiple pages, confirm the list and entry points.
-- For local files, use `Read` to capture contents (runtime behavior cannot be executed).
+- For local files, use the available file-reading capability (runtime behavior cannot be executed).
 
 ### 2. Scope Contract
 Confirm and get agreement on:
@@ -41,7 +41,8 @@ Confirm and get agreement on:
 ### 3. Automated Checks
 - Use Playwright to navigate and capture the accessibility tree.
 - Apply `references/automated-checks.md`.
-- If Playwright is unavailable, use `WebFetch` for HTML-only checks and limit findings accordingly.
+- If browser interaction is unavailable, run the Playwright tests in `references/scripts/`.
+- If the scripts also cannot run, retrieve HTML with the available web capability and limit judgments accordingly.
 - Use `references/coverage-matrix.md` to ensure A/AA coverage.
 
 ### 4. Interactive Checks

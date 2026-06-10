@@ -2,9 +2,9 @@
 
 ## Writing Skills and Guides
 
-### Assume Claude's Prior Knowledge
+### Assume the Agent's Prior Knowledge
 
-Claude already knows accessibility standards thoroughly. Do not include:
+Claude Code and Codex already know accessibility standards thoroughly. Do not include:
 
 - WCAG 2.x success criteria definitions
 - WAI-ARIA roles, states, and properties
@@ -43,6 +43,15 @@ This project maintains documentation in both English and Japanese.
 - English files are translations of the Japanese source
 - When updating content, update the Japanese version first, then sync to English
 - When adding a new file, create both language versions
+
+### Shared Skill Compatibility
+
+- Keep one shared `SKILL.md` for Claude Code and Codex; do not duplicate platform-specific skill bodies.
+- Preserve `argument-hint` and `allowed-tools` in skill frontmatter. Claude Code uses them, and the supported Codex runtime tolerates these extensions.
+- Validate skills with `npm run validate:skills`. The upstream Codex `quick_validate.py` is not the compatibility gate because it rejects the Claude Code `argument-hint` extension.
+- Express workflow steps in terms of capabilities instead of platform-specific tool names.
+- Put Codex presentation metadata in `agents/openai.yaml`, not in a second skill file.
+- Keep the version synchronized across `.claude-plugin/plugin.json`, both version fields in `.claude-plugin/marketplace.json`, and `.codex-plugin/plugin.json`.
 
 ### Language Links
 

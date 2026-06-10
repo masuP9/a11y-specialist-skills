@@ -2,7 +2,7 @@
   "name": "a11y-specialist-skills-monorepo",
   "private": true,
   "version": "0.0.0",
-  "description": "Monorepo for a11y-specialist-skills: Claude Code skill plugin + @a11y-skills/audit npm package",
+  "description": "Monorepo for a11y-specialist-skills: Claude Code and Codex skill plugin + @a11y-skills/audit npm package",
   "license": "MIT",
   "author": {
     "name": "masuP9",
@@ -18,7 +18,12 @@
   "scripts": {
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
+    "test:validator": "node --test scripts/validate-skills.test.mjs",
     "typecheck": "npm run typecheck --workspaces --if-present",
+    "validate:skills": "node scripts/validate-skills.mjs",
     "clean": "npm run clean --workspaces --if-present"
+  },
+  "devDependencies": {
+    "yaml": "^2.8.1"
   }
 }

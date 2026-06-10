@@ -1,6 +1,8 @@
 # WCAG Accessibility Checklist
 
-This is a reference document for human reviewers. Claude already knows these WCAG criteria - this is maintained for documentation purposes only.
+[日本語版 (Japanese)](./wcag-checklist.ja.md)
+
+This is a reference document for human reviewers. Supported agents are assumed to know these WCAG criteria; this file is maintained for documentation purposes.
 
 ## Automated Check Items
 
