@@ -1,0 +1,4 @@
+interface:
+  display_name: "Accessibility Improvement Plan"
+  short_description: "Create an a11y roadmap, KPIs, and strategy"
+  default_prompt: "Use $planning-a11y-improvement to assess organizational maturity and create a phased accessibility roadmap with KPIs and stakeholder actions."

@@ -14,23 +14,23 @@ Choose your approach based on available tools:
 
 | Tool Available | Capability | Limitation |
 |----------------|------------|------------|
-| Playwright MCP | Full accessibility tree, computed roles, visual rendering | Requires MCP setup |
-| WebFetch | HTML source, DOM structure | No accessibility tree, no JS-rendered content |
+| Browser interaction | Full accessibility tree, computed roles, visual rendering | Requires supported browser tooling or MCP |
+| Web retrieval | HTML source, DOM structure | No accessibility tree, no JS-rendered content |
 | Neither | Cannot fetch page | Ask user to paste HTML |
 
 ### Priority Order
 
-1. **Playwright MCP** (recommended): Provides accessibility tree showing what assistive technologies actually "see"
-2. **WebFetch**: Fallback for HTML analysis when Playwright unavailable
+1. **Browser interaction** (recommended): Provides the accessibility tree that assistive technologies see
+2. **Web retrieval**: Fallback for HTML analysis when browser interaction is unavailable
 3. **User-provided HTML**: Last resort when no fetch tools available
 
 ## Review Process
 
-### With Playwright MCP
+### With Browser Interaction
 
 ```
-1. Navigate: mcp__playwright__browser_navigate with URL
-2. Snapshot: mcp__playwright__browser_snapshot to capture:
+1. Navigate to the URL with the available browser capability
+2. Capture the page state, including:
    - Accessibility tree (primary data source)
    - Visual rendering
    - Complete DOM structure
@@ -39,10 +39,10 @@ Choose your approach based on available tools:
 
 The accessibility tree is your most reliable data source - it shows what screen readers actually announce.
 
-### With WebFetch Only
+### With Web Retrieval Only
 
 ```
-1. Fetch: WebFetch with URL to get HTML source
+1. Retrieve the HTML source with the available web capability
 2. Analyze HTML structure directly:
    - Semantic elements (headings, landmarks, lists)
    - ARIA attributes in source
@@ -50,7 +50,7 @@ The accessibility tree is your most reliable data source - it shows what screen 
    - Form label associations
 ```
 
-**Limitations when using WebFetch:**
+**Limitations when using web retrieval:**
 - Cannot detect JavaScript-rendered content
 - Cannot verify computed accessible names
 - Cannot see actual accessibility tree
@@ -60,7 +60,7 @@ Note these limitations in your report and recommend browser-based testing.
 
 ### Without Fetch Tools
 
-If neither Playwright nor WebFetch is available:
+If neither browser interaction nor web retrieval is available:
 1. Inform the user that you cannot fetch the page directly
 2. Ask them to paste the HTML source or provide a screenshot
 3. Proceed with static analysis of provided content
@@ -69,7 +69,7 @@ If neither Playwright nor WebFetch is available:
 
 Analyze for these issues (tools determine what you can detect):
 
-| Category | Playwright | WebFetch |
+| Category | Browser interaction | Web retrieval |
 |----------|------------|----------|
 | Heading structure | ✅ Computed levels | ✅ HTML elements |
 | Landmarks | ✅ Computed roles | ✅ HTML5/ARIA |
@@ -141,7 +141,7 @@ The following items require manual testing:
 
 ## Key Principles
 
-- **Use best available tool**: Playwright > WebFetch > user-provided content
+- **Use the best available capability**: browser interaction > web retrieval > user-provided content
 - **Be transparent about limitations**: Note what you couldn't check
 - **Be specific**: Reference actual elements (selectors, text content, roles)
 - **Prioritize impact**: Critical issues first
@@ -149,19 +149,19 @@ The following items require manual testing:
 
 ## Example Workflows
 
-### With Playwright
+### With Browser Interaction
 ```
 1. User provides URL
-2. Navigate with Playwright
+2. Navigate in the browser
 3. Capture snapshot with accessibility tree
 4. Analyze tree top-to-bottom
 5. Compile findings into structured report
 ```
 
-### With WebFetch
+### With Web Retrieval
 ```
 1. User provides URL
-2. Fetch HTML with WebFetch
+2. Retrieve HTML with the available web capability
 3. Parse DOM structure
 4. Analyze semantic markup and ARIA
 5. Note limitations in report

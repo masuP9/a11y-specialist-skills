@@ -1,6 +1,6 @@
 ---
 name: planning-a11y-improvement
-description: アクセシビリティ改善計画の策定支援。組織の成熟度評価、フェーズ別ロードマップ、KPI設計、ステークホルダー説得資料を生成。
+description: 組織のアクセシビリティ成熟度を評価し、中長期ロードマップ、KPI、ステークホルダー向け資料を含む改善計画を策定する。特定サイトのWCAG監査実施計画には planning-wcag-audit を使用する。
 argument-hint: Organization context or goal (optional)
 allowed-tools: Read Grep Glob AskUserQuestion Write
 ---
@@ -91,7 +91,7 @@ allowed-tools: Read Grep Glob AskUserQuestion Write
 
 ## ステップ2: 情報収集
 
-シナリオを特定したら、以下の順序で情報を収集します。`AskUserQuestion`ツールを使って効率的に質問してください。
+シナリオを特定したら、以下の順序で情報を収集します。利用可能な対話手段で短く効率的に質問してください。
 
 ### Stage 0: 参考ドキュメント確認（最初に確認）
 
@@ -113,7 +113,7 @@ allowed-tools: Read Grep Glob AskUserQuestion Write
 なければ「なし」と回答してください。
 ```
 
-ファイルパスが指定されたら `Read` ツールで読み込み、内容をコンテキストとして保持します。読み込んだ情報は成熟度評価やロードマップ作成に活用します。
+ファイルパスが指定されたら利用可能なファイル読取手段で読み込み、内容を成熟度評価やロードマップ作成に活用します。
 
 ### Stage 1: 必須項目（最初に必ず確認）
 
@@ -356,7 +356,7 @@ allowed-tools: Read Grep Glob AskUserQuestion Write
 
 ### 6.2 ファイル出力
 
-`Write`ツールを使用して、最終版の戦略をファイルに保存します。
+ワークスペースへの書込みが可能なら、最終版の戦略をMarkdownファイルとして保存します。
 
 ファイルの末尾には以下を含めてください：
 

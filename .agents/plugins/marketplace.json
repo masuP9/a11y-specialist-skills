@@ -1,0 +1,20 @@
+{
+  "name": "a11y-specialist-skills",
+  "interface": {
+    "displayName": "A11y Specialist Skills"
+  },
+  "plugins": [
+    {
+      "name": "a11y-specialist-skills",
+      "source": {
+        "source": "local",
+        "path": "./../.."
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

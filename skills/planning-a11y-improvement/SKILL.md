@@ -1,6 +1,6 @@
 ---
 name: planning-a11y-improvement
-description: Accessibility improvement planning support. Generates organizational maturity assessment, phased roadmap, KPI design, and stakeholder persuasion materials.
+description: Assess organizational accessibility maturity and create a long-term improvement plan with a roadmap, KPIs, and stakeholder materials. Use planning-wcag-audit for the execution plan of a specific site's WCAG audit.
 argument-hint: Organization context or goal (optional)
 allowed-tools: Read Grep Glob AskUserQuestion Write
 ---
@@ -92,7 +92,7 @@ I'll help develop an accessibility improvement strategy. Which situation is clos
 
 ## Step 2: Gather Information
 
-Once the scenario is identified, collect information in the following order. Use the `AskUserQuestion` tool to ask questions efficiently.
+Once the scenario is identified, collect information in the following order. Ask short, efficient questions using the available interaction mechanism.
 
 ### Stage 0: Reference Documents (Check first)
 
@@ -114,7 +114,7 @@ For multiple files, separate paths with commas.
 If none, reply "none".
 ```
 
-If file paths are provided, use the `Read` tool to load the content and keep it as context. The information will be used for maturity assessment and roadmap creation.
+If file paths are provided, use the available file-reading capability and apply the content to the maturity assessment and roadmap.
 
 ### Stage 1: Required Items (Always confirm first)
 
@@ -357,7 +357,7 @@ Default suggestion: `./a11y-strategy-YYYY-MM-DD.md`
 
 ### 6.2 Write File
 
-Use `Write` tool to save the final strategy.
+When workspace writing is available, save the final strategy as a Markdown file.
 
 Include at the end of the file:
 

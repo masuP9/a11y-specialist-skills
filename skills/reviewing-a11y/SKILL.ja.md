@@ -1,13 +1,15 @@
 ---
 name: reviewing-a11y
-description: アクセシビリティレビューのオーケストレーター。Webページ、コード実装、デザインモックアップをWCAG・WAI-ARIA APG観点でレビュー。レビュー対象に応じて専門サブエージェントに自動委譲。
+description: Webページ、コード実装、デザインモックアップや仕様書のアクセシビリティをレビューし、重大度別の問題と修正案を報告する。準拠状況を全達成基準について判定する正式監査には auditing-wcag を使用する。
 argument-hint: URL, file path, or Figma URL to review
 allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mcp__playwright__browser_navigate mcp__playwright__browser_click
 ---
 
+[English](./SKILL.md)
+
 # アクセシビリティレビュー
 
-あなたはアクセシビリティレビューのオーケストレーターです。ユーザーがレビューを希望する対象を特定し、適切な専門サブエージェントに委譲する役割を担います。
+ユーザーがレビューを希望する対象を特定し、対応する参照ガイドに従ってアクセシビリティレビューを実行します。
 
 ## ステップ1: レビュー対象の特定
 
@@ -19,7 +21,7 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 - ユーザーが「このページをチェック」「このサイトをレビュー」「このURLをテスト」と言う
 - デプロイ済み/実際のウェブサイトをレビューしたい
 
-**アクション:** **ページレビュー**スペシャリストに委譲
+**アクション:** ページレビューガイドに従う
 
 ### コード実装
 **判別指標：**
@@ -28,7 +30,7 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 - コードベース内の特定のファイルやディレクトリに言及
 - 静的コード解析について尋ねる
 
-**アクション:** **コードレビュー**スペシャリストに委譲
+**アクション:** コードレビューガイドに従う
 
 ### デザインモックアップ/仕様書
 **判別指標：**
@@ -37,7 +39,7 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 - ユーザーが「このデザインをレビュー」「このモックアップをチェック」「このワイヤーフレームを見て」と言う
 - デザイン仕様書や視覚的アクセシビリティについて尋ねる
 
-**アクション:** **デザインレビュー**スペシャリストに委譲
+**アクション:** デザインレビューガイドに従う
 
 ### 曖昧なケース
 不明な場合は、ユーザーに尋ねます：
@@ -50,9 +52,9 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 どれをレビューしますか？
 ```
 
-## ステップ2: スペシャリストへの委譲
+## ステップ2: 参照ガイドの読み込みとレビュー
 
-対象を特定したら、**Task**ツールを使用して適切なスペシャリストを起動します：
+対象を特定したら、ユーザーの言語に合う参照ガイドを読み、その手順をこのエージェントが直接実行します。
 
 ### Webページの場合
 ```
@@ -60,8 +62,7 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 - 英語: references/page-review.md
 - 日本語: references/page-review.ja.md
 
-次に、ガイド内容とユーザーのURLでgeneral-purpose Taskエージェントを起動。
-エージェントにページレビューガイドに正確に従うよう指示。
+ガイドに従って利用可能なブラウザ操作、Web取得、またはユーザー提供コンテンツを使い、ページをレビューする。
 ```
 
 ### コードの場合
@@ -70,8 +71,7 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 - 英語: references/code-review.md
 - 日本語: references/code-review.ja.md
 
-次に、ガイド内容とユーザーのファイルパスでgeneral-purpose Taskエージェントを起動。
-エージェントにコードレビューガイドに正確に従うよう指示。
+ガイドに従って対象ファイルと関連実装を調査し、コードをレビューする。
 ```
 
 ### デザインの場合
@@ -80,24 +80,29 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 - 英語: references/design-review.md
 - 日本語: references/design-review.ja.md
 
-次に、ガイド内容とユーザーのデザインファイルでgeneral-purpose Taskエージェントを起動。
-エージェントにデザインレビューガイドに正確に従うよう指示。
+ガイドに従って利用可能な画像・文書・Figma取得手段を使い、デザインをレビューする。
 ```
+
+### サブエージェントを使う場合
+
+- ユーザーが並列レビュー、専門エージェントへの委譲、または複数対象の分担を明示した場合のみ使用する。
+- 対象タイプごとに独立したエージェントへ分担し、各エージェントに該当ガイドと対象を渡す。
+- すべての結果を待って重複を整理し、単一のレポートとして返す。
+- サブエージェント機能がない環境では、このエージェントが順番にレビューする。
 
 ## ステップ3: 結果の返却
 
-スペシャリストエージェントが完了したら：
+レビューが完了したら：
 1. 発見事項をユーザーに提示
 2. 必要に応じて追加対象のレビューを提案
 3. 次のステップを提案（例：「次はコード実装をレビューしますか？」）
 
 ## 重要な注意事項
 
-- **Taskエージェントを起動する前に、必ず適切なガイドを読む**
+- **レビューを始める前に、必ず適切なガイドを読む**
 - **言語を選択**（英語または日本語）ユーザーの言語に基づいて
-- **完全なガイド内容を渡す** Taskエージェントが完全な指示を持つように
-- **具体的に** Taskプロンプトで何をレビューし、どのように出力をフォーマットするかを明確に
-- **レビュータイプを混在させない** - 対象タイプごとに1つのスペシャリスト
+- **証拠を明示** 何を確認でき、何を確認できなかったかを区別する
+- **レビュータイプを混在させない** - 対象タイプごとに1つのガイドを使用する
 
 ## ワークフロー例
 
@@ -107,8 +112,8 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 
 1. 特定: これはWebページ（URL提供）
 2. 読み込み: references/page-review.ja.md
-3. 委譲: ページレビューガイド + URLでTaskエージェントを起動
-4. 返却: スペシャリストの発見事項を提示
+3. 実行: ガイドに従ってページを調査
+4. 返却: 発見事項を提示
 ```
 
 ### 例2: ユーザーがファイルパスを提供
@@ -117,8 +122,8 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 
 1. 特定: これはコード（ファイルパス提供）
 2. 読み込み: references/code-review.ja.md
-3. 委譲: コードレビューガイド + ファイルパスでTaskエージェントを起動
-4. 返却: スペシャリストの発見事項を提示
+3. 実行: ガイドに従って対象と関連コードを調査
+4. 返却: 発見事項を提示
 ```
 
 ### 例3: ユーザーがFigma URLを提供
@@ -127,8 +132,8 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 
 1. 特定: これはデザイン（Figma URL）
 2. 読み込み: references/design-review.ja.md
-3. 委譲: デザインレビューガイド + Figma URLでTaskエージェントを起動
-4. 返却: スペシャリストの発見事項を提示
+3. 実行: ガイドに従ってデザインを調査
+4. 返却: 発見事項を提示
 ```
 
 ## WCAG & 標準リファレンス
@@ -147,4 +152,4 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 - 2.4.6 見出し及びラベル (AA)
 - 4.1.2 名前 (name)・役割 (role)・値 (value) (A)
 
-注意: あなたの仕事は特定と委譲であり、詳細なレビューを自分で実行することではありません。スペシャリストエージェントがガイドに従うことを信頼してください。
+注意: 証拠が不足する項目を推測で断定せず、手動確認として明示してください。

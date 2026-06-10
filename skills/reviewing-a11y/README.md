@@ -6,13 +6,13 @@ A skill for reviewing web pages, component implementations, design mockups, and 
 
 ## Architecture
 
-This skill uses an **orchestrator pattern** with specialized sub-agents:
+This skill uses a **routing pattern** that selects a target-specific reference guide. The main agent reads the guide and performs the review directly:
 
 ```
 ┌─────────────────────────────────────┐
-│   reviewing-a11y (Orchestrator)       │
+│   reviewing-a11y                    │
 │   - Identifies review target        │
-│   - Delegates to specialist         │
+│   - Reads guide and reviews target  │
 └──────────┬──────────────────────────┘
            │
     ┌──────┴────────┬─────────────┐
@@ -20,11 +20,11 @@ This skill uses an **orchestrator pattern** with specialized sub-agents:
     ▼               ▼             ▼
 ┌───────┐    ┌──────────┐   ┌────────────┐
 │ Page  │    │   Code   │   │   Design   │
-│Review │    │  Review  │   │   Review   │
+│ Guide │    │  Guide   │   │   Guide    │
 └───────┘    └──────────┘   └────────────┘
 ```
 
-### Specialists
+### Reference Guides
 
 1. **Page Review** (`references/page-review.md`)
    - Target: Live web pages (URLs)
@@ -41,21 +41,22 @@ This skill uses an **orchestrator pattern** with specialized sub-agents:
    - Method: Visual inspection, spec analysis
    - Focus: Design decisions, visual accessibility
 
-## Prerequisites (Claude's Existing Knowledge)
+## Prerequisites (Agent's Existing Knowledge)
 
-This skill assumes Claude already knows:
+This skill assumes Claude Code and Codex already know:
 - **WCAG 2.2** success criteria, levels (A, AA, AAA), and their meanings
 - **WAI-ARIA** authoring practices, roles, states, and properties
 - **Standard accessibility patterns**: Semantic HTML, form accessibility, keyboard navigation
 - **Common issues and fixes**: Missing alt text, improper ARIA usage, keyboard traps, etc.
 
-The guides primarily focus on **how to review** using specific tools and workflows, building on Claude's existing accessibility knowledge.
+The guides focus on **how to review** with available capabilities and workflows, building on the agent's existing accessibility knowledge.
 
 For human reference, detailed WCAG checklists are available in `references/wcag-checklist.md`.
 
 ## Features
 
-- **Automatic delegation**: Identifies review target and routes to appropriate specialist
+- **Automatic routing**: Identifies the review target and selects the appropriate guide
+- **Optional parallelism**: Delegates to sub-agents only when the user explicitly requests it
 - **Comprehensive coverage**: Pages, code, and designs all supported
 - **WCAG compliant**: Each issue linked to WCAG success criteria
 - **Structured output**: Positive findings, issues by severity, manual check recommendations
@@ -93,7 +94,7 @@ Review a11y for https://example.com
 Check accessibility of https://mysite.com/dashboard
 ```
 
-The orchestrator detects the URL and launches the **Page Review** specialist with Playwright tools.
+The skill detects the URL and follows the page review guide with available browser interaction or web retrieval.
 
 ### Code Review
 ```
@@ -101,7 +102,7 @@ Check accessibility of src/components/Modal.tsx
 Review a11y in src/pages/Login.vue
 ```
 
-The orchestrator detects file paths and launches the **Code Review** specialist with file reading tools.
+The skill detects file paths and follows the code review guide across the target and related code.
 
 ### Design Review
 ```
@@ -109,11 +110,11 @@ Review this Figma design: https://figma.com/file/abc123
 Check accessibility of this design mockup (with attached image)
 ```
 
-The orchestrator detects design artifacts and launches the **Design Review** specialist.
+The skill detects design artifacts and follows the design review guide.
 
 ## Output Format
 
-All specialists produce consistent output:
+All reference guides produce consistent output:
 
 ```markdown
 ### Good Practices
@@ -144,8 +145,9 @@ All specialists produce consistent output:
 
 ```
 skills/reviewing-a11y/
-├── SKILL.md                      # Main orchestrator (English)
-├── SKILL.ja.md                   # Main orchestrator (Japanese)
+├── SKILL.md                      # Main workflow (English)
+├── SKILL.ja.md                   # Main workflow (Japanese)
+├── agents/openai.yaml            # Codex UI metadata
 ├── README.md                     # This file
 ├── README.ja.md                  # Japanese README
 └── references/                       # Reference documents

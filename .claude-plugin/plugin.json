@@ -1,7 +1,7 @@
 {
   "name": "a11y-specialist-skills",
   "version": "2.8.0",
-  "description": "Accessibility specialist skills for Claude Code. WCAG 2.2 review, conformance auditing, and improvement planning tools.",
+  "description": "Accessibility specialist skills for Claude Code and Codex. WCAG 2.2 review, conformance auditing, and improvement planning tools.",
   "author": {
     "name": "masuP9",
     "url": "https://github.com/masuP9"

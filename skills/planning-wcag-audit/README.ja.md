@@ -77,6 +77,7 @@ WAICのウェブアクセシビリティ試験実施ガイドラインに基づ�
 skills/planning-wcag-audit/
 ├── SKILL.md                           # メインスキル（英語）
 ├── SKILL.ja.md                        # メインスキル（日本語）
+├── agents/openai.yaml                  # Codex UIメタデータ
 ├── README.md                          # 英語README
 ├── README.ja.md                       # このファイル
 └── references/

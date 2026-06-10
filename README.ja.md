@@ -2,7 +2,7 @@
 
 [English](./README.md)
 
-[Claude Code](https://claude.ai/claude-code) 用のアクセシビリティ専門スキルプラグイン。
+[Claude Code](https://claude.ai/claude-code) と [Codex](https://developers.openai.com/codex/) で利用できるアクセシビリティ専門スキルプラグイン。
 
 WCAG 2.2 & WAI-ARIA APG に基づいたアクセシビリティレビューを行うスキルを提供します。
 
@@ -17,7 +17,7 @@ WCAG 2.2 & WAI-ARIA APG に基づいたアクセシビリティレビューを�
 
 ## インストール
 
-### プラグインとして（推奨）
+### Claude Codeプラグインとして
 
 ```bash
 # マーケットプレイスを追加
@@ -44,11 +44,31 @@ ln -s /path/to/a11y-specialist-skills/skills/reviewing-a11y ~/.claude/skills/rev
 claude --plugin-dir /path/to/a11y-specialist-skills
 ```
 
+### Codexプラグインとして（推奨）
+
+```bash
+# マーケットプレイスを追加
+codex plugin marketplace add masuP9/a11y-specialist-skills
+
+# Codexを起動し、/plugins から a11y-specialist-skills をインストール
+codex
+```
+
+### Codexスタンドアロンスキルとして
+
+```bash
+# リポジトリをクローン
+git clone https://github.com/masuP9/a11y-specialist-skills.git
+
+# 必要なスキルをCodexのユーザースキルへリンク
+ln -s /path/to/a11y-specialist-skills/skills/reviewing-a11y ~/.agents/skills/reviewing-a11y
+```
+
 ## 使い方
 
 ### reviewing-a11y（アクセシビリティレビュー）
 
-Claudeはリクエストに応じて自動的にスキルを検出します：
+Claude CodeとCodexはリクエストに応じて自動的にスキルを検出します：
 
 ```
 # 例
@@ -70,10 +90,14 @@ src/components/Button.tsx のアクセシビリティを確認して
 このデザイン案のa11y観点でレビューして
 ```
 
-スラッシュコマンドで直接呼び出すこともできます：
+明示的に呼び出すこともできます：
 
 ```
+# Claude Code
 /reviewing-a11y
+
+# Codex
+$reviewing-a11y
 ```
 
 #### レビュー出力
@@ -99,10 +123,14 @@ https://example.com をWCAG監査して
 WCAG 2.2 AA適合性をチェックして
 ```
 
-スラッシュコマンドで直接呼び出すこともできます：
+明示的に呼び出すこともできます：
 
 ```
+# Claude Code
 /auditing-wcag
+
+# Codex
+$auditing-wcag
 ```
 
 #### 監査プロセス
@@ -138,10 +166,14 @@ WCAG監査の計画を立てたい
 アクセシビリティ試験の対象ページを選定して
 ```
 
-スラッシュコマンドで直接呼び出すこともできます：
+明示的に呼び出すこともできます：
 
 ```
+# Claude Code
 /planning-wcag-audit
+
+# Codex
+$planning-wcag-audit
 ```
 
 #### 計画出力
@@ -161,10 +193,14 @@ a11y戦略を考えて
 組織のa11y成熟度を評価して
 ```
 
-スラッシュコマンドで直接呼び出すこともできます：
+明示的に呼び出すこともできます：
 
 ```
+# Claude Code
 /planning-a11y-improvement
+
+# Codex
+$planning-a11y-improvement
 ```
 
 #### 計画出力
@@ -177,6 +213,17 @@ a11y戦略を考えて
 - **ステークホルダー説得資料**: ビジネスインパクトとROI
 
 アクセシビリティ試験結果や取り組み履歴などのドキュメントを読み込んで、より精度の高い計画を策定することもできます。
+
+## 開発と互換性
+
+各スキルはClaude CodeとCodexで同じ `SKILL.md` を使用します。Claude Codeの入力ヒントを維持するため、frontmatterの `argument-hint` と `allowed-tools` を保持しています。Codex runtimeはこれらの拡張を読み飛ばしてスキルを実行できます。
+
+```bash
+npm ci
+npm run validate:skills
+```
+
+このリポジトリでは、Claude Code拡張を拒否するCodexの汎用 `quick_validate.py` ではなく、上記の共有互換validatorをCIゲートとして使用します。
 
 ## 参考リソース
 

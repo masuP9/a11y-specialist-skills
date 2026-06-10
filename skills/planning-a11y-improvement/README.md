@@ -66,7 +66,11 @@ During the information gathering phase, specify file paths and the content will 
 ## Usage
 
 ```
+# Claude Code
 /planning-a11y-improvement
+
+# Codex
+$planning-a11y-improvement
 ```
 
 When the skill starts, it develops plan through:
@@ -84,6 +88,7 @@ When the skill starts, it develops plan through:
 skills/planning-a11y-improvement/
 ├── SKILL.ja.md          # Main workflow (Japanese)
 ├── SKILL.md             # Main workflow (English)
+├── agents/openai.yaml   # Codex UI metadata
 ├── README.ja.md         # README (Japanese)
 ├── README.md            # This file
 └── references/

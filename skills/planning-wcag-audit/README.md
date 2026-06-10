@@ -77,6 +77,7 @@ This skill uses an **integrated pattern** with interactive information gathering
 skills/planning-wcag-audit/
 ├── SKILL.md                           # Main skill (English)
 ├── SKILL.ja.md                        # Main skill (Japanese)
+├── agents/openai.yaml                  # Codex UI metadata
 ├── README.md                          # This file
 ├── README.ja.md                       # Japanese README
 └── references/

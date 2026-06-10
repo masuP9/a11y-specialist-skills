@@ -65,7 +65,11 @@
 ## 使用方法
 
 ```
+# Claude Code
 /planning-a11y-improvement
+
+# Codex
+$planning-a11y-improvement
 ```
 
 スキルが起動すると、以下の流れで計画を策定します：
@@ -83,6 +87,7 @@
 skills/planning-a11y-improvement/
 ├── SKILL.ja.md          # メインワークフロー（日本語）
 ├── SKILL.md             # メインワークフロー（英語）
+├── agents/openai.yaml   # Codex UIメタデータ
 ├── README.ja.md         # このファイル
 ├── README.md            # README（英語）
 └── references/

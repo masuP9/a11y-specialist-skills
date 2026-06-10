@@ -2,7 +2,7 @@
 
 [日本語版 (Japanese)](./README.ja.md)
 
-Accessibility specialist skills plugin for [Claude Code](https://claude.ai/claude-code).
+Accessibility specialist skills plugin for [Claude Code](https://claude.ai/claude-code) and [Codex](https://developers.openai.com/codex/).
 
 Provides accessibility review skills based on WCAG 2.2 & WAI-ARIA APG.
 
@@ -17,7 +17,7 @@ Provides accessibility review skills based on WCAG 2.2 & WAI-ARIA APG.
 
 ## Installation
 
-### As a Plugin (Recommended)
+### As a Claude Code Plugin
 
 ```bash
 # Add marketplace
@@ -44,11 +44,31 @@ ln -s /path/to/a11y-specialist-skills/skills/reviewing-a11y ~/.claude/skills/rev
 claude --plugin-dir /path/to/a11y-specialist-skills
 ```
 
+### As a Codex Plugin (Recommended)
+
+```bash
+# Add the marketplace
+codex plugin marketplace add masuP9/a11y-specialist-skills
+
+# Start Codex and install a11y-specialist-skills from /plugins
+codex
+```
+
+### As a Standalone Codex Skill
+
+```bash
+# Clone the repository
+git clone https://github.com/masuP9/a11y-specialist-skills.git
+
+# Link the required skill into the Codex user skill directory
+ln -s /path/to/a11y-specialist-skills/skills/reviewing-a11y ~/.agents/skills/reviewing-a11y
+```
+
 ## Usage
 
 ### reviewing-a11y (Accessibility Review)
 
-Claude will automatically detect when to use the skill based on your request:
+Claude Code and Codex automatically detect when to use the skill:
 
 ```
 # Examples
@@ -70,10 +90,14 @@ Check accessibility of src/components/Button.tsx
 Review this design mockup from a11y perspective
 ```
 
-You can also invoke directly with slash command:
+You can also invoke it explicitly:
 
 ```
+# Claude Code
 /reviewing-a11y
+
+# Codex
+$reviewing-a11y
 ```
 
 #### Review Output
@@ -99,10 +123,14 @@ Run WCAG audit on https://example.com
 Check WCAG 2.2 AA conformance
 ```
 
-You can also invoke directly with slash command:
+You can also invoke it explicitly:
 
 ```
+# Claude Code
 /auditing-wcag
+
+# Codex
+$auditing-wcag
 ```
 
 #### Audit Process
@@ -139,10 +167,14 @@ Create audit plan for our website
 Select pages for accessibility testing
 ```
 
-You can also invoke directly with slash command:
+You can also invoke it explicitly:
 
 ```
+# Claude Code
 /planning-wcag-audit
+
+# Codex
+$planning-wcag-audit
 ```
 
 #### Planning Output
@@ -162,10 +194,14 @@ Create an a11y strategy
 Assess our organization's a11y maturity
 ```
 
-You can also invoke directly with slash command:
+You can also invoke it explicitly:
 
 ```
+# Claude Code
 /planning-a11y-improvement
+
+# Codex
+$planning-a11y-improvement
 ```
 
 #### Planning Output
@@ -178,6 +214,17 @@ Collects information through interview format and generates:
 - **Stakeholder Materials**: Business impact and ROI
 
 You can also load documents such as accessibility test results or initiative history for more accurate planning.
+
+## Development and Compatibility
+
+Each skill uses one shared `SKILL.md` in Claude Code and Codex. The frontmatter keeps `argument-hint` and `allowed-tools` to preserve Claude Code input guidance and permissions. The supported Codex runtime tolerates these extensions and loads the same skill.
+
+```bash
+npm ci
+npm run validate:skills
+```
+
+This repository uses the shared compatibility validator above as its CI gate. The general Codex `quick_validate.py` is not used because it rejects the Claude Code `argument-hint` extension.
 
 ## References
 
