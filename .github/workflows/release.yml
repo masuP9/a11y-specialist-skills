@@ -138,10 +138,13 @@ jobs:
                   skills/auditing-wcag/references/scripts/package-lock.json
           git commit -m "chore(auditing-wcag): bump scripts to @a11y-skills/audit ^$VERSION"
           git push origin "$BRANCH"
+          {
+            echo "Automated follow-up to the \`a11y-audit-v$VERSION\` release: points the auditing-wcag wrapper scripts at the just-published package version."
+            echo ""
+            echo "Note: PRs created with GITHUB_TOKEN do not trigger CI automatically — close/reopen this PR (or push an empty commit) to run CI before merging."
+          } > /tmp/bump-pr-body.md
           gh pr create \
             --title "chore(auditing-wcag): bump scripts to @a11y-skills/audit ^$VERSION" \
-            --body "Automated follow-up to the \`a11y-audit-v$VERSION\` release: points the auditing-wcag wrapper scripts at the just-published package version.
-
-Note: PRs created with GITHUB_TOKEN do not trigger CI automatically — close/reopen this PR (or push an empty commit) to run CI before merging." \
+            --body-file /tmp/bump-pr-body.md \
             --base main \
             --head "$BRANCH"
