@@ -12,6 +12,7 @@
     "type": "git",
     "url": "https://github.com/masuP9/a11y-specialist-skills"
   },
+  "type": "module",
   "workspaces": [
     "packages/*"
   ],
@@ -21,9 +22,18 @@
     "test:validator": "node --test scripts/validate-skills.test.mjs",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "validate:skills": "node scripts/validate-skills.mjs",
-    "clean": "npm run clean --workspaces --if-present"
+    "clean": "npm run clean --workspaces --if-present",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^9.1.0",
+    "globals": "^15.0.0",
+    "prettier": "^3.3.0",
+    "typescript-eslint": "^8.0.0",
     "yaml": "^2.8.1"
   }
 }

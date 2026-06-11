@@ -1,0 +1,18 @@
+# Content, not code — EN/JA prompt markdown must not be reflowed
+*.md
+
+# Build/vendor/output
+dist/
+node_modules/
+test-results/
+playwright-report/
+package-lock.json
+.playwright-mcp/
+tmp/
+.agents/
+.claude/
+plans/
+
+# Release-sensitive hand-maintained metadata (version-sync CI checks these)
+.claude-plugin/
+.codex-plugin/
