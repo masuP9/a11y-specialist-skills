@@ -11,9 +11,13 @@ defaults.
 
 ## To change a check's behavior
 
-Edit it in `packages/a11y-audit/src/**`, release a new `@a11y-skills/audit`
-version, and bump the dependency in `package.json`. Do **not** reintroduce
-check logic here.
+Edit it in `packages/a11y-audit/src/**` and release a new `@a11y-skills/audit`
+version (push an `a11y-audit-v*` tag). The release workflow's `bump-wrapper`
+job (`.github/workflows/release.yml`) then automatically opens a PR that bumps
+the dependency in this directory's `package.json` / `package-lock.json` —
+review it, close and reopen it once so CI runs (PRs created with
+`GITHUB_TOKEN` don't trigger CI), and merge. Do **not** reintroduce check
+logic here.
 
 ## Running
 
