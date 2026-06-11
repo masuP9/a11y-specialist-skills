@@ -1,0 +1,43 @@
+name: Plugin version sync
+
+on:
+  pull_request:
+    paths:
+      - '.claude-plugin/**'
+      - '.codex-plugin/**'
+      - '.github/workflows/plugin-version-check.yml'
+  push:
+    branches: [main, master]
+    paths:
+      - '.claude-plugin/**'
+      - '.codex-plugin/**'
+      - '.github/workflows/plugin-version-check.yml'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify plugin version fields match across plugin metadata
+        run: |
+          node -e '
+            const fs = require("fs");
+            const read = (p) => JSON.parse(fs.readFileSync(p, "utf8"));
+            const plugin = read(".claude-plugin/plugin.json");
+            const market = read(".claude-plugin/marketplace.json");
+            const codex = read(".codex-plugin/plugin.json");
+            const versions = {
+              "plugin.json .version": plugin.version,
+              "marketplace.json .metadata.version": market.metadata.version,
+              "marketplace.json .plugins[0].version": market.plugins[0].version,
+              "codex-plugin/plugin.json .version": codex.version,
+            };
+            const unique = new Set(Object.values(versions));
+            if (unique.size !== 1) {
+              console.error("Plugin version mismatch:");
+              for (const [k, v] of Object.entries(versions)) console.error(`  ${k}: ${v}`);
+              process.exit(1);
+            }
+            console.log("Versions in sync:", plugin.version);
+          '
