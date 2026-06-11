@@ -15,6 +15,9 @@ on:
       - 'package-lock.json'
       - 'tsconfig.base.json'
       - '.github/workflows/ci.yml'
+      - 'eslint.config.js'
+      - 'prettier.config.js'
+      - '.prettierignore'
   pull_request:
     branches: [main, master]
     paths:
@@ -29,6 +32,9 @@ on:
       - 'package-lock.json'
       - 'tsconfig.base.json'
       - '.github/workflows/ci.yml'
+      - 'eslint.config.js'
+      - 'prettier.config.js'
+      - '.prettierignore'
   workflow_dispatch:
 
 jobs:
@@ -67,6 +73,11 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Lint & format check
+        run: |
+          npm run lint
+          npm run format:check
 
       - name: Type-check & build
         run: npm run build --workspace @a11y-skills/audit
