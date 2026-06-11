@@ -75,3 +75,73 @@ jobs:
       - name: Publish to npm
         if: github.event_name == 'push' && steps.published.outputs.exists != 'true'
         run: npm publish --workspace @a11y-skills/audit --access public --provenance
+
+  # After a successful tag-push publish, open a PR bumping the auditing-wcag
+  # wrapper scripts to the just-released version. Idempotent: skips when the
+  # wrapper is already on that version.
+  bump-wrapper:
+    needs: publish
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Wait for npm registry propagation
+        run: |
+          VERSION="${GITHUB_REF_NAME#a11y-audit-v}"
+          for i in $(seq 1 10); do
+            if [ "$(npm view "@a11y-skills/audit@$VERSION" version 2>/dev/null)" = "$VERSION" ]; then
+              echo "@a11y-skills/audit@$VERSION is visible on npm."
+              exit 0
+            fi
+            echo "Not visible yet, retry $i/10..."
+            sleep 15
+          done
+          echo "::error::@a11y-skills/audit@$VERSION not visible on npm after 150s"
+          exit 1
+
+      - name: Bump wrapper dependency and lockfile
+        working-directory: skills/auditing-wcag/references/scripts
+        run: |
+          VERSION="${GITHUB_REF_NAME#a11y-audit-v}"
+          CURRENT=$(node -p "require('./package.json').dependencies['@a11y-skills/audit']")
+          if [ "$CURRENT" = "^$VERSION" ]; then
+            echo "Wrapper already on ^$VERSION; nothing to do."
+            echo "SKIP_PR=true" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          npm pkg set "dependencies.@a11y-skills/audit=^$VERSION"
+          npm install --package-lock-only
+
+      - name: Open bump PR
+        if: env.SKIP_PR != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#a11y-audit-v}"
+          BRANCH="chore/scripts-bump-audit-$VERSION"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add skills/auditing-wcag/references/scripts/package.json \
+                  skills/auditing-wcag/references/scripts/package-lock.json
+          git commit -m "chore(auditing-wcag): bump scripts to @a11y-skills/audit ^$VERSION"
+          git push origin "$BRANCH"
+          gh pr create \
+            --title "chore(auditing-wcag): bump scripts to @a11y-skills/audit ^$VERSION" \
+            --body "Automated follow-up to the \`a11y-audit-v$VERSION\` release: points the auditing-wcag wrapper scripts at the just-published package version.
+
+Note: PRs created with GITHUB_TOKEN do not trigger CI automatically — close/reopen this PR (or push an empty commit) to run CI before merging." \
+            --base main \
+            --head "$BRANCH"
