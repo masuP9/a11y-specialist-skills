@@ -3,6 +3,16 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## 0.3.1
+
+### Fixed
+
+- `runFocusIndicatorCheck`: focus-triggered navigations slower than the
+  per-Tab settle window are no longer silently missed. The settle window is
+  now configurable via the new `navigationSettleMs` option (default: 50), and
+  a `framenavigated` listener additionally catches URL changes that commit and
+  revert within a single window. (#26)
+
 ## 0.3.0
 
 **Breaking** — every check now returns (and saves) a single axe-style envelope
