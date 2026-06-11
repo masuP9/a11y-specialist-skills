@@ -28,3 +28,12 @@ orientation-screenshot-*.png
 autocomplete-result.json
 time-limit-result.json
 axe-result.json
+
+# Locally-installed agent skills (`npx skills add ...`) — local tooling only,
+# must never ship with the published plugin.
+# Note: `.agents/plugins/` is tracked (Codex marketplace metadata) — only the
+# installer-managed skills subdirectory is ignored.
+.agents/skills/
+.claude/skills/
+/skills/improve
+skills-lock.json
