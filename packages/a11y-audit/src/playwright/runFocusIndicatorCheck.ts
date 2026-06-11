@@ -118,8 +118,9 @@ export interface RunFocusIndicatorCheckOptions extends OutputLocationOptions {
   contextOptions?: BrowserContextOptions;
   /**
    * Milliseconds to wait after each Tab press for a focus-triggered navigation
-   * to surface (default: 50). Raise on slow pages/networks. Late navigations
-   * are also caught via the `framenavigated` listener regardless of this value.
+   * to surface (default: 50). A navigation that fires after this window may be
+   * missed or attributed to a neighboring element — raise this value when
+   * auditing pages with debounced or otherwise delayed focus handlers.
    */
   navigationSettleMs?: number;
 }
@@ -168,8 +169,12 @@ export async function runFocusIndicatorCheck(
       context = await browser.newContext(contextOptions);
       const page = await context.newPage();
 
-      // Catch navigations that surface later than the per-Tab settle window
-      // (WCAG 3.2.1). Reset after the initial goto; checked alongside the URL diff.
+      // Track main-frame navigations (WCAG 3.2.1). Catches URL changes that
+      // commit and revert within a single settle window (which the before/after
+      // URL diff alone would miss). A navigation landing between iterations is
+      // absorbed into the next urlBeforeTab and is NOT caught by this listener —
+      // raise navigationSettleMs for pages with slow focus-triggered handlers.
+      // Reset after the initial goto; checked alongside the URL diff.
       let lateNavigationUrl: string | null = null;
       page.on('framenavigated', (frame) => {
         if (frame === page.mainFrame()) {
