@@ -22,13 +22,13 @@ import { RESULT_SCHEMAS } from '../dist/schemas/index.js';
 
 const ajv = new Ajv2020({ strict: false, allowUnionTypes: true });
 
-function expectValid(schemaKey: keyof typeof RESULT_SCHEMAS, data: unknown): void {
+function expectValid(
+  schemaKey: keyof typeof RESULT_SCHEMAS,
+  data: unknown,
+): void {
   const validate = ajv.compile(RESULT_SCHEMAS[schemaKey]);
   const valid = validate(data);
-  expect(
-    valid,
-    JSON.stringify(validate.errors, null, 2)
-  ).toBe(true);
+  expect(valid, JSON.stringify(validate.errors, null, 2)).toBe(true);
 }
 
 test('axe-audit envelope validates against its schema', () => {
@@ -154,7 +154,12 @@ test('target-size-check envelope validates against its schema', () => {
     failAAAOnly: [],
     passedTargets: 0,
     exceptedTargets: [],
-    summary: { failAACount: 1, failAAAOnlyCount: 0, passCount: 0, exceptedCount: 0 },
+    summary: {
+      failAACount: 1,
+      failAAAOnlyCount: 0,
+      passCount: 0,
+      exceptedCount: 0,
+    },
   };
   const result = buildAuditResult({
     source: 'target-size-check',

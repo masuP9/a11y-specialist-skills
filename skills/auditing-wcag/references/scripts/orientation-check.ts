@@ -6,7 +6,10 @@
  */
 
 import { test } from '@playwright/test';
-import { runOrientationCheck, getTargetUrl } from '@a11y-skills/audit/playwright';
+import {
+  runOrientationCheck,
+  getTargetUrl,
+} from '@a11y-skills/audit/playwright';
 
 test('orientation check (WCAG 1.3.4)', async ({ page }) => {
   // runOrientationCheck owns navigation (loads the page at two viewports).

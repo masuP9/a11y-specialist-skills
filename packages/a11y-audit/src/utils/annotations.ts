@@ -58,7 +58,7 @@ export interface AnnotationConfig {
  */
 export async function addPageAnnotations(
   page: import('@playwright/test').Page,
-  annotations: AnnotationConfig[]
+  annotations: AnnotationConfig[],
 ): Promise<void> {
   await page.evaluate((configs) => {
     // Inline the colors to avoid serialization issues
@@ -72,7 +72,7 @@ export async function addPageAnnotations(
 
     // Create overlay
     let overlay = document.getElementById(
-      'wcag-audit-overlay'
+      'wcag-audit-overlay',
     ) as HTMLDivElement | null;
     if (!overlay) {
       overlay = document.createElement('div');

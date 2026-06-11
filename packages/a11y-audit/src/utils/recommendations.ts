@@ -15,8 +15,12 @@ export interface RecommendationContext {
  * Generate a recommendation based on detection results.
  */
 export function generateRecommendation(ctx: RecommendationContext): string {
-  const { hasAutoPlayContent, stopsWithin5Seconds, pauseControls, pauseVerification } =
-    ctx;
+  const {
+    hasAutoPlayContent,
+    stopsWithin5Seconds,
+    pauseControls,
+    pauseVerification,
+  } = ctx;
 
   if (!hasAutoPlayContent) {
     return 'No auto-playing content detected in viewport.';
@@ -51,10 +55,14 @@ export function generateRecommendation(ctx: RecommendationContext): string {
  */
 export function printSummary(
   ctx: RecommendationContext,
-  outputDir: string
+  outputDir: string,
 ): void {
-  const { hasAutoPlayContent, stopsWithin5Seconds, pauseControls, pauseVerification } =
-    ctx;
+  const {
+    hasAutoPlayContent,
+    stopsWithin5Seconds,
+    pauseControls,
+    pauseVerification,
+  } = ctx;
 
   console.log('\n--- Summary ---');
 
@@ -64,7 +72,9 @@ export function printSummary(
   }
 
   console.log('⚠ Auto-playing content detected!');
-  console.log(`  Stops within 5 seconds: ${stopsWithin5Seconds ? 'Yes' : 'No'}`);
+  console.log(
+    `  Stops within 5 seconds: ${stopsWithin5Seconds ? 'Yes' : 'No'}`,
+  );
   console.log(`  Screenshots saved to: ${outputDir}`);
   console.log('  Diff images generated for visual verification');
 
@@ -74,11 +84,13 @@ export function printSummary(
     console.log(`✓ Pause controls found: ${pauseControls.controls.length}`);
     pauseControls.controls.forEach((ctrl, i) => {
       console.log(
-        `  ${i + 1}. <${ctrl.element}> "${ctrl.name}" (matched by: ${ctrl.matchedBy})`
+        `  ${i + 1}. <${ctrl.element}> "${ctrl.name}" (matched by: ${ctrl.matchedBy})`,
       );
     });
     if (!pauseControls.hasAccessibleName) {
-      console.log('⚠ Warning: Pause control lacks accessible name (aria-label)');
+      console.log(
+        '⚠ Warning: Pause control lacks accessible name (aria-label)',
+      );
     }
   } else {
     console.log('✗ No pause controls detected');
@@ -88,12 +100,18 @@ export function printSummary(
   if (pauseVerification.attempted) {
     console.log('\n--- Pause Control Verification ---');
     console.log(`  Control clicked: ${pauseVerification.controlClicked}`);
-    console.log(`  Change before click: ${pauseVerification.beforeClickDiffPercent}`);
-    console.log(`  Change after click: ${pauseVerification.afterClickDiffPercent}`);
+    console.log(
+      `  Change before click: ${pauseVerification.beforeClickDiffPercent}`,
+    );
+    console.log(
+      `  Change after click: ${pauseVerification.afterClickDiffPercent}`,
+    );
     if (pauseVerification.pauseWorked === true) {
       console.log('✓ Pause control WORKS - animation stopped after clicking');
     } else if (pauseVerification.pauseWorked === false) {
-      console.log('✗ Pause control DOES NOT WORK - animation continues after clicking');
+      console.log(
+        '✗ Pause control DOES NOT WORK - animation continues after clicking',
+      );
     } else if (pauseVerification.error) {
       console.log(`⚠ Verification error: ${pauseVerification.error}`);
     }
@@ -101,7 +119,7 @@ export function printSummary(
 
   if (pauseControls.carouselIndicators.length > 0) {
     console.log(
-      `\nCarousel navigation controls found: ${pauseControls.carouselIndicators.length}`
+      `\nCarousel navigation controls found: ${pauseControls.carouselIndicators.length}`,
     );
   }
 

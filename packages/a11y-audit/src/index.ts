@@ -19,7 +19,12 @@ export {
   TARGET_SIZE_AA,
   TARGET_SIZE_AAA,
 } from './constants.js';
-export { RULES, getRule, type RuleKey, type RuleMeta } from './utils/rule-registry.js';
+export {
+  RULES,
+  getRule,
+  type RuleKey,
+  type RuleMeta,
+} from './utils/rule-registry.js';
 export {
   buildAuditResult,
   mergeNormalizedResults,

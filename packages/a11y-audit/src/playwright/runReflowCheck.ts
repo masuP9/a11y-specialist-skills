@@ -59,7 +59,7 @@ export interface RunReflowCheckOptions extends OutputLocationOptions {
  * (and optionally a screenshot), and return the parsed result.
  */
 export async function runReflowCheck(
-  options: RunReflowCheckOptions
+  options: RunReflowCheckOptions,
 ): Promise<ReflowCheckResult> {
   const {
     page,
@@ -69,7 +69,10 @@ export async function runReflowCheck(
     ...location
   } = options;
 
-  await page.setViewportSize({ width: viewport.width, height: viewport.height });
+  await page.setViewportSize({
+    width: viewport.width,
+    height: viewport.height,
+  });
 
   const layoutResult = await page.evaluate(createLayoutChecker, {
     viewportWidth: viewport.width,
@@ -109,7 +112,7 @@ export async function runReflowCheck(
     (el, i) => [
       `${i + 1}. <${el.tagName}> "${el.selector}"`,
       `   rect.right: ${el.rect.right}px (viewport: ${el.viewportWidth}px)`,
-    ]
+    ],
   );
 
   logIssueList<ClippedTextElement>(
@@ -119,7 +122,7 @@ export async function runReflowCheck(
       `${i + 1}. <${el.tagName}> "${el.selector}"`,
       `   scrollWidth: ${el.scrollWidth}px, clientWidth: ${el.clientWidth}px`,
       `   overflow: ${el.overflow}, overflowX: ${el.overflowX}`,
-    ]
+    ],
   );
 
   const resolvedPath = saveAuditResult(result, {

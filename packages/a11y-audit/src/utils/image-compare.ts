@@ -22,7 +22,7 @@ import { PIXELMATCH_THRESHOLD } from '../constants.js';
 export function compareImages(
   img1Path: string,
   img2Path: string,
-  diffOutputPath: string
+  diffOutputPath: string,
 ): ImageDiffResult {
   const img1 = PNG.sync.read(fs.readFileSync(img1Path));
   const img2 = PNG.sync.read(fs.readFileSync(img2Path));
@@ -32,9 +32,16 @@ export function compareImages(
 
   const diff = new PNG({ width, height });
 
-  const diffPixels = pixelmatch(img1.data, img2.data, diff.data, width, height, {
-    threshold: PIXELMATCH_THRESHOLD,
-  });
+  const diffPixels = pixelmatch(
+    img1.data,
+    img2.data,
+    diff.data,
+    width,
+    height,
+    {
+      threshold: PIXELMATCH_THRESHOLD,
+    },
+  );
 
   fs.writeFileSync(diffOutputPath, PNG.sync.write(diff));
 
@@ -51,7 +58,7 @@ export function formatDiffPercent(diffPercent: number): string {
 /** Check if change is significant based on threshold */
 export function hasSignificantChange(
   diffPercent: number,
-  threshold: number
+  threshold: number,
 ): boolean {
   return diffPercent > threshold;
 }

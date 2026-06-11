@@ -58,7 +58,10 @@ function collectElementMetrics(args: {
 }): ElementMetrics[] {
   const { checkSelector, htmlSnippetMaxLength } = args;
 
-  function getHtmlSnippet(element: Element): { html: string; htmlTruncated: boolean } {
+  function getHtmlSnippet(element: Element): {
+    html: string;
+    htmlTruncated: boolean;
+  } {
     let html = '';
     try {
       html = element.outerHTML || '';
@@ -66,7 +69,10 @@ function collectElementMetrics(args: {
       html = '';
     }
     if (!html) {
-      return { html: `<${element.tagName.toLowerCase()}>`, htmlTruncated: false };
+      return {
+        html: `<${element.tagName.toLowerCase()}>`,
+        htmlTruncated: false,
+      };
     }
     if (html.length > htmlSnippetMaxLength) {
       return { html: html.slice(0, htmlSnippetMaxLength), htmlTruncated: true };
@@ -90,7 +96,9 @@ function collectElementMetrics(args: {
       path.unshift(selector);
       current = parent;
     }
-    return path.length > 0 ? path.join(' > ') : `[data-index="${elementIndex}"]`;
+    return path.length > 0
+      ? path.join(' > ')
+      : `[data-index="${elementIndex}"]`;
   }
 
   function isVisible(element: Element): boolean {
@@ -122,7 +130,8 @@ function collectElementMetrics(args: {
     }
 
     const style = window.getComputedStyle(element);
-    const hasText = element.textContent && element.textContent.trim().length > 0;
+    const hasText =
+      element.textContent && element.textContent.trim().length > 0;
 
     if (hasText && hasHiddenOverflow(style)) {
       metrics.push({
@@ -159,7 +168,10 @@ function injectSpacingAndCollect(args: {
   // Force reflow
   void document.body.offsetHeight;
 
-  function getHtmlSnippet(element: Element): { html: string; htmlTruncated: boolean } {
+  function getHtmlSnippet(element: Element): {
+    html: string;
+    htmlTruncated: boolean;
+  } {
     let html = '';
     try {
       html = element.outerHTML || '';
@@ -167,7 +179,10 @@ function injectSpacingAndCollect(args: {
       html = '';
     }
     if (!html) {
-      return { html: `<${element.tagName.toLowerCase()}>`, htmlTruncated: false };
+      return {
+        html: `<${element.tagName.toLowerCase()}>`,
+        htmlTruncated: false,
+      };
     }
     if (html.length > htmlSnippetMaxLength) {
       return { html: html.slice(0, htmlSnippetMaxLength), htmlTruncated: true };
@@ -191,7 +206,9 @@ function injectSpacingAndCollect(args: {
       path.unshift(selector);
       current = parent;
     }
-    return path.length > 0 ? path.join(' > ') : `[data-index="${elementIndex}"]`;
+    return path.length > 0
+      ? path.join(' > ')
+      : `[data-index="${elementIndex}"]`;
   }
 
   function isVisible(element: Element): boolean {
@@ -223,7 +240,8 @@ function injectSpacingAndCollect(args: {
     }
 
     const style = window.getComputedStyle(element);
-    const hasText = element.textContent && element.textContent.trim().length > 0;
+    const hasText =
+      element.textContent && element.textContent.trim().length > 0;
 
     if (hasText && hasHiddenOverflow(style)) {
       metrics.push({
@@ -246,7 +264,7 @@ function injectSpacingAndCollect(args: {
 
 function determineIssueType(
   hasHorizontalIssue: boolean,
-  hasVerticalIssue: boolean
+  hasVerticalIssue: boolean,
 ): 'horizontal-clip' | 'vertical-clip' | 'both' {
   if (hasHorizontalIssue && hasVerticalIssue) {
     return 'both';
@@ -260,7 +278,7 @@ function determineIssueType(
 function detectClippingIssues(
   beforeMetrics: ElementMetrics[],
   afterMetrics: ElementMetrics[],
-  tolerance: number
+  tolerance: number,
 ): TextSpacingIssue[] {
   const beforeMap = new Map<string, ElementMetrics>();
   beforeMetrics.forEach((m) => beforeMap.set(m.selector, m));
@@ -279,10 +297,12 @@ function detectClippingIssues(
 
     const horizontalClipBefore =
       beforeData.scrollWidth > beforeData.clientWidth + tolerance;
-    const horizontalClipAfter = after.scrollWidth > after.clientWidth + tolerance;
+    const horizontalClipAfter =
+      after.scrollWidth > after.clientWidth + tolerance;
     const verticalClipBefore =
       beforeData.scrollHeight > beforeData.clientHeight + tolerance;
-    const verticalClipAfter = after.scrollHeight > after.clientHeight + tolerance;
+    const verticalClipAfter =
+      after.scrollHeight > after.clientHeight + tolerance;
 
     const newHorizontalClip = !horizontalClipBefore && horizontalClipAfter;
     const newVerticalClip = !verticalClipBefore && verticalClipAfter;
@@ -343,7 +363,7 @@ export interface RunTextSpacingCheckOptions extends OutputLocationOptions {
  * (and optionally a screenshot), and return the parsed result.
  */
 export async function runTextSpacingCheck(
-  options: RunTextSpacingCheckOptions
+  options: RunTextSpacingCheckOptions,
 ): Promise<TextSpacingCheckResult> {
   const {
     page,
@@ -366,7 +386,7 @@ export async function runTextSpacingCheck(
   const clippedElements = detectClippingIssues(
     beforeMetrics,
     afterMetrics,
-    tolerance
+    tolerance,
   );
 
   const details: TextSpacingCheckDetails = {
@@ -396,7 +416,7 @@ export async function runTextSpacingCheck(
       `   Issue: ${el.issueType}`,
       `   Before: ${el.beforeMetrics.scrollWidth}x${el.beforeMetrics.scrollHeight} in ${el.beforeMetrics.clientWidth}x${el.beforeMetrics.clientHeight}`,
       `   After:  ${el.afterMetrics.scrollWidth}x${el.afterMetrics.scrollHeight} in ${el.afterMetrics.clientWidth}x${el.afterMetrics.clientHeight}`,
-    ]
+    ],
   );
 
   const resolvedPath = saveAuditResult(result, {
@@ -409,7 +429,7 @@ export async function runTextSpacingCheck(
     screenshotPath = await takeAuditScreenshot(page, {
       path: resolveScreenshotPath(
         resolvedPath,
-        DEFAULT_TEXT_SPACING_SCREENSHOT_FILE
+        DEFAULT_TEXT_SPACING_SCREENSHOT_FILE,
       ),
     });
   }

@@ -116,7 +116,7 @@ function captureOrientationState(args: OrientationCheckArgs): OrientationState {
 /** Determine where orientation lock was detected. */
 function determineLockLocation(
   portraitHasLock: boolean,
-  landscapeHasLock: boolean
+  landscapeHasLock: boolean,
 ): 'portrait' | 'landscape' | 'both' | 'none' {
   if (portraitHasLock && landscapeHasLock) {
     return 'both';
@@ -134,14 +134,16 @@ function determineLockLocation(
 function logOrientationState(
   label: string,
   viewport: { width: number; height: number },
-  state: OrientationState
+  state: OrientationState,
 ): void {
   console.log(`\n${label} (${viewport.width}x${viewport.height}):`);
   console.log(`  Lock message found: ${state.lockMessageFound ? 'YES' : 'No'}`);
   if (state.lockMessageText) {
     console.log(`  Message: "${state.lockMessageText}"`);
   }
-  console.log(`  Main content hidden: ${state.mainContentHidden ? 'YES' : 'No'}`);
+  console.log(
+    `  Main content hidden: ${state.mainContentHidden ? 'YES' : 'No'}`,
+  );
   console.log(`  Body size: ${state.bodyWidth}x${state.bodyHeight}`);
 }
 
@@ -166,7 +168,7 @@ export interface RunOrientationCheckOptions extends OutputLocationOptions {
  * result.
  */
 export async function runOrientationCheck(
-  options: RunOrientationCheckOptions
+  options: RunOrientationCheckOptions,
 ): Promise<OrientationCheckResult> {
   const { page, targetUrl, screenshot = false, ...location } = options;
 
@@ -193,7 +195,7 @@ export async function runOrientationCheck(
     portraitScreenshotPath = await takeAuditScreenshot(page, {
       path: resolveScreenshotPath(
         resolvedPath,
-        DEFAULT_ORIENTATION_PORTRAIT_SCREENSHOT_FILE
+        DEFAULT_ORIENTATION_PORTRAIT_SCREENSHOT_FILE,
       ),
     });
   }
@@ -201,14 +203,17 @@ export async function runOrientationCheck(
   // Test landscape orientation
   await page.setViewportSize(ORIENTATION_VIEWPORTS.landscape);
   await page.goto(url, { waitUntil: 'networkidle' });
-  const landscapeState = await page.evaluate(captureOrientationState, checkArgs);
+  const landscapeState = await page.evaluate(
+    captureOrientationState,
+    checkArgs,
+  );
 
   let landscapeScreenshotPath: string | undefined;
   if (screenshot) {
     landscapeScreenshotPath = await takeAuditScreenshot(page, {
       path: resolveScreenshotPath(
         resolvedPath,
-        DEFAULT_ORIENTATION_LANDSCAPE_SCREENSHOT_FILE
+        DEFAULT_ORIENTATION_LANDSCAPE_SCREENSHOT_FILE,
       ),
     });
   }
@@ -219,7 +224,10 @@ export async function runOrientationCheck(
   const landscapeHasLock =
     landscapeState.lockMessageFound || landscapeState.mainContentHidden;
   const hasOrientationLock = portraitHasLock || landscapeHasLock;
-  const lockDetectedIn = determineLockLocation(portraitHasLock, landscapeHasLock);
+  const lockDetectedIn = determineLockLocation(
+    portraitHasLock,
+    landscapeHasLock,
+  );
 
   const details: OrientationCheckDetails = {
     portrait: portraitState,
@@ -237,15 +245,19 @@ export async function runOrientationCheck(
 
   // Output results
   logAuditHeader('Orientation Check Results', 'WCAG 1.3.4', result.url);
-  logOrientationState('Portrait', ORIENTATION_VIEWPORTS.portrait, details.portrait);
+  logOrientationState(
+    'Portrait',
+    ORIENTATION_VIEWPORTS.portrait,
+    details.portrait,
+  );
   logOrientationState(
     'Landscape',
     ORIENTATION_VIEWPORTS.landscape,
-    details.landscape
+    details.landscape,
   );
 
   console.log(
-    `\nOrientation lock detected: ${details.hasOrientationLock ? 'YES' : 'No'}`
+    `\nOrientation lock detected: ${details.hasOrientationLock ? 'YES' : 'No'}`,
   );
   if (details.hasOrientationLock) {
     console.log(`Lock detected in: ${details.lockDetectedIn}`);

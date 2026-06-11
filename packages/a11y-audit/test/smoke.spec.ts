@@ -79,7 +79,7 @@ test('runReflowCheck reports overflow as incomplete (manual-review queue)', asyn
   expect(result.details.viewport).toEqual({ width: 320, height: 256 });
   expect(
     result.details.hasHorizontalScroll ||
-      result.details.overflowingElements.length > 0
+      result.details.overflowingElements.length > 0,
   ).toBe(true);
   // reflow findings are never auto-confirmed violations
   expect(result.violations).toEqual([]);
@@ -101,7 +101,7 @@ test('runTargetSizeCheck flags undersized adjacent targets as incomplete', async
   expect(result.summary.checkedNodes).toBe(result.details.totalTargetsChecked);
 
   const minimum = result.incomplete.find(
-    (r) => r.id === 'a11y-skills/target-size-minimum'
+    (r) => r.id === 'a11y-skills/target-size-minimum',
   );
   expect(minimum).toBeDefined();
   expect(minimum!.tags).toContain('wcag22aa');
@@ -125,7 +125,7 @@ test('runFocusIndicatorCheck flags missing focus indicator as incomplete', async
   expect(result.details.elementsWithoutFocusStyle).toBeGreaterThan(0);
 
   const focusVisible = result.incomplete.find(
-    (r) => r.id === 'a11y-skills/focus-visible'
+    (r) => r.id === 'a11y-skills/focus-visible',
   );
   expect(focusVisible).toBeDefined();
   expect(focusVisible!.nodes[0].target[0]).toContain('#nofocus');

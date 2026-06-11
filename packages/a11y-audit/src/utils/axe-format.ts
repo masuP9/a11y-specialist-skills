@@ -48,7 +48,10 @@ function emptyBuckets(): NormalizedBuckets {
   return { violations: [], incomplete: [], passes: [], inapplicable: [] };
 }
 
-function ruleResult(key: RuleKey, nodes: NormalizedNode[]): NormalizedRuleResult {
+function ruleResult(
+  key: RuleKey,
+  nodes: NormalizedNode[],
+): NormalizedRuleResult {
   const meta = getRule(key);
   return {
     id: meta.id,
@@ -71,7 +74,7 @@ function bucketize(
   key: RuleKey,
   nodes: NormalizedNode[],
   applicable: boolean,
-  override?: 'violation' | 'incomplete'
+  override?: 'violation' | 'incomplete',
 ): void {
   if (!applicable) {
     buckets.inapplicable.push(ruleResult(key, []));
@@ -82,9 +85,10 @@ function bucketize(
     return;
   }
   const classification = override ?? getRule(key).classification;
-  (classification === 'violation' ? buckets.violations : buckets.incomplete).push(
-    ruleResult(key, nodes)
-  );
+  (classification === 'violation'
+    ? buckets.violations
+    : buckets.incomplete
+  ).push(ruleResult(key, nodes));
 }
 
 // =============================================================================
@@ -113,7 +117,12 @@ function toNode(el: ElementEvidence, failureSummary: string): NormalizedNode {
 
 /** Build a page-level node (`target: ['html']`). */
 function pageNode(failureSummary: string): NormalizedNode {
-  return { target: ['html'], html: '<html>', htmlTruncated: false, failureSummary };
+  return {
+    target: ['html'],
+    html: '<html>',
+    htmlTruncated: false,
+    failureSummary,
+  };
 }
 
 function describeElement(ref: FocusElementRef): string {
@@ -159,7 +168,9 @@ export function buildAuditResult<TDetails>(args: {
 // Per-check normalizers
 // =============================================================================
 
-export function normalizeFocusCheck(details: FocusCheckDetails): NormalizedBuckets {
+export function normalizeFocusCheck(
+  details: FocusCheckDetails,
+): NormalizedBuckets {
   const buckets = emptyBuckets();
   const applicable = details.totalFocusableElements > 0;
   buckets.checkedNodes = details.totalFocusableElements;
@@ -173,10 +184,10 @@ export function normalizeFocusCheck(details: FocusCheckDetails): NormalizedBucke
         `${describeElement(el)} shows no computed-style change on focus ` +
           '(outline, box-shadow, background-color). Verify manually whether a ' +
           'visual focus indicator exists (pseudo-elements, canvas, or parent ' +
-          'changes are not detected).'
-      )
+          'changes are not detected).',
+      ),
     ),
-    applicable
+    applicable,
   );
 
   bucketize(
@@ -186,10 +197,10 @@ export function normalizeFocusCheck(details: FocusCheckDetails): NormalizedBucke
       toNode(
         v.element,
         `Focusing ${describeElement(v.element)} triggered a ${v.changeType} ` +
-          `from ${v.fromUrl} to ${v.toUrl}.`
-      )
+          `from ${v.fromUrl} to ${v.toUrl}.`,
+      ),
     ),
-    applicable
+    applicable,
   );
 
   bucketize(
@@ -201,16 +212,18 @@ export function normalizeFocusCheck(details: FocusCheckDetails): NormalizedBucke
         `${describeElement(issue.element)} is ${(issue.obscuredRatio * 100).toFixed(0)}% ` +
           `obscured when focused (by ${issue.overlaps
             .map((o) => `<${o.obscuredBy.tag.toLowerCase()}>`)
-            .join(', ')}). Verify whether the focused element is hidden.`
-      )
+            .join(', ')}). Verify whether the focused element is hidden.`,
+      ),
     ),
-    applicable
+    applicable,
   );
 
   return buckets;
 }
 
-export function normalizeReflowCheck(details: ReflowCheckDetails): NormalizedBuckets {
+export function normalizeReflowCheck(
+  details: ReflowCheckDetails,
+): NormalizedBuckets {
   const buckets = emptyBuckets();
 
   const overflowNodes = details.overflowingElements.map((el) =>
@@ -218,16 +231,16 @@ export function normalizeReflowCheck(details: ReflowCheckDetails): NormalizedBuc
       el,
       `<${el.tagName}> extends to ${el.rect.right}px in a ${el.viewportWidth}px ` +
         `viewport (${el.reason}). Verify whether a two-dimensional layout ` +
-        'exception (table, map, diagram, ...) applies.'
-    )
+        'exception (table, map, diagram, ...) applies.',
+    ),
   );
   if (details.hasHorizontalScroll && overflowNodes.length === 0) {
     overflowNodes.push(
       pageNode(
         `Document scrolls horizontally at ${details.viewport.width}px ` +
           `(scrollWidth ${details.documentScrollWidth}px > clientWidth ` +
-          `${details.documentClientWidth}px). Verify whether an exception applies.`
-      )
+          `${details.documentClientWidth}px). Verify whether an exception applies.`,
+      ),
     );
   }
   bucketize(buckets, 'reflow-overflow', overflowNodes, true);
@@ -240,17 +253,17 @@ export function normalizeReflowCheck(details: ReflowCheckDetails): NormalizedBuc
         el,
         `<${el.tagName}> clips its text at ${details.viewport.width}px ` +
           `(scrollWidth ${el.scrollWidth}px > clientWidth ${el.clientWidth}px, ` +
-          `overflow: ${el.overflow}). Verify whether content is lost.`
-      )
+          `overflow: ${el.overflow}). Verify whether content is lost.`,
+      ),
     ),
-    true
+    true,
   );
 
   return buckets;
 }
 
 export function normalizeTargetSizeCheck(
-  details: TargetSizeCheckDetails
+  details: TargetSizeCheckDetails,
 ): NormalizedBuckets {
   const buckets = emptyBuckets();
   const applicable = details.totalTargetsChecked > 0;
@@ -272,13 +285,13 @@ export function normalizeTargetSizeCheck(
   // Minimum (2.5.8 AA): findings are fail-aa targets, with and without
   // detected exceptions. Only 'ruled-out' assessments are confirmed violations.
   const minimumIssues = [...details.failAA, ...details.exceptedTargets].filter(
-    (issue) => issue.level === 'fail-aa'
+    (issue) => issue.level === 'fail-aa',
   );
   const confirmed = minimumIssues.filter(
-    (i) => i.exceptionAssessment === 'ruled-out'
+    (i) => i.exceptionAssessment === 'ruled-out',
   );
   const needsReview = minimumIssues.filter(
-    (i) => i.exceptionAssessment !== 'ruled-out'
+    (i) => i.exceptionAssessment !== 'ruled-out',
   );
   if (!applicable) {
     buckets.inapplicable.push(ruleResult('target-size-minimum', []));
@@ -289,16 +302,16 @@ export function normalizeTargetSizeCheck(
       buckets.violations.push(
         ruleResult(
           'target-size-minimum',
-          confirmed.map((i) => toNode(i, minimumFailureSummary(i)))
-        )
+          confirmed.map((i) => toNode(i, minimumFailureSummary(i))),
+        ),
       );
     }
     if (needsReview.length > 0) {
       buckets.incomplete.push(
         ruleResult(
           'target-size-minimum',
-          needsReview.map((i) => toNode(i, minimumFailureSummary(i)))
-        )
+          needsReview.map((i) => toNode(i, minimumFailureSummary(i))),
+        ),
       );
     }
   }
@@ -313,17 +326,17 @@ export function normalizeTargetSizeCheck(
         issue,
         `Target is ${issue.width}x${issue.height}px ` +
           `(min dimension ${issue.minDimension}px, AAA requirement 44px). ` +
-          'Verify whether an SC 2.5.5 exception applies.'
-      )
+          'Verify whether an SC 2.5.5 exception applies.',
+      ),
     ),
-    applicable
+    applicable,
   );
 
   return buckets;
 }
 
 export function normalizeTextSpacingCheck(
-  details: TextSpacingCheckDetails
+  details: TextSpacingCheckDetails,
 ): NormalizedBuckets {
   const buckets = emptyBuckets();
   buckets.checkedNodes = details.totalElementsChecked;
@@ -336,16 +349,18 @@ export function normalizeTextSpacingCheck(
         el,
         `<${el.tagName}> clips its content (${el.issueType}) when WCAG 1.4.12 ` +
           `text spacing is applied: ${el.afterMetrics.scrollWidth}x${el.afterMetrics.scrollHeight}px ` +
-          `content in a ${el.afterMetrics.clientWidth}x${el.afterMetrics.clientHeight}px box.`
-      )
+          `content in a ${el.afterMetrics.clientWidth}x${el.afterMetrics.clientHeight}px box.`,
+      ),
     ),
-    details.totalElementsChecked > 0
+    details.totalElementsChecked > 0,
   );
 
   return buckets;
 }
 
-export function normalizeZoomCheck(details: ZoomCheckDetails): NormalizedBuckets {
+export function normalizeZoomCheck(
+  details: ZoomCheckDetails,
+): NormalizedBuckets {
   const buckets = emptyBuckets();
 
   const nodes = details.clippedElements.map((el) =>
@@ -354,8 +369,8 @@ export function normalizeZoomCheck(details: ZoomCheckDetails): NormalizedBuckets
       `<${el.tagName}> ${el.issueType === 'horizontal-scroll' ? 'overflows horizontally' : 'clips its content'} ` +
         `at ${details.zoomFactor * 100}% zoom (scrollWidth ${el.scrollWidth}px > ` +
         `clientWidth ${el.clientWidth}px). Verify whether content or ` +
-        'functionality is lost.'
-    )
+        'functionality is lost.',
+    ),
   );
   if (details.hasHorizontalScroll && nodes.length === 0) {
     nodes.push(
@@ -363,8 +378,8 @@ export function normalizeZoomCheck(details: ZoomCheckDetails): NormalizedBuckets
         `Document scrolls horizontally at ${details.zoomFactor * 100}% zoom ` +
           `(scrollWidth ${details.documentScrollWidth}px > clientWidth ` +
           `${details.documentClientWidth}px). Horizontal scrolling alone does ` +
-          'not fail SC 1.4.4 — verify whether text becomes unusable.'
-      )
+          'not fail SC 1.4.4 — verify whether text becomes unusable.',
+      ),
     );
   }
   bucketize(buckets, 'resize-text', nodes, true);
@@ -373,14 +388,16 @@ export function normalizeZoomCheck(details: ZoomCheckDetails): NormalizedBuckets
 }
 
 export function normalizeOrientationCheck(
-  details: OrientationCheckDetails
+  details: OrientationCheckDetails,
 ): NormalizedBuckets {
   const buckets = emptyBuckets();
 
   const nodes: NormalizedNode[] = [];
   if (details.hasOrientationLock) {
     const state =
-      details.lockDetectedIn === 'landscape' ? details.landscape : details.portrait;
+      details.lockDetectedIn === 'landscape'
+        ? details.landscape
+        : details.portrait;
     const messagePart = state.lockMessageText
       ? ` Lock message found: "${state.lockMessageText}".`
       : '';
@@ -388,8 +405,8 @@ export function normalizeOrientationCheck(
       pageNode(
         `Content appears restricted to a single orientation ` +
           `(detected in: ${details.lockDetectedIn}).${messagePart} Verify ` +
-          'whether the essential exception (SC 1.3.4) applies.'
-      )
+          'whether the essential exception (SC 1.3.4) applies.',
+      ),
     );
   }
   bucketize(buckets, 'orientation-lock', nodes, true);
@@ -398,7 +415,7 @@ export function normalizeOrientationCheck(
 }
 
 export function normalizeAutocompleteAudit(
-  details: AutocompleteAuditDetails
+  details: AutocompleteAuditDetails,
 ): NormalizedBuckets {
   const buckets = emptyBuckets();
   const applicable = details.totalFieldsChecked > 0;
@@ -411,10 +428,10 @@ export function normalizeAutocompleteAudit(
       toNode(
         field,
         `autocomplete="${field.currentAutocomplete}" is not a valid token. ` +
-          `Expected "${field.expectedToken}" (purpose matched by ${field.matchedBy}).`
-      )
+          `Expected "${field.expectedToken}" (purpose matched by ${field.matchedBy}).`,
+      ),
     ),
-    applicable
+    applicable,
   );
 
   bucketize(
@@ -428,17 +445,17 @@ export function normalizeAutocompleteAudit(
             field.currentAutocomplete === null
               ? 'no autocomplete attribute'
               : `autocomplete="${field.currentAutocomplete}"`
-          }. Confirm the field purpose manually.`
-      )
+          }. Confirm the field purpose manually.`,
+      ),
     ),
-    applicable
+    applicable,
   );
 
   return buckets;
 }
 
 export function normalizeTimeLimitDetector(
-  details: TimeLimitDetectorDetails
+  details: TimeLimitDetectorDetails,
 ): NormalizedBuckets {
   const buckets = emptyBuckets();
 
@@ -447,14 +464,15 @@ export function normalizeTimeLimitDetector(
     'meta-refresh',
     details.metaRefresh.map((meta) => ({
       target: ['meta[http-equiv="refresh"]'],
-      html: meta.html || `<meta http-equiv="refresh" content="${meta.content}">`,
+      html:
+        meta.html || `<meta http-equiv="refresh" content="${meta.content}">`,
       htmlTruncated: meta.htmlTruncated ?? false,
       failureSummary:
         `Page refreshes${meta.url ? ` to ${meta.url}` : ''} after ${meta.seconds}s. ` +
         'Verify whether the time limit can be turned off, adjusted, or extended, ' +
         'or whether an SC 2.2.1 exception (e.g. over 20 hours) applies.',
     })),
-    true
+    true,
   );
 
   bucketize(
@@ -464,10 +482,10 @@ export function normalizeTimeLimitDetector(
       pageNode(
         `${timer.type} with a ${timer.delayMs}ms delay detected` +
           `${timer.callStack ? ` (${timer.callStack.split('\n')[0]?.trim()})` : ''}. ` +
-          'Verify whether it implements a time limit and is adjustable.'
-      )
+          'Verify whether it implements a time limit and is adjustable.',
+      ),
     ),
-    true
+    true,
   );
 
   bucketize(
@@ -477,17 +495,17 @@ export function normalizeTimeLimitDetector(
       toNode(
         indicator,
         `Countdown/timeout wording found: "${indicator.text.slice(0, 80)}". ` +
-          'Verify whether it indicates an adjustable time limit.'
-      )
+          'Verify whether it indicates an adjustable time limit.',
+      ),
     ),
-    true
+    true,
   );
 
   return buckets;
 }
 
 export function normalizeAutoPlayDetection(
-  details: AutoPlayDetectionDetails
+  details: AutoPlayDetectionDetails,
 ): NormalizedBuckets {
   const buckets = emptyBuckets();
 
@@ -501,8 +519,8 @@ export function normalizeAutoPlayDetection(
       pageNode(
         `Moving content continues past 5 seconds (pixel-diff detection). ` +
           `${controlsPart} ${details.recommendation} Verify the content type ` +
-          'and audio manually.'
-      )
+          'and audio manually.',
+      ),
     );
   }
   bucketize(buckets, 'auto-play', nodes, true);
@@ -536,7 +554,10 @@ export interface RawAxeResults {
   inapplicable: RawAxeRule[];
 }
 
-function normalizeAxeRule(rule: RawAxeRule, includeNodes: boolean): NormalizedRuleResult {
+function normalizeAxeRule(
+  rule: RawAxeRule,
+  includeNodes: boolean,
+): NormalizedRuleResult {
   return {
     id: rule.id,
     impact: (rule.impact ?? null) as NormalizedImpact | null,
@@ -605,7 +626,7 @@ type BucketName = (typeof BUCKETS)[number];
  *   violations > incomplete > passes > inapplicable.
  */
 export function mergeNormalizedResults(
-  results: Array<AuditCheckResult<unknown>>
+  results: Array<AuditCheckResult<unknown>>,
 ): MergedAuditResult {
   if (results.length === 0) {
     throw new Error('mergeNormalizedResults requires at least one result.');
@@ -615,7 +636,7 @@ export function mergeNormalizedResults(
   if (mismatch) {
     throw new Error(
       `mergeNormalizedResults: URL mismatch — "${first.url}" vs "${mismatch.url}". ` +
-        'Merge only results for the same page.'
+        'Merge only results for the same page.',
     );
   }
 

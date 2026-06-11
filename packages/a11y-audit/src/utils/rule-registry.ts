@@ -100,7 +100,8 @@ export const RULES = {
     tags: ['a11y-skills', 'wcag21aa', 'wcag1410'],
     impact: 'moderate',
     scope: 'node',
-    description: 'Ensure text is not clipped when content reflows at 320 CSS px',
+    description:
+      'Ensure text is not clipped when content reflows at 320 CSS px',
     help: 'Text should remain readable at 320px width',
     helpUrl: `${UNDERSTANDING}/reflow.html`,
     classification: 'incomplete',
@@ -113,7 +114,8 @@ export const RULES = {
     tags: ['a11y-skills', 'wcag22aa', 'wcag258'],
     impact: 'serious',
     scope: 'node',
-    description: 'Ensure pointer targets are at least 24x24 CSS px (WCAG 2.5.8 AA)',
+    description:
+      'Ensure pointer targets are at least 24x24 CSS px (WCAG 2.5.8 AA)',
     help: 'Pointer targets should be at least 24x24 CSS px',
     helpUrl: `${UNDERSTANDING}/target-size-minimum.html`,
     // exception heuristics cannot rule out the essential exception; only
@@ -126,7 +128,8 @@ export const RULES = {
     tags: ['a11y-skills', 'wcag21aaa', 'wcag255'],
     impact: 'moderate',
     scope: 'node',
-    description: 'Ensure pointer targets are at least 44x44 CSS px (WCAG 2.5.5 AAA)',
+    description:
+      'Ensure pointer targets are at least 44x44 CSS px (WCAG 2.5.5 AAA)',
     help: 'Pointer targets should be at least 44x44 CSS px',
     helpUrl: `${UNDERSTANDING}/target-size-enhanced.html`,
     classification: 'incomplete',
@@ -155,8 +158,7 @@ export const RULES = {
     tags: ['a11y-skills', 'wcag2aa', 'wcag144'],
     impact: 'moderate',
     scope: 'node',
-    description:
-      'Ensure content remains usable when text is resized to 200%',
+    description: 'Ensure content remains usable when text is resized to 200%',
     help: 'Content should not be lost or clipped at 200% zoom',
     helpUrl: `${UNDERSTANDING}/resize-text.html`,
     // horizontal scrolling at zoom does not by itself fail SC 1.4.4.
@@ -225,8 +227,7 @@ export const RULES = {
     tags: ['a11y-skills', 'wcag2a', 'wcag221'],
     impact: 'moderate',
     scope: 'page',
-    description:
-      'Detect JavaScript timers that may implement a time limit',
+    description: 'Detect JavaScript timers that may implement a time limit',
     help: 'Verify whether detected timers implement an adjustable time limit',
     helpUrl: `${UNDERSTANDING}/timing-adjustable.html`,
     classification: 'incomplete',

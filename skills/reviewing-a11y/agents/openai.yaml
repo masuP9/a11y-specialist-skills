@@ -1,4 +1,4 @@
 interface:
-  display_name: "Accessibility Review"
-  short_description: "Review pages, code, and designs for a11y"
-  default_prompt: "Use $reviewing-a11y to review the provided page, code, or design and report severity-ranked accessibility issues with fixes."
+  display_name: 'Accessibility Review'
+  short_description: 'Review pages, code, and designs for a11y'
+  default_prompt: 'Use $reviewing-a11y to review the provided page, code, or design and report severity-ranked accessibility issues with fixes.'

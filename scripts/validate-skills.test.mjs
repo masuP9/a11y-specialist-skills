@@ -1,10 +1,5 @@
 import assert from 'node:assert/strict';
-import {
-  mkdtempSync,
-  mkdirSync,
-  readFileSync,
-  writeFileSync,
-} from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -24,7 +19,10 @@ function createFixture() {
   ];
   for (const path of paths) mkdirSync(join(root, path), { recursive: true });
 
-  writeFileSync(join(root, 'README.md'), '[日本語版 (Japanese)](./README.ja.md)\n');
+  writeFileSync(
+    join(root, 'README.md'),
+    '[日本語版 (Japanese)](./README.ja.md)\n',
+  );
   writeFileSync(join(root, 'README.ja.md'), '[English](./README.md)\n');
   writeFileSync(
     join(root, 'skills/example/SKILL.md'),
@@ -107,7 +105,10 @@ test('rejects unknown frontmatter keys', () => {
   const skill = join(root, 'skills/example/SKILL.md');
   writeFileSync(
     skill,
-    readFileSync(skill, 'utf8').replace('allowed-tools: Read', 'model: example'),
+    readFileSync(skill, 'utf8').replace(
+      'allowed-tools: Read',
+      'model: example',
+    ),
   );
 
   const result = validate(root);

@@ -73,12 +73,12 @@ test('runFocusIndicatorCheck detects focus-triggered navigation delayed beyond t
   expect(result.details.onFocusViolations.length).toBeGreaterThanOrEqual(1);
 
   const navViolation = result.details.onFocusViolations.find((v) =>
-    v.toUrl.includes('/navigated')
+    v.toUrl.includes('/navigated'),
   );
   expect(navViolation).toBeDefined();
 
   const ruleResult = result.violations.find(
-    (r) => r.id === 'a11y-skills/no-context-change-on-focus'
+    (r) => r.id === 'a11y-skills/no-context-change-on-focus',
   );
   expect(ruleResult).toBeDefined();
 });

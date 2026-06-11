@@ -74,7 +74,10 @@ function collectBasicFieldInfo(args: {
 }): BasicFieldInfo[] {
   const { htmlSnippetMaxLength } = args;
 
-  function getHtmlSnippet(element: Element): { html: string; htmlTruncated: boolean } {
+  function getHtmlSnippet(element: Element): {
+    html: string;
+    htmlTruncated: boolean;
+  } {
     let html = '';
     try {
       html = element.outerHTML || '';
@@ -82,7 +85,10 @@ function collectBasicFieldInfo(args: {
       html = '';
     }
     if (!html) {
-      return { html: `<${element.tagName.toLowerCase()}>`, htmlTruncated: false };
+      return {
+        html: `<${element.tagName.toLowerCase()}>`,
+        htmlTruncated: false,
+      };
     }
     if (html.length > htmlSnippetMaxLength) {
       return { html: html.slice(0, htmlSnippetMaxLength), htmlTruncated: true };
@@ -106,7 +112,9 @@ function collectBasicFieldInfo(args: {
       path.unshift(selector);
       current = parent;
     }
-    return path.length > 0 ? path.join(' > ') : `[data-index="${elementIndex}"]`;
+    return path.length > 0
+      ? path.join(' > ')
+      : `[data-index="${elementIndex}"]`;
   }
 
   const skipTypes = ['hidden', 'submit', 'reset', 'button', 'image', 'file'];
@@ -161,8 +169,11 @@ function parseAccessibleName(snapshot: string): string | null {
 /** Find pattern match for a field across name, id, label, and placeholder. */
 function findPatternMatch(
   field: FieldInfo,
-  patterns: [string, RegExp][]
-): { token: string; matchedBy: 'name' | 'id' | 'label' | 'placeholder' } | null {
+  patterns: [string, RegExp][],
+): {
+  token: string;
+  matchedBy: 'name' | 'id' | 'label' | 'placeholder';
+} | null {
   for (const [token, pattern] of patterns) {
     if (field.name && pattern.test(field.name)) {
       return { token, matchedBy: 'name' };
@@ -184,7 +195,7 @@ function findPatternMatch(
 function analyzeFields(
   fields: FieldInfo[],
   patterns: [string, RegExp][],
-  validTokens: readonly string[]
+  validTokens: readonly string[],
 ): { missing: AutocompleteIssue[]; invalid: AutocompleteIssue[] } {
   const missing: AutocompleteIssue[] = [];
   const invalid: AutocompleteIssue[] = [];
@@ -253,7 +264,7 @@ export interface RunAutocompleteAuditOptions extends OutputLocationOptions {
  * and return the parsed result.
  */
 export async function runAutocompleteAudit(
-  options: RunAutocompleteAuditOptions
+  options: RunAutocompleteAuditOptions,
 ): Promise<AutocompleteAuditResult> {
   const { page, ...location } = options;
 
@@ -288,7 +299,7 @@ export async function runAutocompleteAudit(
   const { missing, invalid } = analyzeFields(
     fields,
     patterns,
-    VALID_AUTOCOMPLETE_TOKENS
+    VALID_AUTOCOMPLETE_TOKENS,
   );
 
   const details: AutocompleteAuditDetails = {
@@ -321,7 +332,7 @@ export async function runAutocompleteAudit(
       `   name: ${el.name || 'none'}, id: ${el.id || 'none'}`,
       `   label: "${el.labelText || 'none'}"`,
       `   Expected: autocomplete="${el.expectedToken}" (matched by ${el.matchedBy})`,
-    ]
+    ],
   );
 
   logIssueList<AutocompleteIssue>(
@@ -331,7 +342,7 @@ export async function runAutocompleteAudit(
       `${i + 1}. <${el.tagName}> "${el.selector}"`,
       `   Current: autocomplete="${el.currentAutocomplete}"`,
       `   Expected: autocomplete="${el.expectedToken}"`,
-    ]
+    ],
   );
 
   const resolvedPath = saveAuditResult(result, {

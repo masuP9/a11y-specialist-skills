@@ -6,7 +6,10 @@
  */
 
 import { test } from '@playwright/test';
-import { runTargetSizeCheck, getTargetUrl } from '@a11y-skills/audit/playwright';
+import {
+  runTargetSizeCheck,
+  getTargetUrl,
+} from '@a11y-skills/audit/playwright';
 
 test('target size check (WCAG 2.5.5 / 2.5.8)', async ({ page }) => {
   await page.goto(getTargetUrl('?preset=ng-terrible1&wcagver=22'), {

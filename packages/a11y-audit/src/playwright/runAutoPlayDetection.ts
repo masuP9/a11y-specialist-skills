@@ -32,12 +32,15 @@ import {
   buildAuditResult,
   normalizeAutoPlayDetection,
 } from '../utils/axe-format.js';
-import { generateRecommendation, printSummary } from '../utils/recommendations.js';
+import {
+  generateRecommendation,
+  printSummary,
+} from '../utils/recommendations.js';
 
 /** Capture screenshots at configured intervals. */
 async function captureScreenshots(
   page: Page,
-  outputDir: string
+  outputDir: string,
 ): Promise<ScreenshotRecord[]> {
   const screenshots: ScreenshotRecord[] = [];
 
@@ -80,14 +83,14 @@ export interface RunAutoPlayDetectionOptions {
  * @throws if the optional `pixelmatch` / `pngjs` deps are not installed.
  */
 export async function runAutoPlayDetection(
-  options: RunAutoPlayDetectionOptions
+  options: RunAutoPlayDetectionOptions,
 ): Promise<AutoPlayDetectionResult> {
   const { page, changeThreshold = CHANGE_THRESHOLD } = options;
   const outputDir =
     options.outputDir ??
     path.join(
       process.env.A11Y_OUTPUT_DIR ?? process.cwd(),
-      DEFAULT_AUTO_PLAY_OUTPUT_DIR
+      DEFAULT_AUTO_PLAY_OUTPUT_DIR,
     );
 
   // Lazy-load the modules that depend on the optional pixelmatch/pngjs deps.
@@ -105,7 +108,7 @@ export async function runAutoPlayDetection(
       throw new Error(
         'runAutoPlayDetection requires the optional dependencies `pixelmatch` and `pngjs`. ' +
           'Install them: `npm install pixelmatch pngjs`.\n' +
-          `Original error: ${msg}`
+          `Original error: ${msg}`,
       );
     }
     throw err;
@@ -136,11 +139,14 @@ export async function runAutoPlayDetection(
     const curr = screenshots[i];
     if (!prev || !curr) continue;
 
-    const diffPath = path.join(outputDir, `diff-${prev.time}-vs-${curr.time}.png`);
+    const diffPath = path.join(
+      outputDir,
+      `diff-${prev.time}-vs-${curr.time}.png`,
+    );
     const { diffPixels, totalPixels, diffPercent } = compareImages(
       prev.path,
       curr.path,
-      diffPath
+      diffPath,
     );
     const hasChange = hasSignificantChange(diffPercent, changeThreshold);
 
@@ -171,7 +177,7 @@ export async function runAutoPlayDetection(
       page,
       pauseControls,
       outputDir,
-      changeThreshold
+      changeThreshold,
     );
   } else {
     let reason: string;
@@ -213,8 +219,13 @@ export async function runAutoPlayDetection(
   saveJsonResult(path.join(outputDir, DETECTION_RESULT_FILENAME), result);
 
   printSummary(
-    { hasAutoPlayContent: hasAnyChange, stopsWithin5Seconds, pauseControls, pauseVerification },
-    outputDir
+    {
+      hasAutoPlayContent: hasAnyChange,
+      stopsWithin5Seconds,
+      pauseControls,
+      pauseVerification,
+    },
+    outputDir,
   );
 
   return result;

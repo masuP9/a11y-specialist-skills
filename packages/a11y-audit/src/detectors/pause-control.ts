@@ -25,7 +25,9 @@ import {
 /**
  * Detect pause/stop controls in the page.
  */
-export async function detectPauseControls(page: Page): Promise<PauseControlInfo> {
+export async function detectPauseControls(
+  page: Page,
+): Promise<PauseControlInfo> {
   const config = {
     pauseKeywords: [...PAUSE_KEYWORDS],
     controlClassPatterns: [...CONTROL_CLASS_PATTERNS],
@@ -39,7 +41,10 @@ export async function detectPauseControls(page: Page): Promise<PauseControlInfo>
     const controls: Array<{
       element: string;
       name: string;
-      matchedBy: 'accessible-name' | 'class-name-near-carousel' | 'svg-icon-pattern';
+      matchedBy:
+        | 'accessible-name'
+        | 'class-name-near-carousel'
+        | 'svg-icon-pattern';
       selector: string;
     }> = [];
     const carouselIndicators: Array<{ element: string; name: string }> = [];
@@ -59,7 +64,7 @@ export async function detectPauseControls(page: Page): Promise<PauseControlInfo>
     };
 
     const interactiveElements = document.querySelectorAll(
-      'button, [role="button"], input[type="button"], [tabindex="0"]'
+      'button, [role="button"], input[type="button"], [tabindex="0"]',
     );
 
     interactiveElements.forEach((el) => {
@@ -71,7 +76,7 @@ export async function detectPauseControls(page: Page): Promise<PauseControlInfo>
 
       let accessibleName = ariaLabel || textContent;
       const isSvgMetadata = cfg.svgMetadataPatterns.some((pattern: string) =>
-        accessibleName.toLowerCase().includes(pattern)
+        accessibleName.toLowerCase().includes(pattern),
       );
       if (isSvgMetadata) {
         accessibleName = '';
@@ -80,11 +85,11 @@ export async function detectPauseControls(page: Page): Promise<PauseControlInfo>
       const lowerClass = className.toLowerCase();
 
       const nameMatch = cfg.pauseKeywords.some((kw: string) =>
-        lowerName.includes(kw.toLowerCase())
+        lowerName.includes(kw.toLowerCase()),
       );
 
       const classMatch = cfg.controlClassPatterns.some((pattern: string) =>
-        lowerClass.includes(pattern)
+        lowerClass.includes(pattern),
       );
 
       const isNearCarousel = cfg.carouselPatterns.some((pattern: string) => {
@@ -135,7 +140,7 @@ export async function detectPauseControls(page: Page): Promise<PauseControlInfo>
       }
 
       const isNavControl = cfg.navKeywords.some(
-        (kw: string) => lowerName.includes(kw) || lowerClass.includes(kw)
+        (kw: string) => lowerName.includes(kw) || lowerClass.includes(kw),
       );
       if (isNavControl && isNearCarousel) {
         carouselIndicators.push({
@@ -161,7 +166,7 @@ export async function verifyPauseControl(
   page: Page,
   pauseControls: PauseControlInfo,
   outputDir: string,
-  changeThreshold: number
+  changeThreshold: number,
 ): Promise<PauseVerificationResult> {
   const control = pauseControls.controls[0];
   if (!pauseControls.found || !control) {
@@ -199,7 +204,7 @@ export async function verifyPauseControl(
     const beforeDiff = compareImages(
       beforePath1,
       beforePath2,
-      path.join(outputDir, 'verify-before-diff.png')
+      path.join(outputDir, 'verify-before-diff.png'),
     );
 
     const element = await page.$(selector);
@@ -227,16 +232,16 @@ export async function verifyPauseControl(
     const afterDiff = compareImages(
       afterPath1,
       afterPath2,
-      path.join(outputDir, 'verify-after-diff.png')
+      path.join(outputDir, 'verify-after-diff.png'),
     );
 
     const hadChangeBefore = hasSignificantChange(
       beforeDiff.diffPercent,
-      changeThreshold
+      changeThreshold,
     );
     const hasChangeAfter = hasSignificantChange(
       afterDiff.diffPercent,
-      changeThreshold
+      changeThreshold,
     );
     const pauseWorked = hadChangeBefore && !hasChangeAfter;
 
@@ -263,7 +268,9 @@ export async function verifyPauseControl(
 /**
  * Create a skipped verification result.
  */
-export function createSkippedVerification(reason: string): PauseVerificationResult {
+export function createSkippedVerification(
+  reason: string,
+): PauseVerificationResult {
   return {
     attempted: false,
     controlClicked: null,
