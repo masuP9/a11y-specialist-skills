@@ -3,6 +3,7 @@
  * Cross-platform test runner
  * Usage: node run-test.cjs <test-file(s)> [url]
  */
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- CommonJS file; require() is intentional
 const { execFileSync } = require('child_process');
 
 const testFiles = process.argv[2];
