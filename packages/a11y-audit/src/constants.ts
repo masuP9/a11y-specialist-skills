@@ -74,6 +74,9 @@ export const FOCUSABLE_SELECTOR = `
 /** Extra tab iterations for safety margin */
 export const EXTRA_TAB_ITERATIONS = 10;
 
+/** Default ms to wait after each Tab press for a focus-triggered navigation to surface. */
+export const DEFAULT_NAVIGATION_SETTLE_MS = 50;
+
 // =============================================================================
 // Focus Obscured Detection Constants (WCAG 2.4.12)
 // =============================================================================

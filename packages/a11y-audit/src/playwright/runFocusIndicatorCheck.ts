@@ -29,6 +29,7 @@ import {
   FOCUSABLE_SELECTOR,
   FOCUS_STYLE_PROPERTIES,
   EXTRA_TAB_ITERATIONS,
+  DEFAULT_NAVIGATION_SETTLE_MS,
   DEFAULT_FOCUS_RESULT_FILE,
   DEFAULT_FOCUS_SCREENSHOT_FILE,
   FOCUS_OBSCURED_MIN_OVERLAP_RATIO,
@@ -115,6 +116,12 @@ export interface RunFocusIndicatorCheckOptions extends OutputLocationOptions {
   screenshot?: boolean;
   /** Options forwarded to `browser.newContext()` (locale, viewport, storageState, ...). */
   contextOptions?: BrowserContextOptions;
+  /**
+   * Milliseconds to wait after each Tab press for a focus-triggered navigation
+   * to surface (default: 50). Raise on slow pages/networks. Late navigations
+   * are also caught via the `framenavigated` listener regardless of this value.
+   */
+  navigationSettleMs?: number;
 }
 
 /**
@@ -129,6 +136,7 @@ export async function runFocusIndicatorCheck(
     targetUrl: targetUrlOption,
     screenshot = false,
     contextOptions,
+    navigationSettleMs = DEFAULT_NAVIGATION_SETTLE_MS,
     ...location
   } = options;
 
@@ -159,6 +167,15 @@ export async function runFocusIndicatorCheck(
       // Create a fresh context for each attempt to reset init scripts
       context = await browser.newContext(contextOptions);
       const page = await context.newPage();
+
+      // Catch navigations that surface later than the per-Tab settle window
+      // (WCAG 3.2.1). Reset after the initial goto; checked alongside the URL diff.
+      let lateNavigationUrl: string | null = null;
+      page.on('framenavigated', (frame) => {
+        if (frame === page.mainFrame()) {
+          lateNavigationUrl = frame.url();
+        }
+      });
 
       const focusHistory: FocusRecord[] = [];
       let lastFocusedElement: FocusElementRef | null = null;
@@ -241,6 +258,10 @@ export async function runFocusIndicatorCheck(
         }, skipSelectors);
       }
 
+      // Reset the late-navigation flag so the initial goto and skip-element
+      // setup above don't produce false positives in the Tab loop.
+      lateNavigationUrl = null;
+
       // Tab through all elements with navigation detection
       for (let i = 0; i < count + EXTRA_TAB_ITERATIONS; i++) {
         const urlBeforeTab = page.url();
@@ -296,20 +317,26 @@ export async function runFocusIndicatorCheck(
         }
 
         // Small wait to allow any navigation to start
-        await page.waitForTimeout(50);
+        await page.waitForTimeout(navigationSettleMs);
 
-        // Check if navigation occurred
+        // Check if navigation occurred (either within the settle window or late)
         const urlAfterTab = page.url();
-        if (urlAfterTab !== urlBeforeTab) {
+        const lateNav =
+          lateNavigationUrl !== null && lateNavigationUrl !== urlBeforeTab;
+        if (urlAfterTab !== urlBeforeTab || lateNav) {
           // 3.2.1 violation detected!
           navigationDetected = true;
 
           const culprit = currentFocusedElement || lastFocusedElement;
           if (culprit && !skipSelectors.includes(culprit.selector)) {
+            const toUrl =
+              urlAfterTab !== urlBeforeTab
+                ? urlAfterTab
+                : (lateNavigationUrl ?? urlAfterTab);
             onFocusViolations.push({
               element: culprit,
               fromUrl: urlBeforeTab,
-              toUrl: urlAfterTab,
+              toUrl,
               changeType: 'navigation',
             });
             skipSelectors.push(culprit.selector);
@@ -320,9 +347,10 @@ export async function runFocusIndicatorCheck(
             console.warn(`    Element: <${culprit.tag}> "${culprit.name}"`);
             console.warn(`    Selector: ${culprit.selector}`);
             console.warn(`    From: ${urlBeforeTab}`);
-            console.warn(`    To: ${urlAfterTab}`);
+            console.warn(`    To: ${toUrl}`);
             console.warn(`    Restarting test with this element skipped...`);
           }
+          lateNavigationUrl = null;
           break;
         }
       }
