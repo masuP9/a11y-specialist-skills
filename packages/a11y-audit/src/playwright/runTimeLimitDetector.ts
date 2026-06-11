@@ -63,14 +63,17 @@ function createTimerHookScript(args: { minMs: number; maxMs: number }): void {
         callStack =
           (e as Error).stack?.split('\n').slice(2, 5).join('\n') || null;
       }
-      capturedTimers.push({ type: 'setTimeout', delayMs: actualDelay, callStack });
+      capturedTimers.push({
+        type: 'setTimeout',
+        delayMs: actualDelay,
+        callStack,
+      });
     }
 
-    return (originalSetTimeout as (...args: unknown[]) => unknown).apply(window, [
-      callback,
-      delay,
-      ...rest,
-    ]) as unknown as number;
+    return (originalSetTimeout as (...args: unknown[]) => unknown).apply(
+      window,
+      [callback, delay, ...rest],
+    ) as unknown as number;
   };
 
   (window as unknown as Record<string, unknown>).setInterval = function (
@@ -88,17 +91,21 @@ function createTimerHookScript(args: { minMs: number; maxMs: number }): void {
         callStack =
           (e as Error).stack?.split('\n').slice(2, 5).join('\n') || null;
       }
-      capturedTimers.push({ type: 'setInterval', delayMs: actualDelay, callStack });
+      capturedTimers.push({
+        type: 'setInterval',
+        delayMs: actualDelay,
+        callStack,
+      });
     }
 
-    return (originalSetInterval as (...args: unknown[]) => unknown).apply(window, [
-      callback,
-      delay,
-      ...rest,
-    ]) as unknown as number;
+    return (originalSetInterval as (...args: unknown[]) => unknown).apply(
+      window,
+      [callback, delay, ...rest],
+    ) as unknown as number;
   };
 
-  (window as unknown as Record<string, unknown>).__capturedTimers = capturedTimers;
+  (window as unknown as Record<string, unknown>).__capturedTimers =
+    capturedTimers;
 }
 
 interface TimeLimitIndicatorsResult {
@@ -113,7 +120,10 @@ function detectTimeLimitIndicators(args: {
 }): TimeLimitIndicatorsResult {
   const { keywords, htmlSnippetMaxLength } = args;
 
-  function getHtmlSnippet(element: Element): { html: string; htmlTruncated: boolean } {
+  function getHtmlSnippet(element: Element): {
+    html: string;
+    htmlTruncated: boolean;
+  } {
     let html = '';
     try {
       html = element.outerHTML || '';
@@ -121,7 +131,10 @@ function detectTimeLimitIndicators(args: {
       html = '';
     }
     if (!html) {
-      return { html: `<${element.tagName.toLowerCase()}>`, htmlTruncated: false };
+      return {
+        html: `<${element.tagName.toLowerCase()}>`,
+        htmlTruncated: false,
+      };
     }
     if (html.length > htmlSnippetMaxLength) {
       return { html: html.slice(0, htmlSnippetMaxLength), htmlTruncated: true };
@@ -145,7 +158,9 @@ function detectTimeLimitIndicators(args: {
       path.unshift(selector);
       current = parent;
     }
-    return path.length > 0 ? path.join(' > ') : `[data-index="${elementIndex}"]`;
+    return path.length > 0
+      ? path.join(' > ')
+      : `[data-index="${elementIndex}"]`;
   }
 
   const metaRefresh: MetaRefreshInfo[] = [];
@@ -179,7 +194,7 @@ function detectTimeLimitIndicators(args: {
     const walker = document.createTreeWalker(
       document.body,
       NodeFilter.SHOW_TEXT,
-      null
+      null,
     );
     let node: Text | null;
     let elementIndex = 0;
@@ -189,7 +204,9 @@ function detectTimeLimitIndicators(args: {
         const parent = node.parentElement;
         if (parent) {
           const fullText = parent.textContent?.trim().slice(0, 150) || '';
-          const alreadyAdded = countdownIndicators.some((c) => c.text === fullText);
+          const alreadyAdded = countdownIndicators.some(
+            (c) => c.text === fullText,
+          );
           if (!alreadyAdded && fullText.length > 0) {
             countdownIndicators.push({
               selector: getUniqueSelector(parent, elementIndex),
@@ -224,7 +241,7 @@ export interface RunTimeLimitDetectorOptions extends OutputLocationOptions {
  * Run the time limit detector, write the result JSON, and return the result.
  */
 export async function runTimeLimitDetector(
-  options: RunTimeLimitDetectorOptions
+  options: RunTimeLimitDetectorOptions,
 ): Promise<TimeLimitDetectorResult> {
   const {
     page,
@@ -276,21 +293,26 @@ export async function runTimeLimitDetector(
 
   logSummary({
     'Meta refresh tags': details.metaRefresh.length,
-    [`Timers detected (${minMs / 1000}s - ${maxMs / 1000}s)`]: details.timers.length,
+    [`Timers detected (${minMs / 1000}s - ${maxMs / 1000}s)`]:
+      details.timers.length,
     'Countdown text indicators': details.countdownIndicators.length,
     'Time limits detected': details.hasTimeLimits,
   });
 
-  logIssueList<MetaRefreshInfo>('Meta Refresh', details.metaRefresh, (meta, i) => {
-    const lines = [
-      `${i + 1}. content="${meta.content}"`,
-      `   Refresh in ${meta.seconds} seconds`,
-    ];
-    if (meta.url) {
-      lines.push(`   Redirects to: ${meta.url}`);
-    }
-    return lines;
-  });
+  logIssueList<MetaRefreshInfo>(
+    'Meta Refresh',
+    details.metaRefresh,
+    (meta, i) => {
+      const lines = [
+        `${i + 1}. content="${meta.content}"`,
+        `   Refresh in ${meta.seconds} seconds`,
+      ];
+      if (meta.url) {
+        lines.push(`   Redirects to: ${meta.url}`);
+      }
+      return lines;
+    },
+  );
 
   logIssueList<TimerInfo>('Detected Timers', details.timers, (timer, i) => {
     const lines = [
@@ -315,7 +337,7 @@ export async function runTimeLimitDetector(
         `   Text: "${truncatedText}"`,
       ];
     },
-    5
+    5,
   );
 
   const resolvedPath = saveAuditResult(result, {

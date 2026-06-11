@@ -23,7 +23,7 @@ import type {
 } from '../dist/index.js';
 
 const targetSizeIssue = (
-  overrides: Partial<TargetSizeIssue> = {}
+  overrides: Partial<TargetSizeIssue> = {},
 ): TargetSizeIssue => ({
   selector: '#b1',
   tagName: 'button',
@@ -43,7 +43,7 @@ const targetSizeIssue = (
 });
 
 const emptyFocusDetails = (
-  overrides: Partial<FocusCheckDetails> = {}
+  overrides: Partial<FocusCheckDetails> = {},
 ): FocusCheckDetails => ({
   totalFocusableElements: 0,
   elementsWithFocusStyle: 0,
@@ -66,22 +66,33 @@ test('target-size: not-assessed findings go to incomplete, ruled-out to violatio
   const details: TargetSizeCheckDetails = {
     totalTargetsChecked: 3,
     failAA: [
-      targetSizeIssue({ selector: '#review', exceptionAssessment: 'not-assessed' }),
-      targetSizeIssue({ selector: '#confirmed', exceptionAssessment: 'ruled-out' }),
+      targetSizeIssue({
+        selector: '#review',
+        exceptionAssessment: 'not-assessed',
+      }),
+      targetSizeIssue({
+        selector: '#confirmed',
+        exceptionAssessment: 'ruled-out',
+      }),
     ],
     failAAAOnly: [],
     passedTargets: 1,
     exceptedTargets: [],
-    summary: { failAACount: 2, failAAAOnlyCount: 0, passCount: 1, exceptedCount: 0 },
+    summary: {
+      failAACount: 2,
+      failAAAOnlyCount: 0,
+      passCount: 1,
+      exceptedCount: 0,
+    },
   };
 
   const buckets = normalizeTargetSizeCheck(details);
 
   const violation = buckets.violations.find(
-    (r) => r.id === 'a11y-skills/target-size-minimum'
+    (r) => r.id === 'a11y-skills/target-size-minimum',
   );
   const incomplete = buckets.incomplete.find(
-    (r) => r.id === 'a11y-skills/target-size-minimum'
+    (r) => r.id === 'a11y-skills/target-size-minimum',
   );
   expect(violation?.nodes.map((n) => n.target[0])).toEqual(['#confirmed']);
   expect(incomplete?.nodes.map((n) => n.target[0])).toEqual(['#review']);
@@ -103,21 +114,26 @@ test('target-size: correct WCAG tags per rule (AA vs AAA)', () => {
     ],
     passedTargets: 0,
     exceptedTargets: [],
-    summary: { failAACount: 1, failAAAOnlyCount: 1, passCount: 0, exceptedCount: 0 },
+    summary: {
+      failAACount: 1,
+      failAAAOnlyCount: 1,
+      passCount: 0,
+      exceptedCount: 0,
+    },
   };
 
   const buckets = normalizeTargetSizeCheck(details);
   const minimum = buckets.incomplete.find(
-    (r) => r.id === 'a11y-skills/target-size-minimum'
+    (r) => r.id === 'a11y-skills/target-size-minimum',
   );
   const enhanced = buckets.incomplete.find(
-    (r) => r.id === 'a11y-skills/target-size-enhanced'
+    (r) => r.id === 'a11y-skills/target-size-enhanced',
   );
   expect(minimum?.tags).toEqual(
-    expect.arrayContaining(['a11y-skills', 'wcag22aa', 'wcag258'])
+    expect.arrayContaining(['a11y-skills', 'wcag22aa', 'wcag258']),
   );
   expect(enhanced?.tags).toEqual(
-    expect.arrayContaining(['a11y-skills', 'wcag21aaa', 'wcag255'])
+    expect.arrayContaining(['a11y-skills', 'wcag21aaa', 'wcag255']),
   );
 });
 
@@ -150,14 +166,14 @@ test('focus check: on-focus navigation is a confirmed violation, missing style i
       onFocusViolations: [
         { element, fromUrl: 'a:b', toUrl: 'a:c', changeType: 'navigation' },
       ],
-    })
+    }),
   );
 
   expect(buckets.violations.map((r) => r.id)).toEqual([
     'a11y-skills/no-context-change-on-focus',
   ]);
   expect(buckets.incomplete.map((r) => r.id)).toContain(
-    'a11y-skills/focus-visible'
+    'a11y-skills/focus-visible',
   );
   const violation = buckets.violations[0];
   expect(violation.nodes[0].failureSummary).toContain('navigation');
@@ -172,8 +188,18 @@ test('text-spacing clipping is a confirmed violation', () => {
         tagName: 'div',
         html: '<div class="box">text</div>',
         htmlTruncated: false,
-        beforeMetrics: { scrollWidth: 80, scrollHeight: 20, clientWidth: 80, clientHeight: 20 },
-        afterMetrics: { scrollWidth: 120, scrollHeight: 20, clientWidth: 80, clientHeight: 20 },
+        beforeMetrics: {
+          scrollWidth: 80,
+          scrollHeight: 20,
+          clientWidth: 80,
+          clientHeight: 20,
+        },
+        afterMetrics: {
+          scrollWidth: 120,
+          scrollHeight: 20,
+          clientWidth: 80,
+          clientHeight: 20,
+        },
         overflow: 'hidden',
         overflowX: 'hidden',
         overflowY: 'visible',
@@ -182,7 +208,9 @@ test('text-spacing clipping is a confirmed violation', () => {
     ],
   };
   const buckets = normalizeTextSpacingCheck(details);
-  expect(buckets.violations.map((r) => r.id)).toEqual(['a11y-skills/text-spacing']);
+  expect(buckets.violations.map((r) => r.id)).toEqual([
+    'a11y-skills/text-spacing',
+  ]);
 });
 
 test('time-limit: meta refresh and timers are incomplete; timers are page-level', () => {
@@ -206,7 +234,7 @@ test('time-limit: meta refresh and timers are incomplete; timers are page-level'
   expect(ids).toContain('a11y-skills/meta-refresh');
   expect(ids).toContain('a11y-skills/time-limit-timer');
   const timerRule = buckets.incomplete.find(
-    (r) => r.id === 'a11y-skills/time-limit-timer'
+    (r) => r.id === 'a11y-skills/time-limit-timer',
   );
   expect(timerRule?.nodes[0].target).toEqual(['html']);
   expect(timerRule?.nodes[0].html.length).toBeGreaterThan(0);

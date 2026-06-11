@@ -1,4 +1,4 @@
 interface:
-  display_name: "WCAG Audit Planning"
-  short_description: "Plan scope, pages, and audit execution"
-  default_prompt: "Use $planning-wcag-audit to define the audit scope, select representative pages, document the environment, and produce an execution plan."
+  display_name: 'WCAG Audit Planning'
+  short_description: 'Plan scope, pages, and audit execution'
+  default_prompt: 'Use $planning-wcag-audit to define the audit scope, select representative pages, document the environment, and produce an execution plan.'

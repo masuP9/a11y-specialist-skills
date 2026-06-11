@@ -432,19 +432,21 @@ export const TARGET_SIZE_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
   },
 });
 
-export const TEXT_SPACING_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
-  id: 'text-spacing-check-result',
-  title: 'TextSpacingCheckResult',
-  source: 'text-spacing-check',
-  details: {
-    type: 'object',
-    required: ['clippedElements', 'totalElementsChecked'],
-    properties: {
-      clippedElements: { type: 'array', items: { type: 'object' } },
-      totalElementsChecked: { type: 'number' },
+export const TEXT_SPACING_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema(
+  {
+    id: 'text-spacing-check-result',
+    title: 'TextSpacingCheckResult',
+    source: 'text-spacing-check',
+    details: {
+      type: 'object',
+      required: ['clippedElements', 'totalElementsChecked'],
+      properties: {
+        clippedElements: { type: 'array', items: { type: 'object' } },
+        totalElementsChecked: { type: 'number' },
+      },
     },
   },
-});
+);
 
 export const ZOOM_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
   id: 'zoom-check-result',
@@ -490,63 +492,76 @@ export const ORIENTATION_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
   },
 });
 
-export const AUTOCOMPLETE_AUDIT_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
-  id: 'autocomplete-audit-result',
-  title: 'AutocompleteAuditResult',
-  source: 'autocomplete-audit',
-  details: {
-    type: 'object',
-    required: ['totalFieldsChecked', 'missingAutocomplete', 'invalidAutocomplete'],
-    properties: {
-      totalFieldsChecked: { type: 'number' },
-      missingAutocomplete: { type: 'array', items: { type: 'object' } },
-      invalidAutocomplete: { type: 'array', items: { type: 'object' } },
+export const AUTOCOMPLETE_AUDIT_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema(
+  {
+    id: 'autocomplete-audit-result',
+    title: 'AutocompleteAuditResult',
+    source: 'autocomplete-audit',
+    details: {
+      type: 'object',
+      required: [
+        'totalFieldsChecked',
+        'missingAutocomplete',
+        'invalidAutocomplete',
+      ],
+      properties: {
+        totalFieldsChecked: { type: 'number' },
+        missingAutocomplete: { type: 'array', items: { type: 'object' } },
+        invalidAutocomplete: { type: 'array', items: { type: 'object' } },
+      },
     },
   },
-});
+);
 
-export const TIME_LIMIT_DETECTOR_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
-  id: 'time-limit-detector-result',
-  title: 'TimeLimitDetectorResult',
-  source: 'time-limit-detector',
-  details: {
-    type: 'object',
-    required: ['metaRefresh', 'timers', 'countdownIndicators', 'hasTimeLimits'],
-    properties: {
-      metaRefresh: { type: 'array', items: { type: 'object' } },
-      timers: { type: 'array', items: { type: 'object' } },
-      countdownIndicators: { type: 'array', items: { type: 'object' } },
-      hasTimeLimits: { type: 'boolean' },
+export const TIME_LIMIT_DETECTOR_RESULT_SCHEMA: JsonSchema =
+  buildEnvelopeSchema({
+    id: 'time-limit-detector-result',
+    title: 'TimeLimitDetectorResult',
+    source: 'time-limit-detector',
+    details: {
+      type: 'object',
+      required: [
+        'metaRefresh',
+        'timers',
+        'countdownIndicators',
+        'hasTimeLimits',
+      ],
+      properties: {
+        metaRefresh: { type: 'array', items: { type: 'object' } },
+        timers: { type: 'array', items: { type: 'object' } },
+        countdownIndicators: { type: 'array', items: { type: 'object' } },
+        hasTimeLimits: { type: 'boolean' },
+      },
     },
-  },
-});
+  });
 
-export const AUTO_PLAY_DETECTION_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
-  id: 'auto-play-detection-result',
-  title: 'AutoPlayDetectionResult',
-  source: 'auto-play-detection',
-  details: {
-    type: 'object',
-    required: [
-      'screenshotRecords',
-      'comparisons',
-      'hasAutoPlayContent',
-      'stopsWithin5Seconds',
-      'pauseControls',
-      'pauseVerification',
-      'recommendation',
-    ],
-    properties: {
-      screenshotRecords: { type: 'array', items: { type: 'object' } },
-      comparisons: { type: 'array', items: { type: 'object' } },
-      hasAutoPlayContent: { type: 'boolean' },
-      stopsWithin5Seconds: { type: 'boolean' },
-      pauseControls: { type: 'object' },
-      pauseVerification: { type: 'object' },
-      recommendation: { type: 'string' },
+export const AUTO_PLAY_DETECTION_RESULT_SCHEMA: JsonSchema =
+  buildEnvelopeSchema({
+    id: 'auto-play-detection-result',
+    title: 'AutoPlayDetectionResult',
+    source: 'auto-play-detection',
+    details: {
+      type: 'object',
+      required: [
+        'screenshotRecords',
+        'comparisons',
+        'hasAutoPlayContent',
+        'stopsWithin5Seconds',
+        'pauseControls',
+        'pauseVerification',
+        'recommendation',
+      ],
+      properties: {
+        screenshotRecords: { type: 'array', items: { type: 'object' } },
+        comparisons: { type: 'array', items: { type: 'object' } },
+        hasAutoPlayContent: { type: 'boolean' },
+        stopsWithin5Seconds: { type: 'boolean' },
+        pauseControls: { type: 'object' },
+        pauseVerification: { type: 'object' },
+        recommendation: { type: 'string' },
+      },
     },
-  },
-});
+  });
 
 /** All result schemas keyed by check id. */
 export const RESULT_SCHEMAS = {

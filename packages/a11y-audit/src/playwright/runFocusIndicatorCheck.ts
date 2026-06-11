@@ -130,7 +130,7 @@ export interface RunFocusIndicatorCheckOptions extends OutputLocationOptions {
  * screenshot), and return the parsed result.
  */
 export async function runFocusIndicatorCheck(
-  options: RunFocusIndicatorCheckOptions
+  options: RunFocusIndicatorCheckOptions,
 ): Promise<FocusCheckResult> {
   const {
     browser,
@@ -149,7 +149,7 @@ export async function runFocusIndicatorCheck(
   });
   const resolvedScreenshotPath = resolveScreenshotPath(
     resolvedResultPath,
-    DEFAULT_FOCUS_SCREENSHOT_FILE
+    DEFAULT_FOCUS_SCREENSHOT_FILE,
   );
 
   const onFocusViolations: OnFocusViolation[] = [];
@@ -206,7 +206,7 @@ export async function runFocusIndicatorCheck(
         'reportFocusObscured',
         (data: FocusObscuredIssue) => {
           focusObscuredIssues.push(data);
-        }
+        },
       );
 
       // Inject focus tracking script with current skip list
@@ -228,7 +228,9 @@ export async function runFocusIndicatorCheck(
 
       // Initialize focus tracker and get element count
       const count = await page.evaluate(() =>
-        (window as unknown as { initFocusTracker: () => number }).initFocusTracker()
+        (
+          window as unknown as { initFocusTracker: () => number }
+        ).initFocusTracker(),
       );
 
       // Mark elements that caused navigation violations (from previous attempts)
@@ -276,46 +278,52 @@ export async function runFocusIndicatorCheck(
         // Get currently focused element IMMEDIATELY after Tab
         let currentFocusedElement: FocusElementRef | null = null;
         try {
-          currentFocusedElement = await page.evaluate((htmlSnippetMaxLength) => {
-            const el = document.activeElement;
-            if (!el || el === document.body) return null;
+          currentFocusedElement = await page.evaluate(
+            (htmlSnippetMaxLength) => {
+              const el = document.activeElement;
+              if (!el || el === document.body) return null;
 
-            const getSelector = (element: Element): string => {
-              if (element.id) return `#${element.id}`;
-              const tag = element.tagName.toLowerCase();
-              const parent = element.parentElement;
-              if (!parent) return tag;
-              const siblings = [...parent.children].filter(
-                (c) => c.tagName === element.tagName
-              );
-              if (siblings.length === 1) return `${getSelector(parent)} > ${tag}`;
-              const index = siblings.indexOf(element) + 1;
-              return `${getSelector(parent)} > ${tag}:nth-of-type(${index})`;
-            };
+              const getSelector = (element: Element): string => {
+                if (element.id) return `#${element.id}`;
+                const tag = element.tagName.toLowerCase();
+                const parent = element.parentElement;
+                if (!parent) return tag;
+                const siblings = [...parent.children].filter(
+                  (c) => c.tagName === element.tagName,
+                );
+                if (siblings.length === 1)
+                  return `${getSelector(parent)} > ${tag}`;
+                const index = siblings.indexOf(element) + 1;
+                return `${getSelector(parent)} > ${tag}:nth-of-type(${index})`;
+              };
 
-            let html = '';
-            try {
-              html = el.outerHTML || '';
-            } catch {
-              html = '';
-            }
-            if (!html) {
-              html = `<${el.tagName.toLowerCase()}>`;
-            }
-            const htmlTruncated = html.length > htmlSnippetMaxLength;
+              let html = '';
+              try {
+                html = el.outerHTML || '';
+              } catch {
+                html = '';
+              }
+              if (!html) {
+                html = `<${el.tagName.toLowerCase()}>`;
+              }
+              const htmlTruncated = html.length > htmlSnippetMaxLength;
 
-            return {
-              tag: el.tagName,
-              role: el.getAttribute('role'),
-              name:
-                el.getAttribute('aria-label') ||
-                el.textContent?.slice(0, 30) ||
-                '',
-              selector: getSelector(el),
-              html: htmlTruncated ? html.slice(0, htmlSnippetMaxLength) : html,
-              htmlTruncated,
-            };
-          }, HTML_SNIPPET_MAX_LENGTH);
+              return {
+                tag: el.tagName,
+                role: el.getAttribute('role'),
+                name:
+                  el.getAttribute('aria-label') ||
+                  el.textContent?.slice(0, 30) ||
+                  '',
+                selector: getSelector(el),
+                html: htmlTruncated
+                  ? html.slice(0, htmlSnippetMaxLength)
+                  : html,
+                htmlTruncated,
+              };
+            },
+            HTML_SNIPPET_MAX_LENGTH,
+          );
         } catch {
           // Page might have navigated, use lastFocusedElement as fallback
           currentFocusedElement = lastFocusedElement;
@@ -347,7 +355,7 @@ export async function runFocusIndicatorCheck(
             skipSelectors.push(culprit.selector);
 
             console.warn(
-              `\n⚠️  WCAG 3.2.1 Violation: Focus on element caused navigation!`
+              `\n⚠️  WCAG 3.2.1 Violation: Focus on element caused navigation!`,
             );
             console.warn(`    Element: <${culprit.tag}> "${culprit.name}"`);
             console.warn(`    Selector: ${culprit.selector}`);
@@ -370,7 +378,7 @@ export async function runFocusIndicatorCheck(
       retryCount++;
       if (retryCount >= MAX_RETRIES) {
         console.warn(
-          `\n⚠️  Max retries (${MAX_RETRIES}) reached. Some elements may not have been tested.`
+          `\n⚠️  Max retries (${MAX_RETRIES}) reached. Some elements may not have been tested.`,
         );
         // Keep this page with its annotations for the screenshot
         finalFocusHistory = focusHistory;
@@ -390,13 +398,13 @@ export async function runFocusIndicatorCheck(
 
     // Report results
     const elementsWithoutFocusStyle = finalFocusHistory.filter(
-      (f) => !f.hasFocusStyle
+      (f) => !f.hasFocusStyle,
     );
 
     if (elementsWithoutFocusStyle.length > 0) {
       console.warn(
         'Elements without visible focus indicator:',
-        elementsWithoutFocusStyle
+        elementsWithoutFocusStyle,
       );
     }
 
@@ -433,19 +441,21 @@ export async function runFocusIndicatorCheck(
     logAuditHeader(
       'Focus Indicator Check Results',
       'WCAG 2.4.7 / 2.4.11 / 3.2.1',
-      result.url
+      result.url,
     );
 
     console.log(`Total focusable elements: ${details.totalFocusableElements}`);
     console.log(`Elements with focus style: ${details.elementsWithFocusStyle}`);
     console.log(
-      `Elements WITHOUT focus style: ${details.elementsWithoutFocusStyle}`
+      `Elements WITHOUT focus style: ${details.elementsWithoutFocusStyle}`,
     );
-    console.log(`Elements with OBSCURED focus: ${details.elementsWithObscuredFocus}`);
+    console.log(
+      `Elements with OBSCURED focus: ${details.elementsWithObscuredFocus}`,
+    );
 
     if (retryCount > 0) {
       console.log(
-        `\nTest restarted ${retryCount} time(s) due to navigation violations`
+        `\nTest restarted ${retryCount} time(s) due to navigation violations`,
       );
     }
 
@@ -454,23 +464,27 @@ export async function runFocusIndicatorCheck(
       console.log('\n--- WCAG 2.4.7: Elements Missing Focus Indicator ---');
       elementsWithoutFocusStyle.forEach((el, i) => {
         console.log(
-          `  ${i + 1}. <${el.tag}> "${el.name}" (role: ${el.role || 'none'})`
+          `  ${i + 1}. <${el.tag}> "${el.name}" (role: ${el.role || 'none'})`,
         );
       });
     }
 
     // WCAG 2.4.12 summary
     if (focusObscuredIssues.length > 0) {
-      console.log('\n--- WCAG 2.4.12: Focus Obscured by Fixed/Sticky Elements ---');
+      console.log(
+        '\n--- WCAG 2.4.12: Focus Obscured by Fixed/Sticky Elements ---',
+      );
       focusObscuredIssues.forEach((issue, i) => {
-        console.log(`  ${i + 1}. <${issue.element.tag}> "${issue.element.name}"`);
+        console.log(
+          `  ${i + 1}. <${issue.element.tag}> "${issue.element.name}"`,
+        );
         console.log(`     Selector: ${issue.element.selector}`);
         console.log(
-          `     Obscured ratio: ${(issue.obscuredRatio * 100).toFixed(1)}%`
+          `     Obscured ratio: ${(issue.obscuredRatio * 100).toFixed(1)}%`,
         );
         issue.overlaps.forEach((overlap) => {
           console.log(
-            `     Obscured by: <${overlap.obscuredBy.tag}> "${overlap.obscuredBy.name}"`
+            `     Obscured by: <${overlap.obscuredBy.tag}> "${overlap.obscuredBy.name}"`,
           );
         });
       });
@@ -535,7 +549,7 @@ function createFocusTrackerScript(args: {
   } = args;
 
   const getHtmlSnippet = (
-    el: Element
+    el: Element,
   ): { html: string; htmlTruncated: boolean } => {
     let html = '';
     try {
@@ -578,7 +592,9 @@ function createFocusTrackerScript(args: {
     const tag = el.tagName.toLowerCase();
     const parent = el.parentElement;
     if (!parent) return tag;
-    const siblings = [...parent.children].filter((c) => c.tagName === el.tagName);
+    const siblings = [...parent.children].filter(
+      (c) => c.tagName === el.tagName,
+    );
     if (siblings.length === 1) return `${getSelector(parent)} > ${tag}`;
     const index = siblings.indexOf(el) + 1;
     return `${getSelector(parent)} > ${tag}:nth-of-type(${index})`;
@@ -620,7 +636,7 @@ function createFocusTrackerScript(args: {
    */
   const isVisibleFocusChange = (
     diff: Record<string, string>,
-    focusedStyle: Record<string, string>
+    focusedStyle: Record<string, string>,
   ): boolean => {
     const diffKeys = Object.keys(diff);
     if (diffKeys.length === 0) return false;
@@ -677,7 +693,9 @@ function createFocusTrackerScript(args: {
    * Create overlay container for annotations
    */
   const createOverlay = (): HTMLDivElement => {
-    let overlay = document.getElementById('focus-audit-overlay') as HTMLDivElement;
+    let overlay = document.getElementById(
+      'focus-audit-overlay',
+    ) as HTMLDivElement;
     if (!overlay) {
       overlay = document.createElement('div');
       overlay.id = 'focus-audit-overlay';
@@ -689,7 +707,11 @@ function createFocusTrackerScript(args: {
   /**
    * Add annotation box to overlay for an element
    */
-  const addAnnotationBox = (el: Element, label: string, cssClass: string): void => {
+  const addAnnotationBox = (
+    el: Element,
+    label: string,
+    cssClass: string,
+  ): void => {
     const overlay = createOverlay();
     const rect = el.getBoundingClientRect();
 
@@ -713,7 +735,7 @@ function createFocusTrackerScript(args: {
    */
   const getIntersection = (
     rect1: DOMRect,
-    rect2: DOMRect
+    rect2: DOMRect,
   ): { left: number; top: number; width: number; height: number } | null => {
     const left = Math.max(rect1.left, rect2.left);
     const top = Math.max(rect1.top, rect2.top);
@@ -779,7 +801,7 @@ function createFocusTrackerScript(args: {
   const isActuallyObscuring = (
     focusedEl: Element,
     obscurer: Element,
-    intersection: { left: number; top: number; width: number; height: number }
+    intersection: { left: number; top: number; width: number; height: number },
   ): boolean => {
     // Calculate safe sample offsets (clamped to intersection bounds)
     const marginX = Math.min(2, intersection.width / 4);
@@ -883,7 +905,12 @@ function createFocusTrackerScript(args: {
 
     const obscurers = getObscurerCandidates();
     const overlaps: Array<{
-      obscuredBy: { tag: string; role: string | null; name: string; selector: string };
+      obscuredBy: {
+        tag: string;
+        role: string | null;
+        name: string;
+        selector: string;
+      };
       overlapRect: { left: number; top: number; width: number; height: number };
       overlapArea: number;
     }> = [];
@@ -936,12 +963,15 @@ function createFocusTrackerScript(args: {
     const obscuredRatio = Math.min(totalOverlapArea / focusedArea, 1.0);
 
     // Only report if obscured ratio exceeds threshold
-    if (obscuredRatio >= obscuredConfig.minOverlapRatio && overlaps.length > 0) {
+    if (
+      obscuredRatio >= obscuredConfig.minOverlapRatio &&
+      overlaps.length > 0
+    ) {
       // Add visual annotation
       addAnnotationBox(
         focusedEl,
         `⚠ 2.4.12 Obscured (${(obscuredRatio * 100).toFixed(0)}%)`,
-        'focus-obscured'
+        'focus-obscured',
       );
 
       // Report to test
@@ -975,19 +1005,20 @@ function createFocusTrackerScript(args: {
   /**
    * Initialize focus tracker - called after page load
    */
-  (window as unknown as { initFocusTracker: () => number }).initFocusTracker = () => {
-    // Create overlay container
-    createOverlay();
+  (window as unknown as { initFocusTracker: () => number }).initFocusTracker =
+    () => {
+      // Create overlay container
+      createOverlay();
 
-    const elements = [...document.querySelectorAll(focusableSelector)]
-      .filter(isVisible)
-      .filter((el) => !shouldSkip(el));
-    elements.forEach((el) => {
-      baseStyles.set(el, captureStyle(el));
-      elementSelectors.set(el, getSelector(el));
-    });
-    return elements.length;
-  };
+      const elements = [...document.querySelectorAll(focusableSelector)]
+        .filter(isVisible)
+        .filter((el) => !shouldSkip(el));
+      elements.forEach((el) => {
+        baseStyles.set(el, captureStyle(el));
+        elementSelectors.set(el, getSelector(el));
+      });
+      return elements.length;
+    };
 
   /**
    * Handle focus events
@@ -1023,7 +1054,7 @@ function createFocusTrackerScript(args: {
         .join('; ');
       styleSheet.insertRule(
         `[data-focus-visited="${id}"] { ${cssText} }`,
-        styleSheet.cssRules.length
+        styleSheet.cssRules.length,
       );
       // Add green annotation box for elements with focus style
       addAnnotationBox(el, '✓ Focus Style', 'has-focus-style');
@@ -1035,18 +1066,19 @@ function createFocusTrackerScript(args: {
     }
 
     // Report to test
-    (
-      window as unknown as { reportFocus: (data: unknown) => void }
-    ).reportFocus({
-      id,
-      tag: el.tagName,
-      role: el.getAttribute('role'),
-      name: el.getAttribute('aria-label') || el.textContent?.slice(0, 30) || '',
-      hasFocusStyle,
-      diff,
-      selector: elementSelectors.get(el) || getSelector(el),
-      ...getHtmlSnippet(el),
-    });
+    (window as unknown as { reportFocus: (data: unknown) => void }).reportFocus(
+      {
+        id,
+        tag: el.tagName,
+        role: el.getAttribute('role'),
+        name:
+          el.getAttribute('aria-label') || el.textContent?.slice(0, 30) || '',
+        hasFocusStyle,
+        diff,
+        selector: elementSelectors.get(el) || getSelector(el),
+        ...getHtmlSnippet(el),
+      },
+    );
 
     // Check for WCAG 2.4.12 - focus obscured by fixed/sticky elements
     checkFocusObscured(el);

@@ -87,11 +87,16 @@ function validateSkill(skillDir) {
     if (frontmatter.name !== name) {
       fail(`skills/${name}/${label}: name must match directory name`);
     }
-    if (typeof frontmatter.description !== 'string' || !frontmatter.description.trim()) {
+    if (
+      typeof frontmatter.description !== 'string' ||
+      !frontmatter.description.trim()
+    ) {
       fail(`skills/${name}/${label}: description is required`);
     }
     if (typeof frontmatter['argument-hint'] !== 'string') {
-      fail(`skills/${name}/${label}: argument-hint must be preserved as a string`);
+      fail(
+        `skills/${name}/${label}: argument-hint must be preserved as a string`,
+      );
     }
   }
 
@@ -115,17 +120,16 @@ function validateSkill(skillDir) {
         entry.replace(/\.md$/, '.ja.md'),
       );
       if (!existsSync(japaneseReference)) {
-        fail(`${relative(root, englishReference)}: Japanese counterpart is missing`);
+        fail(
+          `${relative(root, englishReference)}: Japanese counterpart is missing`,
+        );
         continue;
       }
       validateLanguageLink(
         englishReference,
         `[日本語版 (Japanese)](./${entry.replace(/\.md$/, '.ja.md')})`,
       );
-      validateLanguageLink(
-        japaneseReference,
-        `[English](./${entry})`,
-      );
+      validateLanguageLink(japaneseReference, `[English](./${entry})`);
       validateLocalLinks(englishReference);
       validateLocalLinks(japaneseReference);
     }
@@ -141,7 +145,10 @@ function validateSkill(skillDir) {
     }
     const interfaceMetadata = metadata?.interface;
     for (const key of ['display_name', 'short_description', 'default_prompt']) {
-      if (typeof interfaceMetadata?.[key] !== 'string' || !interfaceMetadata[key].trim()) {
+      if (
+        typeof interfaceMetadata?.[key] !== 'string' ||
+        !interfaceMetadata[key].trim()
+      ) {
         fail(`${relative(root, openaiPath)}: interface.${key} is required`);
       }
     }
@@ -149,17 +156,23 @@ function validateSkill(skillDir) {
       typeof interfaceMetadata?.default_prompt === 'string' &&
       !interfaceMetadata.default_prompt.includes(`$${name}`)
     ) {
-      fail(`${relative(root, openaiPath)}: default_prompt must invoke $${name}`);
+      fail(
+        `${relative(root, openaiPath)}: default_prompt must invoke $${name}`,
+      );
     }
   }
 }
 
 function validateManifestVersions() {
-  const claudePlugin = JSON.parse(read(join(root, '.claude-plugin', 'plugin.json')));
+  const claudePlugin = JSON.parse(
+    read(join(root, '.claude-plugin', 'plugin.json')),
+  );
   const claudeMarketplace = JSON.parse(
     read(join(root, '.claude-plugin', 'marketplace.json')),
   );
-  const codexPlugin = JSON.parse(read(join(root, '.codex-plugin', 'plugin.json')));
+  const codexPlugin = JSON.parse(
+    read(join(root, '.codex-plugin', 'plugin.json')),
+  );
   const codexMarketplace = JSON.parse(
     read(join(root, '.agents', 'plugins', 'marketplace.json')),
   );
@@ -192,7 +205,9 @@ function validateManifestVersions() {
       entry.source.path,
     ) !== root
   ) {
-    fail('.agents/plugins/marketplace.json: source.path must point to repository root');
+    fail(
+      '.agents/plugins/marketplace.json: source.path must point to repository root',
+    );
   }
 }
 

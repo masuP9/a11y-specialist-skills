@@ -1,4 +1,4 @@
 interface:
-  display_name: "WCAG Conformance Audit"
-  short_description: "Audit WCAG 2.2 A/AA with evidence"
-  default_prompt: "Use $auditing-wcag to audit the provided target and report Pass, Fail, NT, or NA for every applicable WCAG 2.2 A/AA criterion."
+  display_name: 'WCAG Conformance Audit'
+  short_description: 'Audit WCAG 2.2 A/AA with evidence'
+  default_prompt: 'Use $auditing-wcag to audit the provided target and report Pass, Fail, NT, or NA for every applicable WCAG 2.2 A/AA criterion.'

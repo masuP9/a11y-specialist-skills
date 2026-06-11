@@ -40,7 +40,7 @@ export interface RunAxeAuditOptions extends OutputLocationOptions {
  * return the parsed result.
  */
 export async function runAxeAudit(
-  options: RunAxeAuditOptions
+  options: RunAxeAuditOptions,
 ): Promise<AxeAuditResult> {
   const { page, tags = DEFAULT_AXE_TAGS, rules, ...location } = options;
 
@@ -68,7 +68,11 @@ export async function runAxeAudit(
   });
 
   // Output results
-  logAuditHeader('Axe-core Accessibility Audit Results', 'axe-core', result.url);
+  logAuditHeader(
+    'Axe-core Accessibility Audit Results',
+    'axe-core',
+    result.url,
+  );
 
   logSummary({
     Timestamp: result.timestamp,
@@ -82,12 +86,12 @@ export async function runAxeAudit(
     console.log('\n--- Violations ---');
     result.violations.forEach((v, i) => {
       console.log(
-        `\n  ${i + 1}. [${v.impact?.toUpperCase() || 'UNKNOWN'}] ${v.id}`
+        `\n  ${i + 1}. [${v.impact?.toUpperCase() || 'UNKNOWN'}] ${v.id}`,
       );
       console.log(`     ${v.help}`);
       console.log(`     Affected: ${v.nodes.length} element(s)`);
       console.log(
-        `     Tags: ${v.tags.filter((t) => t.startsWith('wcag')).join(', ')}`
+        `     Tags: ${v.tags.filter((t) => t.startsWith('wcag')).join(', ')}`,
       );
 
       // Show first 3 affected elements
@@ -108,10 +112,10 @@ export async function runAxeAudit(
   } else {
     const totalElements = result.violations.reduce(
       (sum, v) => sum + v.nodes.length,
-      0
+      0,
     );
     console.log(
-      `Found ${result.summary.violationCount} violation type(s) affecting ${totalElements} element(s)`
+      `Found ${result.summary.violationCount} violation type(s) affecting ${totalElements} element(s)`,
     );
   }
 

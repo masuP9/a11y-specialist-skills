@@ -26,7 +26,9 @@ export interface LayoutCheckResult {
  * Create the browser-side layout check function.
  * This is serialized and executed in the browser context.
  */
-export function createLayoutChecker(options: LayoutCheckOptions): LayoutCheckResult {
+export function createLayoutChecker(
+  options: LayoutCheckOptions,
+): LayoutCheckResult {
   const {
     viewportWidth,
     overflowTolerance,
@@ -35,7 +37,10 @@ export function createLayoutChecker(options: LayoutCheckOptions): LayoutCheckRes
     htmlSnippetMaxLength,
   } = options;
 
-  function getHtmlSnippet(element: Element): { html: string; htmlTruncated: boolean } {
+  function getHtmlSnippet(element: Element): {
+    html: string;
+    htmlTruncated: boolean;
+  } {
     let html = '';
     try {
       html = element.outerHTML || '';
@@ -43,7 +48,10 @@ export function createLayoutChecker(options: LayoutCheckOptions): LayoutCheckRes
       html = '';
     }
     if (!html) {
-      return { html: `<${element.tagName.toLowerCase()}>`, htmlTruncated: false };
+      return {
+        html: `<${element.tagName.toLowerCase()}>`,
+        htmlTruncated: false,
+      };
     }
     if (html.length > htmlSnippetMaxLength) {
       return { html: html.slice(0, htmlSnippetMaxLength), htmlTruncated: true };
@@ -79,7 +87,9 @@ export function createLayoutChecker(options: LayoutCheckOptions): LayoutCheckRes
     }
 
     // Append element index as fallback for guaranteed uniqueness
-    return path.length > 0 ? path.join(' > ') : `[data-index="${elementIndex}"]`;
+    return path.length > 0
+      ? path.join(' > ')
+      : `[data-index="${elementIndex}"]`;
   }
 
   function isAllowedOverflow(element: Element): boolean {

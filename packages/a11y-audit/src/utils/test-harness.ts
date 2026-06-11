@@ -39,7 +39,7 @@ export interface OutputLocationOptions {
  *   `outputFile` is an absolute path.
  */
 export function resolveOutputPath(
-  options: OutputLocationOptions & { defaultFile: string }
+  options: OutputLocationOptions & { defaultFile: string },
 ): string {
   const { outputDir, outputFile, outputPath, defaultFile } = options;
 
@@ -49,7 +49,7 @@ export function resolveOutputPath(
   ) {
     throw new Error(
       '`outputPath` cannot be combined with `outputDir` / `outputFile`. ' +
-        'Specify either `outputPath`, or `outputDir` + `outputFile`.'
+        'Specify either `outputPath`, or `outputDir` + `outputFile`.',
     );
   }
 
@@ -60,7 +60,7 @@ export function resolveOutputPath(
   if (outputFile !== undefined && path.basename(outputFile) !== outputFile) {
     throw new Error(
       '`outputFile` must be a bare file name (no path separators or `..`). ' +
-        'Use `outputDir` for the directory, or `outputPath` for a full path.'
+        'Use `outputDir` for the directory, or `outputPath` for a full path.',
     );
   }
 
@@ -87,7 +87,7 @@ export interface SaveResultOptions extends OutputLocationOptions {
  */
 export function saveAuditResult<T extends object>(
   result: T,
-  options: SaveResultOptions
+  options: SaveResultOptions,
 ): string {
   const { defaultFile, ...location } = options;
   const resolvedPath = resolveOutputPath({ ...location, defaultFile });
@@ -116,7 +116,7 @@ export interface TakeScreenshotOptions {
  */
 export async function takeAuditScreenshot(
   page: Page,
-  options: TakeScreenshotOptions
+  options: TakeScreenshotOptions,
 ): Promise<string> {
   const { path: screenshotPath, fullPage = true } = options;
   const resolvedPath = path.resolve(screenshotPath);
@@ -131,7 +131,7 @@ export async function takeAuditScreenshot(
  */
 export function resolveScreenshotPath(
   resolvedResultPath: string,
-  defaultScreenshotFile: string
+  defaultScreenshotFile: string,
 ): string {
   return path.join(path.dirname(resolvedResultPath), defaultScreenshotFile);
 }
@@ -149,7 +149,7 @@ export function requireTargetUrl(explicit?: string): string {
   const url = explicit ?? process.env.TEST_PAGE;
   if (!url) {
     throw new Error(
-      'No target URL provided. Pass `targetUrl` or set the TEST_PAGE environment variable.'
+      'No target URL provided. Pass `targetUrl` or set the TEST_PAGE environment variable.',
     );
   }
   return url;
@@ -169,14 +169,18 @@ export function getTargetUrl(defaultPath: string): string {
 // =============================================================================
 
 /** Log the header for audit results to console. */
-export function logAuditHeader(title: string, wcagRef: string, url: string): void {
+export function logAuditHeader(
+  title: string,
+  wcagRef: string,
+  url: string,
+): void {
   console.log(`\n=== ${title} (${wcagRef}) ===`);
   console.log(`URL: ${url}`);
 }
 
 /** Log a summary section with key-value pairs. */
 export function logSummary(
-  items: Record<string, string | number | boolean>
+  items: Record<string, string | number | boolean>,
 ): void {
   for (const [label, value] of Object.entries(items)) {
     const displayValue =
@@ -190,7 +194,7 @@ export function logIssueList<T>(
   title: string,
   items: T[],
   formatter: (item: T, index: number) => string[],
-  maxItems = 10
+  maxItems = 10,
 ): void {
   if (items.length === 0) {
     return;
@@ -208,7 +212,10 @@ export function logIssueList<T>(
 }
 
 /** Log the output file paths and disclaimer. */
-export function logOutputPaths(outputPath: string, screenshotPath?: string): void {
+export function logOutputPaths(
+  outputPath: string,
+  screenshotPath?: string,
+): void {
   console.log(`\nResults saved to: ${outputPath}`);
   if (screenshotPath) {
     console.log(`Screenshot saved to: ${screenshotPath}`);

@@ -56,7 +56,10 @@ interface ZoomCheckResponse {
 function applyZoomAndCheck(args: ZoomCheckArgs): ZoomCheckResponse {
   const { checkSelector, tolerance, htmlSnippetMaxLength } = args;
 
-  function getHtmlSnippet(element: Element): { html: string; htmlTruncated: boolean } {
+  function getHtmlSnippet(element: Element): {
+    html: string;
+    htmlTruncated: boolean;
+  } {
     let html = '';
     try {
       html = element.outerHTML || '';
@@ -64,7 +67,10 @@ function applyZoomAndCheck(args: ZoomCheckArgs): ZoomCheckResponse {
       html = '';
     }
     if (!html) {
-      return { html: `<${element.tagName.toLowerCase()}>`, htmlTruncated: false };
+      return {
+        html: `<${element.tagName.toLowerCase()}>`,
+        htmlTruncated: false,
+      };
     }
     if (html.length > htmlSnippetMaxLength) {
       return { html: html.slice(0, htmlSnippetMaxLength), htmlTruncated: true };
@@ -73,8 +79,9 @@ function applyZoomAndCheck(args: ZoomCheckArgs): ZoomCheckResponse {
   }
 
   // Apply CSS zoom
-  (document.documentElement.style as CSSStyleDeclaration & { zoom: string }).zoom =
-    '200%';
+  (
+    document.documentElement.style as CSSStyleDeclaration & { zoom: string }
+  ).zoom = '200%';
 
   // Force reflow
   void document.body.offsetHeight;
@@ -95,7 +102,9 @@ function applyZoomAndCheck(args: ZoomCheckArgs): ZoomCheckResponse {
       path.unshift(selector);
       current = parent;
     }
-    return path.length > 0 ? path.join(' > ') : `[data-index="${elementIndex}"]`;
+    return path.length > 0
+      ? path.join(' > ')
+      : `[data-index="${elementIndex}"]`;
   }
 
   function isVisible(element: Element): boolean {
@@ -190,7 +199,7 @@ export interface RunZoomCheckOptions extends OutputLocationOptions {
  * (and optionally a screenshot), and return the parsed result.
  */
 export async function runZoomCheck(
-  options: RunZoomCheckOptions
+  options: RunZoomCheckOptions,
 ): Promise<ZoomCheckResult> {
   const {
     page,
@@ -200,7 +209,10 @@ export async function runZoomCheck(
     ...location
   } = options;
 
-  await page.setViewportSize({ width: viewport.width, height: viewport.height });
+  await page.setViewportSize({
+    width: viewport.width,
+    height: viewport.height,
+  });
 
   // If a URL is available, navigate at the base viewport (legacy ordering).
   const targetUrl = targetUrlOption ?? process.env.TEST_PAGE;
@@ -246,7 +258,7 @@ export async function runZoomCheck(
       `${i + 1}. <${el.tagName}> "${el.selector}"`,
       `   scrollWidth: ${el.scrollWidth}px, clientWidth: ${el.clientWidth}px`,
       `   Issue: ${el.issueType}`,
-    ]
+    ],
   );
 
   const resolvedPath = saveAuditResult(result, {

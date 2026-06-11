@@ -460,7 +460,8 @@ export interface AutocompleteAuditDetails {
   invalidAutocomplete: AutocompleteIssue[];
 }
 
-export type AutocompleteAuditResult = AuditCheckResult<AutocompleteAuditDetails>;
+export type AutocompleteAuditResult =
+  AuditCheckResult<AutocompleteAuditDetails>;
 
 // =============================================================================
 // Time Limit Detector (WCAG 2.2.1)
@@ -495,7 +496,8 @@ export interface TimeLimitDetectorDetails {
   hasTimeLimits: boolean;
 }
 
-export type TimeLimitDetectorResult = AuditCheckResult<TimeLimitDetectorDetails>;
+export type TimeLimitDetectorResult =
+  AuditCheckResult<TimeLimitDetectorDetails>;
 
 // =============================================================================
 // Auto-play Detection (WCAG 1.4.2 / 2.2.2)
@@ -523,7 +525,10 @@ export interface ImageDiffResult {
 export interface PauseControl {
   element: string;
   name: string;
-  matchedBy: 'accessible-name' | 'class-name-near-carousel' | 'svg-icon-pattern';
+  matchedBy:
+    | 'accessible-name'
+    | 'class-name-near-carousel'
+    | 'svg-icon-pattern';
   selector: string;
 }
 
@@ -558,4 +563,5 @@ export interface AutoPlayDetectionDetails {
   recommendation: string;
 }
 
-export type AutoPlayDetectionResult = AuditCheckResult<AutoPlayDetectionDetails>;
+export type AutoPlayDetectionResult =
+  AuditCheckResult<AutoPlayDetectionDetails>;

@@ -48,7 +48,10 @@ import {
   logOutputPaths,
   type OutputLocationOptions,
 } from '../utils/test-harness.js';
-import { addPageAnnotations, type AnnotationConfig } from '../utils/annotations.js';
+import {
+  addPageAnnotations,
+  type AnnotationConfig,
+} from '../utils/annotations.js';
 
 /** Basic target info collected from DOM */
 interface BasicTargetInfo {
@@ -81,7 +84,10 @@ function collectBasicTargetInfo(args: {
 }): BasicTargetInfo[] {
   const { interactiveSelector, htmlSnippetMaxLength } = args;
 
-  function getHtmlSnippet(element: Element): { html: string; htmlTruncated: boolean } {
+  function getHtmlSnippet(element: Element): {
+    html: string;
+    htmlTruncated: boolean;
+  } {
     let html = '';
     try {
       html = element.outerHTML || '';
@@ -89,7 +95,10 @@ function collectBasicTargetInfo(args: {
       html = '';
     }
     if (!html) {
-      return { html: `<${element.tagName.toLowerCase()}>`, htmlTruncated: false };
+      return {
+        html: `<${element.tagName.toLowerCase()}>`,
+        htmlTruncated: false,
+      };
     }
     if (html.length > htmlSnippetMaxLength) {
       return { html: html.slice(0, htmlSnippetMaxLength), htmlTruncated: true };
@@ -108,7 +117,7 @@ function collectBasicTargetInfo(args: {
       const parent: Element | null = current.parentElement;
       if (parent) {
         const siblings = Array.from(parent.children).filter(
-          (c) => c.tagName === current!.tagName
+          (c) => c.tagName === current!.tagName,
         );
         if (siblings.length > 1) {
           const index = siblings.indexOf(current) + 1;
@@ -118,7 +127,9 @@ function collectBasicTargetInfo(args: {
       path.unshift(selector);
       current = parent;
     }
-    return path.length > 0 ? path.join(' > ') : `[data-index="${elementIndex}"]`;
+    return path.length > 0
+      ? path.join(' > ')
+      : `[data-index="${elementIndex}"]`;
   }
 
   const targets: BasicTargetInfo[] = [];
@@ -198,7 +209,7 @@ function parseAccessibleName(snapshot: string): string | null {
 function checkInlineException(
   target: BasicTargetInfo,
   inlineContextTags: readonly string[],
-  minTextLength: number
+  minTextLength: number,
 ): { applies: boolean; details: string | null } {
   // Only links typically qualify for inline exception
   if (target.tagName !== 'a' || !target.href) {
@@ -224,7 +235,7 @@ function checkInlineException(
  */
 function checkUAControlException(
   target: BasicTargetInfo,
-  uaControlledTypes: readonly string[]
+  uaControlledTypes: readonly string[],
 ): { applies: boolean; details: string | null } {
   // Check native form controls that haven't been restyled
   if (target.tagName === 'select') {
@@ -256,7 +267,7 @@ function checkUAControlException(
  * Check for redundant targets (same href with at least one meeting size).
  */
 function findRedundantTargets(
-  targets: BasicTargetInfo[]
+  targets: BasicTargetInfo[],
 ): Map<string, BasicTargetInfo[]> {
   const byHref = new Map<string, BasicTargetInfo[]>();
 
@@ -277,7 +288,7 @@ function findRedundantTargets(
 function checkSpacingException(
   target: BasicTargetInfo,
   allTargets: BasicTargetInfo[],
-  requiredSpacing: number
+  requiredSpacing: number,
 ): { applies: boolean; details: string | null } {
   const targetRect = target.boundingRect;
 
@@ -291,11 +302,17 @@ function checkSpacingException(
     // Calculate distance between edges
     const horizontalGap = Math.max(
       0,
-      Math.max(otherRect.left - targetRect.right, targetRect.left - otherRect.right)
+      Math.max(
+        otherRect.left - targetRect.right,
+        targetRect.left - otherRect.right,
+      ),
     );
     const verticalGap = Math.max(
       0,
-      Math.max(otherRect.top - targetRect.bottom, targetRect.top - otherRect.bottom)
+      Math.max(
+        otherRect.top - targetRect.bottom,
+        targetRect.top - otherRect.bottom,
+      ),
     );
 
     // If adjacent (gaps are small), check if spacing is adequate
@@ -318,7 +335,7 @@ function checkSpacingException(
 function analyzeTargets(
   targets: Array<BasicTargetInfo & { accessibleName: string | null }>,
   aaThreshold: number,
-  aaaThreshold: number
+  aaaThreshold: number,
 ): {
   failAA: TargetSizeIssue[];
   failAAAOnly: TargetSizeIssue[];
@@ -356,7 +373,7 @@ function analyzeTargets(
       const inlineCheck = checkInlineException(
         target,
         INLINE_CONTEXT_TAGS,
-        INLINE_CONTEXT_MIN_TEXT
+        INLINE_CONTEXT_MIN_TEXT,
       );
       if (inlineCheck.applies) {
         exception = 'inline';
@@ -365,7 +382,10 @@ function analyzeTargets(
 
       // Check UA control exception
       if (!exception) {
-        const uaCheck = checkUAControlException(target, UA_CONTROLLED_INPUT_TYPES);
+        const uaCheck = checkUAControlException(
+          target,
+          UA_CONTROLLED_INPUT_TYPES,
+        );
         if (uaCheck.applies) {
           exception = 'ua-control';
           exceptionDetails = uaCheck.details;
@@ -378,7 +398,7 @@ function analyzeTargets(
         const hasLargerTarget = sameHrefTargets.some(
           (t) =>
             t.selector !== target.selector &&
-            Math.min(t.width, t.height) >= aaThreshold
+            Math.min(t.width, t.height) >= aaThreshold,
         );
         if (hasLargerTarget) {
           exception = 'redundant';
@@ -388,7 +408,11 @@ function analyzeTargets(
 
       // Check spacing exception
       if (!exception) {
-        const spacingCheck = checkSpacingException(target, targets, aaThreshold);
+        const spacingCheck = checkSpacingException(
+          target,
+          targets,
+          aaThreshold,
+        );
         if (spacingCheck.applies) {
           exception = 'spacing';
           exceptionDetails = spacingCheck.details;
@@ -443,7 +467,7 @@ export interface RunTargetSizeCheckOptions extends OutputLocationOptions {
  * (and optionally an annotated screenshot), and return the parsed result.
  */
 export async function runTargetSizeCheck(
-  options: RunTargetSizeCheckOptions
+  options: RunTargetSizeCheckOptions,
 ): Promise<TargetSizeCheckResult> {
   const {
     page,
@@ -460,7 +484,8 @@ export async function runTargetSizeCheck(
   });
 
   // Enhance with accessible names via ariaSnapshot()
-  const targets: Array<BasicTargetInfo & { accessibleName: string | null }> = [];
+  const targets: Array<BasicTargetInfo & { accessibleName: string | null }> =
+    [];
   for (const basicTarget of basicTargets) {
     let accessibleName: string | null = null;
 
@@ -482,7 +507,7 @@ export async function runTargetSizeCheck(
   const { failAA, failAAAOnly, passCount, excepted } = analyzeTargets(
     targets,
     aaThreshold,
-    aaaThreshold
+    aaaThreshold,
   );
 
   const details: TargetSizeCheckDetails = {
@@ -516,7 +541,7 @@ export async function runTargetSizeCheck(
   console.log('\nSummary:');
   console.log(`  Pass (>= ${aaaThreshold}px): ${details.summary.passCount}`);
   console.log(
-    `  Fail AAA only (${aaThreshold}-${aaaThreshold - 1}px): ${details.summary.failAAAOnlyCount}`
+    `  Fail AAA only (${aaThreshold}-${aaaThreshold - 1}px): ${details.summary.failAAAOnlyCount}`,
   );
   console.log(`  Fail AA (< ${aaThreshold}px): ${details.summary.failAACount}`);
   console.log(`  Possible exceptions: ${details.summary.exceptedCount}`);
@@ -534,7 +559,7 @@ export async function runTargetSizeCheck(
         lines.push(`   Exception: ${el.exception} - ${el.exceptionDetails}`);
       }
       return lines;
-    }
+    },
   );
 
   logIssueList<TargetSizeIssue>(
@@ -545,7 +570,7 @@ export async function runTargetSizeCheck(
       `   Size: ${el.width}x${el.height}px (min: ${el.minDimension}px)`,
       `   Name: "${el.accessibleName || 'none'}"`,
     ],
-    5
+    5,
   );
 
   logIssueList<TargetSizeIssue>(
@@ -556,7 +581,7 @@ export async function runTargetSizeCheck(
       `   Size: ${el.width}x${el.height}px (min: ${el.minDimension}px)`,
       `   Exception: ${el.exception} - ${el.exceptionDetails}`,
     ],
-    5
+    5,
   );
 
   const resolvedPath = saveAuditResult(result, {
@@ -598,7 +623,7 @@ export async function runTargetSizeCheck(
     screenshotPath = await takeAuditScreenshot(page, {
       path: resolveScreenshotPath(
         resolvedPath,
-        DEFAULT_TARGET_SIZE_SCREENSHOT_FILE
+        DEFAULT_TARGET_SIZE_SCREENSHOT_FILE,
       ),
     });
 
@@ -606,10 +631,12 @@ export async function runTargetSizeCheck(
     console.log('\nLegend:');
     console.log(`  PASS (green): >= ${aaaThreshold}px - AA Pass, AAA Pass`);
     console.log(
-      `  AA Pass (orange): ${aaThreshold}-${aaaThreshold - 1}px - AA Pass, AAA Fail`
+      `  AA Pass (orange): ${aaThreshold}-${aaaThreshold - 1}px - AA Pass, AAA Fail`,
     );
     console.log(`  AA Fail (red): < ${aaThreshold}px - AA Fail, AAA Fail`);
-    console.log(`  Exception (blue): Possible exception (manual review needed)`);
+    console.log(
+      `  Exception (blue): Possible exception (manual review needed)`,
+    );
   }
 
   logOutputPaths(resolvedPath, screenshotPath);

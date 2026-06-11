@@ -7,7 +7,10 @@
  */
 
 import { test } from '@playwright/test';
-import { runAutoPlayDetection, getTargetUrl } from '@a11y-skills/audit/playwright';
+import {
+  runAutoPlayDetection,
+  getTargetUrl,
+} from '@a11y-skills/audit/playwright';
 
 test('auto-play content detection', async ({ page }) => {
   await page.goto(getTargetUrl('?preset=ng-terrible1&wcagver=22'), {

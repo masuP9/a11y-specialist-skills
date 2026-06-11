@@ -18,7 +18,10 @@ export {
   runFocusIndicatorCheck,
   type RunFocusIndicatorCheckOptions,
 } from './runFocusIndicatorCheck.js';
-export { runReflowCheck, type RunReflowCheckOptions } from './runReflowCheck.js';
+export {
+  runReflowCheck,
+  type RunReflowCheckOptions,
+} from './runReflowCheck.js';
 export {
   runTargetSizeCheck,
   type RunTargetSizeCheckOptions,
