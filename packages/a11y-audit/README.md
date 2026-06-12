@@ -52,6 +52,70 @@ npm install -D pixelmatch pngjs   # only if you use runAutoPlayDetection
 > ESM only. This package does not ship a CommonJS build; import it from ESM
 > (or a TypeScript project compiled to ESM).
 
+## CLI
+
+Run all ten checks against a URL with a single command — no test runner needed.
+
+```sh
+npx -y @a11y-skills/audit --url https://example.com
+```
+
+Peer dependencies (`@playwright/test`, `@axe-core/playwright`) are pulled in
+automatically by npm 7+. Install Chromium on first use:
+
+```sh
+npx playwright install chromium
+```
+
+### Flags
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `--url <url>` | `TEST_PAGE` env | Target URL. `--url` takes priority over the env var. If neither is set, usage is printed and the process exits 2. |
+| `--checks <list>` | `all` | Comma-separated check names (see list below). |
+| `--output-dir <dir>` | `./a11y-audit-results` | Directory for result JSON files. |
+| `--screenshot` | off | Enable focus-indicator screenshot. |
+| `--list-checks` | — | Print check names and exit 0. |
+| `--version` | — | Print version and exit 0. |
+| `--help` | — | Print usage and exit 0. |
+
+### Available check names
+
+```
+axe-audit
+focus-indicator-check
+reflow-check
+text-spacing-check
+zoom-200-check
+orientation-check
+autocomplete-audit
+time-limit-detector
+auto-play-detection
+target-size-check
+```
+
+### Exit codes
+
+| Code | Meaning |
+| --- | --- |
+| `0` | All checks completed, no violations found. |
+| `1` | All checks completed, at least one violation found. |
+| `2` | Runtime error — bad arguments, missing peers, navigation failure, or check crash. |
+
+Completed-check JSON is always written even when the exit code is non-zero.
+
+### Peer requirements
+
+`@playwright/test >=1.50.0` and `@axe-core/playwright >=4.10.0` must be
+resolvable. If they are not found, the CLI exits 2 with an install hint.
+`--list-checks`, `--help`, and `--version` work without peers.
+
+### `auto-play-detection` and optional deps
+
+`auto-play-detection` needs `pixelmatch` and `pngjs`. If they are absent, that
+check is skipped with a `SKIPPED` message and does not affect the exit code.
+The other nine checks continue normally.
+
 ## Usage — function API (recommended)
 
 You navigate the page; the function runs the check, writes a result JSON, and

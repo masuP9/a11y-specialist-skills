@@ -50,6 +50,70 @@ npm install -D pixelmatch pngjs   # runAutoPlayDetection を使う場合のみ
 > ESM 専用です。CommonJS ビルドは同梱しません。ESM（または ESM 出力の TypeScript）から
 > import してください。
 
+## CLI
+
+テストランナー不要で、コマンド 1 本で 10 検査すべてを実行できます。
+
+```sh
+npx -y @a11y-skills/audit --url https://example.com
+```
+
+npm 7 以降では peer dependencies（`@playwright/test`、`@axe-core/playwright`）が
+自動でインストールされます。初回は Chromium のインストールが必要です:
+
+```sh
+npx playwright install chromium
+```
+
+### フラグ
+
+| フラグ | デフォルト | 説明 |
+| --- | --- | --- |
+| `--url <url>` | `TEST_PAGE` 環境変数 | 対象 URL。`--url` が環境変数より優先されます。どちらも未設定の場合は usage を表示して exit 2。 |
+| `--checks <list>` | `all` | カンマ区切りのチェック名（下記一覧参照）。 |
+| `--output-dir <dir>` | `./a11y-audit-results` | 結果 JSON の出力ディレクトリ。 |
+| `--screenshot` | off | focus-indicator のスクリーンショットを有効化。 |
+| `--list-checks` | — | チェック名一覧を出力して exit 0。 |
+| `--version` | — | バージョンを出力して exit 0。 |
+| `--help` | — | usage を出力して exit 0。 |
+
+### チェック名一覧
+
+```
+axe-audit
+focus-indicator-check
+reflow-check
+text-spacing-check
+zoom-200-check
+orientation-check
+autocomplete-audit
+time-limit-detector
+auto-play-detection
+target-size-check
+```
+
+### 終了コード
+
+| コード | 意味 |
+| --- | --- |
+| `0` | すべてのチェックが完了し、違反なし。 |
+| `1` | すべてのチェックが完了し、1 件以上の違反あり。 |
+| `2` | 実行時エラー — 引数不正・peer 欠落・ナビゲーション失敗・チェックのクラッシュ。 |
+
+exit コードが非 0 でも、完了したチェックの JSON は必ず書き出されます。
+
+### peer 要件
+
+`@playwright/test >=1.50.0` および `@axe-core/playwright >=4.10.0` が必要です。
+見つからない場合は exit 2 でインストール手順を案内します。
+`--list-checks`、`--help`、`--version` は peer なしでも動作します。
+
+### `auto-play-detection` と optional deps
+
+`auto-play-detection` は `pixelmatch` と `pngjs` が必要です。
+未インストールの場合はそのチェックだけ `SKIPPED` となり、終了コードには影響しません。
+他の 9 検査は通常通り実行されます。
+
 ## 使い方 — 関数 API（推奨）
 
 ページの遷移は呼び出し側で行い、関数は検査の実行・結果 JSON の書き出し・結果オブジェクトの

@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/masuP9/a11y-specialist-skills",
+    "url": "git+https://github.com/masuP9/a11y-specialist-skills.git",
     "directory": "packages/a11y-audit"
   },
   "homepage": "https://github.com/masuP9/a11y-specialist-skills/tree/main/packages/a11y-audit",
@@ -29,6 +29,9 @@
     "reflow",
     "target-size"
   ],
+  "bin": {
+    "a11y-audit": "dist/cli.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

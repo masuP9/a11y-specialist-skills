@@ -3,6 +3,19 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] — 0.4.0
+
+### Added
+
+- `bin` CLI (`a11y-audit`): run all ten WCAG checks against a URL without a
+  Playwright test runner — `npx -y @a11y-skills/audit --url <url>`. Flags:
+  `--checks <list>`, `--output-dir`, `--screenshot`, `--list-checks`,
+  `--version`, `--help`. Exit codes: `0` = no violations, `1` = violations
+  found, `2` = runtime error. JSON output uses the same envelope as the
+  function API regardless of exit code.
+- `test/fixtures/cli-smoke.html`: network-independent smoke fixture (a page
+  with intentional axe violations) for the CI CLI smoke test.
+
 ## 0.3.1
 
 ### Fixed
