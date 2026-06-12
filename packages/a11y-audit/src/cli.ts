@@ -41,6 +41,9 @@ interface AuditResultEnvelope {
 interface CheckEntry {
   name: string;
   kind: CheckKind;
+  /** When true, the check owns its own navigation (page.goto). The main loop
+   *  skips the pre-navigation step and passes a fresh un-navigated page. */
+  ownsNavigation?: boolean;
   run: (opts: RunCheckOptions) => Promise<AuditResultEnvelope>;
 }
 
@@ -114,11 +117,13 @@ const CHECK_REGISTRY: CheckEntry[] = [
   {
     name: 'orientation-check',
     kind: 'page',
-    async run({ page, outputDir }) {
+    ownsNavigation: true,
+    async run({ page, outputDir, url }) {
       const { runOrientationCheck } =
         await import('./playwright/runOrientationCheck.js');
       return (await runOrientationCheck({
         page,
+        targetUrl: url,
         outputDir,
       })) as AuditResultEnvelope;
     },
@@ -138,11 +143,13 @@ const CHECK_REGISTRY: CheckEntry[] = [
   {
     name: 'time-limit-detector',
     kind: 'page',
-    async run({ page, outputDir }) {
+    ownsNavigation: true,
+    async run({ page, outputDir, url }) {
       const { runTimeLimitDetector } =
         await import('./playwright/runTimeLimitDetector.js');
       return (await runTimeLimitDetector({
         page,
+        targetUrl: url,
         outputDir,
       })) as AuditResultEnvelope;
     },
@@ -381,21 +388,24 @@ async function main(): Promise<void> {
         context = await browser.newContext();
         page = await context.newPage();
 
-        // Use 'load' for file: URLs to avoid networkidle hanging
-        const waitUntil = url.startsWith('file:') ? 'load' : 'networkidle';
-        try {
-          await page.goto(url, { waitUntil });
-        } catch (navErr) {
-          const msg = navErr instanceof Error ? navErr.message : String(navErr);
-          process.stderr.write(`[${check.name}] Navigation failed: ${msg}\n`);
-          summaries.push({
-            name: check.name,
-            status: 'ERROR',
-            durationMs: Date.now() - start,
-            error: msg,
-          });
-          hasErrors = true;
-          continue;
+        if (!check.ownsNavigation) {
+          // Use 'load' for file: URLs to avoid networkidle hanging
+          const waitUntil = url.startsWith('file:') ? 'load' : 'networkidle';
+          try {
+            await page.goto(url, { waitUntil });
+          } catch (navErr) {
+            const msg =
+              navErr instanceof Error ? navErr.message : String(navErr);
+            process.stderr.write(`[${check.name}] Navigation failed: ${msg}\n`);
+            summaries.push({
+              name: check.name,
+              status: 'ERROR',
+              durationMs: Date.now() - start,
+              error: msg,
+            });
+            hasErrors = true;
+            continue;
+          }
         }
       }
 

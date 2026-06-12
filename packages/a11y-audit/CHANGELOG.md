@@ -3,6 +3,16 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## 0.4.1 — 2026-06-12
+
+### Fixed
+
+- CLI: `orientation-check` and `time-limit-detector` were failing with
+  "No target URL provided" because the registry entries did not pass `targetUrl`
+  to the underlying check functions. Both checks own their own navigation, so the
+  CLI's redundant pre-navigation step is now skipped for these two entries via the
+  new `ownsNavigation: true` flag on `CheckEntry`.
+
 ## 0.4.0 — 2026-06-12
 
 ### Added
