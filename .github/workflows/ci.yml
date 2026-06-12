@@ -107,15 +107,16 @@ jobs:
       - name: Run smoke tests
         run: npm test --workspace @a11y-skills/audit
 
-      - name: CLI smoke test
+      - name: CLI smoke test (all checks)
         run: |
           set +e
           node packages/a11y-audit/dist/cli.js \
             --url "file://$PWD/packages/a11y-audit/test/fixtures/cli-smoke.html" \
-            --checks axe-audit --output-dir /tmp/cli-smoke
-          code=$?
+            --checks all --output-dir /tmp/cli-smoke | tee /tmp/cli-smoke-stdout.log
+          code="${PIPESTATUS[0]}"
           set -e
           test "$code" -eq 1
+          grep -E "Errors: +0" /tmp/cli-smoke-stdout.log
           test -n "$(ls /tmp/cli-smoke/)"
 
       - name: Verify publish payload
