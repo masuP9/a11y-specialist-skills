@@ -4,7 +4,8 @@
 
 Only machine-verifiable items from the Playwright accessibility tree are covered. Each result must be labeled Pass/Fail/NT/NA and include evidence from the a11y tree or DOM fragment.
 
-> **Script:** `scripts/axe-audit.ts` provides comprehensive automated checks via axe-core, covering many of the criteria below plus additional rules. Run it first for broad coverage, then supplement with manual checks.
+> **CLI Check:** The `axe-audit` check provides comprehensive automated checks via axe-core, covering many of the criteria below plus additional rules. Run it first for broad coverage, then supplement with manual checks.
+> Run via: `npx -y @a11y-skills/audit --url "<url>" --checks axe-audit`
 
 ## Common Judgment Rules
 - Source: `page.accessibility.snapshot()` / DOM attributes
@@ -123,9 +124,10 @@ Only machine-verifiable items from the Playwright accessibility tree are covered
 ## Input Purpose
 | Criterion | Automated check | Evidence | Fail rule |
 |---|---|---|---|
-| 1.3.5 | Input fields have appropriate autocomplete attribute | autocomplete-audit.ts | autocomplete missing/incorrect for user data fields |
+| 1.3.5 | Input fields have appropriate autocomplete attribute | `autocomplete-audit` **[CLI]** | autocomplete missing/incorrect for user data fields |
 
-> **Script:** `scripts/autocomplete-audit.ts` - Matches field names/labels to expected autocomplete tokens and reports missing or invalid values.
+> **CLI Check:** The `autocomplete-audit` check matches field names/labels to expected autocomplete tokens and reports missing or invalid values.
+> Run via: `npx -y @a11y-skills/audit --url "<url>" --checks autocomplete-audit`
 
 ## Language
 | Criterion | Automated check | Evidence | Fail rule |

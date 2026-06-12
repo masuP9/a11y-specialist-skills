@@ -4,7 +4,8 @@
 
 Playwrightのアクセシビリティツリーから機械的に判定できる項目のみを扱います。判定は「Fail/Pass/NT/NA」を明示し、証跡はa11y treeスナップショットまたはDOM断片を保存します。
 
-> **スクリプト:** `scripts/axe-audit.ts` はaxe-coreによる包括的な自動チェックを提供し、以下の多くの基準に加えて追加ルールもカバーします。まず実行して広範囲をカバーし、その後手動チェックで補完してください。
+> **CLIチェック:** `axe-audit` チェックはaxe-coreによる包括的な自動チェックを提供し、以下の多くの基準に加えて追加ルールもカバーします。まず実行して広範囲をカバーし、その後手動チェックで補完してください。
+> 実行: `npx -y @a11y-skills/audit --url "<url>" --checks axe-audit`
 
 ## 判定ルールの共通方針
 - 取得元: `page.accessibility.snapshot()` / DOM属性
@@ -123,9 +124,10 @@ Playwrightのアクセシビリティツリーから機械的に判定できる�
 ## 入力目的
 | 基準 | 自動チェック | 証跡 | Fail条件 |
 |---|---|---|---|
-| 1.3.5 | 入力フィールドに適切なautocomplete属性がある | autocomplete-audit.ts | ユーザーデータフィールドでautocomplete欠落/不正 |
+| 1.3.5 | 入力フィールドに適切なautocomplete属性がある | `autocomplete-audit` **[CLI]** | ユーザーデータフィールドでautocomplete欠落/不正 |
 
-> **スクリプト:** `scripts/autocomplete-audit.ts` - フィールド名/ラベルから期待されるautocompleteトークンと照合し、欠落・不正値を報告。
+> **CLIチェック:** `autocomplete-audit` チェックはフィールド名/ラベルから期待されるautocompleteトークンと照合し、欠落・不正値を報告。
+> 実行: `npx -y @a11y-skills/audit --url "<url>" --checks autocomplete-audit`
 
 ## 言語
 | 基準 | 自動チェック | 証跡 | Fail条件 |

@@ -30,7 +30,8 @@
 |---|---|---|---|
 | 1.4.2 | 自動再生音声の停止/調整 | 操作ログ | 停止/調整不可 |
 
-> **Tip:** `scripts/auto-play-detection.ts` でスクリーンショット比較による自動再生コンテンツの検出が可能です。音声の自動再生は聴覚確認が必要です。詳細は [interactive-checks.ja.md](./interactive-checks.ja.md#自動再生検出) を参照。
+> **Tip:** `auto-play-detection` チェックでスクリーンショット比較による自動再生コンテンツの検出が可能です。音声の自動再生は聴覚確認が必要です。詳細は [interactive-checks.ja.md](./interactive-checks.ja.md#自動再生検出) を参照。
+> 実行: `npx -y @a11y-skills/audit --url "<url>" --checks auto-play-detection`
 
 ## ナビゲーション
 | 基準 | 確認内容 | 証跡 | Fail条件 |

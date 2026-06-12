@@ -16,10 +16,12 @@
 | 1.4.10 | リフロー時の横スクロール不要 | スクショ | 320px相当で横スクロール必須 |
 | 1.4.12 | テキスト間隔変更で崩れない | スクショ | 文字が欠落/重なり |
 
-> **スクリプト:**
-> - `scripts/zoom-200-check.ts` - 200%ズーム時のコンテンツ欠落/クリッピングを検出（1.4.4）
-> - `scripts/reflow-check.ts` - 320pxビューポートでの水平スクロールを検出（1.4.10）
-> - `scripts/text-spacing-check.ts` - WCAGテキストスペーシング変更後のクリッピングを検出（1.4.12）
+> **CLIチェック:**
+> - `zoom-200-check` - 200%ズーム時のコンテンツ欠落/クリッピングを検出（1.4.4）
+> - `reflow-check` - 320pxビューポートでの水平スクロールを検出（1.4.10）
+> - `text-spacing-check` - WCAGテキストスペーシング変更後のクリッピングを検出（1.4.12）
+>
+> 実行: `npx -y @a11y-skills/audit --url "<url>" --checks zoom-200-check,reflow-check,text-spacing-check`
 
 ## タイミング
 | 基準 | 確認内容 | 証跡 | Fail条件 |
@@ -27,9 +29,11 @@
 | 2.2.1 | 時間制限の延長/解除 | 操作ログ | 延長/解除が不可 |
 | 2.2.2 | 自動更新/アニメの停止 | 操作ログ | 停止/一時停止不可 |
 
-> **スクリプト:**
-> - `scripts/time-limit-detector.ts` - meta refresh、setTimeout/setInterval、カウントダウン表示を検出（2.2.1）
-> - `scripts/auto-play-detection.ts` - スクリーンショット比較による自動再生コンテンツの検出（2.2.2）。詳細は [interactive-checks.ja.md](./interactive-checks.ja.md#自動再生検出) を参照。
+> **CLIチェック:**
+> - `time-limit-detector` - meta refresh、setTimeout/setInterval、カウントダウン表示を検出（2.2.1）
+> - `auto-play-detection` - スクリーンショット比較による自動再生コンテンツの検出（2.2.2）。詳細は [interactive-checks.ja.md](./interactive-checks.ja.md#自動再生検出) を参照。
+>
+> 実行: `npx -y @a11y-skills/audit --url "<url>" --checks time-limit-detector,auto-play-detection`
 
 ## フラッシュ
 | 基準 | 確認内容 | 証跡 | Fail条件 |
@@ -41,7 +45,9 @@
 |---|---|---|---|
 | 1.3.4 | 縦横どちらでも利用可能 | スクショ | 特定方向で機能不可 |
 
-> **スクリプト:** `scripts/orientation-check.ts` - 画面の向き制限メッセージと縦横でのコンテンツ表示差異を検出。
+> **CLIチェック:** `orientation-check` - 画面の向き制限メッセージと縦横でのコンテンツ表示差異を検出。
+>
+> 実行: `npx -y @a11y-skills/audit --url "<url>" --checks orientation-check`
 
 ## 冗長入力
 | 基準 | 確認内容 | 証跡 | Fail条件 |

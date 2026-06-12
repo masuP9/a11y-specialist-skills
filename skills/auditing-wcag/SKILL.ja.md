@@ -41,8 +41,8 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 ### 3. 自動チェック
 - Playwrightでページに遷移し、アクセシビリティツリーを取得する。
 - `references/automated-checks.ja.md`を基準に判定する。
-- ブラウザ操作が使えない場合は、`references/scripts/` のPlaywrightテストを実行する。
-- スクリプトも実行できない場合は、利用可能なWeb取得手段でHTMLを取得し、判定可能な範囲のみ実施する。
+- ブラウザ操作が使えない場合は、`a11y-audit` CLI でチェックを実行する（下記「自動チェックCLI」参照）。
+- CLIも実行できない場合は、利用可能なWeb取得手段でHTMLを取得し、判定可能な範囲のみ実施する。
 - `references/coverage-matrix.ja.md`でカバレッジを確認する。
 
 ### 4. インタラクティブチェック
@@ -76,30 +76,48 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 - `references/output-format.ja.md`
 - `references/coverage-matrix.ja.md`
 
-## 自動テストスクリプト
+## 自動チェックCLI
 
-`references/scripts/` ディレクトリには、詳細な自動チェック用のPlaywrightベースのテストスクリプトが含まれています。各スクリプトはJSON結果とアノテーション付きスクリーンショットを生成します。
+自動チェックは npm パッケージ [`@a11y-skills/audit`](https://www.npmjs.com/package/@a11y-skills/audit) に含まれる `a11y-audit` CLI で実行します（Node 18+ が必要。ピア依存関係は npm 7+ が自動取得）。
 
-> チェックのロジックは npm パッケージ [`@a11y-skills/audit`](../../packages/a11y-audit) に集約されており、ここの各スクリプトは薄い wrapper です。下記の `npm install` でパッケージと optional な `pixelmatch`/`pngjs` が自動的に入ります。自前のプロジェクトで直接利用する場合はパッケージの README を参照してください。
-
-| スクリプト | 達成基準 | 説明 |
-|---|---|---|
-| `axe-audit.ts` | 複数 | axe-coreによる包括的チェック |
-| `reflow-check.ts` | 1.4.10 | 320pxでの水平スクロール検出 |
-| `text-spacing-check.ts` | 1.4.12 | テキストスペーシング変更後のクリッピング |
-| `zoom-200-check.ts` | 1.4.4 | 200%ズーム時のコンテンツ損失 |
-| `orientation-check.ts` | 1.3.4 | 画面の向き制限の検出 |
-| `autocomplete-audit.ts` | 1.3.5 | autocomplete属性の欠落・不正値 |
-| `time-limit-detector.ts` | 2.2.1 | タイマー・meta refresh検出 |
-| `auto-play-detection.ts` | 1.4.2, 2.2.2 | 自動再生コンテンツの検出 |
-| `focus-indicator-check.ts` | 2.4.7 | フォーカスインジケーターの視認性 |
-| `target-size-check.ts` | 2.5.5, 2.5.8 | ターゲットサイズの測定 |
-
-**使用方法:**
+**セットアップ（初回のみ）:**
 ```bash
-cd references/scripts
-npm install
-TEST_PAGE="https://example.com" npx playwright test <script-name>.ts
+npx playwright install chromium
 ```
 
-詳細は `references/scripts/README.md` を参照してください。
+**全チェックを実行:**
+```bash
+npx -y @a11y-skills/audit --url "https://example.com"
+```
+
+**特定のチェックのみ実行:**
+```bash
+npx -y @a11y-skills/audit --url "https://example.com" --checks axe-audit,focus-indicator-check
+```
+
+**アノテーション付きスクリーンショット（focus-indicator）:**
+```bash
+npx -y @a11y-skills/audit --url "https://example.com" --checks focus-indicator-check --screenshot
+```
+
+**結果JSONの出力先を指定（デフォルト: `./a11y-audit-results`）:**
+```bash
+npx -y @a11y-skills/audit --url "https://example.com" --output-dir ./results
+```
+
+**終了コード:** `0` = violations なし / `1` = violations あり / `2` = 実行時エラー
+
+| チェック名 | 達成基準 | 説明 |
+|---|---|---|
+| `axe-audit` | 複数 | axe-coreによる包括的チェック |
+| `reflow-check` | 1.4.10 | 320pxでの水平スクロール検出 |
+| `text-spacing-check` | 1.4.12 | テキストスペーシング変更後のクリッピング |
+| `zoom-200-check` | 1.4.4 | 200%ズーム時のコンテンツ損失 |
+| `orientation-check` | 1.3.4 | 画面の向き制限の検出 |
+| `autocomplete-audit` | 1.3.5 | autocomplete属性の欠落・不正値 |
+| `time-limit-detector` | 2.2.1 | タイマー・meta refresh検出 |
+| `auto-play-detection` | 1.4.2, 2.2.2 | 自動再生コンテンツの検出 |
+| `focus-indicator-check` | 2.4.7 | フォーカスインジケーターの視認性 |
+| `target-size-check` | 2.5.5, 2.5.8 | ターゲットサイズの測定 |
+
+詳細は [`@a11y-skills/audit` README](https://www.npmjs.com/package/@a11y-skills/audit) を参照してください。

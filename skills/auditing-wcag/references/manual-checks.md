@@ -16,10 +16,12 @@ Items requiring human judgment. Use screenshots/video/notes as evidence for visu
 | 1.4.10 | Reflow without horizontal scroll | screenshot | Horizontal scroll at 320px equivalent |
 | 1.4.12 | Text spacing changes do not break layout | screenshot | Text clipping/overlap |
 
-> **Scripts:**
-> - `scripts/zoom-200-check.ts` - Detects content loss/clipping at 200% zoom (1.4.4)
-> - `scripts/reflow-check.ts` - Detects horizontal scroll at 320px viewport (1.4.10)
-> - `scripts/text-spacing-check.ts` - Detects clipping after WCAG text spacing overrides (1.4.12)
+> **CLI Checks:**
+> - `zoom-200-check` - Detects content loss/clipping at 200% zoom (1.4.4)
+> - `reflow-check` - Detects horizontal scroll at 320px viewport (1.4.10)
+> - `text-spacing-check` - Detects clipping after WCAG text spacing overrides (1.4.12)
+>
+> Run via: `npx -y @a11y-skills/audit --url "<url>" --checks zoom-200-check,reflow-check,text-spacing-check`
 
 ## Timing
 | Criterion | Check | Evidence | Fail rule |
@@ -27,9 +29,11 @@ Items requiring human judgment. Use screenshots/video/notes as evidence for visu
 | 2.2.1 | Time limits can be extended/disabled | logs | No extension/disable |
 | 2.2.2 | Auto-updating content can be paused/stopped | logs | No pause/stop |
 
-> **Scripts:**
-> - `scripts/time-limit-detector.ts` - Detects meta refresh, setTimeout/setInterval, countdown indicators (2.2.1)
-> - `scripts/auto-play-detection.ts` - Detects auto-playing content via screenshot comparison (2.2.2). See [interactive-checks.md](./interactive-checks.md#auto-play-detection) for details.
+> **CLI Checks:**
+> - `time-limit-detector` - Detects meta refresh, setTimeout/setInterval, countdown indicators (2.2.1)
+> - `auto-play-detection` - Detects auto-playing content via screenshot comparison (2.2.2). See [interactive-checks.md](./interactive-checks.md#auto-play-detection) for details.
+>
+> Run via: `npx -y @a11y-skills/audit --url "<url>" --checks time-limit-detector,auto-play-detection`
 
 ## Flashing
 | Criterion | Check | Evidence | Fail rule |
@@ -41,7 +45,9 @@ Items requiring human judgment. Use screenshots/video/notes as evidence for visu
 |---|---|---|---|
 | 1.3.4 | Works in both portrait/landscape | screenshots | Functionality blocked in one orientation |
 
-> **Script:** `scripts/orientation-check.ts` - Detects orientation lock messages and content visibility differences between portrait/landscape.
+> **CLI Check:** `orientation-check` - Detects orientation lock messages and content visibility differences between portrait/landscape.
+>
+> Run via: `npx -y @a11y-skills/audit --url "<url>" --checks orientation-check`
 
 ## Redundant Entry
 | Criterion | Check | Evidence | Fail rule |

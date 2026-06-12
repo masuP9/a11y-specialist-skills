@@ -24,9 +24,9 @@
 | 2.4.11 | フォーカス表示が最低要件を満たす | スクショ/計測 | コントラスト/太さが不足 |
 | 2.4.12 | フォーカスが他のコンテンツに隠されない | スクショ | 固定ヘッダー/フッター/モーダルでフォーカスが隠れる |
 
-### フォーカス可視化チェックスクリプト
+### `focus-indicator-check` CLIチェック
 
-`scripts/focus-indicator-check.ts` を使用して、フォーカスインジケーターの有無、フォーカス遮蔽、フォーカス時のコンテキスト変更を自動検出できます。
+`focus-indicator-check` チェックを使用して、フォーカスインジケーターの有無、フォーカス遮蔽、フォーカス時のコンテキスト変更を自動検出できます。
 
 **WCAG カバレッジ:**
 - **2.4.7 Focus Visible** - フォーカスインジケーターがない要素を検出
@@ -45,11 +45,7 @@
 
 **使用方法:**
 ```bash
-# デフォルトのテストページ
-npx playwright test scripts/focus-indicator-check.ts
-
-# カスタムURL
-TEST_PAGE="https://example.com" npx playwright test scripts/focus-indicator-check.ts
+npx -y @a11y-skills/audit --url "https://example.com" --checks focus-indicator-check
 ```
 
 **出力:**
@@ -59,7 +55,7 @@ TEST_PAGE="https://example.com" npx playwright test scripts/focus-indicator-chec
   - `onFocusViolations` - フォーカス時のコンテキスト変更（3.2.1）
   - `interrupted` - ナビゲーションによりテストが中断されたかどうか
   - `allElements` - テストした全要素とフォーカススタイルの差分
-- `focus-indicators.png` - 問題のある要素に警告ラベルを付けた全ページスクリーンショット
+- `focus-indicators.png` - 問題のある要素に警告ラベルを付けた全ページスクリーンショット（`--screenshot` フラグで有効化）
 
 **3.2.1 検出:**
 要素のフォーカスイベントがナビゲーションを引き起こした場合:
@@ -68,20 +64,15 @@ TEST_PAGE="https://example.com" npx playwright test scripts/focus-indicator-chec
 3. 元のページでスクリーンショットを撮影
 4. テストは中断としてマークされる
 
-**依存関係:**
-```bash
-npm install @playwright/test
-```
-
 ## ポインター
 | 基準 | 操作 | 証跡 | Fail条件 |
 |---|---|---|---|
 | 2.5.7 | ドラッグ以外の操作手段を提供 | 操作ログ | ドラッグ必須で代替なし |
 | 2.5.8 | ターゲットサイズを測定 | スクショ/計測 | 最低サイズを満たさない |
 
-### ターゲットサイズチェックスクリプト
+### `target-size-check` CLIチェック
 
-`scripts/target-size-check.ts` を使用して、WCAG 2.5.8（AA: 24px）および 2.5.5（AAA: 44px）に基づくタップ/クリックターゲットのサイズを自動測定できます。
+`target-size-check` チェックを使用して、WCAG 2.5.8（AA: 24px）および 2.5.5（AAA: 44px）に基づくタップ/クリックターゲットのサイズを自動測定できます。
 
 **機能:**
 - すべてのインタラクティブ要素を検出（リンク、ボタン、入力、ARIAウィジェット）
@@ -93,11 +84,7 @@ npm install @playwright/test
 
 **使用方法:**
 ```bash
-# デフォルトのテストページ
-npx playwright test scripts/target-size-check.ts
-
-# カスタムURL
-TEST_PAGE="https://example.com" npx playwright test scripts/target-size-check.ts
+npx -y @a11y-skills/audit --url "https://example.com" --checks target-size-check
 ```
 
 **出力:**
@@ -216,9 +203,9 @@ const a11ySnapshot = await page.accessibility.snapshot();
 - **1.4.2** (音声の制御): 自動再生音声を停止/制御できる
 - **2.2.2** (一時停止、停止、非表示): 自動更新コンテンツを一時停止/停止できる
 
-### 自動再生検出スクリプト
+### `auto-play-detection` CLIチェック
 
-`scripts/auto-play-detection.ts` を使用して、ピクセルレベルのスクリーンショット比較による自動再生コンテンツを検出できます。
+`auto-play-detection` チェックを使用して、ピクセルレベルのスクリーンショット比較による自動再生コンテンツを検出できます。
 
 **機能:**
 - 2秒間隔でスクリーンショットを撮影（0秒, 2秒, 4秒, 6秒）
@@ -231,8 +218,7 @@ const a11ySnapshot = await page.accessibility.snapshot();
 
 **使用方法:**
 ```bash
-# スクリプト内のURLを変更して実行
-npx playwright test scripts/auto-play-detection.ts
+npx -y @a11y-skills/audit --url "https://example.com" --checks auto-play-detection
 ```
 
 **出力:**
@@ -244,12 +230,6 @@ npx playwright test scripts/auto-play-detection.ts
     - 5秒以内に停止するか
     - 検出された一時停止コントロール（アクセシビリティ情報付き）
     - 一時停止コントロールの検証結果
-
-**依存関係:**
-```bash
-npm install @playwright/test pixelmatch pngjs
-npm install -D @types/pngjs
-```
 
 **一時停止コントロール検出:**
 スクリプトは以下の方法で一時停止/停止コントロールを自動検索します:
