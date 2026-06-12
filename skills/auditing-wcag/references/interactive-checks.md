@@ -24,9 +24,9 @@ Items verified by simulating user interaction with Playwright. Focus on stateful
 | 2.4.11 | Focus appearance meets minimum requirements | screenshots/measurement | Contrast or thickness insufficient |
 | 2.4.12 | Focus not obscured by other content | screenshots | Focus indicator hidden by sticky headers/footers/modals |
 
-### Focus Indicator Check Script
+### `focus-indicator-check` CLI Check
 
-Use `scripts/focus-indicator-check.ts` to automatically detect focus indicator presence, focus obscured issues, and focus-triggered context changes.
+Use the `focus-indicator-check` check to automatically detect focus indicator presence, focus obscured issues, and focus-triggered context changes.
 
 **WCAG Coverage:**
 - **2.4.7 Focus Visible** - Detects elements without visible focus indicators
@@ -45,11 +45,7 @@ Use `scripts/focus-indicator-check.ts` to automatically detect focus indicator p
 
 **Usage:**
 ```bash
-# Default test page
-npx playwright test scripts/focus-indicator-check.ts
-
-# Custom URL
-TEST_PAGE="https://example.com" npx playwright test scripts/focus-indicator-check.ts
+npx -y @a11y-skills/audit --url "https://example.com" --checks focus-indicator-check
 ```
 
 **Output:**
@@ -59,7 +55,7 @@ TEST_PAGE="https://example.com" npx playwright test scripts/focus-indicator-chec
   - `onFocusViolations` - Focus-triggered context changes (3.2.1)
   - `interrupted` - Whether test was interrupted by navigation
   - `allElements` - All tested elements with their focus style diffs
-- `focus-indicators.png` - Full-page screenshot with warning labels on problematic elements
+- `focus-indicators.png` - Full-page screenshot with warning labels on problematic elements (use `--screenshot` flag)
 
 **3.2.1 Detection:**
 When an element's focus event triggers navigation:
@@ -68,20 +64,15 @@ When an element's focus event triggers navigation:
 3. Screenshot is taken on the original page
 4. Test is marked as interrupted
 
-**Dependencies:**
-```bash
-npm install @playwright/test
-```
-
 ## Pointer
 | Criterion | Action | Evidence | Fail rule |
 |---|---|---|---|
 | 2.5.7 | Provide alternative to dragging | logs | Dragging is required with no alternative |
 | 2.5.8 | Measure target size | screenshots/measurement | Minimum target size not met |
 
-### Target Size Check Script
+### `target-size-check` CLI Check
 
-Use `scripts/target-size-check.ts` to automatically measure tap/click target sizes per WCAG 2.5.8 (AA: 24px) and 2.5.5 (AAA: 44px).
+Use the `target-size-check` check to automatically measure tap/click target sizes per WCAG 2.5.8 (AA: 24px) and 2.5.5 (AAA: 44px).
 
 **Features:**
 - Detects all interactive elements (links, buttons, inputs, ARIA widgets)
@@ -93,11 +84,7 @@ Use `scripts/target-size-check.ts` to automatically measure tap/click target siz
 
 **Usage:**
 ```bash
-# Default test page
-npx playwright test scripts/target-size-check.ts
-
-# Custom URL
-TEST_PAGE="https://example.com" npx playwright test scripts/target-size-check.ts
+npx -y @a11y-skills/audit --url "https://example.com" --checks target-size-check
 ```
 
 **Output:**
@@ -216,9 +203,9 @@ Supports criteria:
 - **1.4.2** (Audio Control): Auto-play audio can be stopped/controlled
 - **2.2.2** (Pause, Stop, Hide): Auto-updating content can be paused/stopped
 
-### Auto-play Detection Script
+### `auto-play-detection` CLI Check
 
-Use `scripts/auto-play-detection.ts` to detect auto-playing content via pixel-level screenshot comparison.
+Use the `auto-play-detection` check to detect auto-playing content via pixel-level screenshot comparison.
 
 **Features:**
 - Takes screenshots at 2-second intervals (0s, 2s, 4s, 6s)
@@ -231,8 +218,7 @@ Use `scripts/auto-play-detection.ts` to detect auto-playing content via pixel-le
 
 **Usage:**
 ```bash
-# Update URL in the script and run
-npx playwright test scripts/auto-play-detection.ts
+npx -y @a11y-skills/audit --url "https://example.com" --checks auto-play-detection
 ```
 
 **Output:**
@@ -244,12 +230,6 @@ npx playwright test scripts/auto-play-detection.ts
     - Whether content stops within 5 seconds
     - Detected pause controls with accessibility info
     - Pause control verification results
-
-**Dependencies:**
-```bash
-npm install @playwright/test pixelmatch pngjs
-npm install -D @types/pngjs
-```
 
 **Pause Control Detection:**
 The script automatically searches for pause/stop controls by:

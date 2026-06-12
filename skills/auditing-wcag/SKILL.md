@@ -41,8 +41,8 @@ Confirm and get agreement on:
 ### 3. Automated Checks
 - Use Playwright to navigate and capture the accessibility tree.
 - Apply `references/automated-checks.md`.
-- If browser interaction is unavailable, run the Playwright tests in `references/scripts/`.
-- If the scripts also cannot run, retrieve HTML with the available web capability and limit judgments accordingly.
+- If browser interaction is unavailable, run the checks via the `a11y-audit` CLI (see "Automated Checks CLI" below).
+- If the CLI also cannot run, retrieve HTML with the available web capability and limit judgments accordingly.
 - Use `references/coverage-matrix.md` to ensure A/AA coverage.
 
 ### 4. Interactive Checks
@@ -76,30 +76,48 @@ Confirm and get agreement on:
 - `references/output-format.md`
 - `references/coverage-matrix.md`
 
-## Automated Test Scripts
+## Automated Checks CLI
 
-The `references/scripts/` directory contains Playwright-based test scripts for detailed automated checks. These scripts generate JSON results and annotated screenshots.
+Automated checks are run via the `a11y-audit` CLI included in the npm package [`@a11y-skills/audit`](https://www.npmjs.com/package/@a11y-skills/audit) (requires Node 18+; peer dependencies are fetched automatically by npm 7+).
 
-> The check logic now lives in the npm package [`@a11y-skills/audit`](../../packages/a11y-audit); each script here is a thin wrapper. `npm install` (below) pulls the package and its optional `pixelmatch`/`pngjs` deps automatically. To consume the checks directly in your own project, see the package README.
-
-| Script | Criterion | Description |
-|---|---|---|
-| `axe-audit.ts` | Multiple | axe-core comprehensive check |
-| `reflow-check.ts` | 1.4.10 | Horizontal scroll at 320px |
-| `text-spacing-check.ts` | 1.4.12 | Text spacing override clipping |
-| `zoom-200-check.ts` | 1.4.4 | 200% zoom content loss |
-| `orientation-check.ts` | 1.3.4 | Orientation lock detection |
-| `autocomplete-audit.ts` | 1.3.5 | Missing/invalid autocomplete |
-| `time-limit-detector.ts` | 2.2.1 | Timer/meta refresh detection |
-| `auto-play-detection.ts` | 1.4.2, 2.2.2 | Auto-play content detection |
-| `focus-indicator-check.ts` | 2.4.7 | Focus indicator visibility |
-| `target-size-check.ts` | 2.5.5, 2.5.8 | Target size measurement |
-
-**Usage:**
+**Setup (first time only):**
 ```bash
-cd references/scripts
-npm install
-TEST_PAGE="https://example.com" npx playwright test <script-name>.ts
+npx playwright install chromium
 ```
 
-See `references/scripts/README.md` for detailed documentation.
+**Run all checks:**
+```bash
+npx -y @a11y-skills/audit --url "https://example.com"
+```
+
+**Run specific checks:**
+```bash
+npx -y @a11y-skills/audit --url "https://example.com" --checks axe-audit,focus-indicator-check
+```
+
+**With annotated screenshots (focus-indicator):**
+```bash
+npx -y @a11y-skills/audit --url "https://example.com" --checks focus-indicator-check --screenshot
+```
+
+**Custom output directory (default: `./a11y-audit-results`):**
+```bash
+npx -y @a11y-skills/audit --url "https://example.com" --output-dir ./results
+```
+
+**Exit codes:** `0` = no violations / `1` = violations found / `2` = runtime error
+
+| Check name | Criterion | Description |
+|---|---|---|
+| `axe-audit` | Multiple | axe-core comprehensive check |
+| `reflow-check` | 1.4.10 | Horizontal scroll at 320px |
+| `text-spacing-check` | 1.4.12 | Text spacing override clipping |
+| `zoom-200-check` | 1.4.4 | 200% zoom content loss |
+| `orientation-check` | 1.3.4 | Orientation lock detection |
+| `autocomplete-audit` | 1.3.5 | Missing/invalid autocomplete |
+| `time-limit-detector` | 2.2.1 | Timer/meta refresh detection |
+| `auto-play-detection` | 1.4.2, 2.2.2 | Auto-play content detection |
+| `focus-indicator-check` | 2.4.7 | Focus indicator visibility |
+| `target-size-check` | 2.5.5, 2.5.8 | Target size measurement |
+
+See the [`@a11y-skills/audit` README](https://www.npmjs.com/package/@a11y-skills/audit) for detailed documentation.

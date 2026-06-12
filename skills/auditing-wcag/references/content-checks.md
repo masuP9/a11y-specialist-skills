@@ -30,7 +30,8 @@ Checks that depend on content quality and availability. Validate presence and ad
 |---|---|---|---|
 | 1.4.2 | Auto-play audio can be stopped/controlled | logs | No stop/controls |
 
-> **Tip:** Use `scripts/auto-play-detection.ts` to detect auto-playing visual content via screenshot comparison. Audio auto-play requires manual listening. See [interactive-checks.md](./interactive-checks.md#auto-play-detection) for details.
+> **Tip:** Use the `auto-play-detection` check to detect auto-playing visual content via screenshot comparison. Audio auto-play requires manual listening. See [interactive-checks.md](./interactive-checks.md#auto-play-detection) for details.
+> Run via: `npx -y @a11y-skills/audit --url "<url>" --checks auto-play-detection`
 
 ## Navigation
 | Criterion | Check | Evidence | Fail rule |
