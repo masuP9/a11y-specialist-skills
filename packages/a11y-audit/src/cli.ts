@@ -14,6 +14,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { parseArgs } from 'node:util';
+import type { Browser, BrowserContext, Page } from '@playwright/test';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -22,10 +23,8 @@ import { parseArgs } from 'node:util';
 type CheckKind = 'page' | 'browser';
 
 interface RunCheckOptions {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  page: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  browser: any;
+  page: Page;
+  browser: Browser;
   outputDir: string;
   screenshot: boolean;
   url: string;
@@ -344,12 +343,10 @@ async function main(): Promise<void> {
   }
 
   // --- Launch browser ---
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let browser: any;
+  let browser: Browser;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const pw = (await import('@playwright/test')) as any;
-    browser = await pw.chromium.launch();
+    const { chromium } = await import('@playwright/test');
+    browser = await chromium.launch();
   } catch (err) {
     process.stderr.write(
       `Error launching browser: ${err instanceof Error ? err.message : String(err)}\n`,
@@ -376,10 +373,8 @@ async function main(): Promise<void> {
     const start = Date.now();
 
     // page-based checks get a fresh context + navigated page
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let context: any = null;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let page: any = null;
+    let context: BrowserContext | null = null;
+    let page: Page | null = null;
 
     try {
       if (check.kind === 'page') {
@@ -405,7 +400,8 @@ async function main(): Promise<void> {
       }
 
       const result = await check.run({
-        page,
+        // page is null only for browser-kind checks, which do not use it
+        page: page as Page,
         browser,
         outputDir,
         screenshot,
