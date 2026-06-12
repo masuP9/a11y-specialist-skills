@@ -41,12 +41,12 @@ jobs:
   skill-compatibility:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: package-lock.json
 
@@ -62,12 +62,12 @@ jobs:
   a11y-audit-package:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: package-lock.json
 
@@ -89,7 +89,7 @@ jobs:
 
       - name: Cache Playwright browsers
         id: playwright-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
@@ -119,7 +119,10 @@ jobs:
           test -n "$(ls /tmp/cli-smoke/)"
 
       - name: Verify publish payload
-        run: npm publish --workspace @a11y-skills/audit --dry-run
+        # `npm pack` lists the tarball contents without the registry version
+        # check that `npm publish --dry-run` performs on npm 11+ (which fails
+        # between a release and the next version bump).
+        run: npm pack --workspace @a11y-skills/audit --dry-run
 
   wcag-audit-tests:
     runs-on: ubuntu-latest
@@ -128,12 +131,12 @@ jobs:
         working-directory: skills/auditing-wcag/references/scripts
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: skills/auditing-wcag/references/scripts/package-lock.json
 
@@ -149,7 +152,7 @@ jobs:
 
       - name: Cache Playwright browsers
         id: playwright-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
@@ -166,7 +169,7 @@ jobs:
         run: npm test
 
       - name: Upload test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: wcag-audit-results
