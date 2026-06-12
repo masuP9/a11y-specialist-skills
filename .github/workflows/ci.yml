@@ -9,7 +9,6 @@ on:
       - '.claude-plugin/**'
       - '.codex-plugin/**'
       - '.agents/plugins/**'
-      - 'skills/auditing-wcag/references/scripts/**'
       - 'packages/**'
       - 'package.json'
       - 'package-lock.json'
@@ -26,7 +25,6 @@ on:
       - '.claude-plugin/**'
       - '.codex-plugin/**'
       - '.agents/plugins/**'
-      - 'skills/auditing-wcag/references/scripts/**'
       - 'packages/**'
       - 'package.json'
       - 'package-lock.json'
@@ -125,12 +123,8 @@ jobs:
         # between a release and the next version bump).
         run: npm pack --workspace @a11y-skills/audit --dry-run
 
-  wcag-audit-tests:
+  cli-integration:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: skills/auditing-wcag/references/scripts
-
     steps:
       - uses: actions/checkout@v6
 
@@ -138,18 +132,16 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: '24'
-          cache: 'npm'
-          cache-dependency-path: skills/auditing-wcag/references/scripts/package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Type-check (wrappers resolve @a11y-skills/audit)
-        run: npm run typecheck
+      - name: Install published @a11y-skills/audit (as the skill instructs)
+        run: |
+          mkdir -p /tmp/cli-it && cd /tmp/cli-it
+          npm init -y > /dev/null
+          npm install @a11y-skills/audit @playwright/test @axe-core/playwright
 
       - name: Get Playwright version
         id: playwright-version
-        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+        run: echo "version=$(node -p "require('/tmp/cli-it/node_modules/@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
 
       - name: Cache Playwright browsers
         id: playwright-cache
@@ -160,22 +152,20 @@ jobs:
 
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium
+        run: cd /tmp/cli-it && npx playwright install --with-deps chromium
 
       - name: Install Playwright system deps
         if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium
+        run: cd /tmp/cli-it && npx playwright install-deps chromium
 
-      - name: Run Playwright tests
-        run: npm test
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v7
-        if: always()
-        with:
-          name: wcag-audit-results
-          path: |
-            skills/auditing-wcag/references/scripts/*-result.json
-            skills/auditing-wcag/references/scripts/*-screenshot*.png
-            skills/auditing-wcag/references/scripts/focus-indicators.png
-          retention-days: 7
+      - name: Run all checks via CLI against local fixture
+        run: |
+          set +e
+          cd /tmp/cli-it
+          npx a11y-audit \
+            --url "file://$GITHUB_WORKSPACE/packages/a11y-audit/test/fixtures/cli-smoke.html" \
+            --checks all --output-dir results
+          code=$?
+          set -e
+          test "$code" -eq 1
+          test -n "$(ls results/)"
