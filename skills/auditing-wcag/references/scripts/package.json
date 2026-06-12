@@ -25,7 +25,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@a11y-skills/audit": "^0.4.0",
+    "@a11y-skills/audit": "^0.4.1",
     "@playwright/test": "^1.58.0"
   },
   "devDependencies": {
