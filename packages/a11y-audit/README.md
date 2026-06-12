@@ -116,6 +116,63 @@ resolvable. If they are not found, the CLI exits 2 with an install hint.
 check is skipped with a `SKIPPED` message and does not affect the exit code.
 The other nine checks continue normally.
 
+### GitHub Actions
+
+Copy-paste workflow for a manually triggered audit. Violations fail the job
+(exit code 1); add `continue-on-error: true` to the audit step if you want the
+result to be informational only.
+
+```yaml
+# .github/workflows/a11y-audit.yml
+name: A11y Audit
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Audit target URL'
+        required: true
+        default: 'https://example.com'
+
+jobs:
+  a11y-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Install audit package
+        run: npm install --no-save @a11y-skills/audit @playwright/test @axe-core/playwright
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run a11y audit
+        run: npx a11y-audit --url "$TARGET_URL" --output-dir a11y-audit-results
+        env:
+          TARGET_URL: ${{ inputs.target_url }}
+
+      - name: Upload audit results
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: a11y-audit-results
+          path: a11y-audit-results/
+          retention-days: 30
+```
+
+Notes:
+
+- Add `push` / `schedule` triggers (with a hardcoded URL) to run the audit as
+  a recurring gate.
+- Result JSON files (and the focus-indicator screenshot when `--screenshot`
+  is set) are uploaded as a build artifact.
+- To speed up repeat runs, cache `~/.cache/ms-playwright` keyed on the
+  installed `@playwright/test` version — see this repository's `ci.yml` for
+  the pattern.
+
 ## Usage — function API (recommended)
 
 You navigate the page; the function runs the check, writes a result JSON, and

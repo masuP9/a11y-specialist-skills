@@ -114,6 +114,57 @@ exit コードが非 0 でも、完了したチェックの JSON は必ず書き
 未インストールの場合はそのチェックだけ `SKIPPED` となり、終了コードには影響しません。
 他の 9 検査は通常通り実行されます。
 
+### GitHub Actions
+
+手動トリガーで監査を実行するコピー&ペースト用ワークフロー。violations があるとジョブは fail する（終了コード 1）。結果を情報提供のみにしたい場合は監査ステップに `continue-on-error: true` を付ける。
+
+```yaml
+# .github/workflows/a11y-audit.yml
+name: A11y Audit
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Audit target URL'
+        required: true
+        default: 'https://example.com'
+
+jobs:
+  a11y-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Install audit package
+        run: npm install --no-save @a11y-skills/audit @playwright/test @axe-core/playwright
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run a11y audit
+        run: npx a11y-audit --url "$TARGET_URL" --output-dir a11y-audit-results
+        env:
+          TARGET_URL: ${{ inputs.target_url }}
+
+      - name: Upload audit results
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: a11y-audit-results
+          path: a11y-audit-results/
+          retention-days: 30
+```
+
+Notes:
+
+- `push` / `schedule` トリガー（URL はハードコード）を追加すると、定期的なゲートとして実行できる。
+- 結果 JSON ファイル（`--screenshot` 指定時はフォーカスインジケーターのスクリーンショットも含む）はビルドアーティファクトとしてアップロードされる。
+- 繰り返し実行を高速化するには、インストール済みの `@playwright/test` バージョンをキーに `~/.cache/ms-playwright` をキャッシュする — パターンはこのリポジトリの `ci.yml` を参照。
+
 ## 使い方 — 関数 API（推奨）
 
 ページの遷移は呼び出し側で行い、関数は検査の実行・結果 JSON の書き出し・結果オブジェクトの
