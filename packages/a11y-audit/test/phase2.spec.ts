@@ -2,6 +2,14 @@
  * Smoke tests for the Phase 2 checks (imported from built dist).
  * Each fixture is crafted to exercise the check; the timing-heavy ones
  * (time-limit, auto-play) use lenient but meaningful assertions.
+ *
+ * Coverage note: bucket-level rule assertions are now handled by
+ * test/fixture-gallery.spec.ts (HTTP-served fixtures) and auto-play.spec.ts.
+ * This file retains API-contract tests that verify detail fields and
+ * check-specific parameters.
+ *
+ * Removed (migrated to fixture-gallery.spec.ts / auto-play.spec.ts):
+ *   - runAutoPlayDetection static page (covered by auto-play.spec.ts clear case)
  */
 
 import { test, expect } from '@playwright/test';
@@ -11,7 +19,6 @@ import {
   runOrientationCheck,
   runAutocompleteAudit,
   runTimeLimitDetector,
-  runAutoPlayDetection,
 } from '../dist/playwright/index.js';
 
 const dataUrl = (html: string) => 'data:text/html,' + encodeURIComponent(html);
@@ -114,16 +121,5 @@ test('runTimeLimitDetector reports a meta refresh as incomplete', async ({
   );
 });
 
-test('runAutoPlayDetection passes on a static page', async ({
-  page,
-}, testInfo) => {
-  await page.setContent(`<!doctype html><html lang="en"><head><meta charset="utf-8"><title>t</title></head>
-    <body><p>static content, no animation</p></body></html>`);
-  const result = await runAutoPlayDetection({
-    page,
-    outputDir: testInfo.outputDir,
-  });
-  expect(result.details.hasAutoPlayContent).toBe(false);
-  expect(typeof result.details.recommendation).toBe('string');
-  expect(result.passes.map((r) => r.id)).toContain('a11y-skills/auto-play');
-});
+// runAutoPlayDetection clear and finding cases migrated to auto-play.spec.ts
+// (uses HTTP-served fixtures for reliable pixel-diff detection).
