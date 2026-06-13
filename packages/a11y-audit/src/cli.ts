@@ -3,7 +3,7 @@
  * @a11y-skills/audit CLI
  *
  * Runs WCAG 2.2 accessibility checks against a URL without needing a
- * Playwright test runner. All 10 checks are available via --checks.
+ * Playwright test runner. All 11 checks are available via --checks.
  *
  * Exit codes:
  *   0 — completed, no violations found across all checks
@@ -175,6 +175,20 @@ const CHECK_REGISTRY: CheckEntry[] = [
       return (await runTargetSizeCheck({
         page,
         outputDir,
+      })) as AuditResultEnvelope;
+    },
+  },
+  {
+    name: 'keyboard-trap-check',
+    kind: 'browser',
+    async run({ browser, outputDir, screenshot, url }) {
+      const { runKeyboardTrapCheck } =
+        await import('./playwright/runKeyboardTrapCheck.js');
+      return (await runKeyboardTrapCheck({
+        browser,
+        targetUrl: url,
+        outputDir,
+        screenshot,
       })) as AuditResultEnvelope;
     },
   },
