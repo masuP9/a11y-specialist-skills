@@ -6,13 +6,20 @@
  * published artifact. Each fixture is crafted to trigger the relevant check.
  */
 
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { test, expect } from '@playwright/test';
 import {
   runAxeAudit,
   runReflowCheck,
   runTargetSizeCheck,
   runFocusIndicatorCheck,
+  runKeyboardTrapCheck,
 } from '../dist/playwright/index.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const fixtureUrl = (name: string) =>
+  `file://${path.join(__dirname, 'fixtures', name)}`;
 
 const AXE_FIXTURE = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>axe fixture</title></head>
@@ -130,4 +137,50 @@ test('runFocusIndicatorCheck flags missing focus indicator as incomplete', async
   expect(focusVisible).toBeDefined();
   expect(focusVisible!.nodes[0].target[0]).toContain('#nofocus');
   expect(focusVisible!.nodes[0].html).toContain('button');
+});
+
+test('runKeyboardTrapCheck detects true keyboard trap as violation', async ({
+  browser,
+}, testInfo) => {
+  const result = await runKeyboardTrapCheck({
+    browser,
+    targetUrl: fixtureUrl('keyboard-trap-true.html'),
+    outputDir: testInfo.outputDir,
+  });
+
+  expect(result.source).toBe('keyboard-trap-check');
+  expect(result.details.totalFocusableElements).toBeGreaterThan(0);
+  expect(result.summary.checkedNodes).toBe(result.details.totalFocusableElements);
+  expect(
+    result.violations.some((r) => r.id === 'a11y-skills/no-keyboard-trap'),
+  ).toBe(true);
+});
+
+test('runKeyboardTrapCheck passes for a proper aria-modal dialog', async ({
+  browser,
+}, testInfo) => {
+  const result = await runKeyboardTrapCheck({
+    browser,
+    targetUrl: fixtureUrl('keyboard-trap-modal.html'),
+    outputDir: testInfo.outputDir,
+  });
+
+  expect(result.source).toBe('keyboard-trap-check');
+  expect(result.violations).toHaveLength(0);
+  expect(result.incomplete).toHaveLength(0);
+});
+
+test('runKeyboardTrapCheck passes for a page with no keyboard trap', async ({
+  browser,
+}, testInfo) => {
+  const result = await runKeyboardTrapCheck({
+    browser,
+    targetUrl: fixtureUrl('keyboard-trap-none.html'),
+    outputDir: testInfo.outputDir,
+  });
+
+  expect(result.source).toBe('keyboard-trap-check');
+  expect(result.violations).toHaveLength(0);
+  expect(result.incomplete).toHaveLength(0);
+  expect(result.details.totalFocusableElements).toBeGreaterThan(0);
 });

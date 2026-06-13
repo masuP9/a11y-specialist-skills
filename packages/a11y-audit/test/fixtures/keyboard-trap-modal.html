@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Keyboard Trap Fixture - Proper Modal</title>
+    <style>
+      #modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #modal {
+        background: white;
+        padding: 2rem;
+        border-radius: 8px;
+        min-width: 300px;
+      }
+      #main-content {
+        padding: 2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="main-content">
+      <h1>Page with Proper Modal</h1>
+      <p>The modal is open on page load.</p>
+    </div>
+
+    <!-- Proper modal: role=dialog + aria-modal=true + Escape closes it -->
+    <div id="modal-backdrop">
+      <div
+        id="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
+      >
+        <h2 id="modal-title">Confirmation Dialog</h2>
+        <p>Please confirm your action.</p>
+        <button id="modal-confirm">Confirm</button>
+        <button id="modal-cancel" aria-label="Close">Cancel</button>
+      </div>
+    </div>
+
+    <script>
+      const backdrop = document.getElementById('modal-backdrop');
+      const modalConfirm = document.getElementById('modal-confirm');
+
+      function closeModal() {
+        backdrop.style.display = 'none';
+      }
+
+      // Escape key closes the modal (WCAG 2.1.2 compliant exit)
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && backdrop.style.display !== 'none') {
+          closeModal();
+        }
+      });
+
+      document.getElementById('modal-cancel').addEventListener('click', closeModal);
+      modalConfirm.addEventListener('click', closeModal);
+
+      // Keep focus inside modal while it is open (proper focus trap)
+      document.addEventListener('focusin', function (e) {
+        if (
+          backdrop.style.display !== 'none' &&
+          !backdrop.contains(e.target)
+        ) {
+          modalConfirm.focus();
+        }
+      });
+
+      // Open modal on load
+      window.addEventListener('load', function () {
+        modalConfirm.focus();
+      });
+    </script>
+  </body>
+</html>
