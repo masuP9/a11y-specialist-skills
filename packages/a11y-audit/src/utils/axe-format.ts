@@ -17,6 +17,7 @@ import type {
   CheckSource,
   FocusCheckDetails,
   FocusElementRef,
+  KeyboardTrapCheckDetails,
   NormalizedImpact,
   NormalizedNode,
   NormalizedRuleResult,
@@ -524,6 +525,47 @@ export function normalizeAutoPlayDetection(
     );
   }
   bucketize(buckets, 'auto-play', nodes, true);
+
+  return buckets;
+}
+
+// =============================================================================
+// Keyboard Trap Check normalization (WCAG 2.1.2)
+// =============================================================================
+
+export function normalizeKeyboardTrapCheck(
+  details: KeyboardTrapCheckDetails,
+): NormalizedBuckets {
+  const buckets = emptyBuckets();
+  const applicable = details.totalFocusableElements > 0;
+  buckets.checkedNodes = details.totalFocusableElements;
+
+  bucketize(
+    buckets,
+    'no-keyboard-trap',
+    details.confirmedTraps.map((t) =>
+      pageNode(
+        `Keyboard focus is trapped in <${t.tag.toLowerCase()}> "${t.name}" ` +
+          `(${t.selector}). None of Escape / Shift+Tab / a close control moved ` +
+          `focus out. Keyboard users cannot leave this region.`,
+      ),
+    ),
+    applicable,
+  );
+
+  bucketize(
+    buckets,
+    'keyboard-trap-needs-review',
+    details.needsReview.map((t) =>
+      pageNode(
+        `Focus appears confined to <${t.tag.toLowerCase()}> "${t.name}" ` +
+          `(${t.selector}); it can be left via ` +
+          `${[t.escapeAttempts.escape && 'Escape', t.escapeAttempts.shiftTab && 'Shift+Tab', t.escapeAttempts.closeAffordance && 'a close control'].filter(Boolean).join(', ')}. ` +
+          `Verify the escape method is documented/discoverable (WCAG 2.1.2 exception).`,
+      ),
+    ),
+    applicable,
+  );
 
   return buckets;
 }
