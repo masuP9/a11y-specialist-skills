@@ -258,6 +258,33 @@ export const RULES = {
     // pixel diffing cannot identify the content type or audio.
     classification: 'incomplete',
   },
+
+  // --- keyboard-trap-check ---
+  'no-keyboard-trap': {
+    id: 'a11y-skills/no-keyboard-trap',
+    sc: ['2.1.2'],
+    tags: ['a11y-skills', 'wcag2a', 'wcag212'],
+    impact: 'critical',
+    scope: 'page',
+    description: 'Ensure keyboard focus can be moved away from all components',
+    help: 'Keyboard users must be able to navigate away from any focused component',
+    helpUrl: `${UNDERSTANDING}/no-keyboard-trap.html`,
+    // focus confinement with no working exit is directly observed; no exception applies.
+    classification: 'violation',
+  },
+  'keyboard-trap-needs-review': {
+    id: 'a11y-skills/keyboard-trap-needs-review',
+    sc: ['2.1.2'],
+    tags: ['a11y-skills', 'wcag2a', 'wcag212'],
+    impact: 'critical',
+    scope: 'page',
+    description:
+      'Focus appears confined; verify whether the escape path is documented or discoverable',
+    help: 'Verify that users can escape focus-confined areas via documented keyboard methods',
+    helpUrl: `${UNDERSTANDING}/no-keyboard-trap.html`,
+    // 2.1.2 allows non-standard exit if the user is advised; that judgment is manual.
+    classification: 'incomplete',
+  },
 } as const satisfies Record<string, RuleMeta>;
 
 export type RuleKey = keyof typeof RULES;

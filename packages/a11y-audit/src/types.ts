@@ -28,7 +28,8 @@ export type CheckSource =
   | 'orientation-check'
   | 'autocomplete-audit'
   | 'time-limit-detector'
-  | 'auto-play-detection';
+  | 'auto-play-detection'
+  | 'keyboard-trap-check';
 
 export type NormalizedImpact = 'critical' | 'serious' | 'moderate' | 'minor';
 
@@ -565,3 +566,36 @@ export interface AutoPlayDetectionDetails {
 
 export type AutoPlayDetectionResult =
   AuditCheckResult<AutoPlayDetectionDetails>;
+
+// =============================================================================
+// Keyboard Trap Check (WCAG 2.1.2)
+// =============================================================================
+
+export interface KeyboardTrapEvidence {
+  selector: string;
+  tag: string;
+  name: string;
+  html: string;
+  htmlTruncated: boolean;
+  /** Escape attempts and their outcomes (used in incomplete failure summaries). */
+  escapeAttempts: { escape: boolean; shiftTab: boolean; closeAffordance: boolean };
+  /** Whether the trap container has role=dialog and aria-modal=true. */
+  isAriaModal: boolean;
+}
+
+export interface KeyboardTrapCheckDetails {
+  totalFocusableElements: number;
+  /** Number of trap candidates detected. */
+  trapCandidates: number;
+  /** Traps from which no escape path worked (→ violation). */
+  confirmedTraps: KeyboardTrapEvidence[];
+  /** Traps that have an escape path but require manual review (→ incomplete). */
+  needsReview: KeyboardTrapEvidence[];
+  /**
+   * Path the screenshot was (or would be) written to. Empty string when
+   * `screenshot` was disabled.
+   */
+  screenshotPath: string;
+}
+
+export type KeyboardTrapCheckResult = AuditCheckResult<KeyboardTrapCheckDetails>;
