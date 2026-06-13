@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      target-size finding: target-size-minimum / target-size-enhanced
+    </title>
+    <style>
+      body {
+        margin: 1rem;
+        font-family: sans-serif;
+      }
+      /* Tiny buttons adjacent to each other — fails 24px minimum (WCAG 2.5.8) */
+      .tiny-btn {
+        width: 18px;
+        height: 18px;
+        padding: 0;
+        font-size: 10px;
+        display: inline-block;
+        margin: 1px;
+        cursor: pointer;
+        border: 1px solid #666;
+        background: #eee;
+      }
+      /* Medium buttons — pass 24px minimum but fail 44px enhanced (WCAG 2.5.5) */
+      .medium-btn {
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        font-size: 12px;
+        display: inline-block;
+        margin: 2px;
+        cursor: pointer;
+        border: 1px solid #666;
+        background: #cce;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Small Target Sizes</h1>
+    <p>Tiny buttons (18×18px) — fail WCAG 2.5.8 AA minimum:</p>
+    <button class="tiny-btn">A</button>
+    <button class="tiny-btn">B</button>
+    <button class="tiny-btn">C</button>
+
+    <p>Medium buttons (30×30px) — pass 2.5.8 AA but fail 2.5.5 AAA:</p>
+    <button class="medium-btn">X</button>
+    <button class="medium-btn">Y</button>
+  </body>
+</html>

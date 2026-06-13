@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>
+      Keyboard Trap Fixture - Needs Review (Escape works, undocumented)
+    </title>
+    <style>
+      #overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #panel {
+        background: white;
+        padding: 2rem;
+        min-width: 280px;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <!--
+      Non-idiomatic modal: confines focus via focusin listener but does NOT have
+      role=dialog + aria-modal=true. Escape key works to dismiss, but there is no
+      visible close control and no ARIA semantics indicating this is a dialog.
+      The check will report keyboard-trap-needs-review (incomplete).
+
+      Detection strategy: the overlay contains 2 focusable elements (search-input,
+      submit-btn). A third element (outside-btn, placed AFTER the overlay in DOM
+      order) is unreachable while the overlay is open — it exists so that
+      totalFocusableElements (3) > trapped elements (2), enabling the check's
+      trap-candidate logic. Escape dismisses the overlay → needsReview (not
+      confirmedTraps).
+    -->
+    <div id="overlay">
+      <div id="panel">
+        <h2>Panel Title</h2>
+        <p>Focus is confined here. Press Escape to leave (undocumented).</p>
+        <input type="text" aria-label="Search" id="search-input" />
+        <button id="submit-btn">Submit</button>
+      </div>
+    </div>
+
+    <!--
+      Outside button: placed after overlay in DOM so tab order is:
+      search-input → submit-btn → (focusin redirect back to search-input).
+      Unreachable while overlay is open. Provides the count > trapped gap.
+    -->
+    <button
+      id="outside-btn"
+      style="position: fixed; bottom: 4px; right: 4px; z-index: 0"
+    >
+      Outside (unreachable while overlay open)
+    </button>
+
+    <script>
+      const overlay = document.getElementById('overlay');
+      const searchInput = document.getElementById('search-input');
+
+      // Confine focus to the panel via focusin — no role=dialog, no aria-modal.
+      // Use requestAnimationFrame to ensure the redirect fires after the browser
+      // settles focus, avoiding a race between the Tab press and the redirect.
+      document.addEventListener('focusin', function (e) {
+        if (overlay.style.display !== 'none' && !overlay.contains(e.target)) {
+          // Redirect back to first element in panel
+          window.requestAnimationFrame(function () {
+            searchInput.focus();
+          });
+        }
+      });
+
+      // Escape works to dismiss the overlay (but no button advertises this)
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          overlay.style.display = 'none';
+        }
+      });
+
+      // Set initial focus inside the panel on load
+      window.addEventListener('load', function () {
+        searchInput.focus();
+      });
+    </script>
+  </body>
+</html>

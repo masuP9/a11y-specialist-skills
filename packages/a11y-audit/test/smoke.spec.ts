@@ -4,22 +4,25 @@
  * These import from the BUILT `dist/` output (run `npm run build` first; the
  * `pretest` script does this automatically) so they exercise the actual
  * published artifact. Each fixture is crafted to trigger the relevant check.
+ *
+ * Coverage note: bucket-level rule assertions (violations/incomplete/passes)
+ * are now handled by test/fixture-gallery.spec.ts (HTTP-served fixtures).
+ * This file retains API-contract tests that check detail fields, node
+ * structure, and envelope shape — things the data-driven gallery tests
+ * intentionally do not duplicate.
+ *
+ * Removed (migrated to fixture-gallery.spec.ts):
+ *   - runKeyboardTrapCheck with keyboard-trap-{true,modal,none}.html
+ *     (file:// not viable for ownsNavigation checks; HTTP fixtures cover these)
  */
 
-import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { test, expect } from '@playwright/test';
 import {
   runAxeAudit,
   runReflowCheck,
   runTargetSizeCheck,
   runFocusIndicatorCheck,
-  runKeyboardTrapCheck,
 } from '../dist/playwright/index.js';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const fixtureUrl = (name: string) =>
-  `file://${path.join(__dirname, 'fixtures', name)}`;
 
 const AXE_FIXTURE = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>axe fixture</title></head>
@@ -83,6 +86,7 @@ test('runReflowCheck reports overflow as incomplete (manual-review queue)', asyn
   const result = await runReflowCheck({ page, outputDir: testInfo.outputDir });
 
   expect(result.source).toBe('reflow-check');
+  // Detail-level contract: viewport is set to 320px, scroll is detected
   expect(result.details.viewport).toEqual({ width: 320, height: 256 });
   expect(
     result.details.hasHorizontalScroll ||
@@ -128,6 +132,7 @@ test('runFocusIndicatorCheck flags missing focus indicator as incomplete', async
     outputDir: testInfo.outputDir,
   });
 
+  // Detail-level contract: counts and node identity
   expect(result.details.totalFocusableElements).toBeGreaterThan(0);
   expect(result.details.elementsWithoutFocusStyle).toBeGreaterThan(0);
 
@@ -137,52 +142,4 @@ test('runFocusIndicatorCheck flags missing focus indicator as incomplete', async
   expect(focusVisible).toBeDefined();
   expect(focusVisible!.nodes[0].target[0]).toContain('#nofocus');
   expect(focusVisible!.nodes[0].html).toContain('button');
-});
-
-test('runKeyboardTrapCheck detects true keyboard trap as violation', async ({
-  browser,
-}, testInfo) => {
-  const result = await runKeyboardTrapCheck({
-    browser,
-    targetUrl: fixtureUrl('keyboard-trap-true.html'),
-    outputDir: testInfo.outputDir,
-  });
-
-  expect(result.source).toBe('keyboard-trap-check');
-  expect(result.details.totalFocusableElements).toBeGreaterThan(0);
-  expect(result.summary.checkedNodes).toBe(
-    result.details.totalFocusableElements,
-  );
-  expect(
-    result.violations.some((r) => r.id === 'a11y-skills/no-keyboard-trap'),
-  ).toBe(true);
-});
-
-test('runKeyboardTrapCheck passes for a proper aria-modal dialog', async ({
-  browser,
-}, testInfo) => {
-  const result = await runKeyboardTrapCheck({
-    browser,
-    targetUrl: fixtureUrl('keyboard-trap-modal.html'),
-    outputDir: testInfo.outputDir,
-  });
-
-  expect(result.source).toBe('keyboard-trap-check');
-  expect(result.violations).toHaveLength(0);
-  expect(result.incomplete).toHaveLength(0);
-});
-
-test('runKeyboardTrapCheck passes for a page with no keyboard trap', async ({
-  browser,
-}, testInfo) => {
-  const result = await runKeyboardTrapCheck({
-    browser,
-    targetUrl: fixtureUrl('keyboard-trap-none.html'),
-    outputDir: testInfo.outputDir,
-  });
-
-  expect(result.source).toBe('keyboard-trap-check');
-  expect(result.violations).toHaveLength(0);
-  expect(result.incomplete).toHaveLength(0);
-  expect(result.details.totalFocusableElements).toBeGreaterThan(0);
 });

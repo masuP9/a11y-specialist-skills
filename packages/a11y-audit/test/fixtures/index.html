@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>@a11y-skills/audit — Fixture Gallery</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        line-height: 1.5;
+      }
+      h1 {
+        border-bottom: 2px solid #333;
+        padding-bottom: 0.5rem;
+      }
+      h2 {
+        margin-top: 2rem;
+        color: #0057b8;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0.5rem 0 1.5rem;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 0.4rem 0.6rem;
+        border: 1px solid #ccc;
+      }
+      th {
+        background: #f0f4f8;
+      }
+      .scenario-finding {
+        color: #c00;
+      }
+      .scenario-clear {
+        color: #060;
+      }
+      .scenario-needs-review {
+        color: #860;
+      }
+      .warning {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        margin-bottom: 1rem;
+      }
+      code {
+        background: #f4f4f4;
+        padding: 0.1em 0.4em;
+        border-radius: 3px;
+        font-size: 0.9em;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>@a11y-skills/audit — Fixture Gallery</h1>
+    <p>
+      This gallery lists all HTML fixture pages used by the fixture-gallery
+      integration tests. Each fixture is crafted to trigger (or pass) a specific
+      WCAG rule. Open a fixture in a browser to inspect it visually.
+    </p>
+    <p class="warning">
+      <strong>Warning:</strong> Fixtures marked "finding" intentionally contain
+      accessibility problems for testing purposes. They are linked (not iframed)
+      to avoid polluting your browser's assistive technology context.
+    </p>
+
+    <!-- ------------------------------------------------------------------ -->
+    <h2>axe-audit</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Scenario</th>
+          <th>Fixture</th>
+          <th>Expected rule(s)</th>
+          <th>Bucket</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/axe-audit/finding.html">axe-audit/finding.html</a>
+          </td>
+          <td><code>image-alt</code></td>
+          <td>violations</td>
+        </tr>
+        <tr>
+          <td class="scenario-clear">clear</td>
+          <td><a href="pages/axe-audit/clear.html">axe-audit/clear.html</a></td>
+          <td><code>image-alt</code></td>
+          <td>passes</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ------------------------------------------------------------------ -->
+    <h2>focus-indicator-check</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Scenario</th>
+          <th>Fixture</th>
+          <th>Expected rule(s)</th>
+          <th>Bucket</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/focus-indicator/finding-focus-visible.html"
+              >focus-indicator/finding-focus-visible.html</a
+            >
+          </td>
+          <td><code>a11y-skills/focus-visible</code></td>
+          <td>incomplete</td>
+        </tr>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/focus-indicator/finding-context-change.html"
+              >focus-indicator/finding-context-change.html</a
+            >
+          </td>
+          <td><code>a11y-skills/no-context-change-on-focus</code></td>
+          <td>violations</td>
+        </tr>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/focus-indicator/finding-focus-obscured.html"
+              >focus-indicator/finding-focus-obscured.html</a
+            >
+          </td>
+          <td><code>a11y-skills/focus-not-obscured</code></td>
+          <td>incomplete</td>
+        </tr>
+        <tr>
+          <td class="scenario-clear">clear</td>
+          <td>
+            <a href="pages/focus-indicator/clear.html"
+              >focus-indicator/clear.html</a
+            >
+          </td>
+          <td>all 3 rules</td>
+          <td>passes</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ------------------------------------------------------------------ -->
+    <h2>reflow-check</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Scenario</th>
+          <th>Fixture</th>
+          <th>Expected rule(s)</th>
+          <th>Bucket</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/reflow/finding-overflow.html"
+              >reflow/finding-overflow.html</a
+            >
+          </td>
+          <td><code>a11y-skills/reflow-overflow</code></td>
+          <td>incomplete</td>
+        </tr>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/reflow/finding-clipped-text.html"
+              >reflow/finding-clipped-text.html</a
+            >
+          </td>
+          <td><code>a11y-skills/reflow-clipped-text</code></td>
+          <td>incomplete</td>
+        </tr>
+        <tr>
+          <td class="scenario-clear">clear</td>
+          <td><a href="pages/reflow/clear.html">reflow/clear.html</a></td>
+          <td>both rules</td>
+          <td>passes</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ------------------------------------------------------------------ -->
+    <h2>text-spacing-check</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Scenario</th>
+          <th>Fixture</th>
+          <th>Expected rule(s)</th>
+          <th>Bucket</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/text-spacing/finding.html"
+              >text-spacing/finding.html</a
+            >
+          </td>
+          <td><code>a11y-skills/text-spacing</code></td>
+          <td>violations</td>
+        </tr>
+        <tr>
+          <td class="scenario-clear">clear</td>
+          <td>
+            <a href="pages/text-spacing/clear.html">text-spacing/clear.html</a>
+          </td>
+          <td><code>a11y-skills/text-spacing</code></td>
+          <td>passes</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ------------------------------------------------------------------ -->
+    <h2>zoom-200-check</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Scenario</th>
+          <th>Fixture</th>
+          <th>Expected rule(s)</th>
+          <th>Bucket</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td><a href="pages/zoom/finding.html">zoom/finding.html</a></td>
+          <td><code>a11y-skills/resize-text</code></td>
+          <td>incomplete</td>
+        </tr>
+        <tr>
+          <td class="scenario-clear">clear</td>
+          <td><a href="pages/zoom/clear.html">zoom/clear.html</a></td>
+          <td><code>a11y-skills/resize-text</code></td>
+          <td>passes</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ------------------------------------------------------------------ -->
+    <h2>orientation-check</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Scenario</th>
+          <th>Fixture</th>
+          <th>Expected rule(s)</th>
+          <th>Bucket</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/orientation/finding.html"
+              >orientation/finding.html</a
+            >
+          </td>
+          <td><code>a11y-skills/orientation-lock</code></td>
+          <td>incomplete</td>
+        </tr>
+        <tr>
+          <td class="scenario-clear">clear</td>
+          <td>
+            <a href="pages/orientation/clear.html">orientation/clear.html</a>
+          </td>
+          <td><code>a11y-skills/orientation-lock</code></td>
+          <td>passes</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ------------------------------------------------------------------ -->
+    <h2>autocomplete-audit</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Scenario</th>
+          <th>Fixture</th>
+          <th>Expected rule(s)</th>
+          <th>Bucket</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/autocomplete/finding-invalid.html"
+              >autocomplete/finding-invalid.html</a
+            >
+          </td>
+          <td><code>a11y-skills/autocomplete-invalid</code></td>
+          <td>violations</td>
+        </tr>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/autocomplete/finding-missing.html"
+              >autocomplete/finding-missing.html</a
+            >
+          </td>
+          <td><code>a11y-skills/autocomplete-missing</code></td>
+          <td>incomplete</td>
+        </tr>
+        <tr>
+          <td class="scenario-clear">clear</td>
+          <td>
+            <a href="pages/autocomplete/clear.html">autocomplete/clear.html</a>
+          </td>
+          <td>both rules</td>
+          <td>passes</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ------------------------------------------------------------------ -->
+    <h2>time-limit-detector</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Scenario</th>
+          <th>Fixture</th>
+          <th>Expected rule(s)</th>
+          <th>Bucket</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/time-limit/finding-meta-refresh.html"
+              >time-limit/finding-meta-refresh.html</a
+            >
+          </td>
+          <td><code>a11y-skills/meta-refresh</code></td>
+          <td>incomplete</td>
+        </tr>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/time-limit/finding-timer.html"
+              >time-limit/finding-timer.html</a
+            >
+          </td>
+          <td><code>a11y-skills/time-limit-timer</code></td>
+          <td>incomplete</td>
+        </tr>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/time-limit/finding-countdown.html"
+              >time-limit/finding-countdown.html</a
+            >
+          </td>
+          <td><code>a11y-skills/time-limit-countdown</code></td>
+          <td>incomplete</td>
+        </tr>
+        <tr>
+          <td class="scenario-clear">clear</td>
+          <td>
+            <a href="pages/time-limit/clear.html">time-limit/clear.html</a>
+          </td>
+          <td>all 3 rules</td>
+          <td>passes</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ------------------------------------------------------------------ -->
+    <h2>auto-play-detection</h2>
+    <p>
+      The finding fixture uses a large CSS animation (no video). Open in browser
+      to see it; the check needs the animation to run for several seconds.
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>Scenario</th>
+          <th>Fixture</th>
+          <th>Expected rule(s)</th>
+          <th>Bucket</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/auto-play/finding.html">auto-play/finding.html</a>
+          </td>
+          <td><code>a11y-skills/auto-play</code></td>
+          <td>incomplete</td>
+        </tr>
+        <tr>
+          <td class="scenario-clear">clear</td>
+          <td><a href="pages/auto-play/clear.html">auto-play/clear.html</a></td>
+          <td><code>a11y-skills/auto-play</code></td>
+          <td>passes</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ------------------------------------------------------------------ -->
+    <h2>target-size-check</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Scenario</th>
+          <th>Fixture</th>
+          <th>Expected rule(s)</th>
+          <th>Bucket</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/target-size/finding.html"
+              >target-size/finding.html</a
+            >
+          </td>
+          <td>
+            <code>a11y-skills/target-size-minimum</code>,
+            <code>a11y-skills/target-size-enhanced</code>
+          </td>
+          <td>incomplete</td>
+        </tr>
+        <tr>
+          <td class="scenario-clear">clear</td>
+          <td>
+            <a href="pages/target-size/clear.html">target-size/clear.html</a>
+          </td>
+          <td>both rules</td>
+          <td>passes</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ------------------------------------------------------------------ -->
+    <h2>keyboard-trap-check</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Scenario</th>
+          <th>Fixture</th>
+          <th>Expected rule(s)</th>
+          <th>Bucket</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/keyboard-trap/finding.html"
+              >keyboard-trap/finding.html</a
+            >
+          </td>
+          <td><code>a11y-skills/no-keyboard-trap</code></td>
+          <td>violations</td>
+        </tr>
+        <tr>
+          <td class="scenario-needs-review">needs-review</td>
+          <td>
+            <a href="pages/keyboard-trap/needs-review.html"
+              >keyboard-trap/needs-review.html</a
+            >
+          </td>
+          <td><code>a11y-skills/keyboard-trap-needs-review</code></td>
+          <td>incomplete</td>
+        </tr>
+        <tr>
+          <td class="scenario-clear">clear (aria-modal)</td>
+          <td>
+            <a href="pages/keyboard-trap/clear-modal.html"
+              >keyboard-trap/clear-modal.html</a
+            >
+          </td>
+          <td>both rules</td>
+          <td>passes</td>
+        </tr>
+        <tr>
+          <td class="scenario-clear">clear (no trap)</td>
+          <td>
+            <a href="pages/keyboard-trap/clear.html"
+              >keyboard-trap/clear.html</a
+            >
+          </td>
+          <td>both rules</td>
+          <td>passes</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <hr />
+    <p>
+      <small>
+        Fixtures are served via a local HTTP server during tests. To browse them
+        directly, open this file from a local web server (not
+        <code>file://</code>).
+      </small>
+    </p>
+  </body>
+</html>

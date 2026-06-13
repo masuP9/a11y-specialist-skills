@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>reflow finding: reflow-overflow</title>
+    <style>
+      /* Wide element that forces horizontal scroll at 320px viewport */
+      .wide-box {
+        width: 800px;
+        height: 60px;
+        background: #c0e0ff;
+        white-space: nowrap;
+        padding: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Reflow Overflow</h1>
+    <p>Normal text that wraps at narrow widths.</p>
+    <!-- This element is wider than 320px and causes horizontal scroll -->
+    <div class="wide-box">
+      This content does not reflow — it always requires horizontal scrolling at
+      narrow widths.
+    </div>
+    <p>More normal content below.</p>
+  </body>
+</html>

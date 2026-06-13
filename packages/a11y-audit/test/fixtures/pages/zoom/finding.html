@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>zoom finding: resize-text</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 1rem;
+      }
+      /* Wide fixed element forces horizontal scroll at 200% zoom */
+      .wide-fixed {
+        width: 900px;
+        height: 40px;
+        background: #c0e0ff;
+        white-space: nowrap;
+        padding: 0 1rem;
+        line-height: 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Zoom Failure</h1>
+    <p>Normal content.</p>
+    <!-- This element is 900px wide — at 200% zoom on a 1280px viewport,
+         the effective width is ~640px, causing horizontal scroll. -->
+    <div class="wide-fixed">
+      Wide content that requires horizontal scrolling at 200% zoom
+    </div>
+    <p>More content below.</p>
+  </body>
+</html>

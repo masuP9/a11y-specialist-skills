@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>focus-indicator finding: focus-not-obscured</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      /* Sticky header that covers buttons scrolled near the top */
+      #sticky-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 80px;
+        background: #333;
+        color: white;
+        display: flex;
+        align-items: center;
+        padding: 0 1rem;
+        z-index: 100;
+      }
+      #content {
+        padding-top: 90px;
+        padding-left: 1rem;
+      }
+      /* The target button is positioned so the sticky header overlaps it */
+      #obscured-btn {
+        position: fixed;
+        top: 20px;
+        left: 200px;
+        z-index: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <header id="sticky-header">
+      <span>Sticky Header (covers button below)</span>
+    </header>
+    <div id="content">
+      <!-- This button is positioned behind the sticky header -->
+      <button id="obscured-btn">Obscured Button</button>
+      <p>Main page content starts here.</p>
+      <button id="safe-btn">Visible Button</button>
+    </div>
+  </body>
+</html>

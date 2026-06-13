@@ -3,6 +3,25 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Maintenance
+
+- **Test infrastructure**: added fixture-gallery test suite with 29 HTML
+  fixture pages served over HTTP (no `file://` — required for `ownsNavigation`
+  checks), a worker-scoped static server helper, and a 28-entry manifest-driven
+  spec (`test/fixture-gallery.spec.ts`) that verifies every custom rule lands in
+  its expected bucket and validates each envelope with Ajv.
+- **New spec files**: `test/auto-play.spec.ts` (CSS-animation finding, 60s
+  timeout), `test/rule-classification.spec.ts` (manifest ↔ rule-registry
+  cross-check for all 18 custom rules).
+- **Demo gallery**: `test/fixtures/index.html` links all fixture pages.
+- **Migrated inline fixtures**: removed `file://`-based keyboard-trap tests
+  from `smoke.spec.ts` (now covered by fixture-gallery over HTTP); removed
+  auto-play static test from `phase2.spec.ts` (now covered by
+  `auto-play.spec.ts`). Detail-level API contract assertions are retained.
+- No changes to check implementations, normalizers, schemas, or public API.
+
 ## 0.5.0 — 2026-06-13
 
 ### Added
