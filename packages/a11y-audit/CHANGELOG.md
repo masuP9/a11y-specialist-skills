@@ -3,6 +3,33 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## 0.5.0 — 2026-06-13
+
+### Added
+
+- **`keyboard-trap-check`** (WCAG 2.1.2 No Keyboard Trap): 11th check in the
+  package. Tabs through every focusable element on the page, detects regions
+  where focus cannot escape via a `count+1` window algorithm, and attempts three
+  escape paths (Escape key, Shift+Tab, visible close affordance). Results are
+  classified as:
+  - `violation` (`a11y-skills/no-keyboard-trap`): focus confined with no working
+    exit.
+  - `incomplete` (`a11y-skills/keyboard-trap-needs-review`): an escape path exists
+    but may not be discoverable without documentation (WCAG 2.1.2 exception).
+  - `pass`: proper `role=dialog` + `aria-modal=true` modal with Escape working.
+  - `inapplicable`: page has no focusable elements.
+
+  **Limitations** (see runner source for details): Shadow DOM interiors, iframe
+  contents, `inert`-based traps, and SPA pages that change focusable element
+  counts during the walk are not detected.
+
+  Available via:
+  - CLI: `npx @a11y-skills/audit --checks keyboard-trap-check --url <url>`
+  - Function API: `runKeyboardTrapCheck` from `@a11y-skills/audit/playwright`
+  - Test entry: `@a11y-skills/audit/test-entries/keyboard-trap-check`
+  - Normalizer: `normalizeKeyboardTrapCheck` from `@a11y-skills/audit`
+  - Schema: `RESULT_SCHEMAS['keyboard-trap-check']` from `@a11y-skills/audit/schemas`
+
 ## 0.4.1 — 2026-06-12
 
 ### Fixed

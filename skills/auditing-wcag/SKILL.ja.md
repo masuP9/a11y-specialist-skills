@@ -119,5 +119,6 @@ npx -y @a11y-skills/audit --url "https://example.com" --output-dir ./results
 | `auto-play-detection` | 1.4.2, 2.2.2 | 自動再生コンテンツの検出 |
 | `focus-indicator-check` | 2.4.7 | フォーカスインジケーターの視認性 |
 | `target-size-check` | 2.5.5, 2.5.8 | ターゲットサイズの測定 |
+| `keyboard-trap-check` | 2.1.2 | キーボードトラップ検出 |
 
 詳細は [`@a11y-skills/audit` README](https://www.npmjs.com/package/@a11y-skills/audit) を参照してください。

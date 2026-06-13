@@ -237,7 +237,7 @@ export async function runKeyboardTrapCheck(
           const ariaLabel = (el as HTMLElement).getAttribute('aria-label');
           const name = ariaLabel
             ? ariaLabel
-            : (el as HTMLElement).textContent?.trim().slice(0, 50) ?? '';
+            : ((el as HTMLElement).textContent?.trim().slice(0, 50) ?? '');
 
           const rawHtml = el.outerHTML;
           const htmlTruncated = rawHtml.length > maxLen;
@@ -268,8 +268,7 @@ export async function runKeyboardTrapCheck(
     const needsReview: KeyboardTrapEvidence[] = [];
 
     // Trap candidate: no (body) in tail, and tail doesn't cover all elements
-    const isTrapCandidate =
-      !tailSet.has('(body)') && tailSet.size < count;
+    const isTrapCandidate = !tailSet.has('(body)') && tailSet.size < count;
 
     if (isTrapCandidate) {
       const trapSelectors = [...tailSet];
@@ -536,7 +535,10 @@ export async function runKeyboardTrapCheck(
     logOutputPaths(
       resolvedPath,
       screenshot
-        ? resolveScreenshotPath(resolvedPath, DEFAULT_KEYBOARD_TRAP_SCREENSHOT_FILE)
+        ? resolveScreenshotPath(
+            resolvedPath,
+            DEFAULT_KEYBOARD_TRAP_SCREENSHOT_FILE,
+          )
         : undefined,
     );
 

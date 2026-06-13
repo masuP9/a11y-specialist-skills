@@ -183,7 +183,11 @@ test('keyboard-trap-check envelope validates against its schema', () => {
         name: 'Trap Button A',
         html: '<button id="trap-a">Trap Button A</button>',
         htmlTruncated: false,
-        escapeAttempts: { escape: false, shiftTab: false, closeAffordance: false },
+        escapeAttempts: {
+          escape: false,
+          shiftTab: false,
+          closeAffordance: false,
+        },
         isAriaModal: false,
       },
     ],

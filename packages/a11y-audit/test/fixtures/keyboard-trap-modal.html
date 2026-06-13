@@ -59,15 +59,14 @@
         }
       });
 
-      document.getElementById('modal-cancel').addEventListener('click', closeModal);
+      document
+        .getElementById('modal-cancel')
+        .addEventListener('click', closeModal);
       modalConfirm.addEventListener('click', closeModal);
 
       // Keep focus inside modal while it is open (proper focus trap)
       document.addEventListener('focusin', function (e) {
-        if (
-          backdrop.style.display !== 'none' &&
-          !backdrop.contains(e.target)
-        ) {
+        if (backdrop.style.display !== 'none' && !backdrop.contains(e.target)) {
           modalConfirm.focus();
         }
       });

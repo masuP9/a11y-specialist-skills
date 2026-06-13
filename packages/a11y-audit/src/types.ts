@@ -578,7 +578,11 @@ export interface KeyboardTrapEvidence {
   html: string;
   htmlTruncated: boolean;
   /** Escape attempts and their outcomes (used in incomplete failure summaries). */
-  escapeAttempts: { escape: boolean; shiftTab: boolean; closeAffordance: boolean };
+  escapeAttempts: {
+    escape: boolean;
+    shiftTab: boolean;
+    closeAffordance: boolean;
+  };
   /** Whether the trap container has role=dialog and aria-modal=true. */
   isAriaModal: boolean;
 }
@@ -598,4 +602,5 @@ export interface KeyboardTrapCheckDetails {
   screenshotPath: string;
 }
 
-export type KeyboardTrapCheckResult = AuditCheckResult<KeyboardTrapCheckDetails>;
+export type KeyboardTrapCheckResult =
+  AuditCheckResult<KeyboardTrapCheckDetails>;

@@ -150,7 +150,9 @@ test('runKeyboardTrapCheck detects true keyboard trap as violation', async ({
 
   expect(result.source).toBe('keyboard-trap-check');
   expect(result.details.totalFocusableElements).toBeGreaterThan(0);
-  expect(result.summary.checkedNodes).toBe(result.details.totalFocusableElements);
+  expect(result.summary.checkedNodes).toBe(
+    result.details.totalFocusableElements,
+  );
   expect(
     result.violations.some((r) => r.id === 'a11y-skills/no-keyboard-trap'),
   ).toBe(true);
