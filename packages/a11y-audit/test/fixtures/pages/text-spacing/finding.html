@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>text-spacing finding: text-spacing violation</title>
+    <style>
+      /* Fixed height container with overflow:hidden — clips text under spacing overrides */
+      .clipped-box {
+        width: 120px;
+        height: 24px;
+        overflow: hidden;
+        white-space: nowrap;
+        border: 1px solid #ccc;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Text Spacing Failure</h1>
+    <!--
+      When WCAG 1.4.12 spacing overrides are applied (letter-spacing 0.12em,
+      word-spacing 0.16em, line-height 1.5, paragraph spacing 2em), this
+      element's text overflows and is clipped.
+    -->
+    <div class="clipped-box">Important text content</div>
+    <p>Normal paragraph that handles spacing overrides.</p>
+  </body>
+</html>

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>text-spacing clear fixture</title>
+    <style>
+      body {
+        margin: 1rem;
+        font-size: 16px;
+        line-height: 1.5;
+      }
+      /*
+       * This container has overflow:hidden but is generously sized so that
+       * WCAG 1.4.12 text spacing overrides will NOT clip the short text.
+       * totalElementsChecked will be > 0 (rule is applicable), and
+       * clippedElements will be 0 (rule passes).
+       */
+      .roomy-box {
+        width: 600px;
+        height: 200px;
+        overflow: hidden;
+        font-size: 16px;
+        padding: 1rem;
+        border: 1px solid #ccc;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Text Spacing — Clear</h1>
+    <!-- Roomy container: overflow:hidden but large enough to not clip at spacing overrides -->
+    <div class="roomy-box">OK</div>
+    <p>
+      The box above is large enough that WCAG 1.4.12 spacing overrides
+      (letter-spacing, word-spacing, line-height, paragraph spacing) will not
+      cause any clipping.
+    </p>
+  </body>
+</html>

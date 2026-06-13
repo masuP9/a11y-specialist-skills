@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Keyboard Trap Fixture - True Trap</title>
+  </head>
+  <body>
+    <h1>Keyboard Trap Demo</h1>
+    <p>Normal content before the trap.</p>
+
+    <!-- Keyboard trap: focus is re-assigned to trap-a whenever it leaves the trap region. -->
+    <div id="trap-region">
+      <button id="trap-a">Trap Button A</button>
+      <button id="trap-b">Trap Button B</button>
+    </div>
+
+    <a href="#">Link after trap</a>
+
+    <script>
+      // Focusout trap: whenever focus leaves #trap-region, force it back in.
+      // No Escape key handler is installed, so there is no way out.
+      const trapA = document.getElementById('trap-a');
+      const trapB = document.getElementById('trap-b');
+      const region = document.getElementById('trap-region');
+
+      document.addEventListener('focusin', function (e) {
+        if (!region.contains(e.target)) {
+          // Refocus the first trap element
+          e.preventDefault();
+          trapA.focus();
+        }
+      });
+
+      // Set initial focus into the trap on load
+      window.addEventListener('load', function () {
+        trapA.focus();
+      });
+    </script>
+  </body>
+</html>

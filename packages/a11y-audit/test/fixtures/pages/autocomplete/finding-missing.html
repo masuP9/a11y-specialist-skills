@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>autocomplete finding: autocomplete-missing</title>
+  </head>
+  <body>
+    <h1>Missing Autocomplete Token</h1>
+    <form>
+      <!--
+        Field name/id "email" strongly signals it collects email address,
+        but no autocomplete attribute is present → autocomplete-missing (incomplete)
+      -->
+      <label for="email">Email address</label>
+      <input type="email" id="email" name="email" />
+
+      <!--
+        Field name/id "phone" signals phone number collection,
+        no autocomplete → autocomplete-missing (incomplete)
+      -->
+      <label for="phone">Phone number</label>
+      <input type="tel" id="phone" name="phone" />
+
+      <button type="submit">Submit</button>
+    </form>
+  </body>
+</html>

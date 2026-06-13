@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>focus-indicator finding: no-context-change-on-focus</title>
+  </head>
+  <body>
+    <h1>On-Focus Navigation</h1>
+    <!-- This link navigates when it receives focus — a violation of SC 3.2.1 -->
+    <a id="trigger" href="#" onfocus="window.location.href = '/navigated'"
+      >Click or focus me</a
+    >
+    <button id="safe">Safe button</button>
+    <p>
+      Focusing the link above triggers a navigation (context change on focus).
+    </p>
+  </body>
+</html>

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>auto-play finding: auto-play</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      /*
+       * Large animated element covering most of the viewport.
+       * The animation cycles background-color continuously with a 7-second
+       * period (asynchronous with the detector's 3s capture window) so that
+       * pixel-diff always detects motion across its two captures.
+       * No pause control is provided → auto-play incomplete finding.
+       */
+      @keyframes colorshift {
+        0% {
+          background-color: #e60000;
+        }
+        14% {
+          background-color: #e67300;
+        }
+        28% {
+          background-color: #e6e600;
+        }
+        42% {
+          background-color: #00cc00;
+        }
+        57% {
+          background-color: #0000e6;
+        }
+        71% {
+          background-color: #7300e6;
+        }
+        85% {
+          background-color: #e600cc;
+        }
+        100% {
+          background-color: #e60000;
+        }
+      }
+      .animated-banner {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 80vh;
+        animation: colorshift 7s linear infinite;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2rem;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <!--
+      Moving content: large area (80vh) with continuous color cycling.
+      No pause, stop, or hide mechanism provided.
+      Expected result: auto-play (incomplete) finding.
+    -->
+    <div class="animated-banner" aria-label="Animated content">
+      Auto-playing animation — no pause control
+    </div>
+  </body>
+</html>

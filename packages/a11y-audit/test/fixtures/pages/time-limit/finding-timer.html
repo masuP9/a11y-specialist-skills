@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>time-limit finding: time-limit-timer</title>
+  </head>
+  <body>
+    <h1>JavaScript Timer Detected</h1>
+    <p id="status">Session active.</p>
+    <script>
+      // A long-running setInterval that could implement a time limit.
+      // delayMs=60000 → detected as a potential time limit timer (incomplete).
+      setInterval(function () {
+        // Simulated session timer — check would need manual verification
+        document.getElementById('status').textContent = 'Session timer tick.';
+      }, 60000);
+    </script>
+  </body>
+</html>

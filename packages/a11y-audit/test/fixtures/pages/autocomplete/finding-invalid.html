@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>autocomplete finding: autocomplete-invalid</title>
+  </head>
+  <body>
+    <h1>Invalid Autocomplete Token</h1>
+    <form>
+      <label for="email">Email address</label>
+      <!--
+        autocomplete="mail" is not a valid token (correct value: "email")
+        → autocomplete-invalid violation
+      -->
+      <input type="email" id="email" name="email" autocomplete="mail" />
+
+      <label for="fname">First name</label>
+      <!--
+        autocomplete="firstname" is not a valid token (correct: "given-name")
+        → autocomplete-invalid violation
+      -->
+      <input type="text" id="fname" name="fname" autocomplete="firstname" />
+
+      <button type="submit">Submit</button>
+    </form>
+  </body>
+</html>

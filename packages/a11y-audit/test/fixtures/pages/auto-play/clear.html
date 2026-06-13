@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>auto-play clear fixture</title>
+    <style>
+      body {
+        margin: 1rem;
+        font-family: sans-serif;
+      }
+      /* Static element — no animation, no movement */
+      .static-banner {
+        background-color: #0057b8;
+        color: white;
+        padding: 2rem;
+        font-size: 1.5rem;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>No Auto-playing Content</h1>
+    <!-- Static content — no pixel diff will be detected -->
+    <div class="static-banner">Static content — no animation</div>
+    <p>This page contains no auto-playing media or CSS animations.</p>
+    <p>
+      The auto-play detector will capture two screenshots and find no
+      difference.
+    </p>
+  </body>
+</html>

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>focus-indicator clear fixture</title>
+    <style>
+      /* Visible focus indicators — distinct outline on all focusable elements */
+      :focus {
+        outline: 3px solid #005fcc;
+        outline-offset: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Good Focus Indicators</h1>
+    <p>All interactive elements have a clearly visible focus indicator.</p>
+    <button id="btn1">Button One</button>
+    <button id="btn2">Button Two</button>
+    <a href="#section">Link to section</a>
+    <section id="section">
+      <p>Section content with no navigation-on-focus behavior.</p>
+    </section>
+  </body>
+</html>

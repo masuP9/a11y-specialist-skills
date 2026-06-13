@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>focus-indicator finding: focus-visible</title>
+    <style>
+      /* Remove all focus indicators — no outline, box-shadow, or background change */
+      *:focus {
+        outline: none;
+        box-shadow: none;
+      }
+      button:focus {
+        background-color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Focus Indicator Missing</h1>
+    <!-- Buttons with no computed-style change on focus -->
+    <button id="btn1">Button One</button>
+    <button id="btn2">Button Two</button>
+    <a href="#section">Link to section</a>
+    <section id="section">
+      <p>Section content</p>
+    </section>
+  </body>
+</html>
