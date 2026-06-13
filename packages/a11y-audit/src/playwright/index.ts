@@ -47,6 +47,10 @@ export {
   runAutoPlayDetection,
   type RunAutoPlayDetectionOptions,
 } from './runAutoPlayDetection.js';
+export {
+  runKeyboardTrapCheck,
+  type RunKeyboardTrapCheckOptions,
+} from './runKeyboardTrapCheck.js';
 
 export {
   resolveOutputPath,
