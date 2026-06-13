@@ -10,11 +10,13 @@ import {
   buildAuditResult,
   normalizeAxeResults,
   normalizeFocusCheck,
+  normalizeKeyboardTrapCheck,
   normalizeReflowCheck,
   normalizeTargetSizeCheck,
 } from '../dist/index.js';
 import type {
   FocusCheckDetails,
+  KeyboardTrapCheckDetails,
   ReflowCheckDetails,
   TargetSizeCheckDetails,
 } from '../dist/index.js';
@@ -168,6 +170,37 @@ test('target-size-check envelope validates against its schema', () => {
     buckets: normalizeTargetSizeCheck(details),
   });
   expectValid('target-size-check', result);
+});
+
+test('keyboard-trap-check envelope validates against its schema', () => {
+  const details: KeyboardTrapCheckDetails = {
+    totalFocusableElements: 2,
+    trapCandidates: 1,
+    confirmedTraps: [
+      {
+        selector: '#trap-a',
+        tag: 'BUTTON',
+        name: 'Trap Button A',
+        html: '<button id="trap-a">Trap Button A</button>',
+        htmlTruncated: false,
+        escapeAttempts: {
+          escape: false,
+          shiftTab: false,
+          closeAffordance: false,
+        },
+        isAriaModal: false,
+      },
+    ],
+    needsReview: [],
+    screenshotPath: '',
+  };
+  const result = buildAuditResult({
+    source: 'keyboard-trap-check',
+    url: 'about:blank',
+    details,
+    buckets: normalizeKeyboardTrapCheck(details),
+  });
+  expectValid('keyboard-trap-check', result);
 });
 
 test('the pre-0.3.0 flat result shape is rejected', () => {

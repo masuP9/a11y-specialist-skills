@@ -32,6 +32,7 @@ export {
   normalizeAutocompleteAudit,
   normalizeAutoPlayDetection,
   normalizeFocusCheck,
+  normalizeKeyboardTrapCheck,
   normalizeOrientationCheck,
   normalizeReflowCheck,
   normalizeTargetSizeCheck,

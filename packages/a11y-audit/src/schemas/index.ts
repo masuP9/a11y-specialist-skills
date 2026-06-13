@@ -65,6 +65,9 @@ export type {
   PauseVerificationResult,
   AutoPlayDetectionDetails,
   AutoPlayDetectionResult,
+  KeyboardTrapEvidence,
+  KeyboardTrapCheckDetails,
+  KeyboardTrapCheckResult,
 } from '../types.js';
 
 /** Minimal JSON Schema object shape (Draft 2020-12 compatible subset). */
@@ -563,6 +566,30 @@ export const AUTO_PLAY_DETECTION_RESULT_SCHEMA: JsonSchema =
     },
   });
 
+export const KEYBOARD_TRAP_CHECK_RESULT_SCHEMA: JsonSchema =
+  buildEnvelopeSchema({
+    id: 'keyboard-trap-check-result',
+    title: 'KeyboardTrapCheckResult',
+    source: 'keyboard-trap-check',
+    details: {
+      type: 'object',
+      required: [
+        'totalFocusableElements',
+        'trapCandidates',
+        'confirmedTraps',
+        'needsReview',
+        'screenshotPath',
+      ],
+      properties: {
+        totalFocusableElements: { type: 'number' },
+        trapCandidates: { type: 'number' },
+        confirmedTraps: { type: 'array', items: { type: 'object' } },
+        needsReview: { type: 'array', items: { type: 'object' } },
+        screenshotPath: { type: 'string' },
+      },
+    },
+  });
+
 /** All result schemas keyed by check id. */
 export const RESULT_SCHEMAS = {
   'axe-audit': AXE_AUDIT_RESULT_SCHEMA,
@@ -575,4 +602,5 @@ export const RESULT_SCHEMAS = {
   'autocomplete-audit': AUTOCOMPLETE_AUDIT_RESULT_SCHEMA,
   'time-limit-detector': TIME_LIMIT_DETECTOR_RESULT_SCHEMA,
   'auto-play-detection': AUTO_PLAY_DETECTION_RESULT_SCHEMA,
+  'keyboard-trap-check': KEYBOARD_TRAP_CHECK_RESULT_SCHEMA,
 } as const;

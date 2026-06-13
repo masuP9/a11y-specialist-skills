@@ -568,3 +568,18 @@ export const SVG_METADATA_PATTERNS = [
 
 /** Maximum parent levels to check for carousel context */
 export const MAX_PARENT_LEVELS = 5;
+
+// =============================================================================
+// Keyboard Trap Check Constants (WCAG 2.1.2)
+// =============================================================================
+
+/** Tab walk: extra Tab presses beyond `count` focusable elements. */
+export const KEYBOARD_TRAP_SLACK = 10;
+/** Upper bound on Tab presses per walk (large-page guard). Exceeded count is logged. */
+export const KEYBOARD_TRAP_MAX_TAB_PRESSES = 600;
+/** Wait (ms) after each escape attempt before re-reading activeElement. */
+export const KEYBOARD_TRAP_ESCAPE_SETTLE_MS = 200;
+/** Maximum escape attempts per trap candidate. */
+export const KEYBOARD_TRAP_MAX_ESCAPE_ATTEMPTS = 3;
+export const DEFAULT_KEYBOARD_TRAP_RESULT_FILE = 'keyboard-trap-result.json';
+export const DEFAULT_KEYBOARD_TRAP_SCREENSHOT_FILE = 'keyboard-trap.png';

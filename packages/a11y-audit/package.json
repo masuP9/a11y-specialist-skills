@@ -84,6 +84,10 @@
     "./test-entries/auto-play-detection": {
       "types": "./dist/test-entries/auto-play-detection.d.ts",
       "import": "./dist/test-entries/auto-play-detection.js"
+    },
+    "./test-entries/keyboard-trap-check": {
+      "types": "./dist/test-entries/keyboard-trap-check.d.ts",
+      "import": "./dist/test-entries/keyboard-trap-check.js"
     }
   },
   "files": [
