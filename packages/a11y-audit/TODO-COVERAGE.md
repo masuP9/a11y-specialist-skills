@@ -56,7 +56,7 @@
 
 **実装**: `target-size-check.ts`
 - WCAG 2.5.8 (AA: 24px) と 2.5.5 (AAA: 44px) の両方を検証
-- 例外処理: inline, redundant, ua-control, spacing
+- 例外処理: inline, redundant, ua-control, spacing（spacing は WCAG 定義どおりの 24px 円判定で幾何的に検証）
 - ariaSnapshot() によるアクセシブル名取得
 
 **検出可能な問題**:

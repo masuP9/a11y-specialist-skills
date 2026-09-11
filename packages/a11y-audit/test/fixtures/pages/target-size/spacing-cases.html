@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>target-size spacing geometry cases</title>
+    <style>
+      /*
+       * Every target is absolutely positioned so the spacing geometry is
+       * deterministic. Coordinates are document CSS px.
+       */
+      body {
+        margin: 0;
+        font-family: sans-serif;
+        min-height: 2200px;
+      }
+      .t {
+        position: absolute;
+        box-sizing: border-box;
+        width: 20px;
+        height: 20px;
+        padding: 0;
+        border: 0;
+        margin: 0;
+        background: #cde;
+        font-size: 10px;
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Touching circles: 20×20 at x=20 and x=44 → centers 24px apart → OK -->
+    <button id="pair-ok-a" class="t" style="left: 20px; top: 20px">a</button>
+    <button id="pair-ok-b" class="t" style="left: 44px; top: 20px">b</button>
+
+    <!-- Intersecting circles: 20×20 at x=20 and x=42 → centers 22px apart -->
+    <button id="pair-fail-a" class="t" style="left: 20px; top: 100px">a</button>
+    <button id="pair-fail-b" class="t" style="left: 42px; top: 100px">b</button>
+
+    <!-- Circle vs a large neighbor: center (30,190) to the neighbor's left edge at x=41 → 11px < 12px -->
+    <button id="near-large" class="t" style="left: 20px; top: 180px">s</button>
+    <button
+      id="large"
+      class="t"
+      style="left: 41px; top: 170px; width: 100px; height: 40px"
+    >
+      large
+    </button>
+
+    <!-- Nested targets share the same box: not each other's neighbor -->
+    <a id="wrap" class="t" href="#wrap" style="left: 20px; top: 260px">
+      <button id="inner" class="t" style="left: 0; top: 0">x</button>
+    </a>
+
+    <!-- Label and its control (checkbox is 10px away, would intersect otherwise) -->
+    <label id="lbl" for="chk" class="t" style="left: 20px; top: 340px">L</label>
+    <input
+      id="chk"
+      type="checkbox"
+      class="t"
+      style="left: 40px; top: 343px; width: 13px; height: 13px"
+    />
+
+    <!-- Covered target (under an overlay) must not count as a neighbor -->
+    <button id="covered" class="t" style="left: 20px; top: 420px">c</button>
+    <div
+      id="cover"
+      style="
+        position: absolute;
+        left: 0;
+        top: 400px;
+        width: 200px;
+        height: 45px;
+        background: rgba(0, 0, 0, 0.3);
+      "
+    ></div>
+    <button id="beside" class="t" style="left: 20px; top: 442px">d</button>
+
+    <!-- Wrapped link: the bounding box covers the button, the line boxes do not -->
+    <div
+      style="
+        position: absolute;
+        left: 300px;
+        top: 20px;
+        width: 300px;
+        font-size: 16px;
+        line-height: 20px;
+      "
+    >
+      <a id="wrapped" href="#wrapped"
+        >first line of the link is quite long<br />x</a
+      >
+      <button id="near-wrapped" class="t" style="left: 100px; top: 34px">
+        n
+      </button>
+    </div>
+
+    <!-- Far below the initial viewport: exercises the scroll + hit-test path -->
+    <button id="far" class="t" style="left: 20px; top: 2000px">f</button>
+  </body>
+</html>

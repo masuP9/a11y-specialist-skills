@@ -296,6 +296,15 @@ const MANIFEST: ManifestEntry[] = [
   },
   {
     check: 'target-size-check',
+    scenario: 'clear: undersized targets with verified spacing exception',
+    fixture: 'target-size/spacing.html',
+    expectRules: {
+      'a11y-skills/target-size-minimum': 'passes',
+      'a11y-skills/target-size-enhanced': 'incomplete',
+    },
+  },
+  {
+    check: 'target-size-check',
     scenario: 'clear: targets meet 44px AAA requirement',
     fixture: 'target-size/clear.html',
     expectRules: {

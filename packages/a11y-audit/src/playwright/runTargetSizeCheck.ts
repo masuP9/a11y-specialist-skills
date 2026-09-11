@@ -8,12 +8,22 @@
  * function.
  *
  * Note: when `screenshot` is enabled this function appends an annotation
- * overlay to the page DOM before capturing the screenshot.
+ * overlay to the page DOM before capturing the screenshot. Collecting targets
+ * also scrolls the page (to hit-test targets outside the initial viewport)
+ * and restores the original scroll position afterwards.
+ *
+ * Spacing exception (SC 2.5.8): evaluated geometrically per the WCAG
+ * definition — a 24px-diameter circle centered on each undersized target's
+ * bounding box must not intersect another target, nor the circle of another
+ * undersized target. See `utils/target-spacing.ts`.
  *
  * Limitations:
  * - Essential exception requires manual review
  * - Cannot detect all redundant target cases
- * - CSS transform may affect measurements
+ * - Targets that only react to script-attached handlers (no `onclick`
+ *   attribute, no role, no tabindex) are not detected, so a verified spacing
+ *   exception can miss such a neighbor
+ * - Shadow DOM and iframe content are not inspected
  */
 
 import type { Page } from '@playwright/test';
@@ -22,6 +32,8 @@ import type {
   TargetSizeCheckResult,
   TargetSizeCheckDetails,
   TargetSizeException,
+  TargetSizeExceptionAssessment,
+  TargetSpacingResult,
 } from '../types.js';
 import {
   INTERACTIVE_SELECTOR,
@@ -51,10 +63,18 @@ import {
 import {
   addPageAnnotations,
   type AnnotationConfig,
+  type CircleAnnotationConfig,
 } from '../utils/annotations.js';
+import {
+  evaluateTargetSpacing,
+  type Rect,
+  type SpacingTarget,
+} from '../utils/target-spacing.js';
 
 /** Basic target info collected from DOM */
 interface BasicTargetInfo {
+  /** Position in the collected list; stable identifier for relations. */
+  index: number;
   selector: string;
   tagName: string;
   html: string;
@@ -67,21 +87,32 @@ interface BasicTargetInfo {
   appearance: string;
   parentTag: string | null;
   parentTextLength: number;
-  boundingRect: {
-    left: number;
-    top: number;
-    right: number;
-    bottom: number;
-  };
+  /** Bounding box in document coordinates (CSS px). */
+  boundingRect: Rect;
+  /** Per-line painted boxes in document coordinates (CSS px). */
+  clientRects: Rect[];
+  /** Index of the nearest ancestor that is itself a collected target. */
+  parentTargetIndex: number | null;
+  /** Indices of targets that share this target's function (label ↔ control). */
+  sameTargetIndices: number[];
+}
+
+interface CollectedTargets {
+  targets: BasicTargetInfo[];
+  /** Targets skipped because another element covers their hit-test point. */
+  occludedCount: number;
 }
 
 /**
  * Collect basic target information from DOM (runs in browser context).
+ *
+ * Scrolls the page to hit-test every target's painted center and restores
+ * the original scroll position before returning.
  */
 function collectBasicTargetInfo(args: {
   interactiveSelector: string;
   htmlSnippetMaxLength: number;
-}): BasicTargetInfo[] {
+}): CollectedTargets {
   const { interactiveSelector, htmlSnippetMaxLength } = args;
 
   function getHtmlSnippet(element: Element): {
@@ -132,10 +163,29 @@ function collectBasicTargetInfo(args: {
       : `[data-index="${elementIndex}"]`;
   }
 
-  const targets: BasicTargetInfo[] = [];
+  const round2 = (n: number): number => Math.round(n * 100) / 100;
+
+  const originalScrollX = window.scrollX;
+  const originalScrollY = window.scrollY;
+
+  const toDocRect = (rect: DOMRect): Rect => ({
+    left: round2(rect.left + window.scrollX),
+    top: round2(rect.top + window.scrollY),
+    right: round2(rect.right + window.scrollX),
+    bottom: round2(rect.bottom + window.scrollY),
+  });
+
+  // Pass 1: visible candidates, measured at the original scroll position.
+  interface Candidate {
+    el: HTMLElement;
+    rect: DOMRect;
+    boundingRect: Rect;
+    clientRects: Rect[];
+  }
+  const candidates: Candidate[] = [];
   const elements = document.querySelectorAll(interactiveSelector);
 
-  elements.forEach((element, index) => {
+  elements.forEach((element) => {
     const el = element as HTMLElement;
     const rect = el.getBoundingClientRect();
 
@@ -157,6 +207,99 @@ function collectBasicTargetInfo(args: {
       return;
     }
 
+    const clientRects = Array.from(el.getClientRects())
+      .filter((r) => r.width > 0 && r.height > 0)
+      .map(toDocRect);
+
+    candidates.push({
+      el,
+      rect,
+      boundingRect: toDocRect(rect),
+      clientRects: clientRects.length > 0 ? clientRects : [toDocRect(rect)],
+    });
+  });
+
+  // Pass 2: hit-test each candidate's painted center. Targets covered by
+  // another element (overlay, sticky header, clipped container) are not
+  // pointer targets and are dropped. Scroll only when the point is outside
+  // the current viewport; visit candidates in document order to minimise
+  // scrolling.
+  const canScroll = typeof window.scrollTo === 'function';
+  const firstRect = (c: Candidate): Rect => c.clientRects[0] ?? c.boundingRect;
+  const order = candidates
+    .map((c, i) => ({ i, y: firstRect(c).top, x: firstRect(c).left }))
+    .sort((a, b) => a.y - b.y || a.x - b.x)
+    .map((o) => o.i);
+
+  const occluded = new Set<number>();
+  for (const i of order) {
+    const candidate = candidates[i];
+    if (!candidate) {
+      continue;
+    }
+    const { el } = candidate;
+    const first = firstRect(candidate);
+    const docX = (first.left + first.right) / 2;
+    const docY = (first.top + first.bottom) / 2;
+
+    let vx = docX - window.scrollX;
+    let vy = docY - window.scrollY;
+    const inViewport = (x: number, y: number): boolean =>
+      x >= 0 && y >= 0 && x < window.innerWidth && y < window.innerHeight;
+
+    if (!inViewport(vx, vy) && canScroll) {
+      window.scrollTo(
+        Math.max(0, docX - window.innerWidth / 2),
+        Math.max(0, docY - window.innerHeight / 2),
+      );
+      // Re-measure after scrolling: sticky/fixed elements move relative to
+      // the document, and the scroll may have been clamped.
+      const fresh = Array.from(el.getClientRects()).find(
+        (r) => r.width > 0 && r.height > 0,
+      );
+      if (fresh) {
+        vx = (fresh.left + fresh.right) / 2;
+        vy = (fresh.top + fresh.bottom) / 2;
+      } else {
+        vx = docX - window.scrollX;
+        vy = docY - window.scrollY;
+      }
+    }
+
+    if (!inViewport(vx, vy)) {
+      // Cannot hit-test (e.g. inner scroll container); keep the target.
+      continue;
+    }
+
+    const hit = document.elementFromPoint(vx, vy);
+    if (hit && hit !== el && !el.contains(hit)) {
+      occluded.add(i);
+    }
+  }
+
+  if (canScroll) {
+    window.scrollTo(originalScrollX, originalScrollY);
+  }
+
+  // Pass 3: build the target list with relations.
+  const kept = candidates.filter((_, i) => !occluded.has(i));
+  const indexByElement = new Map<Element, number>();
+  kept.forEach((c, index) => indexByElement.set(c.el, index));
+
+  const sameTarget: number[][] = kept.map(() => []);
+  kept.forEach((c, index) => {
+    if (c.el instanceof HTMLLabelElement && c.el.control) {
+      const controlIndex = indexByElement.get(c.el.control);
+      if (controlIndex !== undefined && controlIndex !== index) {
+        sameTarget[index]?.push(controlIndex);
+        sameTarget[controlIndex]?.push(index);
+      }
+    }
+  });
+
+  const targets: BasicTargetInfo[] = kept.map((c, index) => {
+    const { el, rect } = c;
+    const computedStyle = getComputedStyle(el);
     const tagName = el.tagName.toLowerCase();
     const role = el.getAttribute('role');
     const inputType = el instanceof HTMLInputElement ? el.type : null;
@@ -167,28 +310,38 @@ function collectBasicTargetInfo(args: {
     const parentTag = parent ? parent.tagName.toLowerCase() : null;
     const parentTextLength = parent ? (parent.textContent || '').length : 0;
 
-    targets.push({
-      selector: getUniqueSelector(element, index),
+    let parentTargetIndex: number | null = null;
+    let ancestor = el.parentElement;
+    while (ancestor) {
+      const found = indexByElement.get(ancestor);
+      if (found !== undefined) {
+        parentTargetIndex = found;
+        break;
+      }
+      ancestor = ancestor.parentElement;
+    }
+
+    return {
+      index,
+      selector: getUniqueSelector(el, index),
       tagName,
-      ...getHtmlSnippet(element),
+      ...getHtmlSnippet(el),
       role,
-      width: Math.round(rect.width * 100) / 100,
-      height: Math.round(rect.height * 100) / 100,
+      width: round2(rect.width),
+      height: round2(rect.height),
       href,
       inputType,
       appearance: computedStyle.appearance,
       parentTag,
       parentTextLength,
-      boundingRect: {
-        left: rect.left,
-        top: rect.top,
-        right: rect.right,
-        bottom: rect.bottom,
-      },
-    });
+      boundingRect: c.boundingRect,
+      clientRects: c.clientRects,
+      parentTargetIndex,
+      sameTargetIndices: sameTarget[index] ?? [],
+    };
   });
 
-  return targets;
+  return { targets, occludedCount: occluded.size };
 }
 
 /**
@@ -283,50 +436,65 @@ function findRedundantTargets(
 }
 
 /**
- * Check if target has adequate spacing from adjacent targets.
+ * Whether `a` is an ancestor of `b` in the collected target tree.
  */
-function checkSpacingException(
-  target: BasicTargetInfo,
-  allTargets: BasicTargetInfo[],
-  requiredSpacing: number,
-): { applies: boolean; details: string | null } {
-  const targetRect = target.boundingRect;
-
-  for (const other of allTargets) {
-    if (other.selector === target.selector) {
-      continue;
+function isAncestorTarget(
+  a: BasicTargetInfo,
+  b: BasicTargetInfo,
+  byIndex: readonly BasicTargetInfo[],
+): boolean {
+  let cursor = b.parentTargetIndex;
+  while (cursor !== null) {
+    if (cursor === a.index) {
+      return true;
     }
-
-    const otherRect = other.boundingRect;
-
-    // Calculate distance between edges
-    const horizontalGap = Math.max(
-      0,
-      Math.max(
-        otherRect.left - targetRect.right,
-        targetRect.left - otherRect.right,
-      ),
-    );
-    const verticalGap = Math.max(
-      0,
-      Math.max(
-        otherRect.top - targetRect.bottom,
-        targetRect.top - otherRect.bottom,
-      ),
-    );
-
-    // If adjacent (gaps are small), check if spacing is adequate
-    if (horizontalGap < requiredSpacing && verticalGap < requiredSpacing) {
-      // Not enough spacing
-      return { applies: false, details: null };
-    }
+    cursor = byIndex[cursor]?.parentTargetIndex ?? null;
   }
+  return false;
+}
 
-  // All adjacent targets have adequate spacing
-  return {
-    applies: true,
-    details: `No adjacent targets within ${requiredSpacing}px`,
+/**
+ * Build the spacing evaluator: a function that returns the spacing result
+ * for one undersized target against every other collected target, treating
+ * ancestor/descendant pairs and label/control pairs as the same target.
+ */
+function buildSpacingEvaluator(
+  targets: readonly BasicTargetInfo[],
+  aaThreshold: number,
+): (target: BasicTargetInfo) => TargetSpacingResult {
+  const spacingTargets: SpacingTarget[] = targets.map((t) => ({
+    index: t.index,
+    selector: t.selector,
+    bounds: t.boundingRect,
+    rects: t.clientRects,
+    undersized: Math.min(t.width, t.height) < aaThreshold,
+  }));
+
+  const isSameTarget = (a: SpacingTarget, b: SpacingTarget): boolean => {
+    const ta = targets[a.index];
+    const tb = targets[b.index];
+    if (!ta || !tb) {
+      return false;
+    }
+    return (
+      ta.sameTargetIndices.includes(tb.index) ||
+      isAncestorTarget(ta, tb, targets) ||
+      isAncestorTarget(tb, ta, targets)
+    );
   };
+
+  return (target) =>
+    evaluateTargetSpacing(
+      spacingTargets[target.index] ?? {
+        index: target.index,
+        selector: target.selector,
+        bounds: target.boundingRect,
+        rects: target.clientRects,
+        undersized: true,
+      },
+      spacingTargets,
+      { diameter: aaThreshold, isSameTarget },
+    );
 }
 
 /**
@@ -349,6 +517,7 @@ function analyzeTargets(
 
   // Build href map for redundancy check
   const hrefMap = findRedundantTargets(targets);
+  const evaluateSpacing = buildSpacingEvaluator(targets, aaThreshold);
 
   for (const target of targets) {
     const minDimension = Math.min(target.width, target.height);
@@ -367,8 +536,15 @@ function analyzeTargets(
     // Check exceptions (only relevant for fail-aa)
     let exception: TargetSizeException | null = null;
     let exceptionDetails: string | null = null;
+    let exceptionAssessment: TargetSizeExceptionAssessment = 'not-assessed';
+    let spacing: TargetSpacingResult | null = null;
 
     if (level === 'fail-aa') {
+      // Spacing geometry is evaluated for every undersized target so the
+      // result (and the screenshot circle) is available whichever exception
+      // is finally recorded.
+      spacing = evaluateSpacing(target);
+
       // Check inline exception
       const inlineCheck = checkInlineException(
         target,
@@ -406,17 +582,17 @@ function analyzeTargets(
         }
       }
 
-      // Check spacing exception
-      if (!exception) {
-        const spacingCheck = checkSpacingException(
-          target,
-          targets,
-          aaThreshold,
-        );
-        if (spacingCheck.applies) {
-          exception = 'spacing';
-          exceptionDetails = spacingCheck.details;
-        }
+      if (exception) {
+        // Heuristic exceptions can never rule out manual confirmation.
+        exceptionAssessment = 'possible';
+      } else if (spacing.applies) {
+        // Spacing exception verified against the page geometry.
+        exception = 'spacing';
+        exceptionDetails = `No other target within a ${spacing.diameter}px circle centered on the target (verified geometrically)`;
+        exceptionAssessment = 'verified';
+      } else {
+        // No exception found; the essential exception cannot be ruled out.
+        exceptionAssessment = 'not-assessed';
       }
     }
 
@@ -433,10 +609,9 @@ function analyzeTargets(
       level,
       exception,
       exceptionDetails,
-      // the heuristics can detect exceptions but can never rule out the
-      // essential exception, so findings are at best 'possible'/'not-assessed'.
-      exceptionAssessment: exception ? 'possible' : 'not-assessed',
+      exceptionAssessment,
       href: target.href,
+      spacing,
     };
 
     if (exception) {
@@ -449,6 +624,23 @@ function analyzeTargets(
   }
 
   return { failAA, failAAAOnly, passCount, excepted };
+}
+
+/** Human-readable one-liner for a failed spacing evaluation. */
+function describeSpacingFailure(spacing: TargetSpacingResult): string {
+  const nearest = spacing.intersections[0];
+  if (!nearest) {
+    return 'spacing exception applies';
+  }
+  const what =
+    nearest.kind === 'circle'
+      ? `circle of undersized target ${nearest.selector}`
+      : `target ${nearest.selector}`;
+  const more =
+    spacing.intersections.length > 1
+      ? ` (+${spacing.intersections.length - 1} more)`
+      : '';
+  return `${spacing.diameter}px circle intersects ${what}: ${nearest.distance}px, requires ${nearest.required}px${more}`;
 }
 
 export interface RunTargetSizeCheckOptions extends OutputLocationOptions {
@@ -478,10 +670,13 @@ export async function runTargetSizeCheck(
   } = options;
 
   // Collect basic target info from DOM
-  const basicTargets = await page.evaluate(collectBasicTargetInfo, {
-    interactiveSelector: INTERACTIVE_SELECTOR,
-    htmlSnippetMaxLength: HTML_SNIPPET_MAX_LENGTH,
-  });
+  const { targets: basicTargets, occludedCount } = await page.evaluate(
+    collectBasicTargetInfo,
+    {
+      interactiveSelector: INTERACTIVE_SELECTOR,
+      htmlSnippetMaxLength: HTML_SNIPPET_MAX_LENGTH,
+    },
+  );
 
   // Enhance with accessible names via ariaSnapshot()
   const targets: Array<BasicTargetInfo & { accessibleName: string | null }> =
@@ -536,7 +731,15 @@ export async function runTargetSizeCheck(
 
   logSummary({
     'Total targets checked': details.totalTargetsChecked,
+    'Skipped (covered by another element)': occludedCount,
   });
+
+  const verifiedSpacing = excepted.filter(
+    (t) => t.exceptionAssessment === 'verified',
+  );
+  const possibleExceptions = excepted.filter(
+    (t) => t.exceptionAssessment !== 'verified',
+  );
 
   console.log('\nSummary:');
   console.log(`  Pass (>= ${aaaThreshold}px): ${details.summary.passCount}`);
@@ -544,7 +747,8 @@ export async function runTargetSizeCheck(
     `  Fail AAA only (${aaThreshold}-${aaaThreshold - 1}px): ${details.summary.failAAAOnlyCount}`,
   );
   console.log(`  Fail AA (< ${aaThreshold}px): ${details.summary.failAACount}`);
-  console.log(`  Possible exceptions: ${details.summary.exceptedCount}`);
+  console.log(`  Verified spacing exception: ${verifiedSpacing.length}`);
+  console.log(`  Possible exceptions: ${possibleExceptions.length}`);
 
   logIssueList<TargetSizeIssue>(
     `Fail AA (< ${aaThreshold}px) - Requires Fix`,
@@ -555,8 +759,8 @@ export async function runTargetSizeCheck(
         `   Size: ${el.width}x${el.height}px (min: ${el.minDimension}px)`,
         `   Name: "${el.accessibleName || 'none'}"`,
       ];
-      if (el.exception) {
-        lines.push(`   Exception: ${el.exception} - ${el.exceptionDetails}`);
+      if (el.spacing) {
+        lines.push(`   Spacing: ${describeSpacingFailure(el.spacing)}`);
       }
       return lines;
     },
@@ -574,13 +778,31 @@ export async function runTargetSizeCheck(
   );
 
   logIssueList<TargetSizeIssue>(
-    'Possible Exceptions (Manual Review Recommended)',
-    excepted,
+    `Verified Spacing Exception (< ${aaThreshold}px, conforms to 2.5.8)`,
+    verifiedSpacing,
     (el, i) => [
       `${i + 1}. <${el.tagName}> "${el.selector}"`,
       `   Size: ${el.width}x${el.height}px (min: ${el.minDimension}px)`,
-      `   Exception: ${el.exception} - ${el.exceptionDetails}`,
     ],
+    5,
+  );
+
+  logIssueList<TargetSizeIssue>(
+    'Possible Exceptions (Manual Review Recommended)',
+    possibleExceptions,
+    (el, i) => {
+      const lines = [
+        `${i + 1}. <${el.tagName}> "${el.selector}"`,
+        `   Size: ${el.width}x${el.height}px (min: ${el.minDimension}px)`,
+        `   Exception: ${el.exception} - ${el.exceptionDetails}`,
+      ];
+      if (el.spacing) {
+        lines.push(
+          `   Spacing: ${el.spacing.applies ? 'spacing exception also applies' : describeSpacingFailure(el.spacing)}`,
+        );
+      }
+      return lines;
+    },
     5,
   );
 
@@ -612,14 +834,29 @@ export async function runTargetSizeCheck(
         label: 'AA Fail',
         colorScheme: 'fail' as const,
       })),
-      ...excepted.map((t) => ({
+      ...verifiedSpacing.map((t) => ({
+        selector: t.selector,
+        label: 'Spacing OK',
+        colorScheme: 'info' as const,
+      })),
+      ...possibleExceptions.map((t) => ({
         selector: t.selector,
         label: 'Exception',
         colorScheme: 'info' as const,
       })),
     ];
 
-    await addPageAnnotations(page, annotations);
+    // Spacing circles for every undersized target
+    const circles: CircleAnnotationConfig[] = [...failAA, ...excepted]
+      .filter((t) => t.spacing !== null)
+      .map((t) => ({
+        x: t.spacing!.center.x,
+        y: t.spacing!.center.y,
+        diameter: t.spacing!.diameter,
+        colorScheme: t.spacing!.applies ? ('pass' as const) : ('fail' as const),
+      }));
+
+    await addPageAnnotations(page, annotations, circles);
     screenshotPath = await takeAuditScreenshot(page, {
       path: resolveScreenshotPath(
         resolvedPath,
@@ -635,7 +872,13 @@ export async function runTargetSizeCheck(
     );
     console.log(`  AA Fail (red): < ${aaThreshold}px - AA Fail, AAA Fail`);
     console.log(
+      `  Spacing OK (blue): < ${aaThreshold}px but spacing exception verified`,
+    );
+    console.log(
       `  Exception (blue): Possible exception (manual review needed)`,
+    );
+    console.log(
+      `  Circles (${aaThreshold}px): green = no other target inside, red = intersects another target`,
     );
   }
 

@@ -10,14 +10,21 @@
         margin: 1rem;
         font-family: sans-serif;
       }
-      /* Tiny buttons adjacent to each other — fails 24px minimum (WCAG 2.5.8) */
+      /*
+       * Tiny buttons packed edge to edge — fail the 24px minimum (WCAG 2.5.8)
+       * and the spacing exception: 24px circles centered 18px apart intersect.
+       */
+      .tiny-row {
+        display: flex;
+        gap: 0;
+      }
       .tiny-btn {
         width: 18px;
         height: 18px;
         padding: 0;
         font-size: 10px;
         display: inline-block;
-        margin: 1px;
+        margin: 0;
         cursor: pointer;
         border: 1px solid #666;
         background: #eee;
@@ -38,10 +45,12 @@
   </head>
   <body>
     <h1>Small Target Sizes</h1>
-    <p>Tiny buttons (18×18px) — fail WCAG 2.5.8 AA minimum:</p>
-    <button class="tiny-btn">A</button>
-    <button class="tiny-btn">B</button>
-    <button class="tiny-btn">C</button>
+    <p>Tiny buttons (18×18px, no gap) — fail WCAG 2.5.8 AA minimum:</p>
+    <div class="tiny-row">
+      <button class="tiny-btn">A</button>
+      <button class="tiny-btn">B</button>
+      <button class="tiny-btn">C</button>
+    </div>
 
     <p>Medium buttons (30×30px) — pass 2.5.8 AA but fail 2.5.5 AAA:</p>
     <button class="medium-btn">X</button>

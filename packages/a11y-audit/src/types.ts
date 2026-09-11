@@ -287,14 +287,52 @@ export type TargetSizeException =
  * How thoroughly the SC 2.5.8 exceptions were assessed for a target.
  * - ruled-out: every exception was checked and none applies — the finding is a
  *   confirmed violation
+ * - verified: an exception was verified against the page geometry (currently
+ *   only `spacing`) — the target conforms to SC 2.5.8 unless a neighboring
+ *   target escaped detection (e.g. a click handler attached via script)
  * - possible: a heuristic matched an exception; needs manual confirmation
  * - not-assessed: the heuristics found no exception, but they cannot rule out
  *   the essential exception — needs manual confirmation
  */
 export type TargetSizeExceptionAssessment =
   | 'ruled-out'
+  | 'verified'
   | 'possible'
   | 'not-assessed';
+
+/** Why a neighboring target breaks the SC 2.5.8 spacing exception. */
+export interface TargetSpacingIntersection {
+  /** Selector of the neighboring target. */
+  selector: string;
+  /**
+   * - `target`: the 24px circle intersects the neighbor's painted area
+   * - `circle`: the neighbor is undersized too and the two circles intersect
+   */
+  kind: 'target' | 'circle';
+  /**
+   * Measured distance in CSS px: circle center to the neighbor's nearest
+   * painted point (`target`) or center to center (`circle`).
+   */
+  distance: number;
+  /** Minimum distance that would have satisfied the exception (12 or 24). */
+  required: number;
+}
+
+/**
+ * Outcome of the SC 2.5.8 spacing exception for one undersized target: a
+ * circle of `diameter` CSS px centered on the target's bounding box must not
+ * intersect another target, nor the circle of another undersized target.
+ */
+export interface TargetSpacingResult {
+  /** Circle diameter in CSS px (the AA threshold, normally 24). */
+  diameter: number;
+  /** Circle center in document coordinates (CSS px). */
+  center: { x: number; y: number };
+  /** `true` when no neighbor intersects — the spacing exception applies. */
+  applies: boolean;
+  /** Neighbors that intersect, nearest first. Empty when `applies` is `true`. */
+  intersections: TargetSpacingIntersection[];
+}
 
 export interface TargetSizeIssue {
   /** CSS selector for the element */
@@ -323,6 +361,12 @@ export interface TargetSizeIssue {
   exceptionAssessment: TargetSizeExceptionAssessment;
   /** Link href for redundancy check */
   href: string | null;
+  /**
+   * Spacing-exception geometry. Evaluated for every undersized (`fail-aa`)
+   * target regardless of which exception was finally recorded; `null` for
+   * targets that meet the AA threshold.
+   */
+  spacing: TargetSpacingResult | null;
 }
 
 export interface TargetSizeSummary {

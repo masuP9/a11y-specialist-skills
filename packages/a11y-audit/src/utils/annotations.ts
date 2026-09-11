@@ -40,6 +40,21 @@ export interface AnnotationConfig {
   colorScheme: AnnotationColorScheme;
 }
 
+/**
+ * Circle annotation (e.g. the WCAG 2.5.8 spacing circle) drawn at a fixed
+ * document position, independent of any element.
+ */
+export interface CircleAnnotationConfig {
+  /** Center x in document coordinates (CSS px). */
+  x: number;
+  /** Center y in document coordinates (CSS px). */
+  y: number;
+  /** Diameter in CSS px. */
+  diameter: number;
+  /** Color scheme to use */
+  colorScheme: AnnotationColorScheme;
+}
+
 // =============================================================================
 // Playwright Helper
 // =============================================================================
@@ -59,25 +74,27 @@ export interface AnnotationConfig {
 export async function addPageAnnotations(
   page: import('@playwright/test').Page,
   annotations: AnnotationConfig[],
+  circles: CircleAnnotationConfig[] = [],
 ): Promise<void> {
-  await page.evaluate((configs) => {
-    // Inline the colors to avoid serialization issues
-    const colors = {
-      pass: { bg: '#16a34a', border: '#16a34a', text: '#ffffff' },
-      warning: { bg: '#e65100', border: '#e65100', text: '#ffffff' },
-      fail: { bg: '#dc2626', border: '#dc2626', text: '#ffffff' },
-      info: { bg: '#0d47a1', border: '#0d47a1', text: '#ffffff' },
-      violation: { bg: '#7c3aed', border: '#7c3aed', text: '#ffffff' },
-    };
+  await page.evaluate(
+    ({ configs, circles }) => {
+      // Inline the colors to avoid serialization issues
+      const colors = {
+        pass: { bg: '#16a34a', border: '#16a34a', text: '#ffffff' },
+        warning: { bg: '#e65100', border: '#e65100', text: '#ffffff' },
+        fail: { bg: '#dc2626', border: '#dc2626', text: '#ffffff' },
+        info: { bg: '#0d47a1', border: '#0d47a1', text: '#ffffff' },
+        violation: { bg: '#7c3aed', border: '#7c3aed', text: '#ffffff' },
+      };
 
-    // Create overlay
-    let overlay = document.getElementById(
-      'wcag-audit-overlay',
-    ) as HTMLDivElement | null;
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.id = 'wcag-audit-overlay';
-      overlay.style.cssText = `
+      // Create overlay
+      let overlay = document.getElementById(
+        'wcag-audit-overlay',
+      ) as HTMLDivElement | null;
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'wcag-audit-overlay';
+        overlay.style.cssText = `
         position: absolute;
         top: 0;
         left: 0;
@@ -86,22 +103,22 @@ export async function addPageAnnotations(
         pointer-events: none;
         z-index: 99999;
       `;
-      document.body.appendChild(overlay);
-    }
+        document.body.appendChild(overlay);
+      }
 
-    // Add annotations
-    for (const config of configs) {
-      try {
-        const element = document.querySelector(config.selector);
-        if (!element) {
-          continue;
-        }
+      // Add annotations
+      for (const config of configs) {
+        try {
+          const element = document.querySelector(config.selector);
+          if (!element) {
+            continue;
+          }
 
-        const rect = element.getBoundingClientRect();
-        const color = colors[config.colorScheme as keyof typeof colors];
+          const rect = element.getBoundingClientRect();
+          const color = colors[config.colorScheme as keyof typeof colors];
 
-        const box = document.createElement('div');
-        box.style.cssText = `
+          const box = document.createElement('div');
+          box.style.cssText = `
           position: absolute;
           left: ${rect.left + window.scrollX}px;
           top: ${rect.top + window.scrollY}px;
@@ -112,9 +129,9 @@ export async function addPageAnnotations(
           pointer-events: none;
         `;
 
-        const labelEl = document.createElement('span');
-        labelEl.textContent = config.label;
-        labelEl.style.cssText = `
+          const labelEl = document.createElement('span');
+          labelEl.textContent = config.label;
+          labelEl.style.cssText = `
           position: absolute;
           top: -22px;
           left: -3px;
@@ -128,11 +145,32 @@ export async function addPageAnnotations(
           font-family: system-ui, sans-serif;
         `;
 
-        box.appendChild(labelEl);
-        overlay.appendChild(box);
-      } catch {
-        // Ignore selector errors
+          box.appendChild(labelEl);
+          overlay.appendChild(box);
+        } catch {
+          // Ignore selector errors
+        }
       }
-    }
-  }, annotations);
+
+      // Add circles (document coordinates; the overlay is positioned at 0,0)
+      for (const circle of circles) {
+        const color = colors[circle.colorScheme as keyof typeof colors];
+        const radius = circle.diameter / 2;
+        const ring = document.createElement('div');
+        ring.style.cssText = `
+        position: absolute;
+        left: ${circle.x - radius}px;
+        top: ${circle.y - radius}px;
+        width: ${circle.diameter}px;
+        height: ${circle.diameter}px;
+        border: 2px solid ${color.border};
+        border-radius: 50%;
+        box-sizing: border-box;
+        pointer-events: none;
+      `;
+        overlay.appendChild(ring);
+      }
+    },
+    { configs: annotations, circles },
+  );
 }

@@ -5,6 +5,48 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+### Added
+
+- **`target-size-check`: geometric spacing exception (SC 2.5.8).** The
+  `spacing` exception is now evaluated per the WCAG definition: a 24px-diameter
+  circle centered on each undersized target's bounding box must not intersect
+  another target, nor the circle of another undersized target. Neighbors are
+  measured by their line boxes (`getClientRects()`), so a wrapped inline link
+  no longer counts as a solid block. Ancestor/descendant targets and a
+  `<label>` with its control are treated as one target. Targets covered by
+  another element are dropped (hit-tested at their painted center while
+  scrolling the page; the original scroll position is restored). Touching
+  (distance exactly 12px / 24px, within 0.01px) does not count as intersecting.
+- `TargetSizeIssue.spacing` (`TargetSpacingResult`): circle diameter, center
+  (document CSS px), `applies`, and `intersections[]` naming each offending
+  neighbor (`selector`, `kind: 'target' | 'circle'`, `distance`, `required`).
+  Set for every undersized (`fail-aa`) target; `null` otherwise. JSON Schema
+  updated accordingly.
+- `TargetSizeExceptionAssessment` gains `'verified'`: the spacing exception
+  was confirmed geometrically. Such targets conform to SC 2.5.8 and are no
+  longer listed under `target-size-minimum` (the rule passes when nothing else
+  needs review); because SC 2.5.5 has no spacing exception, they are reported
+  under `target-size-enhanced` as incomplete instead.
+- Screenshot: undersized targets get a `Spacing OK` label when verified, and
+  every undersized target is drawn with its 24px circle (green = clear,
+  red = intersects). `addPageAnnotations()` accepts an optional third
+  `circles` argument (`CircleAnnotationConfig[]`).
+- Pure geometry helpers exported from the main entry:
+  `evaluateTargetSpacing`, `circleIntersectsRect`, `circlesIntersect`,
+  `distancePointToRect`, `distanceBetweenPoints`, `rectCenter`,
+  `DEFAULT_SPACING_EPSILON`.
+
+### Changed
+
+- `target-size-check` no longer uses the previous edge-gap heuristic
+  ("no adjacent targets within 24px"), which was stricter than the WCAG
+  definition in some layouts (e.g. 20px icons 10px apart) and looser in others
+  (nested targets). Failure summaries for undersized targets now name the
+  nearest intersecting neighbor and distance.
+- Fixture `target-size/finding.html` packs its tiny buttons edge to edge so it
+  still fails the spacing exception; new fixture `target-size/spacing.html`
+  (verified spacing) and `target-size/spacing-cases.html` (geometry cases).
+
 ### Maintenance
 
 - **Test infrastructure**: added fixture-gallery test suite with 29 HTML

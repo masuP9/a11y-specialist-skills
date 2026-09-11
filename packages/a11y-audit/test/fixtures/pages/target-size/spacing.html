@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>target-size clear: undersized targets with verified spacing</title>
+    <style>
+      body {
+        margin: 1rem;
+        font-family: sans-serif;
+      }
+      /*
+       * 20×20px buttons are below the 24px AA minimum, but a 24px-diameter
+       * circle centered on each does not touch any neighbor (16px gaps), so
+       * the WCAG 2.5.8 spacing exception applies and the targets conform.
+       */
+      .spaced-btn {
+        width: 20px;
+        height: 20px;
+        padding: 0;
+        margin: 8px;
+        font-size: 10px;
+        display: inline-block;
+        cursor: pointer;
+        border: 1px solid #666;
+        background: #eee;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Undersized Targets With Adequate Spacing</h1>
+    <p>Tiny buttons (20×20px) spaced 16px apart — spacing exception applies:</p>
+    <button class="spaced-btn">A</button>
+    <button class="spaced-btn">B</button>
+    <button class="spaced-btn">C</button>
+  </body>
+</html>
