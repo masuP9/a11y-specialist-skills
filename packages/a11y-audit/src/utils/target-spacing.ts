@@ -14,21 +14,18 @@
  */
 
 import type {
+  Point,
+  Rect,
   TargetSpacingIntersection,
   TargetSpacingResult,
 } from '../types.js';
 
-export interface Rect {
-  left: number;
-  top: number;
-  right: number;
-  bottom: number;
-}
-
-export interface Point {
-  x: number;
-  y: number;
-}
+export type {
+  Point,
+  Rect,
+  TargetSpacingIntersection,
+  TargetSpacingResult,
+} from '../types.js';
 
 /** One target as seen by the spacing evaluation. */
 export interface SpacingTarget {
@@ -41,17 +38,12 @@ export interface SpacingTarget {
   /**
    * Painted rectangles used when this target is a *neighbor*. For a wrapped
    * inline link these are the per-line boxes; for a block element it is the
-   * bounding box itself.
+   * bounding box itself. An empty list falls back to `bounds`.
    */
   rects: Rect[];
   /** `true` when the bounding box is less than the AA threshold in either dimension. */
   undersized: boolean;
 }
-
-export type {
-  TargetSpacingIntersection,
-  TargetSpacingResult,
-} from '../types.js';
 
 export interface EvaluateTargetSpacingOptions {
   /** Circle diameter in CSS px (default 24). */
@@ -63,14 +55,18 @@ export interface EvaluateTargetSpacingOptions {
   epsilon?: number;
   /**
    * Returns `true` when `other` must not be treated as a separate target
-   * (ancestor/descendant, or a `<label>` and its control).
+   * (e.g. a `<label>` and its control). Only consulted for neighbors that
+   * are geometrically close enough to matter.
    */
   isSameTarget?: (target: SpacingTarget, other: SpacingTarget) => boolean;
 }
 
 export const DEFAULT_SPACING_EPSILON = 0.01;
 
-const round2 = (n: number): number => Math.round(n * 100) / 100;
+/** Round to 2 decimals (CSS px reporting precision). */
+export function roundPx(n: number): number {
+  return Math.round(n * 100) / 100;
+}
 
 /** Center of a rectangle. */
 export function rectCenter(rect: Rect): Point {
@@ -92,6 +88,15 @@ export function distanceBetweenPoints(a: Point, b: Point): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
+/** Whether `distance` is below `threshold`, allowing touching within `epsilon`. */
+function isCloserThan(
+  distance: number,
+  threshold: number,
+  epsilon: number,
+): boolean {
+  return distance < threshold - epsilon;
+}
+
 /**
  * Whether a circle intersects a rectangle. Touching (distance equal to the
  * radius, within `epsilon`) is not an intersection.
@@ -102,7 +107,7 @@ export function circleIntersectsRect(
   rect: Rect,
   epsilon = DEFAULT_SPACING_EPSILON,
 ): boolean {
-  return distancePointToRect(center, rect) < radius - epsilon;
+  return isCloserThan(distancePointToRect(center, rect), radius, epsilon);
 }
 
 /**
@@ -115,7 +120,7 @@ export function circlesIntersect(
   radius: number,
   epsilon = DEFAULT_SPACING_EPSILON,
 ): boolean {
-  return distanceBetweenPoints(a, b) < radius * 2 - epsilon;
+  return isCloserThan(distanceBetweenPoints(a, b), radius * 2, epsilon);
 }
 
 /**
@@ -143,7 +148,24 @@ export function evaluateTargetSpacing(
   const intersections: TargetSpacingIntersection[] = [];
 
   for (const other of others) {
-    if (other.index === target.index || isSameTarget(target, other)) {
+    if (other.index === target.index) {
+      continue;
+    }
+
+    // Cheap reject: neither a rect hit (needs < radius) nor a circle hit
+    // (needs center distance < diameter) is possible beyond `diameter` from
+    // the center in either axis.
+    const b = other.bounds;
+    if (
+      b.left > center.x + diameter ||
+      b.right < center.x - diameter ||
+      b.top > center.y + diameter ||
+      b.bottom < center.y - diameter
+    ) {
+      continue;
+    }
+
+    if (isSameTarget(target, other)) {
       continue;
     }
 
@@ -152,11 +174,13 @@ export function evaluateTargetSpacing(
     for (const rect of rects) {
       nearest = Math.min(nearest, distancePointToRect(center, rect));
     }
-    if (nearest < radius - epsilon) {
+    if (
+      rects.some((rect) => circleIntersectsRect(center, radius, rect, epsilon))
+    ) {
       intersections.push({
         selector: other.selector,
         kind: 'target',
-        distance: round2(nearest),
+        distance: roundPx(nearest),
         required: radius,
       });
       continue;
@@ -164,12 +188,11 @@ export function evaluateTargetSpacing(
 
     if (other.undersized) {
       const otherCenter = rectCenter(other.bounds);
-      const centerDistance = distanceBetweenPoints(center, otherCenter);
-      if (centerDistance < diameter - epsilon) {
+      if (circlesIntersect(center, otherCenter, radius, epsilon)) {
         intersections.push({
           selector: other.selector,
           kind: 'circle',
-          distance: round2(centerDistance),
+          distance: roundPx(distanceBetweenPoints(center, otherCenter)),
           required: diameter,
         });
       }
@@ -182,8 +205,35 @@ export function evaluateTargetSpacing(
 
   return {
     diameter,
-    center: { x: round2(center.x), y: round2(center.y) },
+    center: { x: roundPx(center.x), y: roundPx(center.y) },
     applies: intersections.length === 0,
     intersections,
   };
+}
+
+/**
+ * One-line, human-readable description of a spacing result, shared by the
+ * console output, `exceptionDetails`, and the normalized failure summary.
+ *
+ * - applies: `no other target within a 24px circle centered on the target`
+ * - fails:   `a 24px circle centered on the target intersects the circle of
+ *             undersized target #b (22px, requires 24px) (+1 more)`
+ */
+export function describeTargetSpacing(spacing: TargetSpacingResult): string {
+  const nearest = spacing.intersections[0];
+  if (!nearest) {
+    return `no other target within a ${spacing.diameter}px circle centered on the target`;
+  }
+  const what =
+    nearest.kind === 'circle'
+      ? `the circle of undersized target ${nearest.selector}`
+      : `target ${nearest.selector}`;
+  const more =
+    spacing.intersections.length > 1
+      ? ` (+${spacing.intersections.length - 1} more)`
+      : '';
+  return (
+    `a ${spacing.diameter}px circle centered on the target intersects ${what} ` +
+    `(${nearest.distance}px, requires ${nearest.required}px)${more}`
+  );
 }

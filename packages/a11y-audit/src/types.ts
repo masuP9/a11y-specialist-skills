@@ -273,7 +273,8 @@ export type ReflowCheckResult = AuditCheckResult<ReflowCheckDetails>;
  * - inline: Target is in a sentence or text block
  * - redundant: Another target with same function meets size requirement
  * - ua-control: Size is determined by user agent (native controls)
- * - spacing: Target has sufficient spacing from adjacent targets
+ * - spacing: a 24px circle centered on the target intersects no other target
+ *   (verified geometrically, see `TargetSpacingResult`)
  * - essential-review: May be essential exception but requires manual review
  */
 export type TargetSizeException =
@@ -299,6 +300,20 @@ export type TargetSizeExceptionAssessment =
   | 'verified'
   | 'possible'
   | 'not-assessed';
+
+/** A point in CSS px (document coordinates unless stated otherwise). */
+export interface Point {
+  x: number;
+  y: number;
+}
+
+/** An edge-based rectangle in CSS px (document coordinates unless stated otherwise). */
+export interface Rect {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
 
 /** Why a neighboring target breaks the SC 2.5.8 spacing exception. */
 export interface TargetSpacingIntersection {
@@ -327,7 +342,7 @@ export interface TargetSpacingResult {
   /** Circle diameter in CSS px (the AA threshold, normally 24). */
   diameter: number;
   /** Circle center in document coordinates (CSS px). */
-  center: { x: number; y: number };
+  center: Point;
   /** `true` when no neighbor intersects — the spacing exception applies. */
   applies: boolean;
   /** Neighbors that intersect, nearest first. Empty when `applies` is `true`. */
@@ -376,8 +391,13 @@ export interface TargetSizeSummary {
   failAAAOnlyCount: number;
   /** Number of targets passing (>= 44px) */
   passCount: number;
-  /** Number of targets with possible exceptions */
+  /** Number of targets with a detected exception (possible or verified) */
   exceptedCount: number;
+  /**
+   * Number of targets whose exception was verified geometrically (subset of
+   * `exceptedCount`); these conform to SC 2.5.8 without manual review.
+   */
+  verifiedCount: number;
 }
 
 export interface TargetSizeCheckDetails {
@@ -389,7 +409,13 @@ export interface TargetSizeCheckDetails {
   failAAAOnly: TargetSizeIssue[];
   /** Number of elements passing (>= 44px) */
   passedTargets: number;
-  /** Elements with possible exceptions */
+  /**
+   * Targets skipped because another element covers their painted center
+   * (overlay, sticky header, clipped container); they are neither reported
+   * nor used as spacing neighbors.
+   */
+  occludedTargets: number;
+  /** Elements with a detected exception (possible or verified) */
   exceptedTargets: TargetSizeIssue[];
   /** Per-target counts */
   summary: TargetSizeSummary;

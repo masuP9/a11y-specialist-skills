@@ -15,7 +15,10 @@
  * Spacing exception (SC 2.5.8): evaluated geometrically per the WCAG
  * definition — a 24px-diameter circle centered on each undersized target's
  * bounding box must not intersect another target, nor the circle of another
- * undersized target. See `utils/target-spacing.ts`.
+ * undersized target. See `utils/target-spacing.ts`. Nested interactive
+ * elements count as separate targets (an undersized control inside a larger
+ * clickable ancestor fails the exception); only a `<label>` and its control
+ * are treated as one target.
  *
  * Limitations:
  * - Essential exception requires manual review
@@ -66,7 +69,9 @@ import {
   type CircleAnnotationConfig,
 } from '../utils/annotations.js';
 import {
+  describeTargetSpacing,
   evaluateTargetSpacing,
+  type Point,
   type Rect,
   type SpacingTarget,
 } from '../utils/target-spacing.js';
@@ -91,8 +96,6 @@ interface BasicTargetInfo {
   boundingRect: Rect;
   /** Per-line painted boxes in document coordinates (CSS px). */
   clientRects: Rect[];
-  /** Index of the nearest ancestor that is itself a collected target. */
-  parentTargetIndex: number | null;
   /** Indices of targets that share this target's function (label ↔ control). */
   sameTargetIndices: number[];
 }
@@ -163,22 +166,24 @@ function collectBasicTargetInfo(args: {
       : `[data-index="${elementIndex}"]`;
   }
 
+  // Mirrors `roundPx` in utils/target-spacing.ts (this closure cannot import).
   const round2 = (n: number): number => Math.round(n * 100) / 100;
 
   const originalScrollX = window.scrollX;
   const originalScrollY = window.scrollY;
 
   const toDocRect = (rect: DOMRect): Rect => ({
-    left: round2(rect.left + window.scrollX),
-    top: round2(rect.top + window.scrollY),
-    right: round2(rect.right + window.scrollX),
-    bottom: round2(rect.bottom + window.scrollY),
+    left: round2(rect.left + originalScrollX),
+    top: round2(rect.top + originalScrollY),
+    right: round2(rect.right + originalScrollX),
+    bottom: round2(rect.bottom + originalScrollY),
   });
 
   // Pass 1: visible candidates, measured at the original scroll position.
   interface Candidate {
     el: HTMLElement;
     rect: DOMRect;
+    appearance: string;
     boundingRect: Rect;
     clientRects: Rect[];
   }
@@ -194,8 +199,10 @@ function collectBasicTargetInfo(args: {
       return;
     }
 
-    // Skip elements outside viewport (likely hidden)
-    if (rect.bottom < 0 || rect.right < 0) {
+    // Skip elements positioned off the document (e.g. `left: -9999px`
+    // skip links). Measured in document coordinates so targets above/left of
+    // the current scroll position are kept — they are still spacing neighbors.
+    if (rect.bottom + originalScrollY < 0 || rect.right + originalScrollX < 0) {
       return;
     }
 
@@ -214,6 +221,7 @@ function collectBasicTargetInfo(args: {
     candidates.push({
       el,
       rect,
+      appearance: computedStyle.appearance,
       boundingRect: toDocRect(rect),
       clientRects: clientRects.length > 0 ? clientRects : [toDocRect(rect)],
     });
@@ -225,11 +233,40 @@ function collectBasicTargetInfo(args: {
   // the current viewport; visit candidates in document order to minimise
   // scrolling.
   const canScroll = typeof window.scrollTo === 'function';
+  // `behavior: 'instant'` bypasses CSS `scroll-behavior: smooth`, which
+  // would otherwise animate asynchronously and leave the synchronous
+  // re-measure below looking at the old position.
+  const scrollTo = (left: number, top: number): void => {
+    window.scrollTo({ left, top, behavior: 'instant' });
+  };
   const firstRect = (c: Candidate): Rect => c.clientRects[0] ?? c.boundingRect;
+  const tileH = Math.max(1, window.innerHeight);
+  const tileW = Math.max(1, window.innerWidth);
+  // Visit viewport-sized tiles in order so each tile is scrolled to once.
   const order = candidates
-    .map((c, i) => ({ i, y: firstRect(c).top, x: firstRect(c).left }))
-    .sort((a, b) => a.y - b.y || a.x - b.x)
+    .map((c, i) => {
+      const r = firstRect(c);
+      return {
+        i,
+        ty: Math.floor(r.top / tileH),
+        tx: Math.floor(r.left / tileW),
+        y: r.top,
+        x: r.left,
+      };
+    })
+    .sort((a, b) => a.ty - b.ty || a.tx - b.tx || a.y - b.y || a.x - b.x)
     .map((o) => o.i);
+  const inViewport = (x: number, y: number): boolean =>
+    x >= 0 && y >= 0 && x < window.innerWidth && y < window.innerHeight;
+  /** Viewport center of the element's first painted box, measured now. */
+  const paintedCenter = (el: Element): Point | null => {
+    const fresh = Array.from(el.getClientRects()).find(
+      (r) => r.width > 0 && r.height > 0,
+    );
+    return fresh
+      ? { x: (fresh.left + fresh.right) / 2, y: (fresh.top + fresh.bottom) / 2 }
+      : null;
+  };
 
   const occluded = new Set<number>();
   for (const i of order) {
@@ -242,43 +279,32 @@ function collectBasicTargetInfo(args: {
     const docX = (first.left + first.right) / 2;
     const docY = (first.top + first.bottom) / 2;
 
-    let vx = docX - window.scrollX;
-    let vy = docY - window.scrollY;
-    const inViewport = (x: number, y: number): boolean =>
-      x >= 0 && y >= 0 && x < window.innerWidth && y < window.innerHeight;
-
-    if (!inViewport(vx, vy) && canScroll) {
-      window.scrollTo(
+    if (
+      !inViewport(docX - window.scrollX, docY - window.scrollY) &&
+      canScroll
+    ) {
+      scrollTo(
         Math.max(0, docX - window.innerWidth / 2),
         Math.max(0, docY - window.innerHeight / 2),
       );
-      // Re-measure after scrolling: sticky/fixed elements move relative to
-      // the document, and the scroll may have been clamped.
-      const fresh = Array.from(el.getClientRects()).find(
-        (r) => r.width > 0 && r.height > 0,
-      );
-      if (fresh) {
-        vx = (fresh.left + fresh.right) / 2;
-        vy = (fresh.top + fresh.bottom) / 2;
-      } else {
-        vx = docX - window.scrollX;
-        vy = docY - window.scrollY;
-      }
     }
 
-    if (!inViewport(vx, vy)) {
+    // Always measure at hit-test time: fixed/sticky elements move relative
+    // to the document whenever the page scrolls.
+    const point = paintedCenter(el);
+    if (!point || !inViewport(point.x, point.y)) {
       // Cannot hit-test (e.g. inner scroll container); keep the target.
       continue;
     }
 
-    const hit = document.elementFromPoint(vx, vy);
+    const hit = document.elementFromPoint(point.x, point.y);
     if (hit && hit !== el && !el.contains(hit)) {
       occluded.add(i);
     }
   }
 
   if (canScroll) {
-    window.scrollTo(originalScrollX, originalScrollY);
+    scrollTo(originalScrollX, originalScrollY);
   }
 
   // Pass 3: build the target list with relations.
@@ -299,7 +325,6 @@ function collectBasicTargetInfo(args: {
 
   const targets: BasicTargetInfo[] = kept.map((c, index) => {
     const { el, rect } = c;
-    const computedStyle = getComputedStyle(el);
     const tagName = el.tagName.toLowerCase();
     const role = el.getAttribute('role');
     const inputType = el instanceof HTMLInputElement ? el.type : null;
@@ -309,17 +334,6 @@ function collectBasicTargetInfo(args: {
     const parent = el.parentElement;
     const parentTag = parent ? parent.tagName.toLowerCase() : null;
     const parentTextLength = parent ? (parent.textContent || '').length : 0;
-
-    let parentTargetIndex: number | null = null;
-    let ancestor = el.parentElement;
-    while (ancestor) {
-      const found = indexByElement.get(ancestor);
-      if (found !== undefined) {
-        parentTargetIndex = found;
-        break;
-      }
-      ancestor = ancestor.parentElement;
-    }
 
     return {
       index,
@@ -331,12 +345,11 @@ function collectBasicTargetInfo(args: {
       height: round2(rect.height),
       href,
       inputType,
-      appearance: computedStyle.appearance,
+      appearance: c.appearance,
       parentTag,
       parentTextLength,
       boundingRect: c.boundingRect,
       clientRects: c.clientRects,
-      parentTargetIndex,
       sameTargetIndices: sameTarget[index] ?? [],
     };
   });
@@ -436,65 +449,32 @@ function findRedundantTargets(
 }
 
 /**
- * Whether `a` is an ancestor of `b` in the collected target tree.
- */
-function isAncestorTarget(
-  a: BasicTargetInfo,
-  b: BasicTargetInfo,
-  byIndex: readonly BasicTargetInfo[],
-): boolean {
-  let cursor = b.parentTargetIndex;
-  while (cursor !== null) {
-    if (cursor === a.index) {
-      return true;
-    }
-    cursor = byIndex[cursor]?.parentTargetIndex ?? null;
-  }
-  return false;
-}
-
-/**
  * Build the spacing evaluator: a function that returns the spacing result
- * for one undersized target against every other collected target, treating
- * ancestor/descendant pairs and label/control pairs as the same target.
+ * for one undersized target against every other collected target. A
+ * `<label>` and its control are the same target; every other pair —
+ * nested interactive elements included — counts as separate targets.
  */
 function buildSpacingEvaluator(
   targets: readonly BasicTargetInfo[],
   aaThreshold: number,
 ): (target: BasicTargetInfo) => TargetSpacingResult {
-  const spacingTargets: SpacingTarget[] = targets.map((t) => ({
+  const toSpacingTarget = (t: BasicTargetInfo): SpacingTarget => ({
     index: t.index,
     selector: t.selector,
     bounds: t.boundingRect,
     rects: t.clientRects,
     undersized: Math.min(t.width, t.height) < aaThreshold,
-  }));
+  });
+  const spacingTargets = targets.map(toSpacingTarget);
 
-  const isSameTarget = (a: SpacingTarget, b: SpacingTarget): boolean => {
-    const ta = targets[a.index];
-    const tb = targets[b.index];
-    if (!ta || !tb) {
-      return false;
-    }
-    return (
-      ta.sameTargetIndices.includes(tb.index) ||
-      isAncestorTarget(ta, tb, targets) ||
-      isAncestorTarget(tb, ta, targets)
-    );
-  };
+  const isSameTarget = (a: SpacingTarget, b: SpacingTarget): boolean =>
+    targets[a.index]?.sameTargetIndices.includes(b.index) ?? false;
 
   return (target) =>
-    evaluateTargetSpacing(
-      spacingTargets[target.index] ?? {
-        index: target.index,
-        selector: target.selector,
-        bounds: target.boundingRect,
-        rects: target.clientRects,
-        undersized: true,
-      },
-      spacingTargets,
-      { diameter: aaThreshold, isSameTarget },
-    );
+    evaluateTargetSpacing(toSpacingTarget(target), spacingTargets, {
+      diameter: aaThreshold,
+      isSameTarget,
+    });
 }
 
 /**
@@ -545,13 +525,20 @@ function analyzeTargets(
       // is finally recorded.
       spacing = evaluateSpacing(target);
 
+      if (spacing.applies) {
+        // Verified geometrically: strongest evidence, wins over heuristics.
+        exception = 'spacing';
+        exceptionDetails = describeTargetSpacing(spacing);
+        exceptionAssessment = 'verified';
+      }
+
       // Check inline exception
       const inlineCheck = checkInlineException(
         target,
         INLINE_CONTEXT_TAGS,
         INLINE_CONTEXT_MIN_TEXT,
       );
-      if (inlineCheck.applies) {
+      if (!exception && inlineCheck.applies) {
         exception = 'inline';
         exceptionDetails = inlineCheck.details;
       }
@@ -582,18 +569,12 @@ function analyzeTargets(
         }
       }
 
-      if (exception) {
+      if (exception && exceptionAssessment !== 'verified') {
         // Heuristic exceptions can never rule out manual confirmation.
         exceptionAssessment = 'possible';
-      } else if (spacing.applies) {
-        // Spacing exception verified against the page geometry.
-        exception = 'spacing';
-        exceptionDetails = `No other target within a ${spacing.diameter}px circle centered on the target (verified geometrically)`;
-        exceptionAssessment = 'verified';
-      } else {
-        // No exception found; the essential exception cannot be ruled out.
-        exceptionAssessment = 'not-assessed';
       }
+      // Otherwise `not-assessed` (initial value): no exception found and the
+      // essential exception cannot be ruled out automatically.
     }
 
     const issue: TargetSizeIssue = {
@@ -624,23 +605,6 @@ function analyzeTargets(
   }
 
   return { failAA, failAAAOnly, passCount, excepted };
-}
-
-/** Human-readable one-liner for a failed spacing evaluation. */
-function describeSpacingFailure(spacing: TargetSpacingResult): string {
-  const nearest = spacing.intersections[0];
-  if (!nearest) {
-    return 'spacing exception applies';
-  }
-  const what =
-    nearest.kind === 'circle'
-      ? `circle of undersized target ${nearest.selector}`
-      : `target ${nearest.selector}`;
-  const more =
-    spacing.intersections.length > 1
-      ? ` (+${spacing.intersections.length - 1} more)`
-      : '';
-  return `${spacing.diameter}px circle intersects ${what}: ${nearest.distance}px, requires ${nearest.required}px${more}`;
 }
 
 export interface RunTargetSizeCheckOptions extends OutputLocationOptions {
@@ -705,17 +669,26 @@ export async function runTargetSizeCheck(
     aaaThreshold,
   );
 
+  const verifiedSpacing = excepted.filter(
+    (t) => t.exceptionAssessment === 'verified',
+  );
+  const possibleExceptions = excepted.filter(
+    (t) => t.exceptionAssessment !== 'verified',
+  );
+
   const details: TargetSizeCheckDetails = {
     totalTargetsChecked: targets.length,
     failAA,
     failAAAOnly,
     passedTargets: passCount,
+    occludedTargets: occludedCount,
     exceptedTargets: excepted,
     summary: {
       failAACount: failAA.length,
       failAAAOnlyCount: failAAAOnly.length,
       passCount,
       exceptedCount: excepted.length,
+      verifiedCount: verifiedSpacing.length,
     },
   };
 
@@ -731,15 +704,8 @@ export async function runTargetSizeCheck(
 
   logSummary({
     'Total targets checked': details.totalTargetsChecked,
-    'Skipped (covered by another element)': occludedCount,
+    'Skipped (covered by another element)': details.occludedTargets,
   });
-
-  const verifiedSpacing = excepted.filter(
-    (t) => t.exceptionAssessment === 'verified',
-  );
-  const possibleExceptions = excepted.filter(
-    (t) => t.exceptionAssessment !== 'verified',
-  );
 
   console.log('\nSummary:');
   console.log(`  Pass (>= ${aaaThreshold}px): ${details.summary.passCount}`);
@@ -760,7 +726,7 @@ export async function runTargetSizeCheck(
         `   Name: "${el.accessibleName || 'none'}"`,
       ];
       if (el.spacing) {
-        lines.push(`   Spacing: ${describeSpacingFailure(el.spacing)}`);
+        lines.push(`   Spacing: ${describeTargetSpacing(el.spacing)}`);
       }
       return lines;
     },
@@ -797,9 +763,7 @@ export async function runTargetSizeCheck(
         `   Exception: ${el.exception} - ${el.exceptionDetails}`,
       ];
       if (el.spacing) {
-        lines.push(
-          `   Spacing: ${el.spacing.applies ? 'spacing exception also applies' : describeSpacingFailure(el.spacing)}`,
-        );
+        lines.push(`   Spacing: ${describeTargetSpacing(el.spacing)}`);
       }
       return lines;
     },
@@ -847,14 +811,19 @@ export async function runTargetSizeCheck(
     ];
 
     // Spacing circles for every undersized target
-    const circles: CircleAnnotationConfig[] = [...failAA, ...excepted]
-      .filter((t) => t.spacing !== null)
-      .map((t) => ({
-        x: t.spacing!.center.x,
-        y: t.spacing!.center.y,
-        diameter: t.spacing!.diameter,
-        colorScheme: t.spacing!.applies ? ('pass' as const) : ('fail' as const),
-      }));
+    const circles: CircleAnnotationConfig[] = [...failAA, ...excepted].flatMap(
+      (t): CircleAnnotationConfig[] =>
+        t.spacing
+          ? [
+              {
+                x: t.spacing.center.x,
+                y: t.spacing.center.y,
+                diameter: t.spacing.diameter,
+                colorScheme: t.spacing.applies ? 'pass' : 'fail',
+              },
+            ]
+          : [],
+    );
 
     await addPageAnnotations(page, annotations, circles);
     screenshotPath = await takeAuditScreenshot(page, {

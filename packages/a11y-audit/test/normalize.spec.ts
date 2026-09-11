@@ -78,12 +78,14 @@ test('target-size: not-assessed findings go to incomplete, ruled-out to violatio
     ],
     failAAAOnly: [],
     passedTargets: 1,
+    occludedTargets: 0,
     exceptedTargets: [],
     summary: {
       failAACount: 2,
       failAAAOnlyCount: 0,
       passCount: 1,
       exceptedCount: 0,
+      verifiedCount: 0,
     },
   };
 
@@ -118,6 +120,7 @@ test('target-size: verified spacing exception passes 2.5.8 and is reviewed under
     ],
     failAAAOnly: [],
     passedTargets: 0,
+    occludedTargets: 0,
     exceptedTargets: [
       targetSizeIssue({
         selector: '#spaced',
@@ -137,6 +140,7 @@ test('target-size: verified spacing exception passes 2.5.8 and is reviewed under
       failAAAOnlyCount: 0,
       passCount: 0,
       exceptedCount: 1,
+      verifiedCount: 1,
     },
   };
   const buckets = normalizeTargetSizeCheck(details);
@@ -163,6 +167,7 @@ test('target-size: only verified exceptions → minimum passes', () => {
     failAA: [],
     failAAAOnly: [],
     passedTargets: 0,
+    occludedTargets: 0,
     exceptedTargets: [
       targetSizeIssue({
         exception: 'spacing',
@@ -180,6 +185,7 @@ test('target-size: only verified exceptions → minimum passes', () => {
       failAAAOnlyCount: 0,
       passCount: 0,
       exceptedCount: 1,
+      verifiedCount: 1,
     },
   };
   const buckets = normalizeTargetSizeCheck(details);
@@ -205,12 +211,14 @@ test('target-size: correct WCAG tags per rule (AA vs AAA)', () => {
       }),
     ],
     passedTargets: 0,
+    occludedTargets: 0,
     exceptedTargets: [],
     summary: {
       failAACount: 1,
       failAAAOnlyCount: 1,
       passCount: 0,
       exceptedCount: 0,
+      verifiedCount: 0,
     },
   };
 

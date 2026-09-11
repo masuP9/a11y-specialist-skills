@@ -163,12 +163,14 @@ test('target-size-check envelope validates against its schema', () => {
     ],
     failAAAOnly: [],
     passedTargets: 0,
+    occludedTargets: 0,
     exceptedTargets: [],
     summary: {
       failAACount: 1,
       failAAAOnlyCount: 0,
       passCount: 0,
       exceptedCount: 0,
+      verifiedCount: 0,
     },
   };
   const result = buildAuditResult({

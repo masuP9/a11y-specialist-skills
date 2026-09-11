@@ -80,7 +80,8 @@ Use the `target-size-check` check to automatically measure tap/click target size
 - Retrieves accessible names via Playwright's `ariaSnapshot()` API
 - Checks WCAG 2.5.8 exceptions: inline, redundant, ua-control, spacing
 - Evaluates the spacing exception geometrically per the WCAG definition: a 24px-diameter circle centered on each undersized target's bounding box must not intersect another target (nor the circle of another undersized target)
-- Treats ancestor/descendant targets and a `label` with its control as one target, and drops targets covered by another element (hit-tested while scrolling)
+- Treats a `label` and its control as one target; nested interactive elements are separate targets, so a small control inside a larger clickable area does not get the spacing exception
+- Drops targets covered by another element (hit-tested while scrolling) and records the count in `details.occludedTargets`
 - Reports issues at both AA (24px) and AAA (44px) levels
 - Takes full-page screenshot with color-coded highlights and 24px circles
 
@@ -108,7 +109,7 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks target-size-check
 | spacing | A 24px circle centered on the target intersects neither another target nor the circle of another undersized target (`exceptionAssessment: "verified"`; when it fails, `spacing.intersections` records each neighbor's selector and distance) |
 | essential | Cannot auto-detect (marked for manual review) |
 
-Targets with a verified spacing exception leave the 2.5.8 manual-review list, so `target-size-minimum` passes. SC 2.5.5 has no spacing exception, so they are still reported as `target-size-enhanced` incomplete.
+The geometric spacing result takes precedence over the heuristic exceptions. Targets with a verified spacing exception leave the 2.5.8 manual-review list, so `target-size-minimum` passes (count in `summary.verifiedCount`). SC 2.5.5 has no spacing exception, so they are still reported as `target-size-enhanced` incomplete.
 
 **Limitations:**
 - Essential exception requires manual judgment

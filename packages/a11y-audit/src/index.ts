@@ -29,13 +29,13 @@ export {
   DEFAULT_SPACING_EPSILON,
   circleIntersectsRect,
   circlesIntersect,
+  describeTargetSpacing,
   distanceBetweenPoints,
   distancePointToRect,
   evaluateTargetSpacing,
   rectCenter,
+  roundPx,
   type EvaluateTargetSpacingOptions,
-  type Point,
-  type Rect,
   type SpacingTarget,
 } from './utils/target-spacing.js';
 export {

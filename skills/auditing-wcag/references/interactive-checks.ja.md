@@ -80,7 +80,8 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks focus-indicator-c
 - Playwright の `ariaSnapshot()` API でアクセシブル名を取得
 - WCAG 2.5.8 例外を判定: inline, redundant, ua-control, spacing
 - spacing 例外は WCAG の定義どおり幾何的に判定: 24px 未満の各ターゲットのバウンディングボックス中心に直径 24px の円を置き、他のターゲット（および他の 24px 未満ターゲットの円）と交差しなければ成立
-- 親子関係のターゲット、`label` とその対象コントロールは同一ターゲットとして扱い、他の要素に覆われたターゲットはスクロールしながら最前面判定して除外
+- `label` とその対象コントロールは同一ターゲットとして扱う。入れ子になったインタラクティブ要素は別のターゲットなので、大きなクリック領域の中にある小さなコントロールは spacing 例外にならない
+- 他の要素に覆われたターゲットはスクロールしながら最前面判定して除外し、件数を `details.occludedTargets` に記録
 - AA（24px）と AAA（44px）の両レベルで問題を報告
 - 色分けハイライトと 24px 円付きの全ページスクリーンショットを生成
 
@@ -108,7 +109,7 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks target-size-check
 | spacing | ターゲット中心の 24px 円が他のターゲットや他の 24px 未満ターゲットの円と交差しない（`exceptionAssessment: "verified"`、不成立時は `spacing.intersections` に相手のセレクターと距離を記録） |
 | essential | 自動検出不可（手動レビュー対象としてマーク） |
 
-spacing 例外が成立したターゲットは 2.5.8 の手動確認対象から外れ、`target-size-minimum` は passes になります。ただし 2.5.5 には spacing 例外がないため、`target-size-enhanced` の incomplete として報告されます。
+spacing 例外の幾何判定は他のヒューリスティック例外より優先されます。成立したターゲットは 2.5.8 の手動確認対象から外れ、`target-size-minimum` は passes になります（件数は `summary.verifiedCount`）。ただし 2.5.5 には spacing 例外がないため、`target-size-enhanced` の incomplete として報告されます。
 
 **制限事項:**
 - essential 例外は手動判断が必要

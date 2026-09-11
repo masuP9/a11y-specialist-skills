@@ -46,9 +46,19 @@
       large
     </button>
 
-    <!-- Nested targets share the same box: not each other's neighbor -->
+    <!-- Nested targets are separate targets: the inner button's circle sits inside the wrapping link -->
     <a id="wrap" class="t" href="#wrap" style="left: 20px; top: 260px">
       <button id="inner" class="t" style="left: 0; top: 0">x</button>
+    </a>
+
+    <!-- Card link wrapping a small button: the button must not get a spacing exception -->
+    <a
+      id="card"
+      class="t"
+      href="#card"
+      style="left: 100px; top: 250px; width: 120px; height: 60px"
+    >
+      <button id="card-fav" class="t" style="left: 90px; top: 30px">♥</button>
     </a>
 
     <!-- Label and its control (checkbox is 10px away, would intersect otherwise) -->
@@ -93,6 +103,11 @@
         n
       </button>
     </div>
+
+    <!-- Vertical pair straddling y=500: with the page scrolled to 500, #stack-a
+         is above the viewport but must still count as #stack-b's neighbor -->
+    <button id="stack-a" class="t" style="left: 300px; top: 476px">a</button>
+    <button id="stack-b" class="t" style="left: 300px; top: 498px">b</button>
 
     <!-- Far below the initial viewport: exercises the scroll + hit-test path -->
     <button id="far" class="t" style="left: 20px; top: 2000px">f</button>

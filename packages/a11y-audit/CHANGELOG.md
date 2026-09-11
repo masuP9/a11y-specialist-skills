@@ -12,21 +12,28 @@ adheres to [Semantic Versioning](https://semver.org/).
   circle centered on each undersized target's bounding box must not intersect
   another target, nor the circle of another undersized target. Neighbors are
   measured by their line boxes (`getClientRects()`), so a wrapped inline link
-  no longer counts as a solid block. Ancestor/descendant targets and a
-  `<label>` with its control are treated as one target. Targets covered by
-  another element are dropped (hit-tested at their painted center while
-  scrolling the page; the original scroll position is restored). Touching
-  (distance exactly 12px / 24px, within 0.01px) does not count as intersecting.
+  no longer counts as a solid block. A `<label>` and its control are treated
+  as one target; nested interactive elements are separate targets, so an
+  undersized control inside a larger clickable ancestor does not get the
+  exception. Targets covered by another element are dropped (hit-tested at
+  their painted center while scrolling the page with `behavior: 'instant'`;
+  the original scroll position is restored) and counted in
+  `details.occludedTargets`. Targets above or left of the caller's scroll
+  position are now collected too (the off-document filter uses document
+  coordinates), so they still count as neighbors. Touching (distance exactly
+  12px / 24px, within 0.01px) does not count as intersecting.
 - `TargetSizeIssue.spacing` (`TargetSpacingResult`): circle diameter, center
   (document CSS px), `applies`, and `intersections[]` naming each offending
   neighbor (`selector`, `kind: 'target' | 'circle'`, `distance`, `required`).
   Set for every undersized (`fail-aa`) target; `null` otherwise. JSON Schema
   updated accordingly.
 - `TargetSizeExceptionAssessment` gains `'verified'`: the spacing exception
-  was confirmed geometrically. Such targets conform to SC 2.5.8 and are no
+  was confirmed geometrically. It takes precedence over the heuristic
+  (`possible`) exceptions. Such targets conform to SC 2.5.8 and are no
   longer listed under `target-size-minimum` (the rule passes when nothing else
   needs review); because SC 2.5.5 has no spacing exception, they are reported
   under `target-size-enhanced` as incomplete instead.
+  `summary.verifiedCount` reports how many of `exceptedCount` are verified.
 - Screenshot: undersized targets get a `Spacing OK` label when verified, and
   every undersized target is drawn with its 24px circle (green = clear,
   red = intersects). `addPageAnnotations()` accepts an optional third
@@ -34,18 +41,20 @@ adheres to [Semantic Versioning](https://semver.org/).
 - Pure geometry helpers exported from the main entry:
   `evaluateTargetSpacing`, `circleIntersectsRect`, `circlesIntersect`,
   `distancePointToRect`, `distanceBetweenPoints`, `rectCenter`,
-  `DEFAULT_SPACING_EPSILON`.
+  `describeTargetSpacing`, `roundPx`, `DEFAULT_SPACING_EPSILON`; `Point` and
+  `Rect` types live in `types.ts`.
 
 ### Changed
 
 - `target-size-check` no longer uses the previous edge-gap heuristic
   ("no adjacent targets within 24px"), which was stricter than the WCAG
-  definition in some layouts (e.g. 20px icons 10px apart) and looser in others
-  (nested targets). Failure summaries for undersized targets now name the
-  nearest intersecting neighbor and distance.
+  definition (e.g. 20px icons 10px apart never qualified) and could only ever
+  mark the exception as `possible`. Failure summaries for undersized targets
+  now name the nearest intersecting neighbor and distance.
 - Fixture `target-size/finding.html` packs its tiny buttons edge to edge so it
   still fails the spacing exception; new fixture `target-size/spacing.html`
-  (verified spacing) and `target-size/spacing-cases.html` (geometry cases).
+  (verified spacing) and `target-size/spacing-cases.html` (geometry cases,
+  linked from the gallery index but not part of the manifest).
 
 ### Maintenance
 

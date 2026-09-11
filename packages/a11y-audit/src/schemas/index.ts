@@ -372,6 +372,7 @@ export const TARGET_SIZE_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
       'failAA',
       'failAAAOnly',
       'passedTargets',
+      'occludedTargets',
       'exceptedTargets',
       'summary',
     ],
@@ -391,6 +392,7 @@ export const TARGET_SIZE_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
             'minDimension',
             'level',
             'exceptionAssessment',
+            'spacing',
           ],
           properties: {
             ...ELEMENT_EVIDENCE_PROPS,
@@ -444,6 +446,7 @@ export const TARGET_SIZE_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
       },
       failAAAOnly: { type: 'array', items: { type: 'object' } },
       passedTargets: { type: 'number' },
+      occludedTargets: { type: 'number' },
       exceptedTargets: { type: 'array', items: { type: 'object' } },
       summary: {
         type: 'object',
@@ -452,12 +455,14 @@ export const TARGET_SIZE_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
           'failAAAOnlyCount',
           'passCount',
           'exceptedCount',
+          'verifiedCount',
         ],
         properties: {
           failAACount: { type: 'number' },
           failAAAOnlyCount: { type: 'number' },
           passCount: { type: 'number' },
           exceptedCount: { type: 'number' },
+          verifiedCount: { type: 'number' },
         },
       },
     },

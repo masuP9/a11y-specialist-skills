@@ -31,6 +31,7 @@ import type {
 } from '../types.js';
 import { AUDIT_DISCLAIMER, HTML_SNIPPET_MAX_LENGTH } from '../constants.js';
 import { getRule, type RuleKey } from './rule-registry.js';
+import { describeTargetSpacing } from './target-spacing.js';
 
 // =============================================================================
 // Buckets
@@ -270,25 +271,10 @@ export function normalizeTargetSizeCheck(
   const applicable = details.totalTargetsChecked > 0;
   buckets.checkedNodes = details.totalTargetsChecked;
 
-  const spacingSummary = (issue: TargetSizeIssue): string => {
-    const spacing = issue.spacing;
-    if (!spacing || spacing.applies) {
-      return '';
-    }
-    const nearest = spacing.intersections[0];
-    if (!nearest) {
-      return '';
-    }
-    const what =
-      nearest.kind === 'circle'
-        ? `the circle of undersized target ${nearest.selector}`
-        : `target ${nearest.selector}`;
-    return (
-      ` Spacing exception does not apply: a ${spacing.diameter}px circle ` +
-      `centered on the target intersects ${what} ` +
-      `(${nearest.distance}px, requires ${nearest.required}px).`
-    );
-  };
+  const spacingSummary = (issue: TargetSizeIssue): string =>
+    issue.spacing && !issue.spacing.applies
+      ? ` Spacing exception does not apply: ${describeTargetSpacing(issue.spacing)}.`
+      : '';
 
   const minimumFailureSummary = (issue: TargetSizeIssue): string => {
     const base =
