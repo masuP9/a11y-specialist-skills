@@ -278,7 +278,11 @@ export type ReflowCheckResult = AuditCheckResult<ReflowCheckDetails>;
  * - essential-review: May be essential exception but requires manual review
  */
 export type TargetSizeException =
-  'inline' | 'redundant' | 'ua-control' | 'spacing' | 'essential-review';
+  | 'inline'
+  | 'redundant'
+  | 'ua-control'
+  | 'spacing'
+  | 'essential-review';
 
 /**
  * How thoroughly the SC 2.5.8 exceptions were assessed for a target.
@@ -292,7 +296,10 @@ export type TargetSizeException =
  *   the essential exception — needs manual confirmation
  */
 export type TargetSizeExceptionAssessment =
-  'ruled-out' | 'verified' | 'possible' | 'not-assessed';
+  | 'ruled-out'
+  | 'verified'
+  | 'possible'
+  | 'not-assessed';
 
 /** A point in CSS px (document coordinates unless stated otherwise). */
 export interface Point {
@@ -590,7 +597,9 @@ export interface PauseControl {
   element: string;
   name: string;
   matchedBy:
-    'accessible-name' | 'class-name-near-carousel' | 'svg-icon-pattern';
+    | 'accessible-name'
+    | 'class-name-near-carousel'
+    | 'svg-icon-pattern';
   selector: string;
 }
 
