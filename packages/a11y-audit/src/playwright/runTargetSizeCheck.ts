@@ -74,6 +74,7 @@ import {
   describeTargetSpacing,
   evaluateTargetSpacing,
   rectCenter,
+  roundPx,
   type Point,
   type Rect,
   type SpacingTarget,
@@ -121,6 +122,8 @@ interface CollectedTargets {
   viewport: { width: number; height: number };
   /** Maximum window scroll offsets in CSS px. */
   maxScroll: Point;
+  /** Window scroll offsets at collection time (restored on return). */
+  scroll: Point;
 }
 
 /**
@@ -208,21 +211,42 @@ function collectBasicTargetInfo(args: {
   const candidates: Candidate[] = [];
   const elements = document.querySelectorAll(interactiveSelector);
 
-  // `position: fixed` on the element or any ancestor (memoised per element).
+  // Viewport-fixed: the element or an ancestor is `position: fixed` AND no
+  // ancestor above that fixed element establishes a containing block for it
+  // (transform, perspective, filter, backdrop-filter, will-change of those,
+  // contain, container-type) — such a fixed element scrolls with the page.
   // Sticky elements are treated as normal flow (limitation).
-  const fixedCache = new Map<Element, boolean>();
-  const isFixed = (el: Element | null): boolean => {
-    if (!el || el === document.documentElement) {
-      return false;
+  const styleCache = new Map<Element, CSSStyleDeclaration>();
+  const styleOf = (el: Element): CSSStyleDeclaration => {
+    let cs = styleCache.get(el);
+    if (!cs) {
+      cs = getComputedStyle(el);
+      styleCache.set(el, cs);
     }
-    const cached = fixedCache.get(el);
-    if (cached !== undefined) {
-      return cached;
+    return cs;
+  };
+  const formsContainingBlockForFixed = (cs: CSSStyleDeclaration): boolean =>
+    cs.transform !== 'none' ||
+    cs.perspective !== 'none' ||
+    cs.filter !== 'none' ||
+    (cs.backdropFilter !== undefined && cs.backdropFilter !== 'none') ||
+    /transform|perspective|filter/.test(cs.willChange) ||
+    /paint|layout|strict|content/.test(cs.contain) ||
+    (cs.containerType !== undefined && cs.containerType !== 'normal');
+  const isFixed = (el: Element): boolean => {
+    let fixedSeen = false;
+    let cursor: Element | null = el;
+    while (cursor && cursor !== document.documentElement) {
+      const cs = styleOf(cursor);
+      if (fixedSeen && formsContainingBlockForFixed(cs)) {
+        return false;
+      }
+      if (cs.position === 'fixed') {
+        fixedSeen = true;
+      }
+      cursor = cursor.parentElement;
     }
-    const result =
-      getComputedStyle(el).position === 'fixed' || isFixed(el.parentElement);
-    fixedCache.set(el, result);
-    return result;
+    return fixedSeen;
   };
   const toViewportRect = (rect: DOMRect): Rect => ({
     left: round2(rect.left),
@@ -436,6 +460,7 @@ function collectBasicTargetInfo(args: {
       x: Math.max(0, doc.scrollWidth - window.innerWidth),
       y: Math.max(0, doc.scrollHeight - window.innerHeight),
     },
+    scroll: { x: originalScrollX, y: originalScrollY },
   };
 }
 
@@ -637,7 +662,11 @@ function analyzeTargets(
   targets: Array<BasicTargetInfo & { accessibleName: string | null }>,
   aaThreshold: number,
   aaaThreshold: number,
-  env: { viewport: { width: number; height: number }; maxScroll: Point },
+  env: {
+    viewport: { width: number; height: number };
+    maxScroll: Point;
+    scroll: Point;
+  },
 ): {
   failAA: TargetSizeIssue[];
   failAAAOnly: TargetSizeIssue[];
@@ -678,6 +707,17 @@ function analyzeTargets(
       // result (and the screenshot circle) is available whichever exception
       // is finally recorded.
       spacing = evaluateSpacing(target);
+      if (target.fixed) {
+        // Fixed targets are evaluated in viewport coordinates; the reported
+        // center follows the document-coordinate contract.
+        spacing = {
+          ...spacing,
+          center: {
+            x: roundPx(spacing.center.x + env.scroll.x),
+            y: roundPx(spacing.center.y + env.scroll.y),
+          },
+        };
+      }
 
       if (spacing.applies) {
         // Verified geometrically: strongest evidence, wins over heuristics.
@@ -793,6 +833,7 @@ export async function runTargetSizeCheck(
     occludedCount,
     viewport,
     maxScroll,
+    scroll,
   } = await page.evaluate(collectBasicTargetInfo, {
     interactiveSelector: INTERACTIVE_SELECTOR,
     htmlSnippetMaxLength: HTML_SNIPPET_MAX_LENGTH,
@@ -823,7 +864,7 @@ export async function runTargetSizeCheck(
     targets,
     aaThreshold,
     aaaThreshold,
-    { viewport, maxScroll },
+    { viewport, maxScroll, scroll },
   );
 
   const verifiedSpacing = excepted.filter(

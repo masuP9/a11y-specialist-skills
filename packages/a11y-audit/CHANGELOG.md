@@ -17,11 +17,15 @@ adheres to [Semantic Versioning](https://semver.org/).
   wrapping labels too), its control, and every other label of that control
   are treated as one target; nested interactive elements are separate
   targets, so an undersized control inside a larger clickable ancestor does
-  not get the exception. `position: fixed` targets are evaluated over the
-  whole scroll range in which the subject target is visible (the fixed
-  element's rects and circle center are swept, so the result does not depend
-  on the scroll position at call time); `position: sticky` is treated as
-  normal flow. Targets covered by another element are dropped (hit-tested at
+  not get the exception. Viewport-fixed targets (`position: fixed` with no
+  transform/perspective/filter/contain ancestor establishing a containing
+  block) are evaluated over the whole scroll range in which the subject
+  target is visible (the fixed element's rects and circle center are swept,
+  so the result does not depend on the scroll position at call time); their
+  reported `spacing.center` is converted to document coordinates. A fixed
+  element under such an ancestor scrolls with the page and is treated as
+  normal flow, as is `position: sticky`. Targets covered by another element
+  are dropped (hit-tested at
   their painted center while scrolling the page with `behavior: 'instant'`;
   the original scroll position is restored) and counted in
   `details.occludedTargets`. Targets above or left of the caller's scroll

@@ -122,6 +122,20 @@ test('target-size-check — spacing exception geometry', async ({
     { selector: '#fixed-btn', kind: 'target', distance: 11, required: 12 },
   ]);
 
+  // position: fixed under a transformed ancestor scrolls with the page: it is
+  // a normal flow neighbor (centers 22px apart → circles intersect).
+  expect(issue('#tflow').spacing?.intersections).toEqual([
+    { selector: '#tfixed', kind: 'circle', distance: 22, required: 24 },
+  ]);
+  expect(issue('#tfixed').spacing?.intersections).toEqual([
+    { selector: '#tflow', kind: 'circle', distance: 22, required: 24 },
+  ]);
+
+  // Undersized viewport-fixed target: verified, center reported in document
+  // coordinates (scroll is 0 here, so equal to viewport coordinates).
+  expectVerified('#tiny-fixed');
+  expect(issue('#tiny-fixed').spacing?.center).toEqual({ x: 610, y: 310 });
+
   // Normalized buckets: verified targets leave 2.5.8 review and enter 2.5.5
   const minimum = result.incomplete.find(
     (r) => r.id === 'a11y-skills/target-size-minimum',
@@ -194,4 +208,19 @@ test('target-size-check — pre-scrolled page with smooth scrolling', async ({
   expect(bySelector('#near-fixed')?.spacing?.intersections).toEqual([
     { selector: '#fixed-btn', kind: 'target', distance: 11, required: 12 },
   ]);
+
+  // A fixed element under a transformed ancestor sits above the viewport at
+  // scrollY=500 (document y 100..120) but is still collected as a flow
+  // neighbor of #tflow.
+  expect(bySelector('#tflow')?.spacing?.intersections).toEqual([
+    { selector: '#tfixed', kind: 'circle', distance: 22, required: 24 },
+  ]);
+
+  // Viewport-fixed target center is reported in document coordinates:
+  // viewport (610, 310) + scroll (0, 500).
+  expect(bySelector('#tiny-fixed')?.exceptionAssessment).toBe('verified');
+  expect(bySelector('#tiny-fixed')?.spacing?.center).toEqual({
+    x: 610,
+    y: 810,
+  });
 });

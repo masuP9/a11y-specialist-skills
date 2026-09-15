@@ -168,5 +168,29 @@
     <button id="near-fixed" class="t" style="left: 100px; top: 1000px">
       x
     </button>
+
+    <!-- position: fixed inside a transformed ancestor is NOT viewport-fixed: it
+         scrolls with the page, so it is a normal flow neighbor at document
+         (500, 100); #tflow at (500, 122) is 22px below → circles intersect. -->
+    <div style="position: absolute; left: 0; top: 0; transform: translateZ(0)">
+      <button
+        id="tfixed"
+        class="t"
+        style="position: fixed; left: 500px; top: 100px"
+      >
+        t
+      </button>
+    </div>
+    <button id="tflow" class="t" style="left: 500px; top: 122px">u</button>
+
+    <!-- Undersized viewport-fixed button with no neighbor: verified, and its
+         reported circle center must be in document coordinates. -->
+    <button
+      id="tiny-fixed"
+      class="t"
+      style="position: fixed; left: 600px; top: 300px"
+    >
+      v
+    </button>
   </body>
 </html>
