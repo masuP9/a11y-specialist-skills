@@ -31,6 +31,7 @@ import type {
 } from '../types.js';
 import { AUDIT_DISCLAIMER, HTML_SNIPPET_MAX_LENGTH } from '../constants.js';
 import { getRule, type RuleKey } from './rule-registry.js';
+import { describeTargetSpacing } from './target-spacing.js';
 
 // =============================================================================
 // Buckets
@@ -270,6 +271,11 @@ export function normalizeTargetSizeCheck(
   const applicable = details.totalTargetsChecked > 0;
   buckets.checkedNodes = details.totalTargetsChecked;
 
+  const spacingSummary = (issue: TargetSizeIssue): string =>
+    issue.spacing && !issue.spacing.applies
+      ? ` Spacing exception does not apply: ${describeTargetSpacing(issue.spacing)}.`
+      : '';
+
   const minimumFailureSummary = (issue: TargetSizeIssue): string => {
     const base =
       `Target is ${issue.width}x${issue.height}px ` +
@@ -277,26 +283,37 @@ export function normalizeTargetSizeCheck(
     if (issue.exception) {
       return (
         `${base} Possible '${issue.exception}' exception: ` +
-        `${issue.exceptionDetails ?? 'see manual review notes'}. Confirm manually.`
+        `${issue.exceptionDetails ?? 'see manual review notes'}.` +
+        `${spacingSummary(issue)} Confirm manually.`
       );
     }
-    return `${base} No exception detected, but the essential exception cannot be ruled out automatically.`;
+    return (
+      `${base}${spacingSummary(issue)} No other exception detected, ` +
+      'but the essential exception cannot be ruled out automatically.'
+    );
   };
 
   // Minimum (2.5.8 AA): findings are fail-aa targets, with and without
-  // detected exceptions. Only 'ruled-out' assessments are confirmed violations.
+  // detected exceptions. Only 'ruled-out' assessments are confirmed
+  // violations; 'verified' exceptions (spacing checked geometrically) conform
+  // and are not reported as findings.
   const minimumIssues = [...details.failAA, ...details.exceptedTargets].filter(
     (issue) => issue.level === 'fail-aa',
   );
   const confirmed = minimumIssues.filter(
     (i) => i.exceptionAssessment === 'ruled-out',
   );
+  const verified = minimumIssues.filter(
+    (i) => i.exceptionAssessment === 'verified',
+  );
   const needsReview = minimumIssues.filter(
-    (i) => i.exceptionAssessment !== 'ruled-out',
+    (i) =>
+      i.exceptionAssessment !== 'ruled-out' &&
+      i.exceptionAssessment !== 'verified',
   );
   if (!applicable) {
     buckets.inapplicable.push(ruleResult('target-size-minimum', []));
-  } else if (minimumIssues.length === 0) {
+  } else if (confirmed.length === 0 && needsReview.length === 0) {
     buckets.passes.push(ruleResult('target-size-minimum', []));
   } else {
     if (confirmed.length > 0) {
@@ -318,15 +335,20 @@ export function normalizeTargetSizeCheck(
   }
 
   // Enhanced (2.5.5 AAA): targets that pass AA but miss the 44px requirement.
-  // Targets already failing AA are reported under target-size-minimum only.
+  // Targets already failing AA are reported under target-size-minimum only,
+  // except those that conform to 2.5.8 via the verified spacing exception:
+  // SC 2.5.5 has no spacing exception, so they still need review for AAA.
   bucketize(
     buckets,
     'target-size-enhanced',
-    details.failAAAOnly.map((issue) =>
+    [...details.failAAAOnly, ...verified].map((issue) =>
       toNode(
         issue,
         `Target is ${issue.width}x${issue.height}px ` +
           `(min dimension ${issue.minDimension}px, AAA requirement 44px). ` +
+          (issue.exceptionAssessment === 'verified'
+            ? 'Conforms to SC 2.5.8 via the spacing exception, which SC 2.5.5 does not offer. '
+            : '') +
           'Verify whether an SC 2.5.5 exception applies.',
       ),
     ),

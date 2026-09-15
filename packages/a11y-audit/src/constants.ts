@@ -182,6 +182,7 @@ export const INTERACTIVE_SELECTOR = `
   [tabindex]:not([tabindex="-1"]):not([disabled]),
   summary,
   label[for],
+  label:has(input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])),
   [onclick]:not([disabled])
 `.trim();
 

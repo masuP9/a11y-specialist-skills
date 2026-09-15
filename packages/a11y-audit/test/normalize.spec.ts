@@ -39,6 +39,7 @@ const targetSizeIssue = (
   exceptionDetails: null,
   exceptionAssessment: 'not-assessed',
   href: null,
+  spacing: null,
   ...overrides,
 });
 
@@ -77,12 +78,14 @@ test('target-size: not-assessed findings go to incomplete, ruled-out to violatio
     ],
     failAAAOnly: [],
     passedTargets: 1,
+    occludedTargets: 0,
     exceptedTargets: [],
     summary: {
       failAACount: 2,
       failAAAOnlyCount: 0,
       passCount: 1,
       exceptedCount: 0,
+      verifiedCount: 0,
     },
   };
 
@@ -99,6 +102,101 @@ test('target-size: not-assessed findings go to incomplete, ruled-out to violatio
   expect(buckets.checkedNodes).toBe(3);
 });
 
+test('target-size: verified spacing exception passes 2.5.8 and is reviewed under 2.5.5', () => {
+  const details: TargetSizeCheckDetails = {
+    totalTargetsChecked: 2,
+    failAA: [
+      targetSizeIssue({
+        selector: '#crowded',
+        spacing: {
+          diameter: 24,
+          center: { x: 30, y: 30 },
+          applies: false,
+          intersections: [
+            { selector: '#next', kind: 'circle', distance: 22, required: 24 },
+          ],
+        },
+      }),
+    ],
+    failAAAOnly: [],
+    passedTargets: 0,
+    occludedTargets: 0,
+    exceptedTargets: [
+      targetSizeIssue({
+        selector: '#spaced',
+        exception: 'spacing',
+        exceptionDetails: 'No other target within a 24px circle',
+        exceptionAssessment: 'verified',
+        spacing: {
+          diameter: 24,
+          center: { x: 100, y: 30 },
+          applies: true,
+          intersections: [],
+        },
+      }),
+    ],
+    summary: {
+      failAACount: 1,
+      failAAAOnlyCount: 0,
+      passCount: 0,
+      exceptedCount: 1,
+      verifiedCount: 1,
+    },
+  };
+  const buckets = normalizeTargetSizeCheck(details);
+
+  const minimum = buckets.incomplete.find(
+    (r) => r.id === 'a11y-skills/target-size-minimum',
+  );
+  expect(minimum?.nodes.map((n) => n.target[0])).toEqual(['#crowded']);
+  expect(minimum?.nodes[0]?.failureSummary).toContain(
+    'intersects the circle of undersized target #next (22px, requires 24px)',
+  );
+  expect(buckets.violations).toHaveLength(0);
+
+  const enhanced = buckets.incomplete.find(
+    (r) => r.id === 'a11y-skills/target-size-enhanced',
+  );
+  expect(enhanced?.nodes.map((n) => n.target[0])).toEqual(['#spaced']);
+  expect(enhanced?.nodes[0]?.failureSummary).toContain('spacing exception');
+});
+
+test('target-size: only verified exceptions → minimum passes', () => {
+  const details: TargetSizeCheckDetails = {
+    totalTargetsChecked: 1,
+    failAA: [],
+    failAAAOnly: [],
+    passedTargets: 0,
+    occludedTargets: 0,
+    exceptedTargets: [
+      targetSizeIssue({
+        exception: 'spacing',
+        exceptionAssessment: 'verified',
+        spacing: {
+          diameter: 24,
+          center: { x: 10, y: 10 },
+          applies: true,
+          intersections: [],
+        },
+      }),
+    ],
+    summary: {
+      failAACount: 0,
+      failAAAOnlyCount: 0,
+      passCount: 0,
+      exceptedCount: 1,
+      verifiedCount: 1,
+    },
+  };
+  const buckets = normalizeTargetSizeCheck(details);
+  expect(
+    buckets.passes.some((r) => r.id === 'a11y-skills/target-size-minimum'),
+  ).toBe(true);
+  expect(
+    buckets.incomplete.some((r) => r.id === 'a11y-skills/target-size-minimum'),
+  ).toBe(false);
+});
+
 test('target-size: correct WCAG tags per rule (AA vs AAA)', () => {
   const details: TargetSizeCheckDetails = {
     totalTargetsChecked: 2,
@@ -113,12 +211,14 @@ test('target-size: correct WCAG tags per rule (AA vs AAA)', () => {
       }),
     ],
     passedTargets: 0,
+    occludedTargets: 0,
     exceptedTargets: [],
     summary: {
       failAACount: 1,
       failAAAOnlyCount: 1,
       passCount: 0,
       exceptedCount: 0,
+      verifiedCount: 0,
     },
   };
 

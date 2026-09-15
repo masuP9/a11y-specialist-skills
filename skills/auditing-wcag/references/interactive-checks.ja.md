@@ -79,8 +79,12 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks focus-indicator-c
 - `getBoundingClientRect()` でバウンディングボックスサイズを測定
 - Playwright の `ariaSnapshot()` API でアクセシブル名を取得
 - WCAG 2.5.8 例外を判定: inline, redundant, ua-control, spacing
+- spacing 例外は WCAG の定義どおり幾何的に判定: 24px 未満の各ターゲットのバウンディングボックス中心に直径 24px の円を置き、他のターゲット（および他の 24px 未満ターゲットの円）と交差しなければ成立
+- `label`（`for` 指定と、コントロールを包む暗黙のラベルの両方）とその対象コントロール、および同じコントロールを指す複数のラベルは同一ターゲットとして扱う。入れ子になったインタラクティブ要素は別のターゲットなので、大きなクリック領域の中にある小さなコントロールは spacing 例外にならない
+- ビューポートに固定された `position: fixed` のターゲットは、検査対象が画面に見えるスクロール範囲全体で動かして交差を判定する（呼び出し時のスクロール位置に依存しない）。transform などで包含ブロックを持つ祖先の下にある fixed 要素と `position: sticky` はページと一緒にスクロールするため通常フローとして扱う
+- 他の要素に覆われたターゲットはスクロールしながら最前面判定して除外し、件数を `details.occludedTargets` に記録
 - AA（24px）と AAA（44px）の両レベルで問題を報告
-- 色分けハイライト付きの全ページスクリーンショットを生成
+- 色分けハイライトと 24px 円付きの全ページスクリーンショットを生成
 
 **使用方法:**
 ```bash
@@ -93,7 +97,9 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks target-size-check
   - **緑 (PASS)**: 44px以上（AA合格、AAA合格）
   - **オレンジ (AA Pass)**: 24-43px（AA合格、AAA不合格）
   - **赤 (AA Fail)**: 24px未満（AA不合格、AAA不合格）
+  - **青 (Spacing OK)**: 24px未満だが spacing 例外が幾何的に成立（2.5.8 適合）
   - **青 (Exception)**: 例外の可能性あり（手動レビュー必要）
+  - **円**: 24px未満の各ターゲットの 24px 円。緑＝他のターゲットと交差なし、赤＝交差あり
 
 **検出される例外:**
 | 例外 | 検出方法 |
@@ -101,17 +107,21 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks target-size-check
 | inline | 段落/リスト内のリンクで周囲テキストが10文字以上 |
 | redundant | 同じhrefを持つ別のターゲットがサイズ要件を満たしている |
 | ua-control | ネイティブフォームコントロール（checkbox, radio, select）でデフォルト外観 |
-| spacing | 24px以内に隣接ターゲットがない |
+| spacing | ターゲット中心の 24px 円が他のターゲットや他の 24px 未満ターゲットの円と交差しない（`exceptionAssessment: "verified"`、不成立時は `spacing.intersections` に相手のセレクターと距離を記録） |
 | essential | 自動検出不可（手動レビュー対象としてマーク） |
+
+spacing 例外の幾何判定は他のヒューリスティック例外より優先されます。成立したターゲットは 2.5.8 の手動確認対象から外れ、`target-size-minimum` は passes になります（件数は `summary.verifiedCount`）。ただし 2.5.5 には spacing 例外がないため、`target-size-enhanced` の incomplete として報告されます。
 
 **制限事項:**
 - essential 例外は手動判断が必要
 - クリック領域を拡張するCSS疑似要素は完全に検出できない
 - CSS transform の効果は測定に含まれる（getBoundingClientRect は変換後のサイズを返す）
+- スクリプトでのみクリックハンドラを付けた要素（`onclick` 属性・role・tabindex なし）はターゲットとして検出されないため、spacing 例外の判定相手からも漏れる
+- Shadow DOM と iframe の中は検査しない
 
 **手動確認が必要な項目:**
 - essential 例外の確認（例: 地図のピン、ゲームコントロール）
-- spacing 例外の実際のインタラクションでの検証
+- spacing 例外が成立したターゲットの近くに、検出されない種類のターゲットがないか
 - インタラクション後にのみ表示されるターゲット（ドロップダウン、モーダル）
 
 ## ホバー/フォーカス表示

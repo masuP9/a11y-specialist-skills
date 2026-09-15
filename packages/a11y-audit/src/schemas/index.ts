@@ -372,6 +372,7 @@ export const TARGET_SIZE_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
       'failAA',
       'failAAAOnly',
       'passedTargets',
+      'occludedTargets',
       'exceptedTargets',
       'summary',
     ],
@@ -391,6 +392,7 @@ export const TARGET_SIZE_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
             'minDimension',
             'level',
             'exceptionAssessment',
+            'spacing',
           ],
           properties: {
             ...ELEMENT_EVIDENCE_PROPS,
@@ -407,14 +409,44 @@ export const TARGET_SIZE_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
             exceptionDetails: { type: ['string', 'null'] },
             exceptionAssessment: {
               type: 'string',
-              enum: ['ruled-out', 'possible', 'not-assessed'],
+              enum: ['ruled-out', 'verified', 'possible', 'not-assessed'],
             },
             href: { type: ['string', 'null'] },
+            spacing: {
+              type: ['object', 'null'],
+              required: ['diameter', 'center', 'applies', 'intersections'],
+              properties: {
+                diameter: { type: 'number' },
+                center: {
+                  type: 'object',
+                  required: ['x', 'y'],
+                  properties: {
+                    x: { type: 'number' },
+                    y: { type: 'number' },
+                  },
+                },
+                applies: { type: 'boolean' },
+                intersections: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    required: ['selector', 'kind', 'distance', 'required'],
+                    properties: {
+                      selector: { type: 'string' },
+                      kind: { type: 'string', enum: ['target', 'circle'] },
+                      distance: { type: 'number' },
+                      required: { type: 'number' },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       },
       failAAAOnly: { type: 'array', items: { type: 'object' } },
       passedTargets: { type: 'number' },
+      occludedTargets: { type: 'number' },
       exceptedTargets: { type: 'array', items: { type: 'object' } },
       summary: {
         type: 'object',
@@ -423,12 +455,14 @@ export const TARGET_SIZE_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
           'failAAAOnlyCount',
           'passCount',
           'exceptedCount',
+          'verifiedCount',
         ],
         properties: {
           failAACount: { type: 'number' },
           failAAAOnlyCount: { type: 'number' },
           passCount: { type: 'number' },
           exceptedCount: { type: 'number' },
+          verifiedCount: { type: 'number' },
         },
       },
     },

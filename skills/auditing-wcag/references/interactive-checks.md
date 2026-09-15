@@ -79,8 +79,12 @@ Use the `target-size-check` check to automatically measure tap/click target size
 - Measures bounding box dimensions via `getBoundingClientRect()`
 - Retrieves accessible names via Playwright's `ariaSnapshot()` API
 - Checks WCAG 2.5.8 exceptions: inline, redundant, ua-control, spacing
+- Evaluates the spacing exception geometrically per the WCAG definition: a 24px-diameter circle centered on each undersized target's bounding box must not intersect another target (nor the circle of another undersized target)
+- Treats a `label` (explicit `for` or implicitly wrapping its control), its control, and every other label of that control as one target; nested interactive elements are separate targets, so a small control inside a larger clickable area does not get the spacing exception
+- Evaluates viewport-fixed `position: fixed` targets over the whole scroll range in which the subject target is visible (independent of the scroll position at call time); a fixed element under a transform-like ancestor that forms its containing block, and `position: sticky`, scroll with the page and are treated as normal flow
+- Drops targets covered by another element (hit-tested while scrolling) and records the count in `details.occludedTargets`
 - Reports issues at both AA (24px) and AAA (44px) levels
-- Takes full-page screenshot with color-coded highlights
+- Takes full-page screenshot with color-coded highlights and 24px circles
 
 **Usage:**
 ```bash
@@ -93,7 +97,9 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks target-size-check
   - **Green (PASS)**: >= 44px (AA Pass, AAA Pass)
   - **Orange (AA Pass)**: 24-43px (AA Pass, AAA Fail)
   - **Red (AA Fail)**: < 24px (AA Fail, AAA Fail)
+  - **Blue (Spacing OK)**: < 24px but the spacing exception is verified geometrically (conforms to 2.5.8)
   - **Blue (Exception)**: Possible exception (manual review needed)
+  - **Circles**: the 24px circle of each undersized target — green = intersects no other target, red = intersects
 
 **Exceptions Detected:**
 | Exception | Detection Method |
@@ -101,17 +107,21 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks target-size-check
 | inline | Link within paragraph/list with surrounding text >= 10 chars |
 | redundant | Same href exists with another target meeting size requirement |
 | ua-control | Native form control (checkbox, radio, select) with default appearance |
-| spacing | No adjacent targets within 24px |
+| spacing | A 24px circle centered on the target intersects neither another target nor the circle of another undersized target (`exceptionAssessment: "verified"`; when it fails, `spacing.intersections` records each neighbor's selector and distance) |
 | essential | Cannot auto-detect (marked for manual review) |
+
+The geometric spacing result takes precedence over the heuristic exceptions. Targets with a verified spacing exception leave the 2.5.8 manual-review list, so `target-size-minimum` passes (count in `summary.verifiedCount`). SC 2.5.5 has no spacing exception, so they are still reported as `target-size-enhanced` incomplete.
 
 **Limitations:**
 - Essential exception requires manual judgment
 - CSS pseudo-elements expanding click area not fully detectable
 - CSS transform effects are included in measurements (getBoundingClientRect returns transformed size)
+- Elements whose click handler is attached only by script (no `onclick` attribute, role, or tabindex) are not detected as targets, so they are also missing as spacing neighbors
+- Shadow DOM and iframe content are not inspected
 
 **Manual Verification Required:**
 - Confirm essential exceptions (e.g., map pins, game controls)
-- Verify spacing exception with actual interaction testing
+- Targets with a verified spacing exception: confirm no undetected kind of target sits nearby
 - Check targets appearing only after interaction (dropdowns, modals)
 
 ## Hover/Focus Content

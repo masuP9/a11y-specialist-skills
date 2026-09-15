@@ -26,6 +26,19 @@ export {
   type RuleMeta,
 } from './utils/rule-registry.js';
 export {
+  DEFAULT_SPACING_EPSILON,
+  circleIntersectsRect,
+  circlesIntersect,
+  describeTargetSpacing,
+  distanceBetweenPoints,
+  distancePointToRect,
+  evaluateTargetSpacing,
+  rectCenter,
+  roundPx,
+  type EvaluateTargetSpacingOptions,
+  type SpacingTarget,
+} from './utils/target-spacing.js';
+export {
   buildAuditResult,
   mergeNormalizedResults,
   normalizeAxeResults,

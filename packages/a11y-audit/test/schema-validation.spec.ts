@@ -151,16 +151,26 @@ test('target-size-check envelope validates against its schema', () => {
         exceptionDetails: null,
         exceptionAssessment: 'not-assessed',
         href: null,
+        spacing: {
+          diameter: 24,
+          center: { x: 15, y: 15 },
+          applies: false,
+          intersections: [
+            { selector: '#b2', kind: 'circle', distance: 20, required: 24 },
+          ],
+        },
       },
     ],
     failAAAOnly: [],
     passedTargets: 0,
+    occludedTargets: 0,
     exceptedTargets: [],
     summary: {
       failAACount: 1,
       failAAAOnlyCount: 0,
       passCount: 0,
       exceptedCount: 0,
+      verifiedCount: 0,
     },
   };
   const result = buildAuditResult({
