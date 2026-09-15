@@ -183,6 +183,19 @@
     </div>
     <button id="tflow" class="t" style="left: 500px; top: 122px">u</button>
 
+    <!-- Same, with the individual `translate` property (independent of
+         `transform`) establishing the containing block. -->
+    <div style="position: absolute; left: 0; top: 0; translate: 0px">
+      <button
+        id="tfixed2"
+        class="t"
+        style="position: fixed; left: 700px; top: 100px"
+      >
+        t
+      </button>
+    </div>
+    <button id="tflow2" class="t" style="left: 700px; top: 122px">u</button>
+
     <!-- Undersized viewport-fixed button with no neighbor: verified, and its
          reported circle center must be in document coordinates. -->
     <button

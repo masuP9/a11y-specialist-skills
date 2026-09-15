@@ -225,14 +225,22 @@ function collectBasicTargetInfo(args: {
     }
     return cs;
   };
+  const isSet = (value: string | undefined): boolean =>
+    value !== undefined && value !== '' && value !== 'none';
   const formsContainingBlockForFixed = (cs: CSSStyleDeclaration): boolean =>
-    cs.transform !== 'none' ||
-    cs.perspective !== 'none' ||
-    cs.filter !== 'none' ||
-    (cs.backdropFilter !== undefined && cs.backdropFilter !== 'none') ||
-    /transform|perspective|filter/.test(cs.willChange) ||
+    isSet(cs.transform) ||
+    // Individual transform properties are independent of `transform`.
+    isSet(cs.translate) ||
+    isSet(cs.rotate) ||
+    isSet(cs.scale) ||
+    isSet(cs.perspective) ||
+    isSet(cs.filter) ||
+    isSet(cs.backdropFilter) ||
+    /transform|translate|rotate|scale|perspective|filter/.test(cs.willChange) ||
     /paint|layout|strict|content/.test(cs.contain) ||
-    (cs.containerType !== undefined && cs.containerType !== 'normal');
+    (cs.containerType !== undefined &&
+      cs.containerType !== '' &&
+      cs.containerType !== 'normal');
   const isFixed = (el: Element): boolean => {
     let fixedSeen = false;
     let cursor: Element | null = el;

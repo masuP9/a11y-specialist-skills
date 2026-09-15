@@ -18,8 +18,10 @@ adheres to [Semantic Versioning](https://semver.org/).
   are treated as one target; nested interactive elements are separate
   targets, so an undersized control inside a larger clickable ancestor does
   not get the exception. Viewport-fixed targets (`position: fixed` with no
-  transform/perspective/filter/contain ancestor establishing a containing
-  block) are evaluated over the whole scroll range in which the subject
+  ancestor establishing a containing block via `transform`, the individual
+  `translate`/`rotate`/`scale` properties, `perspective`, `filter`,
+  `backdrop-filter`, `will-change` of those, `contain` or `container-type`)
+  are evaluated over the whole scroll range in which the subject
   target is visible (the fixed element's rects and circle center are swept,
   so the result does not depend on the scroll position at call time); their
   reported `spacing.center` is converted to document coordinates. A fixed

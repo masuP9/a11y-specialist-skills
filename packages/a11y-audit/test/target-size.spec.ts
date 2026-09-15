@@ -130,6 +130,10 @@ test('target-size-check — spacing exception geometry', async ({
   expect(issue('#tfixed').spacing?.intersections).toEqual([
     { selector: '#tflow', kind: 'circle', distance: 22, required: 24 },
   ]);
+  // Same with the individual `translate` property on the ancestor.
+  expect(issue('#tflow2').spacing?.intersections).toEqual([
+    { selector: '#tfixed2', kind: 'circle', distance: 22, required: 24 },
+  ]);
 
   // Undersized viewport-fixed target: verified, center reported in document
   // coordinates (scroll is 0 here, so equal to viewport coordinates).
@@ -214,6 +218,9 @@ test('target-size-check — pre-scrolled page with smooth scrolling', async ({
   // neighbor of #tflow.
   expect(bySelector('#tflow')?.spacing?.intersections).toEqual([
     { selector: '#tfixed', kind: 'circle', distance: 22, required: 24 },
+  ]);
+  expect(bySelector('#tflow2')?.spacing?.intersections).toEqual([
+    { selector: '#tfixed2', kind: 'circle', distance: 22, required: 24 },
   ]);
 
   // Viewport-fixed target center is reported in document coordinates:
