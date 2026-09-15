@@ -12,10 +12,16 @@ adheres to [Semantic Versioning](https://semver.org/).
   circle centered on each undersized target's bounding box must not intersect
   another target, nor the circle of another undersized target. Neighbors are
   measured by their line boxes (`getClientRects()`), so a wrapped inline link
-  no longer counts as a solid block. A `<label>` and its control are treated
-  as one target; nested interactive elements are separate targets, so an
-  undersized control inside a larger clickable ancestor does not get the
-  exception. Targets covered by another element are dropped (hit-tested at
+  no longer counts as a solid block. A `<label>` (explicit `for` or
+  implicitly wrapping its control — `INTERACTIVE_SELECTOR` now matches
+  wrapping labels too), its control, and every other label of that control
+  are treated as one target; nested interactive elements are separate
+  targets, so an undersized control inside a larger clickable ancestor does
+  not get the exception. `position: fixed` targets are evaluated over the
+  whole scroll range in which the subject target is visible (the fixed
+  element's rects and circle center are swept, so the result does not depend
+  on the scroll position at call time); `position: sticky` is treated as
+  normal flow. Targets covered by another element are dropped (hit-tested at
   their painted center while scrolling the page with `behavior: 'instant'`;
   the original scroll position is restored) and counted in
   `details.occludedTargets`. Targets above or left of the caller's scroll

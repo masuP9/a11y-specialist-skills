@@ -104,6 +104,24 @@ test('target-size-check — spacing exception geometry', async ({
   expectVerified('#far');
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
 
+  // Implicit label (no `for`) is a target; its wrapped checkbox is the same
+  // target, but a button 11px from the label's edge intersects it.
+  expect(issue('#near-implicit').spacing?.intersections).toEqual([
+    { selector: '#implicit', kind: 'target', distance: 11, required: 12 },
+  ]);
+  expectVerified('#implicit-input');
+
+  // Two labels for the same control are one target (centers 22px apart)
+  expectVerified('#dual-a');
+  expectVerified('#dual-b');
+  expectVerified('#dual');
+
+  // position: fixed neighbor: evaluated over the scroll range in which the
+  // subject is visible, not at the scroll position of collection.
+  expect(issue('#near-fixed').spacing?.intersections).toEqual([
+    { selector: '#fixed-btn', kind: 'target', distance: 11, required: 12 },
+  ]);
+
   // Normalized buckets: verified targets leave 2.5.8 review and enter 2.5.5
   const minimum = result.incomplete.find(
     (r) => r.id === 'a11y-skills/target-size-minimum',
@@ -171,4 +189,9 @@ test('target-size-check — pre-scrolled page with smooth scrolling', async ({
   expect(details.occludedTargets).toBe(1);
   expect(bySelector('#far')?.exceptionAssessment).toBe('verified');
   expect(await page.evaluate(() => window.scrollY)).toBe(500);
+
+  // The fixed-neighbor result does not depend on the caller's scroll position.
+  expect(bySelector('#near-fixed')?.spacing?.intersections).toEqual([
+    { selector: '#fixed-btn', kind: 'target', distance: 11, required: 12 },
+  ]);
 });

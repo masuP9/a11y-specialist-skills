@@ -80,7 +80,8 @@ Use the `target-size-check` check to automatically measure tap/click target size
 - Retrieves accessible names via Playwright's `ariaSnapshot()` API
 - Checks WCAG 2.5.8 exceptions: inline, redundant, ua-control, spacing
 - Evaluates the spacing exception geometrically per the WCAG definition: a 24px-diameter circle centered on each undersized target's bounding box must not intersect another target (nor the circle of another undersized target)
-- Treats a `label` and its control as one target; nested interactive elements are separate targets, so a small control inside a larger clickable area does not get the spacing exception
+- Treats a `label` (explicit `for` or implicitly wrapping its control), its control, and every other label of that control as one target; nested interactive elements are separate targets, so a small control inside a larger clickable area does not get the spacing exception
+- Evaluates `position: fixed` targets over the whole scroll range in which the subject target is visible (independent of the scroll position at call time); `position: sticky` is treated as normal flow
 - Drops targets covered by another element (hit-tested while scrolling) and records the count in `details.occludedTargets`
 - Reports issues at both AA (24px) and AAA (44px) levels
 - Takes full-page screenshot with color-coded highlights and 24px circles

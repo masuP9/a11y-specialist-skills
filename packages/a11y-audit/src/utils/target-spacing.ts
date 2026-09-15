@@ -43,6 +43,13 @@ export interface SpacingTarget {
   rects: Rect[];
   /** `true` when the bounding box is less than the AA threshold in either dimension. */
   undersized: boolean;
+  /**
+   * Region in which this neighbor's circle center may lie, when the
+   * neighbor's position relative to the subject is not fixed (e.g. a
+   * `position: fixed` element swept over the scroll range). Defaults to the
+   * center of `bounds`. Only read when this target is a neighbor.
+   */
+  centerRect?: Rect;
 }
 
 export interface EvaluateTargetSpacingOptions {
@@ -187,12 +194,17 @@ export function evaluateTargetSpacing(
     }
 
     if (other.undersized) {
-      const otherCenter = rectCenter(other.bounds);
-      if (circlesIntersect(center, otherCenter, radius, epsilon)) {
+      // The neighbor's center is a point, or a region when it can move
+      // relative to the subject (`centerRect`): the circles intersect when
+      // the closest possible center is less than a diameter away.
+      const centerDistance = other.centerRect
+        ? distancePointToRect(center, other.centerRect)
+        : distanceBetweenPoints(center, rectCenter(other.bounds));
+      if (isCloserThan(centerDistance, diameter, epsilon)) {
         intersections.push({
           selector: other.selector,
           kind: 'circle',
-          distance: roundPx(distanceBetweenPoints(center, otherCenter)),
+          distance: roundPx(centerDistance),
           required: diameter,
         });
       }

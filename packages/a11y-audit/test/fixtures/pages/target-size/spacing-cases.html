@@ -109,7 +109,64 @@
     <button id="stack-a" class="t" style="left: 300px; top: 476px">a</button>
     <button id="stack-b" class="t" style="left: 300px; top: 498px">b</button>
 
+    <!-- Implicit label (no `for`) wrapping a checkbox: the label's whole box is a
+         target, 11px from the small button's center -->
+    <label
+      id="implicit"
+      class="t"
+      style="left: 20px; top: 560px; width: 60px; height: 20px; font-size: 10px"
+    >
+      <input
+        id="implicit-input"
+        type="checkbox"
+        style="
+          width: 13px;
+          height: 13px;
+          margin: 3px 0 0 0;
+          vertical-align: top;
+        "
+      />
+      opt
+    </label>
+    <button id="near-implicit" class="t" style="left: 81px; top: 560px">
+      n
+    </button>
+
+    <!-- Two labels for one control: same target, must not intersect each other -->
+    <label id="dual-a" for="dual" class="t" style="left: 20px; top: 620px"
+      >A</label
+    >
+    <label id="dual-b" for="dual" class="t" style="left: 42px; top: 620px"
+      >B</label
+    >
+    <input
+      id="dual"
+      type="checkbox"
+      class="t"
+      style="left: 100px; top: 623px; width: 13px; height: 13px"
+    />
+
     <!-- Far below the initial viewport: exercises the scroll + hit-test path -->
     <button id="far" class="t" style="left: 20px; top: 2000px">f</button>
+
+    <!-- position: fixed 44x44 button at viewport (121, 350). When #near-fixed
+         (document (100, 1000), center (110, 1010)) is scrolled into view the
+         fixed button's left edge is 11px from that center → intersects. -->
+    <button
+      id="fixed-btn"
+      class="t"
+      style="
+        position: fixed;
+        left: 121px;
+        top: 350px;
+        width: 44px;
+        height: 44px;
+      "
+    >
+      F
+    </button>
+    <button id="near-fixed" class="t" style="left: 100px; top: 1000px">
+      x
+    </button>
   </body>
 </html>

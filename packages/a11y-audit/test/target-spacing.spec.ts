@@ -161,3 +161,26 @@ test('diameter option scales the circle', () => {
     false,
   );
 });
+
+test('centerRect: a neighbor whose center can move is tested at its closest position', () => {
+  const a = target(0, box(0, 0, 20, 20)); // center (10, 10)
+  // An undersized neighbor swept vertically: its painted box is 40px away
+  // horizontally (no rect hit), but its center may lie anywhere on
+  // x=30, y∈[10, 200] — the closest is 20px away, so the circles intersect.
+  const swept = target(1, box(20, 0, 20, 210), {
+    undersized: true,
+    centerRect: { left: 30, top: 10, right: 30, bottom: 200 },
+    rects: [box(50, 0, 20, 210)],
+  });
+  const result = evaluateTargetSpacing(a, [a, swept]);
+  expect(result.intersections).toEqual([
+    { selector: '#t1', kind: 'circle', distance: 20, required: 24 },
+  ]);
+
+  // Far enough at every position → no intersection.
+  const far = {
+    ...swept,
+    centerRect: { left: 34, top: 10, right: 34, bottom: 200 },
+  };
+  expect(evaluateTargetSpacing(a, [a, far]).applies).toBe(true);
+});

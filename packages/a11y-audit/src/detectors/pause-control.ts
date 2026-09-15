@@ -42,9 +42,7 @@ export async function detectPauseControls(
       element: string;
       name: string;
       matchedBy:
-        | 'accessible-name'
-        | 'class-name-near-carousel'
-        | 'svg-icon-pattern';
+        'accessible-name' | 'class-name-near-carousel' | 'svg-icon-pattern';
       selector: string;
     }> = [];
     const carouselIndicators: Array<{ element: string; name: string }> = [];
