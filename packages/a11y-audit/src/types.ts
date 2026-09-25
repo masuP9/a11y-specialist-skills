@@ -666,6 +666,13 @@ export interface KeyboardTrapCheckDetails {
   /** Traps that have an escape path but require manual review (→ incomplete). */
   needsReview: KeyboardTrapEvidence[];
   /**
+   * `true` when the Tab walk hit the press limit before cycling through
+   * every focusable element twice: traps late in the tab order may be missed.
+   * Always set by this version; absent in results from versions before it
+   * (treat as unknown).
+   */
+  tabWalkCapped?: boolean;
+  /**
    * Path the screenshot was (or would be) written to. Empty string when
    * `screenshot` was disabled.
    */

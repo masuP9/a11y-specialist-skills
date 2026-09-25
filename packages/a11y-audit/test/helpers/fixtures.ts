@@ -152,6 +152,8 @@ export async function runFixtureCheck(
   baseUrl: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   context: { page: any; browser: any; testInfo: any },
+  /** Extra options passed to the check (e.g. `quiet`, `writeResult`). */
+  extra: Record<string, unknown> = {},
 ): Promise<AuditCheckResult<unknown>> {
   const registry = await buildRunnerRegistry();
   const entry = registry[checkName];
@@ -161,17 +163,18 @@ export async function runFixtureCheck(
 
   const targetUrl = `${baseUrl}/${fixtureRelPath}`;
   const outputDir = context.testInfo.outputDir;
+  const common = { outputDir, ...extra };
 
   switch (entry.kind) {
     case 'page-current': {
       await context.page.goto(targetUrl, { waitUntil: 'networkidle' });
-      return entry.run({ page: context.page, outputDir });
+      return entry.run({ page: context.page, ...common });
     }
     case 'page-navigating': {
-      return entry.run({ page: context.page, targetUrl, outputDir });
+      return entry.run({ page: context.page, targetUrl, ...common });
     }
     case 'browser-navigating': {
-      return entry.run({ browser: context.browser, targetUrl, outputDir });
+      return entry.run({ browser: context.browser, targetUrl, ...common });
     }
   }
 }

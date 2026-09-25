@@ -29,14 +29,10 @@ import {
 } from '../constants.js';
 import { buildAuditResult, normalizeZoomCheck } from '../utils/axe-format.js';
 import {
-  saveAuditResult,
   takeAuditScreenshot,
   resolveScreenshotPath,
-  logAuditHeader,
-  logSummary,
-  logIssueList,
-  logOutputPaths,
-  type OutputLocationOptions,
+  createAuditOutput,
+  type AuditOutputOptions,
 } from '../utils/test-harness.js';
 
 interface ZoomCheckArgs {
@@ -179,7 +175,7 @@ function applyZoomAndCheck(args: ZoomCheckArgs): ZoomCheckResponse {
   };
 }
 
-export interface RunZoomCheckOptions extends OutputLocationOptions {
+export interface RunZoomCheckOptions extends AuditOutputOptions {
   /** Page to run the check on (navigated by this function if `targetUrl`/`TEST_PAGE` is set). */
   page: Page;
   /**
@@ -208,6 +204,10 @@ export async function runZoomCheck(
     screenshot = false,
     ...location
   } = options;
+  const out = createAuditOutput({
+    ...location,
+    defaultFile: DEFAULT_ZOOM_RESULT_FILE,
+  });
 
   await page.setViewportSize({
     width: viewport.width,
@@ -240,9 +240,9 @@ export async function runZoomCheck(
   });
 
   // Output results
-  logAuditHeader('Zoom 200% Check Results', 'WCAG 1.4.4', result.url);
+  out.header('Zoom 200% Check Results', 'WCAG 1.4.4', result.url);
 
-  logSummary({
+  out.summary({
     'Zoom factor': `${details.zoomFactor}x`,
     'Base viewport': `${details.viewport.width}x${details.viewport.height}`,
     'Document scroll width': `${details.documentScrollWidth}px`,
@@ -251,7 +251,7 @@ export async function runZoomCheck(
     'Clipped elements': details.clippedElements.length,
   });
 
-  logIssueList<ZoomIssue>(
+  out.issueList<ZoomIssue>(
     'Clipped Elements',
     details.clippedElements,
     (el, i) => [
@@ -261,19 +261,16 @@ export async function runZoomCheck(
     ],
   );
 
-  const resolvedPath = saveAuditResult(result, {
-    ...location,
-    defaultFile: DEFAULT_ZOOM_RESULT_FILE,
-  });
+  out.save(result);
 
   let screenshotPath: string | undefined;
   if (screenshot) {
     screenshotPath = await takeAuditScreenshot(page, {
-      path: resolveScreenshotPath(resolvedPath, DEFAULT_ZOOM_SCREENSHOT_FILE),
+      path: resolveScreenshotPath(out.resultPath, DEFAULT_ZOOM_SCREENSHOT_FILE),
     });
   }
 
-  logOutputPaths(resolvedPath, screenshotPath);
+  out.outputPaths(screenshotPath);
 
   return result;
 }

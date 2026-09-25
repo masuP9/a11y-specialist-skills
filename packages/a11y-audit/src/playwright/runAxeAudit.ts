@@ -19,14 +19,11 @@ import type { AxeAuditResult, AxeAuditDetails } from '../types.js';
 import { DEFAULT_AXE_TAGS, DEFAULT_AXE_RESULT_FILE } from '../constants.js';
 import { buildAuditResult, normalizeAxeResults } from '../utils/axe-format.js';
 import {
-  saveAuditResult,
-  logAuditHeader,
-  logSummary,
-  logOutputPaths,
-  type OutputLocationOptions,
+  createAuditOutput,
+  type AuditOutputOptions,
 } from '../utils/test-harness.js';
 
-export interface RunAxeAuditOptions extends OutputLocationOptions {
+export interface RunAxeAuditOptions extends AuditOutputOptions {
   /** A page already navigated to the target URL. */
   page: Page;
   /** axe-core tags to run with (default: WCAG 2.0/2.1/2.2 A & AA). */
@@ -43,6 +40,10 @@ export async function runAxeAudit(
   options: RunAxeAuditOptions,
 ): Promise<AxeAuditResult> {
   const { page, tags = DEFAULT_AXE_TAGS, rules, ...location } = options;
+  const out = createAuditOutput({
+    ...location,
+    defaultFile: DEFAULT_AXE_RESULT_FILE,
+  });
 
   let builder = new AxeBuilder({ page }).withTags([...tags]);
   if (rules) {
@@ -68,13 +69,9 @@ export async function runAxeAudit(
   });
 
   // Output results
-  logAuditHeader(
-    'Axe-core Accessibility Audit Results',
-    'axe-core',
-    result.url,
-  );
+  out.header('Axe-core Accessibility Audit Results', 'axe-core', result.url);
 
-  logSummary({
+  out.summary({
     Timestamp: result.timestamp,
     Violations: result.summary.violationCount,
     Passes: result.summary.passCount,
@@ -83,14 +80,14 @@ export async function runAxeAudit(
   });
 
   if (result.violations.length > 0) {
-    console.log('\n--- Violations ---');
+    out.log('\n--- Violations ---');
     result.violations.forEach((v, i) => {
-      console.log(
+      out.log(
         `\n  ${i + 1}. [${v.impact?.toUpperCase() || 'UNKNOWN'}] ${v.id}`,
       );
-      console.log(`     ${v.help}`);
-      console.log(`     Affected: ${v.nodes.length} element(s)`);
-      console.log(
+      out.log(`     ${v.help}`);
+      out.log(`     Affected: ${v.nodes.length} element(s)`);
+      out.log(
         `     Tags: ${v.tags.filter((t) => t.startsWith('wcag')).join(', ')}`,
       );
 
@@ -98,32 +95,29 @@ export async function runAxeAudit(
       v.nodes.slice(0, 3).forEach((n, j) => {
         const htmlPreview =
           n.html.length > 80 ? n.html.substring(0, 80) + '...' : n.html;
-        console.log(`       ${j + 1}. ${htmlPreview}`);
+        out.log(`       ${j + 1}. ${htmlPreview}`);
       });
       if (v.nodes.length > 3) {
-        console.log(`       ... and ${v.nodes.length - 3} more`);
+        out.log(`       ... and ${v.nodes.length - 3} more`);
       }
     });
   }
 
-  console.log(`\n--- Summary ---`);
+  out.log(`\n--- Summary ---`);
   if (result.summary.violationCount === 0) {
-    console.log('No violations detected by axe-core');
+    out.log('No violations detected by axe-core');
   } else {
     const totalElements = result.violations.reduce(
       (sum, v) => sum + v.nodes.length,
       0,
     );
-    console.log(
+    out.log(
       `Found ${result.summary.violationCount} violation type(s) affecting ${totalElements} element(s)`,
     );
   }
 
-  const resolvedPath = saveAuditResult(result, {
-    ...location,
-    defaultFile: DEFAULT_AXE_RESULT_FILE,
-  });
-  logOutputPaths(resolvedPath);
+  out.save(result);
+  out.outputPaths();
 
   return result;
 }

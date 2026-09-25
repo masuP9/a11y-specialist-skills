@@ -56,14 +56,10 @@ import {
   normalizeTargetSizeCheck,
 } from '../utils/axe-format.js';
 import {
-  saveAuditResult,
   takeAuditScreenshot,
   resolveScreenshotPath,
-  logAuditHeader,
-  logSummary,
-  logIssueList,
-  logOutputPaths,
-  type OutputLocationOptions,
+  createAuditOutput,
+  type AuditOutputOptions,
 } from '../utils/test-harness.js';
 import {
   addPageAnnotations,
@@ -809,7 +805,7 @@ function analyzeTargets(
   return { failAA, failAAAOnly, passCount, excepted };
 }
 
-export interface RunTargetSizeCheckOptions extends OutputLocationOptions {
+export interface RunTargetSizeCheckOptions extends AuditOutputOptions {
   /** A page already navigated to the target URL. */
   page: Page;
   /** Minimum (AA) threshold in CSS px (default: 24). */
@@ -818,6 +814,13 @@ export interface RunTargetSizeCheckOptions extends OutputLocationOptions {
   aaaThreshold?: number;
   /** Whether to capture an annotated screenshot (default: false). Mutates the page DOM. */
   screenshot?: boolean;
+  /**
+   * Whether to resolve each target's accessible name via
+   * `locator.ariaSnapshot()` (default: true). One call per target, run
+   * sequentially — slow on pages with hundreds of links. When `false`,
+   * `accessibleName` is `null` for every target.
+   */
+  resolveAccessibleNames?: boolean;
 }
 
 /**
@@ -832,8 +835,13 @@ export async function runTargetSizeCheck(
     aaThreshold = TARGET_SIZE_AA,
     aaaThreshold = TARGET_SIZE_AAA,
     screenshot = false,
+    resolveAccessibleNames = true,
     ...location
   } = options;
+  const out = createAuditOutput({
+    ...location,
+    defaultFile: DEFAULT_TARGET_SIZE_RESULT_FILE,
+  });
 
   // Collect basic target info from DOM
   const {
@@ -847,18 +855,21 @@ export async function runTargetSizeCheck(
     htmlSnippetMaxLength: HTML_SNIPPET_MAX_LENGTH,
   });
 
-  // Enhance with accessible names via ariaSnapshot()
+  // Enhance with accessible names via ariaSnapshot() (optional: one
+  // sequential round trip per target)
   const targets: Array<BasicTargetInfo & { accessibleName: string | null }> =
     [];
   for (const basicTarget of basicTargets) {
     let accessibleName: string | null = null;
 
-    try {
-      const locator = page.locator(basicTarget.selector).first();
-      const snapshot = await locator.ariaSnapshot();
-      accessibleName = parseAccessibleName(snapshot);
-    } catch {
-      // If ariaSnapshot fails, accessibleName remains null
+    if (resolveAccessibleNames) {
+      try {
+        const locator = page.locator(basicTarget.selector).first();
+        const snapshot = await locator.ariaSnapshot();
+        accessibleName = parseAccessibleName(snapshot);
+      } catch {
+        // If ariaSnapshot fails, accessibleName remains null
+      }
     }
 
     targets.push({
@@ -906,23 +917,23 @@ export async function runTargetSizeCheck(
   });
 
   // Output results
-  logAuditHeader('Target Size Check Results', 'WCAG 2.5.5 / 2.5.8', result.url);
+  out.header('Target Size Check Results', 'WCAG 2.5.5 / 2.5.8', result.url);
 
-  logSummary({
+  out.summary({
     'Total targets checked': details.totalTargetsChecked,
     'Skipped (covered by another element)': details.occludedTargets,
   });
 
-  console.log('\nSummary:');
-  console.log(`  Pass (>= ${aaaThreshold}px): ${details.summary.passCount}`);
-  console.log(
+  out.log('\nSummary:');
+  out.log(`  Pass (>= ${aaaThreshold}px): ${details.summary.passCount}`);
+  out.log(
     `  Fail AAA only (${aaThreshold}-${aaaThreshold - 1}px): ${details.summary.failAAAOnlyCount}`,
   );
-  console.log(`  Fail AA (< ${aaThreshold}px): ${details.summary.failAACount}`);
-  console.log(`  Verified spacing exception: ${verifiedSpacing.length}`);
-  console.log(`  Possible exceptions: ${possibleExceptions.length}`);
+  out.log(`  Fail AA (< ${aaThreshold}px): ${details.summary.failAACount}`);
+  out.log(`  Verified spacing exception: ${verifiedSpacing.length}`);
+  out.log(`  Possible exceptions: ${possibleExceptions.length}`);
 
-  logIssueList<TargetSizeIssue>(
+  out.issueList<TargetSizeIssue>(
     `Fail AA (< ${aaThreshold}px) - Requires Fix`,
     failAA,
     (el, i) => {
@@ -938,7 +949,7 @@ export async function runTargetSizeCheck(
     },
   );
 
-  logIssueList<TargetSizeIssue>(
+  out.issueList<TargetSizeIssue>(
     `Fail AAA Only (${aaThreshold}-${aaaThreshold - 1}px) - Recommended Fix`,
     failAAAOnly,
     (el, i) => [
@@ -949,7 +960,7 @@ export async function runTargetSizeCheck(
     5,
   );
 
-  logIssueList<TargetSizeIssue>(
+  out.issueList<TargetSizeIssue>(
     `Verified Spacing Exception (< ${aaThreshold}px, conforms to 2.5.8)`,
     verifiedSpacing,
     (el, i) => [
@@ -959,7 +970,7 @@ export async function runTargetSizeCheck(
     5,
   );
 
-  logIssueList<TargetSizeIssue>(
+  out.issueList<TargetSizeIssue>(
     'Possible Exceptions (Manual Review Recommended)',
     possibleExceptions,
     (el, i) => {
@@ -976,10 +987,7 @@ export async function runTargetSizeCheck(
     5,
   );
 
-  const resolvedPath = saveAuditResult(result, {
-    ...location,
-    defaultFile: DEFAULT_TARGET_SIZE_RESULT_FILE,
-  });
+  out.save(result);
 
   let screenshotPath: string | undefined;
   if (screenshot) {
@@ -1034,30 +1042,28 @@ export async function runTargetSizeCheck(
     await addPageAnnotations(page, annotations, circles);
     screenshotPath = await takeAuditScreenshot(page, {
       path: resolveScreenshotPath(
-        resolvedPath,
+        out.resultPath,
         DEFAULT_TARGET_SIZE_SCREENSHOT_FILE,
       ),
     });
 
     // Legend
-    console.log('\nLegend:');
-    console.log(`  PASS (green): >= ${aaaThreshold}px - AA Pass, AAA Pass`);
-    console.log(
+    out.log('\nLegend:');
+    out.log(`  PASS (green): >= ${aaaThreshold}px - AA Pass, AAA Pass`);
+    out.log(
       `  AA Pass (orange): ${aaThreshold}-${aaaThreshold - 1}px - AA Pass, AAA Fail`,
     );
-    console.log(`  AA Fail (red): < ${aaThreshold}px - AA Fail, AAA Fail`);
-    console.log(
+    out.log(`  AA Fail (red): < ${aaThreshold}px - AA Fail, AAA Fail`);
+    out.log(
       `  Spacing OK (blue): < ${aaThreshold}px but spacing exception verified`,
     );
-    console.log(
-      `  Exception (blue): Possible exception (manual review needed)`,
-    );
-    console.log(
+    out.log(`  Exception (blue): Possible exception (manual review needed)`);
+    out.log(
       `  Circles (${aaThreshold}px): green = no other target inside, red = intersects another target`,
     );
   }
 
-  logOutputPaths(resolvedPath, screenshotPath);
+  out.outputPaths(screenshotPath);
 
   return result;
 }

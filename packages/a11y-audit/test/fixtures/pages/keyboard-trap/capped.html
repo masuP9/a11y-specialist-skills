@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>keyboard-trap capped: more focusables than the Tab walk limit</title>
+  </head>
+  <body>
+    <!--
+      300 buttons: 2 * 300 + KEYBOARD_TRAP_SLACK (10) exceeds
+      KEYBOARD_TRAP_MAX_TAB_PRESSES (600), so the Tab walk is capped.
+    -->
+    <div id="buttons"></div>
+    <script>
+      const root = document.getElementById('buttons');
+      for (let i = 0; i < 300; i++) {
+        const b = document.createElement('button');
+        b.textContent = `Button ${i}`;
+        root.appendChild(b);
+      }
+    </script>
+  </body>
+</html>

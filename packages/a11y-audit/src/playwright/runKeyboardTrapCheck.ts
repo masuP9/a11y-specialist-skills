@@ -43,20 +43,18 @@ import {
   normalizeKeyboardTrapCheck,
 } from '../utils/axe-format.js';
 import {
-  saveAuditResult,
   takeAuditScreenshot,
   resolveScreenshotPath,
   requireTargetUrl,
-  logAuditHeader,
-  logOutputPaths,
-  type OutputLocationOptions,
+  createAuditOutput,
+  type AuditOutputOptions,
 } from '../utils/test-harness.js';
 
 // =============================================================================
 // Options
 // =============================================================================
 
-export interface RunKeyboardTrapCheckOptions extends OutputLocationOptions {
+export interface RunKeyboardTrapCheckOptions extends AuditOutputOptions {
   /** The browser to create audit contexts in. */
   browser: Browser;
   /** Target URL. Falls back to the `TEST_PAGE` env var; required. */
@@ -102,9 +100,44 @@ export async function runKeyboardTrapCheck(
   } = options;
 
   const targetUrl = requireTargetUrl(targetUrlOption);
+  // Created before the context so invalid output options fail without
+  // leaving a browser context behind.
+  const out = createAuditOutput({
+    ...location,
+    defaultFile: DEFAULT_KEYBOARD_TRAP_RESULT_FILE,
+  });
+  const screenshotPath = resolveScreenshotPath(
+    out.resultPath,
+    DEFAULT_KEYBOARD_TRAP_SCREENSHOT_FILE,
+  );
 
   const context = await browser.newContext(contextOptions);
-  const page = await context.newPage();
+  // The try/finally below closes the context; cover newPage() too.
+  const page = await context.newPage().catch(async (err: unknown) => {
+    await context.close();
+    throw err;
+  });
+
+  /** Screenshot first, so the saved JSON carries `screenshotPath`. */
+  const finish = async (
+    details: KeyboardTrapCheckDetails,
+  ): Promise<KeyboardTrapCheckResult> => {
+    if (screenshot) {
+      details.screenshotPath = await takeAuditScreenshot(page, {
+        path: screenshotPath,
+      });
+    }
+    const result = buildAuditResult({
+      source: 'keyboard-trap-check',
+      url: page.url(),
+      details,
+      buckets: normalizeKeyboardTrapCheck(details),
+    });
+    out.save(result);
+    out.header('Keyboard Trap Check', 'WCAG 2.1.2', page.url());
+    out.outputPaths(details.screenshotPath || undefined);
+    return result;
+  };
 
   try {
     // Use 'load' for file: URLs — networkidle never resolves for file: protocol.
@@ -131,40 +164,10 @@ export async function runKeyboardTrapCheck(
         trapCandidates: 0,
         confirmedTraps: [],
         needsReview: [],
+        tabWalkCapped: false,
         screenshotPath: '',
       };
-      const buckets = normalizeKeyboardTrapCheck(details);
-      const result = buildAuditResult({
-        source: 'keyboard-trap-check',
-        url: page.url(),
-        details,
-        buckets,
-      });
-
-      let screenshotPathOut = '';
-      if (screenshot) {
-        const resolvedPath = saveAuditResult(result, {
-          ...location,
-          defaultFile: DEFAULT_KEYBOARD_TRAP_RESULT_FILE,
-        });
-        screenshotPathOut = await takeAuditScreenshot(page, {
-          path: resolveScreenshotPath(
-            resolvedPath,
-            DEFAULT_KEYBOARD_TRAP_SCREENSHOT_FILE,
-          ),
-        });
-        details.screenshotPath = screenshotPathOut;
-        logAuditHeader('Keyboard Trap Check', 'WCAG 2.1.2', page.url());
-        logOutputPaths(resolvedPath, screenshotPathOut);
-      } else {
-        const resolvedPath = saveAuditResult(result, {
-          ...location,
-          defaultFile: DEFAULT_KEYBOARD_TRAP_RESULT_FILE,
-        });
-        logAuditHeader('Keyboard Trap Check', 'WCAG 2.1.2', page.url());
-        logOutputPaths(resolvedPath);
-      }
-      return result;
+      return await finish(details);
     }
 
     // ------------------------------------------------------------------
@@ -175,8 +178,10 @@ export async function runKeyboardTrapCheck(
       KEYBOARD_TRAP_MAX_TAB_PRESSES,
     );
 
-    if (2 * count + KEYBOARD_TRAP_SLACK > KEYBOARD_TRAP_MAX_TAB_PRESSES) {
-      console.warn(
+    const tabWalkCapped =
+      2 * count + KEYBOARD_TRAP_SLACK > KEYBOARD_TRAP_MAX_TAB_PRESSES;
+    if (tabWalkCapped) {
+      out.warn(
         `[keyboard-trap-check] Tab walk capped at ${KEYBOARD_TRAP_MAX_TAB_PRESSES} ` +
           `presses (page has ${count} focusable elements). Large pages may produce ` +
           `false negatives for traps near the end of the tab order.`,
@@ -505,44 +510,10 @@ export async function runKeyboardTrapCheck(
       trapCandidates: isTrapCandidate ? 1 : 0,
       confirmedTraps,
       needsReview,
+      tabWalkCapped,
       screenshotPath: '',
     };
-
-    const buckets = normalizeKeyboardTrapCheck(details);
-    const result = buildAuditResult({
-      source: 'keyboard-trap-check',
-      url: page.url(),
-      details,
-      buckets,
-    });
-
-    const resolvedPath = saveAuditResult(result, {
-      ...location,
-      defaultFile: DEFAULT_KEYBOARD_TRAP_RESULT_FILE,
-    });
-
-    if (screenshot) {
-      const screenshotPathOut = await takeAuditScreenshot(page, {
-        path: resolveScreenshotPath(
-          resolvedPath,
-          DEFAULT_KEYBOARD_TRAP_SCREENSHOT_FILE,
-        ),
-      });
-      details.screenshotPath = screenshotPathOut;
-    }
-
-    logAuditHeader('Keyboard Trap Check', 'WCAG 2.1.2', page.url());
-    logOutputPaths(
-      resolvedPath,
-      screenshot
-        ? resolveScreenshotPath(
-            resolvedPath,
-            DEFAULT_KEYBOARD_TRAP_SCREENSHOT_FILE,
-          )
-        : undefined,
-    );
-
-    return result;
+    return await finish(details);
   } finally {
     await context.close();
   }

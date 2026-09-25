@@ -39,14 +39,11 @@ import {
 } from '../constants.js';
 import { buildAuditResult, normalizeFocusCheck } from '../utils/axe-format.js';
 import {
-  resolveOutputPath,
   resolveScreenshotPath,
-  saveAuditResult,
   takeAuditScreenshot,
   requireTargetUrl,
-  logAuditHeader,
-  logOutputPaths,
-  type OutputLocationOptions,
+  createAuditOutput,
+  type AuditOutputOptions,
 } from '../utils/test-harness.js';
 
 // =============================================================================
@@ -107,7 +104,7 @@ const WARNING_STYLES = `
 // Maximum retry attempts to avoid infinite loops
 const MAX_RETRIES = 5;
 
-export interface RunFocusIndicatorCheckOptions extends OutputLocationOptions {
+export interface RunFocusIndicatorCheckOptions extends AuditOutputOptions {
   /** The browser to create audit contexts in. */
   browser: Browser;
   /** Target URL. Falls back to the `TEST_PAGE` env var; required. */
@@ -143,12 +140,12 @@ export async function runFocusIndicatorCheck(
 
   const targetUrl = requireTargetUrl(targetUrlOption);
 
-  const resolvedResultPath = resolveOutputPath({
+  const out = createAuditOutput({
     ...location,
     defaultFile: DEFAULT_FOCUS_RESULT_FILE,
   });
   const resolvedScreenshotPath = resolveScreenshotPath(
-    resolvedResultPath,
+    out.resultPath,
     DEFAULT_FOCUS_SCREENSHOT_FILE,
   );
 
@@ -354,14 +351,14 @@ export async function runFocusIndicatorCheck(
             });
             skipSelectors.push(culprit.selector);
 
-            console.warn(
+            out.warn(
               `\n⚠️  WCAG 3.2.1 Violation: Focus on element caused navigation!`,
             );
-            console.warn(`    Element: <${culprit.tag}> "${culprit.name}"`);
-            console.warn(`    Selector: ${culprit.selector}`);
-            console.warn(`    From: ${urlBeforeTab}`);
-            console.warn(`    To: ${toUrl}`);
-            console.warn(`    Restarting test with this element skipped...`);
+            out.warn(`    Element: <${culprit.tag}> "${culprit.name}"`);
+            out.warn(`    Selector: ${culprit.selector}`);
+            out.warn(`    From: ${urlBeforeTab}`);
+            out.warn(`    To: ${toUrl}`);
+            out.warn(`    Restarting test with this element skipped...`);
           }
           lateNavigationUrl = null;
           break;
@@ -377,7 +374,7 @@ export async function runFocusIndicatorCheck(
 
       retryCount++;
       if (retryCount >= MAX_RETRIES) {
-        console.warn(
+        out.warn(
           `\n⚠️  Max retries (${MAX_RETRIES}) reached. Some elements may not have been tested.`,
         );
         // Keep this page with its annotations for the screenshot
@@ -402,7 +399,7 @@ export async function runFocusIndicatorCheck(
     );
 
     if (elementsWithoutFocusStyle.length > 0) {
-      console.warn(
+      out.warn(
         'Elements without visible focus indicator:',
         elementsWithoutFocusStyle,
       );
@@ -426,7 +423,8 @@ export async function runFocusIndicatorCheck(
       focusObscuredIssues,
       elementsWithObscuredFocus: focusObscuredIssues.length,
       allElements: finalFocusHistory,
-      interrupted: false,
+      // Retries exhausted: elements after the last navigation were not tested.
+      interrupted: retryCount >= MAX_RETRIES,
       screenshotPath: screenshot ? resolvedScreenshotPath : '',
     };
 
@@ -438,32 +436,32 @@ export async function runFocusIndicatorCheck(
     });
 
     // Output results
-    logAuditHeader(
+    out.header(
       'Focus Indicator Check Results',
       'WCAG 2.4.7 / 2.4.11 / 3.2.1',
       result.url,
     );
 
-    console.log(`Total focusable elements: ${details.totalFocusableElements}`);
-    console.log(`Elements with focus style: ${details.elementsWithFocusStyle}`);
-    console.log(
+    out.log(`Total focusable elements: ${details.totalFocusableElements}`);
+    out.log(`Elements with focus style: ${details.elementsWithFocusStyle}`);
+    out.log(
       `Elements WITHOUT focus style: ${details.elementsWithoutFocusStyle}`,
     );
-    console.log(
+    out.log(
       `Elements with OBSCURED focus: ${details.elementsWithObscuredFocus}`,
     );
 
     if (retryCount > 0) {
-      console.log(
+      out.log(
         `\nTest restarted ${retryCount} time(s) due to navigation violations`,
       );
     }
 
     // WCAG 2.4.7 summary
     if (elementsWithoutFocusStyle.length > 0) {
-      console.log('\n--- WCAG 2.4.7: Elements Missing Focus Indicator ---');
+      out.log('\n--- WCAG 2.4.7: Elements Missing Focus Indicator ---');
       elementsWithoutFocusStyle.forEach((el, i) => {
-        console.log(
+        out.log(
           `  ${i + 1}. <${el.tag}> "${el.name}" (role: ${el.role || 'none'})`,
         );
       });
@@ -471,19 +469,15 @@ export async function runFocusIndicatorCheck(
 
     // WCAG 2.4.12 summary
     if (focusObscuredIssues.length > 0) {
-      console.log(
-        '\n--- WCAG 2.4.12: Focus Obscured by Fixed/Sticky Elements ---',
-      );
+      out.log('\n--- WCAG 2.4.12: Focus Obscured by Fixed/Sticky Elements ---');
       focusObscuredIssues.forEach((issue, i) => {
-        console.log(
-          `  ${i + 1}. <${issue.element.tag}> "${issue.element.name}"`,
-        );
-        console.log(`     Selector: ${issue.element.selector}`);
-        console.log(
+        out.log(`  ${i + 1}. <${issue.element.tag}> "${issue.element.name}"`);
+        out.log(`     Selector: ${issue.element.selector}`);
+        out.log(
           `     Obscured ratio: ${(issue.obscuredRatio * 100).toFixed(1)}%`,
         );
         issue.overlaps.forEach((overlap) => {
-          console.log(
+          out.log(
             `     Obscured by: <${overlap.obscuredBy.tag}> "${overlap.obscuredBy.name}"`,
           );
         });
@@ -492,11 +486,11 @@ export async function runFocusIndicatorCheck(
 
     // WCAG 3.2.1 summary
     if (onFocusViolations.length > 0) {
-      console.log('\n--- WCAG 3.2.1: Focus Triggered Context Change ---');
+      out.log('\n--- WCAG 3.2.1: Focus Triggered Context Change ---');
       onFocusViolations.forEach((v, i) => {
-        console.log(`  ${i + 1}. <${v.element.tag}> "${v.element.name}"`);
-        console.log(`     Selector: ${v.element.selector}`);
-        console.log(`     Navigated to: ${v.toUrl}`);
+        out.log(`  ${i + 1}. <${v.element.tag}> "${v.element.name}"`);
+        out.log(`     Selector: ${v.element.selector}`);
+        out.log(`     Navigated to: ${v.toUrl}`);
       });
     }
 
@@ -506,11 +500,8 @@ export async function runFocusIndicatorCheck(
         path: resolvedScreenshotPath,
       });
     }
-    const writtenResultPath = saveAuditResult(result, {
-      ...location,
-      defaultFile: DEFAULT_FOCUS_RESULT_FILE,
-    });
-    logOutputPaths(writtenResultPath, writtenScreenshotPath);
+    out.save(result);
+    out.outputPaths(writtenScreenshotPath);
 
     return result;
   } finally {

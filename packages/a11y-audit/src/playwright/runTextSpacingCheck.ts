@@ -27,14 +27,10 @@ import {
   normalizeTextSpacingCheck,
 } from '../utils/axe-format.js';
 import {
-  saveAuditResult,
   takeAuditScreenshot,
   resolveScreenshotPath,
-  logAuditHeader,
-  logSummary,
-  logIssueList,
-  logOutputPaths,
-  type OutputLocationOptions,
+  createAuditOutput,
+  type AuditOutputOptions,
 } from '../utils/test-harness.js';
 
 interface ElementMetrics {
@@ -349,7 +345,7 @@ function detectClippingIssues(
   return issues;
 }
 
-export interface RunTextSpacingCheckOptions extends OutputLocationOptions {
+export interface RunTextSpacingCheckOptions extends AuditOutputOptions {
   /** A page already navigated to the target URL. */
   page: Page;
   /** Tolerance in pixels for clip detection (default: 2). */
@@ -371,6 +367,10 @@ export async function runTextSpacingCheck(
     screenshot = false,
     ...location
   } = options;
+  const out = createAuditOutput({
+    ...location,
+    defaultFile: DEFAULT_TEXT_SPACING_RESULT_FILE,
+  });
 
   const beforeMetrics = await page.evaluate(collectElementMetrics, {
     checkSelector: TEXT_SPACING_CHECK_SELECTOR,
@@ -401,14 +401,14 @@ export async function runTextSpacingCheck(
     buckets: normalizeTextSpacingCheck(details),
   });
 
-  logAuditHeader('Text Spacing Check Results', 'WCAG 1.4.12', result.url);
+  out.header('Text Spacing Check Results', 'WCAG 1.4.12', result.url);
 
-  logSummary({
+  out.summary({
     'Elements with overflow:hidden checked': details.totalElementsChecked,
     'Elements with clipping issues': details.clippedElements.length,
   });
 
-  logIssueList<TextSpacingIssue>(
+  out.issueList<TextSpacingIssue>(
     'Clipped Elements',
     details.clippedElements,
     (el, i) => [
@@ -419,22 +419,19 @@ export async function runTextSpacingCheck(
     ],
   );
 
-  const resolvedPath = saveAuditResult(result, {
-    ...location,
-    defaultFile: DEFAULT_TEXT_SPACING_RESULT_FILE,
-  });
+  out.save(result);
 
   let screenshotPath: string | undefined;
   if (screenshot) {
     screenshotPath = await takeAuditScreenshot(page, {
       path: resolveScreenshotPath(
-        resolvedPath,
+        out.resultPath,
         DEFAULT_TEXT_SPACING_SCREENSHOT_FILE,
       ),
     });
   }
 
-  logOutputPaths(resolvedPath, screenshotPath);
+  out.outputPaths(screenshotPath);
 
   return result;
 }

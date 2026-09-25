@@ -69,8 +69,3 @@ export function ensureOutputDir(outputDir: string): void {
     fs.mkdirSync(outputDir, { recursive: true });
   }
 }
-
-/** Save JSON result to file */
-export function saveJsonResult(filePath: string, data: unknown): void {
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-}

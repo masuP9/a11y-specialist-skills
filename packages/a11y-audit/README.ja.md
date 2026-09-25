@@ -216,6 +216,43 @@ test("focus indicators", async ({ browser }, testInfo) => {
 スクリーンショット（有効時）は結果ファイルの隣に書き出します。`outputFile` はファイル名のみ
 指定可能です。絶対パスを使う場合は `outputPath` を使ってください。
 
+### サーバー内で呼ぶ場合
+
+すべての検査は副作用を止めるオプションを受け付けます。既定値は従来どおりの挙動です。
+
+| オプション | 既定 | 内容 |
+|---|---|---|
+| `writeResult` | `true` | `false` のとき結果 JSON を書き出さず、返り値だけにする。`screenshot: true` なら画像は出力先の解決順どおりに書く。 |
+| `quiet` | `false` | `true` のときコンソールに何も出さない。 |
+
+出力先の指定が不正な場合（`outputPath` と `outputDir` の併用など）は、`writeResult: false` でも検査を始める前にエラーになります。
+
+`runTargetSizeCheck` はさらに次のオプションを受け付けます。
+
+| オプション | 既定 | 内容 |
+|---|---|---|
+| `resolveAccessibleNames` | `true` | `false` のときターゲットごとの `locator.ariaSnapshot()` を省き、`accessibleName` をすべて `null` にする。リンク 300 件のページで約 1.1 秒 → 約 0.06 秒。 |
+
+```ts
+const result = await runTargetSizeCheck({
+  page,
+  writeResult: false,
+  quiet: true,
+  resolveAccessibleNames: false,
+});
+```
+
+`quiet` で消える警告のうち、結果の信頼性に関わるものは結果 JSON に残ります。
+
+- keyboard-trap: Tab の押下回数が上限に達して打ち切った場合は `details.tabWalkCapped: true`
+- focus-indicator: フォーカスによる遷移でリトライが上限に達し、未検査の要素が残った場合は `details.interrupted: true`
+
+**同時に実行する場合の前提:**
+
+- リクエストごとに専用の `outputDir` を渡す。スクリーンショットは「出力先ディレクトリ＋固定のファイル名」で書くため、`outputFile` だけを変えても衝突する。
+- リクエストごとに専用の page（と browser context）を使う。検査は viewport の変更や遷移など、page の状態を変える。
+- `runAutoPlayDetection` は判定のためにフレームのスクリーンショットと差分画像を必ず `outputDir` に書き、読み直す。`writeResult: false` で止まるのは `detection-result.json` だけ。
+
 > **リフローの注意.** `runReflowCheck` は自身で狭い viewport を設定するため、遷移済みの
 > page でも動作します。load 時にのみ viewport を読むページでは、legacy スクリプトと完全に
 > 同じ結果を得るために `page.goto(...)` の**前**に viewport を設定してください（互換 entry

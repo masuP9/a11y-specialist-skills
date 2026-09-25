@@ -3,6 +3,40 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Added
+
+- **`writeResult` and `quiet` options on every check** (`AuditOutputOptions`),
+  for callers that run checks inside a server. Both default to the previous
+  behavior.
+  - `writeResult?: boolean` (default `true`): `false` skips writing the result
+    JSON (for auto-play: `detection-result.json`); the result is only
+    returned. Enabled screenshots are still written.
+  - `quiet?: boolean` (default `false`): `true` suppresses all console output.
+- **`runTargetSizeCheck`: `resolveAccessibleNames?: boolean`** (default
+  `true`): `false` skips the sequential per-target `locator.ariaSnapshot()`
+  calls and leaves `accessibleName` `null`. On a 300-link page this cut the
+  check from ~1.1 s to ~0.06 s.
+- **`keyboard-trap-check`: `details.tabWalkCapped`** (always set; optional
+  in the type and JSON Schema so results from earlier versions still
+  validate — absent means unknown): `true` when the Tab walk hit `KEYBOARD_TRAP_MAX_TAB_PRESSES`, so
+  traps late in the tab order may be missed. Previously only a console
+  warning.
+
+### Changed
+
+- Invalid output location options now throw before a check starts (they used
+  to throw only when the result was saved, after the check had run).
+
+### Fixed
+
+- `keyboard-trap-check`: the saved result JSON now includes
+  `details.screenshotPath` (it was set only on the returned object, after the
+  file had been written).
+- `focus-indicator-check`: `details.interrupted` is now `true` when navigation
+  on focus exhausts the retries (it was always `false`).
+
 ## 0.6.0 — 2026-09-15
 
 ### Added
