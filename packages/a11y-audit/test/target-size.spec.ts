@@ -9,7 +9,7 @@
 
 import { test, expect } from './helpers/fixtures.js';
 import { runTargetSizeCheck } from '../dist/playwright/index.js';
-import type { TargetSizeIssue } from '../dist/index.js';
+import type { TargetSizeCheckResult, TargetSizeIssue } from '../dist/index.js';
 
 test('target-size-check — spacing exception geometry', async ({
   baseUrl,
@@ -229,5 +229,34 @@ test('target-size-check — pre-scrolled page with smooth scrolling', async ({
   expect(bySelector('#tiny-fixed')?.spacing?.center).toEqual({
     x: 610,
     y: 810,
+  });
+});
+
+test.describe('target-size-check — resolveAccessibleNames', () => {
+  const allIssues = (r: TargetSizeCheckResult): TargetSizeIssue[] => [
+    ...r.details.failAA,
+    ...r.details.failAAAOnly,
+    ...r.details.exceptedTargets,
+  ];
+
+  test.beforeEach(async ({ baseUrl, page }) => {
+    await page.goto(`${baseUrl}/target-size/finding.html`, {
+      waitUntil: 'networkidle',
+    });
+  });
+
+  test('resolveAccessibleNames: false leaves every name null', async ({
+    page,
+  }, testInfo) => {
+    const common = { page, outputDir: testInfo.outputDir, quiet: true };
+    const named = allIssues(await runTargetSizeCheck(common));
+    expect(named.some((i) => i.accessibleName !== null)).toBe(true);
+
+    const unnamed = allIssues(
+      await runTargetSizeCheck({ ...common, resolveAccessibleNames: false }),
+    );
+    expect(unnamed.every((i) => i.accessibleName === null)).toBe(true);
+    // Everything but the name is unchanged.
+    expect(unnamed).toEqual(named.map((i) => ({ ...i, accessibleName: null })));
   });
 });

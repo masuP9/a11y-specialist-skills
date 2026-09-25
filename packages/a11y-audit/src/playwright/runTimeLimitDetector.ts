@@ -31,13 +31,9 @@ import {
   normalizeTimeLimitDetector,
 } from '../utils/axe-format.js';
 import {
-  saveAuditResult,
   requireTargetUrl,
-  logAuditHeader,
-  logSummary,
-  logIssueList,
-  logOutputPaths,
-  type OutputLocationOptions,
+  createAuditOutput,
+  type AuditOutputOptions,
 } from '../utils/test-harness.js';
 
 /** Timer hook injected before page load (browser context). */
@@ -224,7 +220,7 @@ function detectTimeLimitIndicators(args: {
   return { metaRefresh, countdownIndicators };
 }
 
-export interface RunTimeLimitDetectorOptions extends OutputLocationOptions {
+export interface RunTimeLimitDetectorOptions extends AuditOutputOptions {
   /** An un-navigated page (this function navigates after installing the timer hook). */
   page: Page;
   /** Target URL. Falls back to the `TEST_PAGE` env var; required. */
@@ -251,6 +247,10 @@ export async function runTimeLimitDetector(
     settleMs = 2000,
     ...location
   } = options;
+  const out = createAuditOutput({
+    ...location,
+    defaultFile: DEFAULT_TIME_LIMIT_RESULT_FILE,
+  });
 
   const targetUrl = requireTargetUrl(targetUrlOption);
 
@@ -289,9 +289,9 @@ export async function runTimeLimitDetector(
     buckets: normalizeTimeLimitDetector(details),
   });
 
-  logAuditHeader('Time Limit Detection Results', 'WCAG 2.2.1', result.url);
+  out.header('Time Limit Detection Results', 'WCAG 2.2.1', result.url);
 
-  logSummary({
+  out.summary({
     'Meta refresh tags': details.metaRefresh.length,
     [`Timers detected (${minMs / 1000}s - ${maxMs / 1000}s)`]:
       details.timers.length,
@@ -299,7 +299,7 @@ export async function runTimeLimitDetector(
     'Time limits detected': details.hasTimeLimits,
   });
 
-  logIssueList<MetaRefreshInfo>(
+  out.issueList<MetaRefreshInfo>(
     'Meta Refresh',
     details.metaRefresh,
     (meta, i) => {
@@ -314,7 +314,7 @@ export async function runTimeLimitDetector(
     },
   );
 
-  logIssueList<TimerInfo>('Detected Timers', details.timers, (timer, i) => {
+  out.issueList<TimerInfo>('Detected Timers', details.timers, (timer, i) => {
     const lines = [
       `${i + 1}. ${timer.type} - ${timer.delayMs}ms (${(timer.delayMs / 1000).toFixed(1)}s)`,
     ];
@@ -324,7 +324,7 @@ export async function runTimeLimitDetector(
     return lines;
   });
 
-  logIssueList<CountdownIndicator>(
+  out.issueList<CountdownIndicator>(
     'Countdown Indicators',
     details.countdownIndicators,
     (indicator, i) => {
@@ -340,11 +340,8 @@ export async function runTimeLimitDetector(
     5,
   );
 
-  const resolvedPath = saveAuditResult(result, {
-    ...location,
-    defaultFile: DEFAULT_TIME_LIMIT_RESULT_FILE,
-  });
-  logOutputPaths(resolvedPath);
+  out.save(result);
+  out.outputPaths();
 
   return result;
 }

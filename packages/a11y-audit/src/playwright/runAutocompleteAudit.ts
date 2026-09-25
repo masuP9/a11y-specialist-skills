@@ -31,12 +31,8 @@ import {
   normalizeAutocompleteAudit,
 } from '../utils/axe-format.js';
 import {
-  saveAuditResult,
-  logAuditHeader,
-  logSummary,
-  logIssueList,
-  logOutputPaths,
-  type OutputLocationOptions,
+  createAuditOutput,
+  type AuditOutputOptions,
 } from '../utils/test-harness.js';
 
 interface FieldInfo {
@@ -254,7 +250,7 @@ function analyzeFields(
   return { missing, invalid };
 }
 
-export interface RunAutocompleteAuditOptions extends OutputLocationOptions {
+export interface RunAutocompleteAuditOptions extends AuditOutputOptions {
   /** A page already navigated to the target URL. */
   page: Page;
 }
@@ -267,6 +263,10 @@ export async function runAutocompleteAudit(
   options: RunAutocompleteAuditOptions,
 ): Promise<AutocompleteAuditResult> {
   const { page, ...location } = options;
+  const out = createAuditOutput({
+    ...location,
+    defaultFile: DEFAULT_AUTOCOMPLETE_RESULT_FILE,
+  });
 
   // Collect basic field info from DOM
   const basicFields = await page.evaluate(collectBasicFieldInfo, {
@@ -316,15 +316,15 @@ export async function runAutocompleteAudit(
   });
 
   // Output results
-  logAuditHeader('Autocomplete Audit Results', 'WCAG 1.3.5', result.url);
+  out.header('Autocomplete Audit Results', 'WCAG 1.3.5', result.url);
 
-  logSummary({
+  out.summary({
     'Total form fields': details.totalFieldsChecked,
     'Fields missing autocomplete': details.missingAutocomplete.length,
     'Fields with invalid autocomplete': details.invalidAutocomplete.length,
   });
 
-  logIssueList<AutocompleteIssue>(
+  out.issueList<AutocompleteIssue>(
     'Missing Autocomplete',
     details.missingAutocomplete,
     (el, i) => [
@@ -335,7 +335,7 @@ export async function runAutocompleteAudit(
     ],
   );
 
-  logIssueList<AutocompleteIssue>(
+  out.issueList<AutocompleteIssue>(
     'Invalid Autocomplete',
     details.invalidAutocomplete,
     (el, i) => [
@@ -345,12 +345,9 @@ export async function runAutocompleteAudit(
     ],
   );
 
-  const resolvedPath = saveAuditResult(result, {
-    ...location,
-    defaultFile: DEFAULT_AUTOCOMPLETE_RESULT_FILE,
-  });
+  out.save(result);
 
-  logOutputPaths(resolvedPath);
+  out.outputPaths();
 
   return result;
 }

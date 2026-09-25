@@ -29,4 +29,13 @@ export default tseslint.config(
     files: ['**/*.cjs'],
     languageOptions: { sourceType: 'commonjs', globals: globals.node },
   },
+  {
+    // Checks log through `createAuditOutput()` so `quiet` holds for every
+    // line. test-harness.ts is the one place allowed to touch the console.
+    // (Also flags console use inside page.evaluate callbacks; disable per
+    // line there if ever needed.)
+    files: ['packages/a11y-audit/src/**/*.ts'],
+    ignores: ['packages/a11y-audit/src/utils/test-harness.ts'],
+    rules: { 'no-console': 'error' },
+  },
 );

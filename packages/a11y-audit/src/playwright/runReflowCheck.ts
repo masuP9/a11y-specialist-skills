@@ -33,17 +33,13 @@ import {
 import { createLayoutChecker } from '../utils/layout.js';
 import { buildAuditResult, normalizeReflowCheck } from '../utils/axe-format.js';
 import {
-  saveAuditResult,
   takeAuditScreenshot,
   resolveScreenshotPath,
-  logAuditHeader,
-  logSummary,
-  logIssueList,
-  logOutputPaths,
-  type OutputLocationOptions,
+  createAuditOutput,
+  type AuditOutputOptions,
 } from '../utils/test-harness.js';
 
-export interface RunReflowCheckOptions extends OutputLocationOptions {
+export interface RunReflowCheckOptions extends AuditOutputOptions {
   /** A page already navigated to the target URL. */
   page: Page;
   /** Viewport to measure reflow at (default: 320x256). */
@@ -68,6 +64,10 @@ export async function runReflowCheck(
     screenshot = false,
     ...location
   } = options;
+  const out = createAuditOutput({
+    ...location,
+    defaultFile: DEFAULT_REFLOW_RESULT_FILE,
+  });
 
   await page.setViewportSize({
     width: viewport.width,
@@ -95,9 +95,9 @@ export async function runReflowCheck(
   });
 
   // Output results
-  logAuditHeader('Reflow Check Results', 'WCAG 1.4.10', result.url);
+  out.header('Reflow Check Results', 'WCAG 1.4.10', result.url);
 
-  logSummary({
+  out.summary({
     Viewport: `${details.viewport.width}x${details.viewport.height}`,
     'Document scroll width': `${details.documentScrollWidth}px`,
     'Document client width': `${details.documentClientWidth}px`,
@@ -106,7 +106,7 @@ export async function runReflowCheck(
     'Clipped text elements': details.clippedTextElements.length,
   });
 
-  logIssueList<ReflowIssue>(
+  out.issueList<ReflowIssue>(
     'Overflowing Elements',
     details.overflowingElements,
     (el, i) => [
@@ -115,7 +115,7 @@ export async function runReflowCheck(
     ],
   );
 
-  logIssueList<ClippedTextElement>(
+  out.issueList<ClippedTextElement>(
     'Clipped Text Elements',
     details.clippedTextElements,
     (el, i) => [
@@ -125,19 +125,19 @@ export async function runReflowCheck(
     ],
   );
 
-  const resolvedPath = saveAuditResult(result, {
-    ...location,
-    defaultFile: DEFAULT_REFLOW_RESULT_FILE,
-  });
+  out.save(result);
 
   let screenshotPath: string | undefined;
   if (screenshot) {
     screenshotPath = await takeAuditScreenshot(page, {
-      path: resolveScreenshotPath(resolvedPath, DEFAULT_REFLOW_SCREENSHOT_FILE),
+      path: resolveScreenshotPath(
+        out.resultPath,
+        DEFAULT_REFLOW_SCREENSHOT_FILE,
+      ),
     });
   }
 
-  logOutputPaths(resolvedPath, screenshotPath);
+  out.outputPaths(screenshotPath);
 
   return result;
 }

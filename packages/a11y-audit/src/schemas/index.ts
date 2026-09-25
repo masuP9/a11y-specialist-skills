@@ -619,6 +619,7 @@ export const KEYBOARD_TRAP_CHECK_RESULT_SCHEMA: JsonSchema =
         trapCandidates: { type: 'number' },
         confirmedTraps: { type: 'array', items: { type: 'object' } },
         needsReview: { type: 'array', items: { type: 'object' } },
+        tabWalkCapped: { type: 'boolean' },
         screenshotPath: { type: 'string' },
       },
     },

@@ -202,6 +202,7 @@ test('keyboard-trap-check envelope validates against its schema', () => {
       },
     ],
     needsReview: [],
+    tabWalkCapped: false,
     screenshotPath: '',
   };
   const result = buildAuditResult({
@@ -211,6 +212,11 @@ test('keyboard-trap-check envelope validates against its schema', () => {
     buckets: normalizeKeyboardTrapCheck(details),
   });
   expectValid('keyboard-trap-check', result);
+
+  // Results from versions before `tabWalkCapped` existed still validate.
+  const legacy = structuredClone(result);
+  delete legacy.details.tabWalkCapped;
+  expectValid('keyboard-trap-check', legacy);
 });
 
 test('the pre-0.3.0 flat result shape is rejected', () => {

@@ -36,6 +36,10 @@ import {
   generateRecommendation,
   printSummary,
 } from '../utils/recommendations.js';
+import {
+  createAuditOutput,
+  type AuditOutputOptions,
+} from '../utils/test-harness.js';
 
 /** Capture screenshots at configured intervals. */
 async function captureScreenshots(
@@ -73,6 +77,14 @@ export interface RunAutoPlayDetectionOptions {
   outputDir?: string;
   /** Significant-change threshold in percent (default: 0.1). */
   changeThreshold?: number;
+  /**
+   * Whether to write `detection-result.json` (default: true). The frame
+   * screenshots and diff images are always written to `outputDir` — the
+   * detection compares them on disk.
+   */
+  writeResult?: AuditOutputOptions['writeResult'];
+  /** Suppress all console output (default: false). */
+  quiet?: AuditOutputOptions['quiet'];
 }
 
 /**
@@ -85,7 +97,12 @@ export interface RunAutoPlayDetectionOptions {
 export async function runAutoPlayDetection(
   options: RunAutoPlayDetectionOptions,
 ): Promise<AutoPlayDetectionResult> {
-  const { page, changeThreshold = CHANGE_THRESHOLD } = options;
+  const {
+    page,
+    changeThreshold = CHANGE_THRESHOLD,
+    writeResult,
+    quiet,
+  } = options;
   const outputDir =
     options.outputDir ??
     path.join(
@@ -119,11 +136,16 @@ export async function runAutoPlayDetection(
     formatDiffPercent,
     hasSignificantChange,
     ensureOutputDir,
-    saveJsonResult,
   } = imageCompare;
   const { detectPauseControls, verifyPauseControl, createSkippedVerification } =
     detectors;
 
+  const out = createAuditOutput({
+    outputDir,
+    defaultFile: DETECTION_RESULT_FILENAME,
+    writeResult,
+    quiet,
+  });
   ensureOutputDir(outputDir);
 
   // Take screenshots at intervals.
@@ -213,10 +235,10 @@ export async function runAutoPlayDetection(
     buckets: normalizeAutoPlayDetection(details),
   });
 
-  console.log('\n=== Auto-play Detection Results ===\n');
-  console.log(JSON.stringify(result, null, 2));
+  out.log('\n=== Auto-play Detection Results ===\n');
+  out.log(JSON.stringify(result, null, 2));
 
-  saveJsonResult(path.join(outputDir, DETECTION_RESULT_FILENAME), result);
+  out.save(result);
 
   printSummary(
     {
@@ -226,6 +248,7 @@ export async function runAutoPlayDetection(
       pauseVerification,
     },
     outputDir,
+    out.log,
   );
 
   return result;

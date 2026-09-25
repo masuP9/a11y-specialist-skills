@@ -51,11 +51,12 @@ export function generateRecommendation(ctx: RecommendationContext): string {
 }
 
 /**
- * Print summary to console.
+ * Print the summary through `log` (the caller decides whether to print).
  */
 export function printSummary(
   ctx: RecommendationContext,
   outputDir: string,
+  log: (...args: unknown[]) => void,
 ): void {
   const {
     hasAutoPlayContent,
@@ -64,73 +65,63 @@ export function printSummary(
     pauseVerification,
   } = ctx;
 
-  console.log('\n--- Summary ---');
+  log('\n--- Summary ---');
 
   if (!hasAutoPlayContent) {
-    console.log('✓ No auto-playing content detected in viewport');
+    log('✓ No auto-playing content detected in viewport');
     return;
   }
 
-  console.log('⚠ Auto-playing content detected!');
-  console.log(
-    `  Stops within 5 seconds: ${stopsWithin5Seconds ? 'Yes' : 'No'}`,
-  );
-  console.log(`  Screenshots saved to: ${outputDir}`);
-  console.log('  Diff images generated for visual verification');
+  log('⚠ Auto-playing content detected!');
+  log(`  Stops within 5 seconds: ${stopsWithin5Seconds ? 'Yes' : 'No'}`);
+  log(`  Screenshots saved to: ${outputDir}`);
+  log('  Diff images generated for visual verification');
 
   // Pause control detection
-  console.log('\n--- Pause Control Detection ---');
+  log('\n--- Pause Control Detection ---');
   if (pauseControls.found) {
-    console.log(`✓ Pause controls found: ${pauseControls.controls.length}`);
+    log(`✓ Pause controls found: ${pauseControls.controls.length}`);
     pauseControls.controls.forEach((ctrl, i) => {
-      console.log(
+      log(
         `  ${i + 1}. <${ctrl.element}> "${ctrl.name}" (matched by: ${ctrl.matchedBy})`,
       );
     });
     if (!pauseControls.hasAccessibleName) {
-      console.log(
-        '⚠ Warning: Pause control lacks accessible name (aria-label)',
-      );
+      log('⚠ Warning: Pause control lacks accessible name (aria-label)');
     }
   } else {
-    console.log('✗ No pause controls detected');
+    log('✗ No pause controls detected');
   }
 
   // Pause verification results
   if (pauseVerification.attempted) {
-    console.log('\n--- Pause Control Verification ---');
-    console.log(`  Control clicked: ${pauseVerification.controlClicked}`);
-    console.log(
-      `  Change before click: ${pauseVerification.beforeClickDiffPercent}`,
-    );
-    console.log(
-      `  Change after click: ${pauseVerification.afterClickDiffPercent}`,
-    );
+    log('\n--- Pause Control Verification ---');
+    log(`  Control clicked: ${pauseVerification.controlClicked}`);
+    log(`  Change before click: ${pauseVerification.beforeClickDiffPercent}`);
+    log(`  Change after click: ${pauseVerification.afterClickDiffPercent}`);
     if (pauseVerification.pauseWorked === true) {
-      console.log('✓ Pause control WORKS - animation stopped after clicking');
+      log('✓ Pause control WORKS - animation stopped after clicking');
     } else if (pauseVerification.pauseWorked === false) {
-      console.log(
-        '✗ Pause control DOES NOT WORK - animation continues after clicking',
-      );
+      log('✗ Pause control DOES NOT WORK - animation continues after clicking');
     } else if (pauseVerification.error) {
-      console.log(`⚠ Verification error: ${pauseVerification.error}`);
+      log(`⚠ Verification error: ${pauseVerification.error}`);
     }
   }
 
   if (pauseControls.carouselIndicators.length > 0) {
-    console.log(
+    log(
       `\nCarousel navigation controls found: ${pauseControls.carouselIndicators.length}`,
     );
   }
 
   // Manual verification checklist
-  console.log('\nManual verification required:');
-  console.log('  - Verify pause/stop controls are keyboard accessible');
-  console.log('  - Check for audio auto-play (requires manual listening)');
+  log('\nManual verification required:');
+  log('  - Verify pause/stop controls are keyboard accessible');
+  log('  - Check for audio auto-play (requires manual listening)');
   if (!pauseControls.hasAccessibleName && pauseControls.found) {
-    console.log('  - Add aria-label to pause control buttons');
+    log('  - Add aria-label to pause control buttons');
   }
   if (pauseVerification.pauseWorked === false) {
-    console.log('  - Fix the pause control to actually stop the animation');
+    log('  - Fix the pause control to actually stop the animation');
   }
 }

@@ -1,8 +1,8 @@
 /**
  * Test harness utilities for the audit checks.
  *
- * Provides output-path resolution (options → env → cwd), result writing, and
- * console logging helpers shared by the four checks.
+ * Provides output-path resolution (options → env → cwd) and the per-run
+ * output channel (result writing + console logging) shared by the checks.
  */
 
 import * as fs from 'node:fs';
@@ -73,29 +73,118 @@ export function resolveOutputPath(
 // Result Output
 // =============================================================================
 
-export interface SaveResultOptions extends OutputLocationOptions {
-  /** Default file name when none is provided via options. */
-  defaultFile: string;
+/**
+ * Options shared by every check: where to write, and whether to write or log
+ * at all. `writeResult: false` + `quiet: true` makes a check side-effect free
+ * apart from the page itself (and screenshots, when enabled).
+ */
+export interface AuditOutputOptions extends OutputLocationOptions {
+  /**
+   * Whether to write the result JSON file (default: true). When `false` the
+   * result is only returned. Screenshots, when enabled, are still written to
+   * the resolved output location.
+   */
+  writeResult?: boolean;
+  /** Suppress all console output of the check (default: false). */
+  quiet?: boolean;
 }
 
 /**
- * Save an audit result to a JSON file, creating parent directories as needed.
- * The result is written as-is — the envelope built by `buildAuditResult()`
- * already carries the disclaimer.
- *
- * @returns the absolute path the result was written to.
+ * Per-run output channel. Every console line and the result file of a check
+ * goes through one of these, so `quiet` / `writeResult` hold for the whole
+ * run and concurrent runs do not affect each other.
  */
-export function saveAuditResult<T extends object>(
-  result: T,
-  options: SaveResultOptions,
-): string {
-  const { defaultFile, ...location } = options;
-  const resolvedPath = resolveOutputPath({ ...location, defaultFile });
+export interface AuditOutput {
+  /**
+   * Absolute result path, resolved once at creation (also when
+   * `writeResult` is false — screenshots are placed next to it).
+   */
+  readonly resultPath: string;
+  /** Write the result JSON to `resultPath` unless `writeResult` is false. */
+  save(result: object): void;
+  log(...args: unknown[]): void;
+  warn(...args: unknown[]): void;
+  /** Log the header for audit results. */
+  header(title: string, wcagRef: string, url: string): void;
+  /** Log key-value pairs. */
+  summary(items: Record<string, string | number | boolean>): void;
+  /** Log a list of issues, truncated after `maxItems`. */
+  issueList<T>(
+    title: string,
+    items: T[],
+    formatter: (item: T, index: number) => string[],
+    maxItems?: number,
+  ): void;
+  /** Log what was saved (result, screenshot) and the disclaimer. */
+  outputPaths(screenshotPath?: string): void;
+}
 
-  fs.mkdirSync(path.dirname(resolvedPath), { recursive: true });
-  fs.writeFileSync(resolvedPath, JSON.stringify(result, null, 2));
+/**
+ * Create the output channel for one check run.
+ *
+ * @throws if the output location options are invalid (see
+ *   `resolveOutputPath`) — before the check does any work, and also when
+ *   `writeResult` is false.
+ */
+export function createAuditOutput(
+  options: AuditOutputOptions & { defaultFile: string },
+): AuditOutput {
+  const { writeResult = true, quiet = false, ...location } = options;
+  const resultPath = resolveOutputPath(location);
+  let saved = false;
 
-  return resolvedPath;
+  const log = (...args: unknown[]): void => {
+    if (!quiet) console.log(...args);
+  };
+  const warn = (...args: unknown[]): void => {
+    if (!quiet) console.warn(...args);
+  };
+
+  return {
+    resultPath,
+    save(result) {
+      if (!writeResult) return;
+      // Written as-is — the envelope built by `buildAuditResult()` already
+      // carries the disclaimer.
+      fs.mkdirSync(path.dirname(resultPath), { recursive: true });
+      fs.writeFileSync(resultPath, JSON.stringify(result, null, 2));
+      saved = true;
+    },
+    log,
+    warn,
+    header(title, wcagRef, url) {
+      log(`\n=== ${title} (${wcagRef}) ===`);
+      log(`URL: ${url}`);
+    },
+    summary(items) {
+      for (const [label, value] of Object.entries(items)) {
+        const displayValue =
+          typeof value === 'boolean' ? (value ? 'YES' : 'No') : value;
+        log(`${label}: ${displayValue}`);
+      }
+    },
+    issueList(title, items, formatter, maxItems = 10) {
+      if (items.length === 0) {
+        return;
+      }
+      log(`\n--- ${title} ---`);
+      items.slice(0, maxItems).forEach((item, index) => {
+        formatter(item, index).forEach((line) => log(`  ${line}`));
+      });
+      if (items.length > maxItems) {
+        log(`  ... and ${items.length - maxItems} more`);
+      }
+    },
+    outputPaths(screenshotPath) {
+      if (saved) {
+        log(`\nResults saved to: ${resultPath}`);
+      }
+      if (screenshotPath) {
+        log(`${saved ? '' : '\n'}Screenshot saved to: ${screenshotPath}`);
+      }
+      log(DISCLAIMER_CONSOLE);
+    },
+  };
 }
 
 // =============================================================================
@@ -162,63 +251,4 @@ export function requireTargetUrl(explicit?: string): string {
  */
 export function getTargetUrl(defaultPath: string): string {
   return process.env.TEST_PAGE || defaultPath;
-}
-
-// =============================================================================
-// Console Logging
-// =============================================================================
-
-/** Log the header for audit results to console. */
-export function logAuditHeader(
-  title: string,
-  wcagRef: string,
-  url: string,
-): void {
-  console.log(`\n=== ${title} (${wcagRef}) ===`);
-  console.log(`URL: ${url}`);
-}
-
-/** Log a summary section with key-value pairs. */
-export function logSummary(
-  items: Record<string, string | number | boolean>,
-): void {
-  for (const [label, value] of Object.entries(items)) {
-    const displayValue =
-      typeof value === 'boolean' ? (value ? 'YES' : 'No') : value;
-    console.log(`${label}: ${displayValue}`);
-  }
-}
-
-/** Log a list of issues with truncation. */
-export function logIssueList<T>(
-  title: string,
-  items: T[],
-  formatter: (item: T, index: number) => string[],
-  maxItems = 10,
-): void {
-  if (items.length === 0) {
-    return;
-  }
-
-  console.log(`\n--- ${title} ---`);
-  items.slice(0, maxItems).forEach((item, index) => {
-    const lines = formatter(item, index);
-    lines.forEach((line) => console.log(`  ${line}`));
-  });
-
-  if (items.length > maxItems) {
-    console.log(`  ... and ${items.length - maxItems} more`);
-  }
-}
-
-/** Log the output file paths and disclaimer. */
-export function logOutputPaths(
-  outputPath: string,
-  screenshotPath?: string,
-): void {
-  console.log(`\nResults saved to: ${outputPath}`);
-  if (screenshotPath) {
-    console.log(`Screenshot saved to: ${screenshotPath}`);
-  }
-  console.log(DISCLAIMER_CONSOLE);
 }

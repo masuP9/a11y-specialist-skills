@@ -35,14 +35,12 @@ import {
   normalizeOrientationCheck,
 } from '../utils/axe-format.js';
 import {
-  saveAuditResult,
-  resolveOutputPath,
   takeAuditScreenshot,
   resolveScreenshotPath,
   requireTargetUrl,
-  logAuditHeader,
-  logOutputPaths,
-  type OutputLocationOptions,
+  createAuditOutput,
+  type AuditOutput,
+  type AuditOutputOptions,
 } from '../utils/test-harness.js';
 
 interface OrientationCheckArgs {
@@ -132,22 +130,21 @@ function determineLockLocation(
 
 /** Log orientation state for a specific orientation. */
 function logOrientationState(
+  out: AuditOutput,
   label: string,
   viewport: { width: number; height: number },
   state: OrientationState,
 ): void {
-  console.log(`\n${label} (${viewport.width}x${viewport.height}):`);
-  console.log(`  Lock message found: ${state.lockMessageFound ? 'YES' : 'No'}`);
+  out.log(`\n${label} (${viewport.width}x${viewport.height}):`);
+  out.log(`  Lock message found: ${state.lockMessageFound ? 'YES' : 'No'}`);
   if (state.lockMessageText) {
-    console.log(`  Message: "${state.lockMessageText}"`);
+    out.log(`  Message: "${state.lockMessageText}"`);
   }
-  console.log(
-    `  Main content hidden: ${state.mainContentHidden ? 'YES' : 'No'}`,
-  );
-  console.log(`  Body size: ${state.bodyWidth}x${state.bodyHeight}`);
+  out.log(`  Main content hidden: ${state.mainContentHidden ? 'YES' : 'No'}`);
+  out.log(`  Body size: ${state.bodyWidth}x${state.bodyHeight}`);
 }
 
-export interface RunOrientationCheckOptions extends OutputLocationOptions {
+export interface RunOrientationCheckOptions extends AuditOutputOptions {
   /**
    * A page to drive. This check navigates the page itself (once per
    * orientation), so the page does not need to be pre-navigated.
@@ -178,9 +175,8 @@ export async function runOrientationCheck(
     mainContentSelectors: [...MAIN_CONTENT_SELECTORS],
   };
 
-  // Resolve where the result will be written up front so screenshots can be
-  // placed next to it (mirrors saveAuditResult's resolution).
-  const resolvedPath = resolveOutputPath({
+  // Resolved up front so screenshots can be placed next to the result.
+  const out = createAuditOutput({
     ...location,
     defaultFile: DEFAULT_ORIENTATION_RESULT_FILE,
   });
@@ -194,7 +190,7 @@ export async function runOrientationCheck(
   if (screenshot) {
     portraitScreenshotPath = await takeAuditScreenshot(page, {
       path: resolveScreenshotPath(
-        resolvedPath,
+        out.resultPath,
         DEFAULT_ORIENTATION_PORTRAIT_SCREENSHOT_FILE,
       ),
     });
@@ -212,7 +208,7 @@ export async function runOrientationCheck(
   if (screenshot) {
     landscapeScreenshotPath = await takeAuditScreenshot(page, {
       path: resolveScreenshotPath(
-        resolvedPath,
+        out.resultPath,
         DEFAULT_ORIENTATION_LANDSCAPE_SCREENSHOT_FILE,
       ),
     });
@@ -244,34 +240,33 @@ export async function runOrientationCheck(
   });
 
   // Output results
-  logAuditHeader('Orientation Check Results', 'WCAG 1.3.4', result.url);
+  out.header('Orientation Check Results', 'WCAG 1.3.4', result.url);
   logOrientationState(
+    out,
     'Portrait',
     ORIENTATION_VIEWPORTS.portrait,
     details.portrait,
   );
   logOrientationState(
+    out,
     'Landscape',
     ORIENTATION_VIEWPORTS.landscape,
     details.landscape,
   );
 
-  console.log(
+  out.log(
     `\nOrientation lock detected: ${details.hasOrientationLock ? 'YES' : 'No'}`,
   );
   if (details.hasOrientationLock) {
-    console.log(`Lock detected in: ${details.lockDetectedIn}`);
+    out.log(`Lock detected in: ${details.lockDetectedIn}`);
   }
 
-  const writtenPath = saveAuditResult(result, {
-    ...location,
-    defaultFile: DEFAULT_ORIENTATION_RESULT_FILE,
-  });
+  out.save(result);
 
   const screenshotPaths = [portraitScreenshotPath, landscapeScreenshotPath]
     .filter((p): p is string => p !== undefined)
     .join(', ');
-  logOutputPaths(writtenPath, screenshotPaths || undefined);
+  out.outputPaths(screenshotPaths || undefined);
 
   return result;
 }

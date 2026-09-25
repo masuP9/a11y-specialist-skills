@@ -224,6 +224,53 @@ For every check:
 Screenshots (when enabled) are written next to the result file. `outputFile`
 must be a bare filename; use `outputPath` for an absolute location.
 
+### Calling from a server
+
+Every check accepts options that turn off its side effects. The defaults keep
+the existing behavior.
+
+| Option | Default | Effect |
+|---|---|---|
+| `writeResult` | `true` | When `false`, no result JSON is written; the result is only returned. With `screenshot: true` the image is still written per the resolution order above. |
+| `quiet` | `false` | When `true`, nothing is printed to the console. |
+
+Invalid output options (e.g. `outputPath` together with `outputDir`) throw
+before the check starts, even with `writeResult: false`.
+
+`runTargetSizeCheck` also accepts:
+
+| Option | Default | Effect |
+|---|---|---|
+| `resolveAccessibleNames` | `true` | When `false`, skips the per-target `locator.ariaSnapshot()` call and sets every `accessibleName` to `null`. On a page with 300 links: ~1.1 s → ~0.06 s. |
+
+```ts
+const result = await runTargetSizeCheck({
+  page,
+  writeResult: false,
+  quiet: true,
+  resolveAccessibleNames: false,
+});
+```
+
+Warnings that `quiet` hides but that affect how far the result can be trusted
+are kept in the result JSON:
+
+- keyboard-trap: `details.tabWalkCapped: true` when the Tab walk hit the press
+  limit.
+- focus-indicator: `details.interrupted: true` when navigation on focus
+  exhausted the retries and some elements were not tested.
+
+**Running checks concurrently:**
+
+- Give each request its own `outputDir`. Screenshots are written as the output
+  directory plus a fixed file name, so changing only `outputFile` still
+  collides.
+- Give each request its own page (and browser context). Checks change page
+  state such as the viewport and the current URL.
+- `runAutoPlayDetection` always writes frame screenshots and diff images to
+  `outputDir` and reads them back to decide; `writeResult: false` only skips
+  `detection-result.json`.
+
 > **Reflow note.** `runReflowCheck` sets the narrow viewport itself, so it works
 > on an already-navigated page. For pages that read the viewport only at load
 > time, set the viewport *before* `page.goto(...)` for results identical to the

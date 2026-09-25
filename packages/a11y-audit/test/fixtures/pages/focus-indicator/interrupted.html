@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      focus-indicator interrupted: navigation on focus exhausts retries
+    </title>
+  </head>
+  <body>
+    <!--
+      Six buttons navigate on focus. Each navigation restarts the walk with the
+      culprit skipped; the fifth restart hits MAX_RETRIES (5), so the walk ends
+      before every element is tested.
+    -->
+    <button onfocus="location.href = 'clear.html'">nav 1</button>
+    <button onfocus="location.href = 'clear.html'">nav 2</button>
+    <button onfocus="location.href = 'clear.html'">nav 3</button>
+    <button onfocus="location.href = 'clear.html'">nav 4</button>
+    <button onfocus="location.href = 'clear.html'">nav 5</button>
+    <button onfocus="location.href = 'clear.html'">nav 6</button>
+  </body>
+</html>
