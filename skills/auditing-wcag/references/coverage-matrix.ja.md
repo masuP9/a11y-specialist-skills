@@ -26,7 +26,7 @@
 | 1.4.4 | 自動+手動 | `zoom-200-check` **[CLI]** + スクショ | 200%で欠落/重なりならFail |
 | 1.4.5 | 手動+コンテンツ | スクショ | テキストが画像化ならFail |
 | 1.4.10 | 自動+手動 | `reflow-check` **[CLI]** + スクショ | 横スクロール必須でFail |
-| 1.4.11 | 自動 | axe非テキストコントラストルール | 非テキストコントラスト不足でFail |
+| 1.4.11 | 手動 | スクショ + 色の計測 | 非テキストコントラスト不足でFail（axeに該当ルールなし、CLI未対応） |
 | 1.4.12 | 自動+手動 | `text-spacing-check` **[CLI]** + スクショ | 文字欠落/重なりでFail |
 | 1.4.13 | インタラクティブ | 動画/ログ | 解除/保持不可でFail |
 
@@ -34,7 +34,7 @@
 | 基準 | テスト方法 | 証跡 | 判定ルール |
 |---|---|---|---|
 | 2.1.1 | インタラクティブ | 操作ログ | キーボード不可でFail |
-| 2.1.2 | インタラクティブ | 操作ログ | トラップでFail |
+| 2.1.2 | 自動+インタラクティブ | `keyboard-trap-check` **[CLI]** + 操作ログ | トラップでFail |
 | 2.1.4 | インタラクティブ | 操作ログ | 単一キー回避不可でFail |
 | 2.2.1 | 自動+手動 | `time-limit-detector` **[CLI]** + 操作ログ | 延長/解除不可でFail |
 | 2.2.2 | 自動+インタラクティブ | `auto-play-detection` **[CLI]** + 操作ログ | 停止/一時停止不可でFail |
@@ -46,11 +46,11 @@
 | 2.4.5 | 自動+コンテンツ | リンクグラフ + 検索/サイトマップ検出 | 複数手段なしでFail |
 | 2.4.6 | 自動+コンテンツ | a11y tree/文面 | 見出し/ラベルが不明瞭でFail |
 | 2.4.7 | インタラクティブ | スクショ | フォーカス不可視でFail |
-| 2.4.11 | インタラクティブ | スクショ/計測 | 最低要件未満でFail |
-| 2.4.12 | インタラクティブ | スクショ | フォーカスが隠れるとFail |
+| 2.4.11 | 自動+インタラクティブ | `focus-indicator-check` **[CLI]** + スクショ | フォーカスが作成者のコンテンツで完全に隠れるとFail |
+| 2.4.12 (AAA) | インタラクティブ | スクショ | フォーカスが一部でも隠れるとFail |
 | 2.5.1 | インタラクティブ | 操作ログ | 複雑ジェスチャ必須でFail |
 | 2.5.2 | インタラクティブ | 操作ログ | 誤作動/キャンセル不可でFail |
-| 2.5.3 | 自動 | a11y name比較 | ラベル文字列不一致でFail |
+| 2.5.3 | 自動+手動 | a11y name比較（axe `label-content-name-mismatch` は実験的ルールのため既定では未実行） | ラベル文字列不一致でFail |
 | 2.5.4 | インタラクティブ | 操作ログ | 動作検知のみでFail |
 | 2.5.7 | インタラクティブ | 操作ログ | ドラッグ必須でFail |
 | 2.5.8 | 自動 | `target-size-check` **[CLI]** | 最低サイズ未満でFail |
@@ -92,6 +92,7 @@
 | 1.4.4 | `zoom-200-check` | `zoom-200-result.json` |
 | 1.4.10 | `reflow-check` | `reflow-result.json` |
 | 1.4.12 | `text-spacing-check` | `text-spacing-result.json` |
+| 2.1.2 | `keyboard-trap-check` | `keyboard-trap-result.json` |
 | 2.2.1 | `time-limit-detector` | `time-limit-result.json` |
-| 2.4.7, 2.4.12, 3.2.1 | `focus-indicator-check` | `focus-indicator-result.json`, `focus-indicators.png` |
+| 2.4.7, 2.4.11, 2.4.12 (AAA), 3.2.1 | `focus-indicator-check` | `focus-indicator-result.json`, `focus-indicators.png` |
 | 2.5.5, 2.5.8 | `target-size-check` | `target-size-result.json`, `target-size-screenshot.png` |
