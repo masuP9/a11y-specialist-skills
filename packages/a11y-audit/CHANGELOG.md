@@ -25,7 +25,10 @@ adheres to [Semantic Versioning](https://semver.org/).
   `aria-activedescendant` got inside; otherwise `details.popups[]` records
   `opened-not-entered` (so dialogs or tooltips that misuse `aria-haspopup`
   produce no candidates). Popups rendered elsewhere in the DOM (portals) are
-  found by comparing visible items before and after the key press.
+  found by comparing visible items before and after the key press. Popups
+  with more than 10 items are sampled like a manual check (enter, ArrowDown
+  moves on, ArrowUp comes back; `status: "sampled"`) and only the visited
+  items are listed.
 - Navigation, reload or the 60 s time budget stop the check early; untested
   elements are `not-evaluated` and the rule is reported as incomplete.
 - Known limitations: listeners delegated to `document` / `window` are not
