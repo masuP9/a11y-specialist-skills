@@ -16,6 +16,18 @@
 | 2.1.2 | すべてのフォーカスを抜けられる | 操作ログ | フォーカストラップがある |
 | 2.1.4 | 文字キー単独ショートカットの無効化/再割当/フォーカス限定 | 操作ログ | ショートカットが誤発火し回避不可 |
 
+### `keyboard-reachability-check` CLIチェック
+
+Tab キー、複合部品（tablist・toolbar・menu・listbox・ラジオ群など）の中での矢印キー、`aria-activedescendant` のいずれでも届かなかった操作可能要素を、理由と確信度（high / medium / low）付きで報告します。
+
+```bash
+npx -y @a11y-skills/audit --url "https://example.com" --checks keyboard-reachability-check
+```
+
+- 候補は常に incomplete です。同じ機能を別の要素や独自ショートカットで操作できれば適合なので、人手で確認します。
+- `keyboard-reachability-result.json` の `details.elements` に、全要素の到達方法（`tab` / `arrow` / `activedescendant` / `unreachable` / `not-evaluated`）が入ります。
+- 機能の完全性、読み込み後に表示される要素、grid / treegrid、Shadow DOM / iframe、独自ショートカットは手動で確認します。
+
 ## フォーカス
 | 基準 | 操作 | 証跡 | Fail条件 |
 |---|---|---|---|

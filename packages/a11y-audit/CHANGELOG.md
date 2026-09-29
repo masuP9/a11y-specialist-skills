@@ -3,6 +3,29 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## 0.8.0 — 2026-09-29
+
+### Added
+
+- **`keyboard-reachability-check` (WCAG 2.1.1)** — `runKeyboardReachabilityCheck`
+  (takes a `browser`) and the CLI check name `keyboard-reachability-check`.
+  It presses Tab through the page, arrow keys inside each composite widget it
+  could enter (tablist, menu, menubar, listbox, radiogroup, toolbar, tree,
+  native radio groups), and follows `aria-activedescendant`. Operable elements
+  that no path reaches are reported under the new rule
+  `a11y-skills/keyboard-unreachable` (always incomplete) with a `reason` and a
+  `confidence`.
+- `details.elements` lists every operable element with how it was reached
+  (`tab` / `arrow` / `activedescendant` / `unreachable` / `not-evaluated`),
+  for consumers that import results per element.
+- Navigation, reload or the 60 s time budget stop the check early; untested
+  elements are `not-evaluated` and the rule is reported as incomplete.
+- Known limitations: listeners delegated to `document` / `window` are not
+  attributed to elements; Shadow DOM, iframes, content shown after load and
+  grid / treegrid are not explored; arrow keys may change the selection of
+  radios, single-select listboxes and auto-activated tabs (in the check's own
+  browser context).
+
 ## 0.7.0 — 2026-09-25
 
 ### Added

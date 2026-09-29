@@ -25,10 +25,12 @@ Claude Code skill から機能本体を切り出したものです。10 個の�
 | `runAutocompleteAudit` | 1.3.5 入力目的の特定 |
 | `runTimeLimitDetector` | 2.2.1 タイミング調整可能 |
 | `runAutoPlayDetection` | 1.4.2 音声制御 / 2.2.2 一時停止、停止、非表示 |
+| `runKeyboardReachabilityCheck` | 2.1.1 キーボード（Tab・複合部品内の矢印キー・activedescendant） |
 
 多くの検査は遷移済みの `page` を受けます。一部は navigation を所有し `targetUrl`
 （または `TEST_PAGE`）を受けます: `runOrientationCheck` と `runTimeLimitDetector`
-（`runZoomCheck` は URL 指定時）。`runFocusIndicatorCheck` は `browser` を受けます。
+（`runZoomCheck` は URL 指定時）。`runFocusIndicatorCheck` と
+`runKeyboardReachabilityCheck` は `browser` を受けます。
 `runAutoPlayDetection` は optional 依存 `pixelmatch` + `pngjs` が必要です（インストール参照）。
 
 ## インストール
@@ -90,6 +92,7 @@ autocomplete-audit
 time-limit-detector
 auto-play-detection
 target-size-check
+keyboard-reachability-check
 ```
 
 ### 終了コード

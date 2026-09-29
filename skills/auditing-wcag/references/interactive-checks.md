@@ -16,6 +16,18 @@ Items verified by simulating user interaction with Playwright. Focus on stateful
 | 2.1.2 | Escape all focus areas | logs | Keyboard trap exists |
 | 2.1.4 | Single-key shortcuts can be disabled/remapped or are focus-limited | logs | Shortcut triggers unexpectedly with no escape |
 
+### `keyboard-reachability-check` CLI Check
+
+Reports operable elements that were reached neither by Tab, nor by arrow keys inside a composite widget (tablist, toolbar, menu, listbox, radio group, etc.), nor via `aria-activedescendant`, with a reason and a confidence (high / medium / low).
+
+```bash
+npx -y @a11y-skills/audit --url "https://example.com" --checks keyboard-reachability-check
+```
+
+- Candidates are always incomplete: the criterion is met if the same function is keyboard operable through another element or a custom shortcut, so verify manually.
+- `details.elements` in `keyboard-reachability-result.json` records how every element was reached (`tab` / `arrow` / `activedescendant` / `unreachable` / `not-evaluated`).
+- Verify manually: completeness of functions, content shown after load, grid / treegrid, Shadow DOM / iframes, custom shortcuts.
+
 ## Focus
 | Criterion | Action | Evidence | Fail rule |
 |---|---|---|---|

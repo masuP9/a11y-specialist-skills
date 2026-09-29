@@ -26,11 +26,12 @@ test entries.
 | `runAutocompleteAudit` | 1.3.5 Identify Input Purpose |
 | `runTimeLimitDetector` | 2.2.1 Timing Adjustable |
 | `runAutoPlayDetection` | 1.4.2 Audio Control / 2.2.2 Pause, Stop, Hide |
+| `runKeyboardReachabilityCheck` | 2.1.1 Keyboard (Tab, arrow keys in composite widgets, activedescendant) |
 
 Most checks take an already-navigated `page`. A few own navigation and take a
 `targetUrl` instead (or `TEST_PAGE`): `runOrientationCheck` and
 `runTimeLimitDetector` (and `runZoomCheck` when a URL is given).
-`runFocusIndicatorCheck` takes a `browser`. `runAutoPlayDetection` needs the
+`runFocusIndicatorCheck` and `runKeyboardReachabilityCheck` take a `browser`. `runAutoPlayDetection` needs the
 optional `pixelmatch` + `pngjs` deps (see Install).
 
 ## Install
@@ -92,6 +93,7 @@ autocomplete-audit
 time-limit-detector
 auto-play-detection
 target-size-check
+keyboard-reachability-check
 ```
 
 ### Exit codes
