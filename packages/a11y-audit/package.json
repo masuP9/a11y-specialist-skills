@@ -1,7 +1,7 @@
 {
   "name": "@a11y-skills/audit",
   "version": "0.7.0",
-  "description": "Playwright + axe-core based WCAG 2.2 accessibility audit functions (axe, focus indicator, keyboard trap, reflow, target size, text spacing, zoom, orientation, autocomplete, time limit, auto-play).",
+  "description": "Playwright + axe-core based WCAG 2.2 accessibility audit functions (axe, focus indicator, keyboard trap, keyboard reachability, reflow, target size, text spacing, zoom, orientation, autocomplete, time limit, auto-play).",
   "type": "module",
   "license": "MIT",
   "author": {
@@ -88,6 +88,10 @@
     "./test-entries/keyboard-trap-check": {
       "types": "./dist/test-entries/keyboard-trap-check.d.ts",
       "import": "./dist/test-entries/keyboard-trap-check.js"
+    },
+    "./test-entries/keyboard-reachability-check": {
+      "types": "./dist/test-entries/keyboard-reachability-check.d.ts",
+      "import": "./dist/test-entries/keyboard-reachability-check.js"
     }
   },
   "files": [
