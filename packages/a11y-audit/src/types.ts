@@ -29,7 +29,8 @@ export type CheckSource =
   | 'autocomplete-audit'
   | 'time-limit-detector'
   | 'auto-play-detection'
-  | 'keyboard-trap-check';
+  | 'keyboard-trap-check'
+  | 'keyboard-reachability-check';
 
 export type NormalizedImpact = 'critical' | 'serious' | 'moderate' | 'minor';
 
@@ -681,3 +682,78 @@ export interface KeyboardTrapCheckDetails {
 
 export type KeyboardTrapCheckResult =
   AuditCheckResult<KeyboardTrapCheckDetails>;
+
+// =============================================================================
+// Keyboard Reachability Check (WCAG 2.1.1)
+// =============================================================================
+
+/**
+ * How an operable element was first reached. `not-evaluated` means the check
+ * could not test it (aborted, budget exhausted, unsupported widget) — distinct
+ * from `unreachable`, which was tested and not reached.
+ */
+export type KeyboardReachMethod =
+  | 'tab'
+  | 'arrow'
+  | 'activedescendant'
+  | 'unreachable'
+  | 'not-evaluated';
+
+export interface KeyboardReachabilityElement {
+  selector: string;
+  tag: string;
+  role: string | null;
+  name: string;
+  html: string;
+  htmlTruncated: boolean;
+  /** Raw tabindex attribute, or null when absent. */
+  tabindex: string | null;
+  /** Why the element counts as operable (native > role > onclick > click-listener). */
+  evidence: 'native' | 'role' | 'onclick' | 'click-listener';
+  reachedBy: KeyboardReachMethod;
+  /** Selector of the nearest composite widget (or native radio group), if any. */
+  compositeSelector: string | null;
+  /** Set only when reachedBy is 'unreachable' or 'not-evaluated'. */
+  reason: string | null;
+  /** Set only when reachedBy is 'unreachable'. */
+  confidence: 'high' | 'medium' | 'low' | null;
+}
+
+export interface KeyboardReachabilityComposite {
+  selector: string;
+  role: string;
+  orientation: 'horizontal' | 'vertical' | 'both' | 'none';
+  keysPressed: number;
+  status: 'explored' | 'stopped' | 'not-explored';
+  stopReason: string | null;
+}
+
+export interface KeyboardReachabilityCheckDetails {
+  totalOperableElements: number;
+  reachedCount: number;
+  unreachableCount: number;
+  /** Elements that could not be tested (reachedBy 'not-evaluated'). */
+  notEvaluatedCount: number;
+  /** Operable elements left out of `elements`, by first matching reason. */
+  excluded: {
+    disabled: number;
+    inert: number;
+    hidden: number;
+    insideOperable: number;
+  };
+  /** Every operable element (reached and unreached). */
+  elements: KeyboardReachabilityElement[];
+  composites: KeyboardReachabilityComposite[];
+  /** `true` when the Tab walk hit its press limit before cycling the page. */
+  tabWalkCapped: boolean;
+  /** Set when exploration stopped early for the whole page. */
+  aborted: { reason: 'navigation' | 'timeout'; url: string } | null;
+  /**
+   * Path the screenshot was written to. Empty string when `screenshot` was
+   * disabled or the check was aborted.
+   */
+  screenshotPath: string;
+}
+
+export type KeyboardReachabilityCheckResult =
+  AuditCheckResult<KeyboardReachabilityCheckDetails>;
