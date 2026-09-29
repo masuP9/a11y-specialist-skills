@@ -33,7 +33,7 @@ Methods are labeled as Automated/Interactive/Manual/Content and can be combined.
 ## 2. Operable
 | Criterion | Test Method | Evidence | Judgment Rule |
 |---|---|---|---|
-| 2.1.1 | Interactive | logs | Fail if keyboard-only not possible |
+| 2.1.1 | Automated + Interactive | `keyboard-reachability-check` **[CLI]** + logs | Fail if keyboard-only not possible |
 | 2.1.2 | Automated + Interactive | `keyboard-trap-check` **[CLI]** + logs | Fail on keyboard trap |
 | 2.1.4 | Interactive | logs | Fail if single-key shortcuts cannot be mitigated |
 | 2.2.1 | Automated + Manual | `time-limit-detector` **[CLI]** + logs | Fail if time limits cannot be extended/disabled |
@@ -92,6 +92,7 @@ The following criteria can be automatically checked via the `a11y-audit` CLI (se
 | 1.4.4 | `zoom-200-check` | `zoom-200-result.json` |
 | 1.4.10 | `reflow-check` | `reflow-result.json` |
 | 1.4.12 | `text-spacing-check` | `text-spacing-result.json` |
+| 2.1.1 | `keyboard-reachability-check` | `keyboard-reachability-result.json` |
 | 2.1.2 | `keyboard-trap-check` | `keyboard-trap-result.json` |
 | 2.2.1 | `time-limit-detector` | `time-limit-result.json` |
 | 2.4.7, 2.4.11, 2.4.12 (AAA), 3.2.1 | `focus-indicator-check` | `focus-indicator-result.json`, `focus-indicators.png` |

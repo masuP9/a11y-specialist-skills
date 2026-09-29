@@ -1,0 +1,106 @@
+<!doctype html>
+<!--
+  keyboard-reachability-check: large popups (> 10 items) are sampled
+  - #country: role=combobox with 12 options (activedescendant). ArrowDown
+    opens on the first option, ArrowDown moves on, ArrowUp comes back
+    → status 'sampled'; only the visited options are in elements; no candidates.
+  - #stuck: menu button with 12 items; ArrowDown opens and focuses the first
+    item, but the menu ignores arrow keys → 'sample-next-failed', the second
+    item is a popup-sample-next-failed / medium candidate.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Keyboard reachability: large popups</title>
+  </head>
+  <body>
+    <h1>Keyboard reachability: large popups</h1>
+
+    <label for="country">Country</label>
+    <input
+      id="country"
+      type="text"
+      role="combobox"
+      aria-controls="country-list"
+      aria-expanded="false"
+    />
+    <ul id="country-list" role="listbox" aria-label="Countries" hidden>
+      <li role="option" id="c1">Austria</li>
+      <li role="option" id="c2">Belgium</li>
+      <li role="option" id="c3">Canada</li>
+      <li role="option" id="c4">Denmark</li>
+      <li role="option" id="c5">Egypt</li>
+      <li role="option" id="c6">France</li>
+      <li role="option" id="c7">Germany</li>
+      <li role="option" id="c8">Hungary</li>
+      <li role="option" id="c9">India</li>
+      <li role="option" id="c10">Japan</li>
+      <li role="option" id="c11">Kenya</li>
+      <li role="option" id="c12">Laos</li>
+    </ul>
+
+    <button
+      type="button"
+      id="stuck"
+      aria-haspopup="menu"
+      aria-controls="stuck-menu"
+    >
+      Stuck
+    </button>
+    <div role="menu" id="stuck-menu" aria-label="Stuck" hidden>
+      <div role="menuitem" id="s1" tabindex="-1">Item 1</div>
+      <div role="menuitem" id="s2" tabindex="-1">Item 2</div>
+      <div role="menuitem" id="s3" tabindex="-1">Item 3</div>
+      <div role="menuitem" id="s4" tabindex="-1">Item 4</div>
+      <div role="menuitem" id="s5" tabindex="-1">Item 5</div>
+      <div role="menuitem" id="s6" tabindex="-1">Item 6</div>
+      <div role="menuitem" id="s7" tabindex="-1">Item 7</div>
+      <div role="menuitem" id="s8" tabindex="-1">Item 8</div>
+      <div role="menuitem" id="s9" tabindex="-1">Item 9</div>
+      <div role="menuitem" id="s10" tabindex="-1">Item 10</div>
+      <div role="menuitem" id="s11" tabindex="-1">Item 11</div>
+      <div role="menuitem" id="s12" tabindex="-1">Item 12</div>
+    </div>
+
+    <script>
+      const input = document.getElementById('country');
+      const list = document.getElementById('country-list');
+      const options = [...list.querySelectorAll('[role="option"]')];
+      let active = -1;
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          if (list.hidden) {
+            list.hidden = false;
+            input.setAttribute('aria-expanded', 'true');
+            active = 0;
+          } else active = Math.min(active + 1, options.length - 1);
+          input.setAttribute('aria-activedescendant', options[active].id);
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          active = Math.max(active - 1, 0);
+          input.setAttribute('aria-activedescendant', options[active].id);
+        } else if (e.key === 'Escape') {
+          list.hidden = true;
+          input.setAttribute('aria-expanded', 'false');
+          input.removeAttribute('aria-activedescendant');
+        }
+      });
+
+      const stuck = document.getElementById('stuck');
+      const stuckMenu = document.getElementById('stuck-menu');
+      stuck.addEventListener('keydown', (e) => {
+        if (e.key !== 'ArrowDown') return;
+        e.preventDefault();
+        stuckMenu.hidden = false;
+        document.getElementById('s1').focus();
+      });
+      stuckMenu.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          stuckMenu.hidden = true;
+          stuck.focus();
+        }
+      });
+    </script>
+  </body>
+</html>

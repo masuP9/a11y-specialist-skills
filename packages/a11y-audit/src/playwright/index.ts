@@ -51,6 +51,10 @@ export {
   runKeyboardTrapCheck,
   type RunKeyboardTrapCheckOptions,
 } from './runKeyboardTrapCheck.js';
+export {
+  runKeyboardReachabilityCheck,
+  type RunKeyboardReachabilityCheckOptions,
+} from './runKeyboardReachabilityCheck.js';
 
 export {
   resolveOutputPath,

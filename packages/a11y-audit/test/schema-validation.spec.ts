@@ -10,12 +10,14 @@ import {
   buildAuditResult,
   normalizeAxeResults,
   normalizeFocusCheck,
+  normalizeKeyboardReachabilityCheck,
   normalizeKeyboardTrapCheck,
   normalizeReflowCheck,
   normalizeTargetSizeCheck,
 } from '../dist/index.js';
 import type {
   FocusCheckDetails,
+  KeyboardReachabilityCheckDetails,
   KeyboardTrapCheckDetails,
   ReflowCheckDetails,
   TargetSizeCheckDetails,
@@ -217,6 +219,120 @@ test('keyboard-trap-check envelope validates against its schema', () => {
   const legacy = structuredClone(result);
   delete legacy.details.tabWalkCapped;
   expectValid('keyboard-trap-check', legacy);
+});
+
+test('keyboard-reachability-check envelope with every reachedBy value validates against its schema', () => {
+  const base = {
+    tag: 'button',
+    role: 'button',
+    html: '<button>x</button>',
+    htmlTruncated: false,
+    tabindex: null,
+    evidence: 'native' as const,
+    compositeSelector: null,
+    foundIn: 'load' as const,
+  };
+  const details: KeyboardReachabilityCheckDetails = {
+    totalOperableElements: 5,
+    reachedCount: 3,
+    unreachableCount: 1,
+    notEvaluatedCount: 1,
+    excluded: { disabled: 1, inert: 0, hidden: 2, insideOperable: 0 },
+    elements: [
+      {
+        ...base,
+        selector: '#a',
+        name: 'A',
+        reachedBy: 'tab',
+        reason: null,
+        confidence: null,
+      },
+      {
+        ...base,
+        selector: '#b',
+        name: 'B',
+        reachedBy: 'arrow',
+        compositeSelector: '#tb',
+        reason: null,
+        confidence: null,
+      },
+      {
+        ...base,
+        selector: '#c',
+        name: 'C',
+        role: 'option',
+        reachedBy: 'activedescendant',
+        compositeSelector: '#lb',
+        foundIn: 'popup',
+        reason: null,
+        confidence: null,
+      },
+      {
+        ...base,
+        selector: '#d',
+        name: 'D',
+        tabindex: '-1',
+        reachedBy: 'unreachable',
+        reason: 'tabindex-negative-outside-composite',
+        confidence: 'high',
+      },
+      {
+        ...base,
+        selector: '#e',
+        name: 'E',
+        reachedBy: 'not-evaluated',
+        compositeSelector: '#tb',
+        reason: 'exploration-aborted',
+        confidence: null,
+      },
+    ],
+    composites: [
+      {
+        selector: '#tb',
+        role: 'toolbar',
+        orientation: 'horizontal',
+        keysPressed: 3,
+        status: 'stopped',
+        stopReason: 'aborted',
+      },
+      {
+        selector: '#lb',
+        role: 'listbox',
+        orientation: 'vertical',
+        keysPressed: 4,
+        status: 'explored',
+        stopReason: null,
+      },
+    ],
+    popups: [
+      {
+        triggerSelector: '#combo',
+        popupSelector: '#lb',
+        status: 'explored',
+        itemsFound: 1,
+        keysPressed: 2,
+        stopReason: null,
+      },
+      {
+        triggerSelector: '#hint',
+        popupSelector: null,
+        status: 'opened-not-entered',
+        itemsFound: 1,
+        keysPressed: 2,
+        stopReason: null,
+      },
+    ],
+    tabWalkCapped: false,
+    aborted: { reason: 'navigation', url: 'about:blank#next' },
+    screenshotPath: '',
+  };
+  const result = buildAuditResult({
+    source: 'keyboard-reachability-check',
+    url: 'about:blank',
+    details,
+    buckets: normalizeKeyboardReachabilityCheck(details),
+  });
+  expectValid('keyboard-reachability-check', result);
 });
 
 test('the pre-0.3.0 flat result shape is rejected', () => {

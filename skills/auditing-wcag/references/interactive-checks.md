@@ -16,6 +16,19 @@ Items verified by simulating user interaction with Playwright. Focus on stateful
 | 2.1.2 | Escape all focus areas | logs | Keyboard trap exists |
 | 2.1.4 | Single-key shortcuts can be disabled/remapped or are focus-limited | logs | Shortcut triggers unexpectedly with no escape |
 
+### `keyboard-reachability-check` CLI Check
+
+Reports operable elements that were reached neither by Tab, nor by arrow keys inside a composite widget (tablist, toolbar, menu, listbox, radio group, etc.), nor via `aria-activedescendant`, with a reason and a confidence (high / medium / low).
+
+```bash
+npx -y @a11y-skills/audit --url "https://example.com" --checks keyboard-reachability-check
+```
+
+- Candidates are always incomplete: the criterion is met if the same function is keyboard operable through another element or a custom shortcut, so verify manually.
+- `details.elements` in `keyboard-reachability-result.json` records how every element was reached (`tab` / `arrow` / `activedescendant` / `unreachable` / `not-evaluated`).
+- Comboboxes (`role="combobox"`) and `aria-haspopup` (`true` / `menu` / `listbox` / `tree`) elements are opened one level with ArrowDown, and their option / menuitem / treeitem items are checked too (`details.popups`). Popups with more than 10 items are only sampled: the first item can be entered, ArrowDown moves on, ArrowUp comes back (`sampled`). Popups the keyboard could not get into are only recorded as `opened-not-entered`; verify them manually.
+- Verify manually: completeness of functions, nested submenus, popups opened with Enter / Space, other content shown after load, grid / treegrid, Shadow DOM / iframes, custom shortcuts.
+
 ## Focus
 | Criterion | Action | Evidence | Fail rule |
 |---|---|---|---|

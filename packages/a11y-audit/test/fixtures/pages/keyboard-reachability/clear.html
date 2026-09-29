@@ -1,0 +1,142 @@
+<!doctype html>
+<!--
+  keyboard-reachability-check: clear
+  Every operable element is reachable by Tab, by arrow keys inside its
+  composite widget (roving tabindex / native radio group), or via
+  aria-activedescendant. Disabled / display:none / inert controls are excluded.
+  A visible button inside aria-hidden="true" is still counted and reached by Tab.
+  Expected: a11y-skills/keyboard-unreachable → passes (unreachableCount 0).
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Keyboard reachability: clear</title>
+  </head>
+  <body>
+    <h1>Keyboard reachability: clear</h1>
+
+    <a href="#top" id="plain-link">Plain link</a>
+    <button type="button" id="plain-button">Plain button</button>
+
+    <!-- Roving tablist (manual activation: arrows move focus only) -->
+    <div role="tablist" aria-label="Sections" id="tabs">
+      <button
+        type="button"
+        role="tab"
+        id="tab1"
+        tabindex="0"
+        aria-selected="true"
+      >
+        One
+      </button>
+      <button
+        type="button"
+        role="tab"
+        id="tab2"
+        tabindex="-1"
+        aria-selected="false"
+      >
+        Two
+      </button>
+      <button
+        type="button"
+        role="tab"
+        id="tab3"
+        tabindex="-1"
+        aria-selected="false"
+      >
+        Three
+      </button>
+    </div>
+    <div role="tabpanel" aria-labelledby="tab1">Panel text only.</div>
+
+    <!-- activedescendant listbox: DOM focus stays on the container -->
+    <div
+      role="listbox"
+      id="fruits"
+      tabindex="0"
+      aria-label="Fruits"
+      aria-activedescendant="opt1"
+    >
+      <div role="option" id="opt1" aria-selected="true">Apple</div>
+      <div role="option" id="opt2" aria-selected="false">Banana</div>
+      <div role="option" id="opt3" aria-selected="false">Cherry</div>
+      <div role="option" id="opt4" aria-selected="false">Durian</div>
+    </div>
+
+    <!-- Roving toolbar whose entry is the MIDDLE item; arrows stop at the ends -->
+    <div role="toolbar" aria-label="Formatting" id="toolbar">
+      <button type="button" id="tb1" tabindex="-1">Bold</button>
+      <button type="button" id="tb2" tabindex="0">Italic</button>
+      <button type="button" id="tb3" tabindex="-1">Underline</button>
+    </div>
+
+    <fieldset>
+      <legend>Size</legend>
+      <label><input type="radio" name="size" id="size-s" checked /> S</label>
+      <label><input type="radio" name="size" id="size-m" /> M</label>
+      <label><input type="radio" name="size" id="size-l" /> L</label>
+    </fieldset>
+
+    <div aria-hidden="true">
+      <button type="button" id="hidden-from-at">Visible but aria-hidden</button>
+    </div>
+
+    <!-- Excluded: one each of disabled / hidden / inert -->
+    <button type="button" id="disabled-button" disabled>Disabled</button>
+    <button type="button" id="display-none" style="display: none">None</button>
+    <section inert>
+      <button type="button" id="inert-button">Inert</button>
+    </section>
+
+    <script>
+      function roving(container, items, nextKey, prevKey) {
+        container.addEventListener('keydown', (e) => {
+          const i = items.indexOf(document.activeElement);
+          if (i < 0) return;
+          let j = i;
+          if (e.key === nextKey) j = Math.min(i + 1, items.length - 1);
+          else if (e.key === prevKey) j = Math.max(i - 1, 0);
+          else if (e.key === 'Home') j = 0;
+          else if (e.key === 'End') j = items.length - 1;
+          else return;
+          e.preventDefault();
+          items[i].tabIndex = -1;
+          items[j].tabIndex = 0;
+          items[j].focus();
+        });
+      }
+      const tabs = document.getElementById('tabs');
+      roving(
+        tabs,
+        [...tabs.querySelectorAll('[role="tab"]')],
+        'ArrowRight',
+        'ArrowLeft',
+      );
+      const toolbar = document.getElementById('toolbar');
+      roving(
+        toolbar,
+        [...toolbar.querySelectorAll('button')],
+        'ArrowRight',
+        'ArrowLeft',
+      );
+
+      const listbox = document.getElementById('fruits');
+      const options = [...listbox.querySelectorAll('[role="option"]')];
+      listbox.addEventListener('keydown', (e) => {
+        const current = document.getElementById(
+          listbox.getAttribute('aria-activedescendant'),
+        );
+        const i = options.indexOf(current);
+        let j = i;
+        if (e.key === 'ArrowDown') j = Math.min(i + 1, options.length - 1);
+        else if (e.key === 'ArrowUp') j = Math.max(i - 1, 0);
+        else if (e.key === 'Home') j = 0;
+        else if (e.key === 'End') j = options.length - 1;
+        else return;
+        e.preventDefault();
+        listbox.setAttribute('aria-activedescendant', options[j].id);
+      });
+    </script>
+  </body>
+</html>

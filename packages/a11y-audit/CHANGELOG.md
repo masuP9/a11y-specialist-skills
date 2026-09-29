@@ -3,6 +3,41 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Added
+
+- **`keyboard-reachability-check` (WCAG 2.1.1)** — `runKeyboardReachabilityCheck`
+  (takes a `browser`) and the CLI check name `keyboard-reachability-check`.
+  It presses Tab through the page, arrow keys inside each composite widget it
+  could enter (tablist, menu, menubar, listbox, radiogroup, toolbar, tree,
+  native radio groups), and follows `aria-activedescendant`. Operable elements
+  that no path reaches are reported under the new rule
+  `a11y-skills/keyboard-unreachable` (always incomplete) with a `reason` and a
+  `confidence`.
+- `details.elements` lists every operable element with how it was reached
+  (`tab` / `arrow` / `activedescendant` / `unreachable` / `not-evaluated`),
+  for consumers that import results per element.
+- One level of popups is opened with ArrowDown from an explicit
+  `role="combobox"` or an `aria-haspopup` (`true` / `menu` / `listbox` /
+  `tree`) trigger. Items that appear (`option`, `menuitem*`, `treeitem`) are
+  added with `foundIn: "popup"` and judged only when focus or
+  `aria-activedescendant` got inside; otherwise `details.popups[]` records
+  `opened-not-entered` (so dialogs or tooltips that misuse `aria-haspopup`
+  produce no candidates). Popups rendered elsewhere in the DOM (portals) are
+  found by comparing visible items before and after the key press. Popups
+  with more than 10 items are sampled like a manual check (enter, ArrowDown
+  moves on, ArrowUp comes back; `status: "sampled"`) and only the visited
+  items are listed.
+- Navigation, reload or the 60 s time budget stop the check early; untested
+  elements are `not-evaluated` and the rule is reported as incomplete.
+- Known limitations: listeners delegated to `document` / `window` are not
+  attributed to elements; Shadow DOM, iframes, nested submenus, popups opened
+  by Enter / Space / Alt+ArrowDown, other content shown after load and
+  grid / treegrid are not explored; arrow keys may change the selection of
+  radios, single-select listboxes and auto-activated tabs (in the check's own
+  browser context).
+
 ## 0.7.0 — 2026-09-25
 
 ### Added

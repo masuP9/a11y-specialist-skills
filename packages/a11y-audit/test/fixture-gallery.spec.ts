@@ -1,5 +1,5 @@
 /**
- * Fixture Gallery: manifest-driven integration tests for all 11 checks.
+ * Fixture Gallery: manifest-driven integration tests for all 12 checks.
  *
  * Each manifest entry:
  * - Serves an HTML fixture from test/fixtures/pages/ via a worker-scoped
@@ -10,7 +10,7 @@
  * - For 'passes' expectations: also guards against silent inapplicable pass.
  * - Validates the result envelope against RESULT_SCHEMAS[check] via Ajv.
  *
- * Coverage: all 18 custom finding-capable rules from rule-registry.ts.
+ * Coverage: all 19 custom finding-capable rules from rule-registry.ts.
  * axe-audit: representative rule (image-alt); full rule coverage is out of
  * scope for axe (hundreds of external rules).
  */
@@ -351,6 +351,27 @@ const MANIFEST: ManifestEntry[] = [
     expectRules: {
       'a11y-skills/no-keyboard-trap': 'passes',
       'a11y-skills/keyboard-trap-needs-review': 'passes',
+    },
+  },
+
+  // =========================================================================
+  // keyboard-reachability-check
+  // Rule 19: a11y-skills/keyboard-unreachable (incomplete)
+  // =========================================================================
+  {
+    check: 'keyboard-reachability-check',
+    scenario: 'finding: keyboard-unreachable (tabindex=-1, onclick, listener)',
+    fixture: 'keyboard-reachability/finding.html',
+    expectRules: {
+      'a11y-skills/keyboard-unreachable': 'incomplete',
+    },
+  },
+  {
+    check: 'keyboard-reachability-check',
+    scenario: 'clear: roving tabindex, activedescendant and native radios',
+    fixture: 'keyboard-reachability/clear.html',
+    expectRules: {
+      'a11y-skills/keyboard-unreachable': 'passes',
     },
   },
 ];

@@ -285,6 +285,22 @@ export const RULES = {
     // 2.1.2 allows non-standard exit if the user is advised; that judgment is manual.
     classification: 'incomplete',
   },
+
+  // --- keyboard-reachability-check ---
+  'keyboard-unreachable': {
+    id: 'a11y-skills/keyboard-unreachable',
+    sc: ['2.1.1'],
+    tags: ['a11y-skills', 'wcag2a', 'wcag211'],
+    impact: 'serious',
+    scope: 'node',
+    description:
+      'Ensure every operable element can be reached with the keyboard',
+    help: 'Operable elements must be reachable via Tab, arrow keys within composite widgets, or aria-activedescendant',
+    helpUrl: `${UNDERSTANDING}/keyboard.html`,
+    // 2.1.1 is about functions, not elements: the same function may be keyboard
+    // operable elsewhere (duplicate control, custom shortcut). Always manual review.
+    classification: 'incomplete',
+  },
 } as const satisfies Record<string, RuleMeta>;
 
 export type RuleKey = keyof typeof RULES;

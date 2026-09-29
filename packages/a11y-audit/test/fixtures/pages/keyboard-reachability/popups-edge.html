@@ -1,0 +1,81 @@
+<!doctype html>
+<!--
+  keyboard-reachability-check: popup edge cases
+  - #shared-a and #shared-b open the same #shared-menu. A shows it without
+    moving focus (opened-not-entered); B focuses its first item (explored).
+    The items must still be found and judged for B.
+  - #bad-ref: aria-controls points to a missing id. Its ArrowDown reveals an
+    unrelated menu and focuses it; with an explicit (unresolved) reference no
+    items may be collected → not-opened, unrelated items not in elements.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Keyboard reachability: popup edge cases</title>
+  </head>
+  <body>
+    <h1>Keyboard reachability: popup edge cases</h1>
+
+    <button type="button" id="shared-a" aria-haspopup="true">Shared A</button>
+    <button type="button" id="shared-b" aria-haspopup="true">Shared B</button>
+    <div role="menu" id="shared-menu" aria-label="Shared" hidden>
+      <div role="menuitem" id="shared-one" tabindex="-1">One</div>
+      <div role="menuitem" id="shared-two" tabindex="-1">Two</div>
+    </div>
+
+    <button
+      type="button"
+      id="bad-ref"
+      aria-haspopup="true"
+      aria-controls="missing-menu"
+    >
+      Bad reference
+    </button>
+    <div role="menu" id="unrelated-menu" aria-label="Unrelated" hidden>
+      <div role="menuitem" id="unrelated-one" tabindex="-1">One</div>
+      <div role="menuitem" id="unrelated-two" tabindex="-1">Two</div>
+    </div>
+
+    <script>
+      const sharedMenu = document.getElementById('shared-menu');
+      const sharedItems = [...sharedMenu.querySelectorAll('[role="menuitem"]')];
+      function closeShared() {
+        sharedMenu.hidden = true;
+      }
+      document.getElementById('shared-a').addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          sharedMenu.hidden = false; // shown, focus stays on the button
+        } else if (e.key === 'Escape') closeShared();
+      });
+      const sharedB = document.getElementById('shared-b');
+      sharedB.addEventListener('keydown', (e) => {
+        if (e.key !== 'ArrowDown') return;
+        e.preventDefault();
+        sharedMenu.hidden = false;
+        sharedItems[0].focus();
+      });
+      sharedMenu.addEventListener('keydown', (e) => {
+        const i = sharedItems.indexOf(document.activeElement);
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          sharedItems[Math.min(i + 1, sharedItems.length - 1)].focus();
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          sharedItems[Math.max(i - 1, 0)].focus();
+        } else if (e.key === 'Escape') {
+          closeShared();
+          sharedB.focus();
+        }
+      });
+
+      const unrelated = document.getElementById('unrelated-menu');
+      document.getElementById('bad-ref').addEventListener('keydown', (e) => {
+        if (e.key !== 'ArrowDown') return;
+        e.preventDefault();
+        unrelated.hidden = false;
+        document.getElementById('unrelated-one').focus();
+      });
+    </script>
+  </body>
+</html>

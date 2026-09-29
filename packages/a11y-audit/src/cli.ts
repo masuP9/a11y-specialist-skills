@@ -192,6 +192,20 @@ const CHECK_REGISTRY: CheckEntry[] = [
       })) as AuditResultEnvelope;
     },
   },
+  {
+    name: 'keyboard-reachability-check',
+    kind: 'browser',
+    async run({ browser, outputDir, screenshot, url }) {
+      const { runKeyboardReachabilityCheck } =
+        await import('./playwright/runKeyboardReachabilityCheck.js');
+      return (await runKeyboardReachabilityCheck({
+        browser,
+        targetUrl: url,
+        outputDir,
+        screenshot,
+      })) as AuditResultEnvelope;
+    },
+  },
 ];
 
 // ---------------------------------------------------------------------------

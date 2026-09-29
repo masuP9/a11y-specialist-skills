@@ -584,3 +584,92 @@ export const KEYBOARD_TRAP_ESCAPE_SETTLE_MS = 200;
 export const KEYBOARD_TRAP_MAX_ESCAPE_ATTEMPTS = 3;
 export const DEFAULT_KEYBOARD_TRAP_RESULT_FILE = 'keyboard-trap-result.json';
 export const DEFAULT_KEYBOARD_TRAP_SCREENSHOT_FILE = 'keyboard-trap.png';
+
+// =============================================================================
+// Keyboard Reachability Check Constants (WCAG 2.1.1)
+// =============================================================================
+
+/** Composite widgets whose items are explored with arrow keys. */
+export const KEYBOARD_REACHABILITY_COMPOSITE_ROLES = [
+  'tablist',
+  'menu',
+  'menubar',
+  'listbox',
+  'radiogroup',
+  'toolbar',
+  'tree',
+] as const;
+/** Composite roles that are enumerated but not explored (2-D navigation deferred). */
+export const KEYBOARD_REACHABILITY_UNSUPPORTED_COMPOSITE_ROLES = [
+  'grid',
+  'treegrid',
+] as const;
+/**
+ * Natively operable elements for the 2.1.1 reachability check. Deliberately
+ * separate from FOCUSABLE_SELECTOR / INTERACTIVE_SELECTOR (shared by other
+ * checks): includes tabindex="-1" and disabled elements (filtered in-page
+ * with a reason).
+ */
+export const KEYBOARD_REACHABILITY_NATIVE_SELECTOR = [
+  'a[href]',
+  'area[href]',
+  'button',
+  'input:not([type="hidden"])',
+  'select',
+  'textarea',
+  'summary',
+  '[contenteditable=""]',
+  '[contenteditable="true"]',
+].join(', ');
+/** Roles that make an element operable for the reachability check. */
+export const KEYBOARD_REACHABILITY_OPERABLE_ROLES = [
+  'button',
+  'link',
+  'checkbox',
+  'radio',
+  'switch',
+  'menuitem',
+  'menuitemcheckbox',
+  'menuitemradio',
+  'tab',
+  'option',
+  'treeitem',
+  'slider',
+  'spinbutton',
+  'combobox',
+  'textbox',
+  'searchbox',
+] as const;
+/** aria-haspopup values whose popup is opened with ArrowDown (dialog/grid excluded). */
+export const KEYBOARD_REACHABILITY_POPUP_HASPOPUP_VALUES = [
+  'true',
+  'menu',
+  'listbox',
+  'tree',
+] as const;
+/** Only these roles count as popup contents (not dialog controls or tooltips). */
+export const KEYBOARD_REACHABILITY_POPUP_ITEM_ROLES = [
+  'option',
+  'menuitem',
+  'menuitemcheckbox',
+  'menuitemradio',
+  'treeitem',
+] as const;
+/**
+ * Popups with more items than this are sampled (enter, ArrowDown moves on,
+ * ArrowUp comes back) instead of swept item by item.
+ */
+export const KEYBOARD_REACHABILITY_POPUP_SAMPLE_THRESHOLD = 10;
+/** Tab walk: extra Tab presses beyond the focusable count. */
+export const KEYBOARD_REACHABILITY_TAB_SLACK = 10;
+export const KEYBOARD_REACHABILITY_MAX_TAB_PRESSES = 600;
+export const KEYBOARD_REACHABILITY_MAX_ARROW_PRESSES_PER_COMPOSITE = 100;
+export const KEYBOARD_REACHABILITY_MAX_ARROW_PRESSES_TOTAL = 1000;
+/** Added+removed nodes during one composite's exploration before it is stopped. */
+export const KEYBOARD_REACHABILITY_MAX_DOM_MUTATIONS = 200;
+/** Wall-clock budget for the whole check; checked before each key press. */
+export const KEYBOARD_REACHABILITY_TIMEOUT_MS = 60_000;
+export const DEFAULT_KEYBOARD_REACHABILITY_RESULT_FILE =
+  'keyboard-reachability-result.json';
+export const DEFAULT_KEYBOARD_REACHABILITY_SCREENSHOT_FILE =
+  'keyboard-reachability.png';

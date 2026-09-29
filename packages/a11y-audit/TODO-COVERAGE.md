@@ -90,21 +90,26 @@
 
 ## 部分的に自動化可能
 
-### 2.1.1 Keyboard
+### 2.1.1 Keyboard - **部分実装** ✅
 **概要**: 全機能がキーボードで操作可能
 
-**実装アイデア**:
-- Tab キーで全インタラクティブ要素にフォーカス移動
-- フォーカス可能だが `tabindex="-1"` の要素を報告
-- クリックハンドラがあるが非インタラクティブな要素を検出
+**実装**: `keyboard-reachability-check`（`runKeyboardReachabilityCheck.ts`）
+- 読み込み直後に操作可能要素を列挙し、Tab で 1 周、Tab で入れた複合部品
+  （tablist / menu / menubar / listbox / radiogroup / toolbar / tree、ネイティブ
+  ラジオ群）の中を矢印キーで両方向に巡回、`aria-activedescendant` の参照先も記録
+- 届かなかった要素を reason / confidence 付きで incomplete 報告
+  （`tabindex="-1"`、フォーカス不可の `onclick` / role 要素、クリックリスナー付き要素など）
+- 遷移・再読み込み・時間切れで中断したときは、試せなかった要素を
+  `not-evaluated` にして結果を incomplete にする
+- コンボボックス・`aria-haspopup` の要素は ArrowDown で 1 段だけ開き、中の
+  option / menuitem / treeitem も判定（キーボードで中に入れたときだけ）
 
-**検出可能な問題**:
-- `div[onclick]` でフォーカス不可の要素
-- `tabindex="-1"` の操作可能要素
-
-**制限**:
-- カスタムキーボード操作（矢印キーなど）の検証は困難
-- 機能の完全性は手動確認が必要
+**残る制限**:
+- 機能の完全性（同じ機能を別の要素や独自ショートカットで操作できるか）は手動確認
+- `document` / `window` への委譲リスナー、`el.onclick = fn` の代入は検出できない
+- Shadow DOM / iframe の中、2 段目以降のサブメニュー、Enter / Space で開く
+  ポップアップ、その他の読み込み後に表示される要素、grid / treegrid は対象外
+- 独自ショートカット（F6 など）で入る部品は候補として出る
 
 ---
 
@@ -150,12 +155,12 @@
 |-------|---------|------|
 | 中 | 2.1.2 No Keyboard Trap | モーダル問題の検出 |
 | 低 | 1.4.13 Content on Hover | 実装複雑、エッジケース多い |
-| 低 | 2.1.1 Keyboard | 部分的にしか検出できない |
 
 **既存でカバー済み:**
 
 | 達成基準 | カバー元 |
 |---------|---------|
+| 2.1.1 Keyboard | `keyboard-reachability-check`（部分） ✅ |
 | 2.4.1 Bypass Blocks | `automated-checks.md` |
 | 2.4.12 Focus Not Obscured | `focus-indicator-check.ts` ✅ |
 | 2.5.3 Label in Name | `automated-checks.md` |

@@ -83,6 +83,12 @@ const FINDING_EXPECTATIONS: Array<{
     ruleId: 'a11y-skills/keyboard-trap-needs-review',
     expectedBucket: 'incomplete',
   },
+
+  // keyboard-reachability-check
+  {
+    ruleId: 'a11y-skills/keyboard-unreachable',
+    expectedBucket: 'incomplete',
+  },
 ];
 
 /**
@@ -114,14 +120,14 @@ test('all manifest finding expectations agree with rule-registry classification'
   }
 });
 
-test('all 18 custom finding rules have a manifest entry', () => {
+test('all 19 custom finding rules have a manifest entry', () => {
   const manifestRuleIds = new Set(FINDING_EXPECTATIONS.map((e) => e.ruleId));
 
   const registryRuleIds = Object.values(RULES).map((r) => r.id);
   expect(
     registryRuleIds.length,
-    'rule-registry should have 18 custom rules',
-  ).toBe(18);
+    'rule-registry should have 19 custom rules',
+  ).toBe(19);
 
   for (const ruleId of registryRuleIds) {
     expect(

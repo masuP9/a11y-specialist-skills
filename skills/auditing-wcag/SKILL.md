@@ -120,5 +120,6 @@ npx -y @a11y-skills/audit --url "https://example.com" --output-dir ./results
 | `focus-indicator-check` | 2.4.7 | Focus indicator visibility |
 | `target-size-check` | 2.5.5, 2.5.8 | Target size measurement |
 | `keyboard-trap-check` | 2.1.2 | Keyboard trap detection |
+| `keyboard-reachability-check` | 2.1.1 | Keyboard reachability (Tab, arrow keys, activedescendant) |
 
 See the [`@a11y-skills/audit` README](https://www.npmjs.com/package/@a11y-skills/audit) for detailed documentation.
