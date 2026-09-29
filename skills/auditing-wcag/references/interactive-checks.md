@@ -26,7 +26,8 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks keyboard-reachabi
 
 - Candidates are always incomplete: the criterion is met if the same function is keyboard operable through another element or a custom shortcut, so verify manually.
 - `details.elements` in `keyboard-reachability-result.json` records how every element was reached (`tab` / `arrow` / `activedescendant` / `unreachable` / `not-evaluated`).
-- Verify manually: completeness of functions, content shown after load, grid / treegrid, Shadow DOM / iframes, custom shortcuts.
+- Comboboxes (`role="combobox"`) and `aria-haspopup` (`true` / `menu` / `listbox` / `tree`) elements are opened one level with ArrowDown, and their option / menuitem / treeitem items are checked too (`details.popups`). Popups the keyboard could not get into are only recorded as `opened-not-entered`; verify them manually.
+- Verify manually: completeness of functions, nested submenus, popups opened with Enter / Space, other content shown after load, grid / treegrid, Shadow DOM / iframes, custom shortcuts.
 
 ## Focus
 | Criterion | Action | Evidence | Fail rule |

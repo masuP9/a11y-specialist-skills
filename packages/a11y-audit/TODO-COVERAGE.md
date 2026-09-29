@@ -101,11 +101,14 @@
   （`tabindex="-1"`、フォーカス不可の `onclick` / role 要素、クリックリスナー付き要素など）
 - 遷移・再読み込み・時間切れで中断したときは、試せなかった要素を
   `not-evaluated` にして結果を incomplete にする
+- コンボボックス・`aria-haspopup` の要素は ArrowDown で 1 段だけ開き、中の
+  option / menuitem / treeitem も判定（キーボードで中に入れたときだけ）
 
 **残る制限**:
 - 機能の完全性（同じ機能を別の要素や独自ショートカットで操作できるか）は手動確認
 - `document` / `window` への委譲リスナー、`el.onclick = fn` の代入は検出できない
-- Shadow DOM / iframe の中、読み込み後に表示される要素、grid / treegrid は対象外
+- Shadow DOM / iframe の中、2 段目以降のサブメニュー、Enter / Space で開く
+  ポップアップ、その他の読み込み後に表示される要素、grid / treegrid は対象外
 - 独自ショートカット（F6 など）で入る部品は候補として出る
 
 ---

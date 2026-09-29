@@ -18,10 +18,19 @@ adheres to [Semantic Versioning](https://semver.org/).
 - `details.elements` lists every operable element with how it was reached
   (`tab` / `arrow` / `activedescendant` / `unreachable` / `not-evaluated`),
   for consumers that import results per element.
+- One level of popups is opened with ArrowDown from an explicit
+  `role="combobox"` or an `aria-haspopup` (`true` / `menu` / `listbox` /
+  `tree`) trigger. Items that appear (`option`, `menuitem*`, `treeitem`) are
+  added with `foundIn: "popup"` and judged only when focus or
+  `aria-activedescendant` got inside; otherwise `details.popups[]` records
+  `opened-not-entered` (so dialogs or tooltips that misuse `aria-haspopup`
+  produce no candidates). Popups rendered elsewhere in the DOM (portals) are
+  found by comparing visible items before and after the key press.
 - Navigation, reload or the 60 s time budget stop the check early; untested
   elements are `not-evaluated` and the rule is reported as incomplete.
 - Known limitations: listeners delegated to `document` / `window` are not
-  attributed to elements; Shadow DOM, iframes, content shown after load and
+  attributed to elements; Shadow DOM, iframes, nested submenus, popups opened
+  by Enter / Space / Alt+ArrowDown, other content shown after load and
   grid / treegrid are not explored; arrow keys may change the selection of
   radios, single-select listboxes and auto-activated tabs (in the check's own
   browser context).
