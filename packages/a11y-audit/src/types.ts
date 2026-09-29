@@ -738,8 +738,14 @@ export interface KeyboardReachabilityPopup {
   triggerSelector: string;
   /** aria-controls / aria-owns target, or null when found by visibility diff. */
   popupSelector: string | null;
+  /**
+   * 'sampled': more than KEYBOARD_REACHABILITY_POPUP_SAMPLE_THRESHOLD items;
+   * entering, moving on with ArrowDown and back with ArrowUp all worked.
+   * Only the visited items are listed in `elements`.
+   */
   status:
     | 'explored'
+    | 'sampled'
     | 'stopped'
     | 'opened-not-entered'
     | 'not-opened'

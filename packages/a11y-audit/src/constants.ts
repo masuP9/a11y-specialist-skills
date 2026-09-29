@@ -655,6 +655,11 @@ export const KEYBOARD_REACHABILITY_POPUP_ITEM_ROLES = [
   'menuitemradio',
   'treeitem',
 ] as const;
+/**
+ * Popups with more items than this are sampled (enter, ArrowDown moves on,
+ * ArrowUp comes back) instead of swept item by item.
+ */
+export const KEYBOARD_REACHABILITY_POPUP_SAMPLE_THRESHOLD = 10;
 /** Tab walk: extra Tab presses beyond the focusable count. */
 export const KEYBOARD_REACHABILITY_TAB_SLACK = 10;
 export const KEYBOARD_REACHABILITY_MAX_TAB_PRESSES = 600;

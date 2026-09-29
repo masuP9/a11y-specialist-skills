@@ -562,3 +562,53 @@ test('popup-reload page: a reload while opening a popup aborts instead of throwi
   expect(details.aborted?.reason).toBe('navigation');
   expect(details.popups[0]?.stopReason).toBe('aborted');
 });
+
+test('popups-large page: a 12-option combobox is sampled and only visited options are judged', async ({
+  baseUrl,
+  page,
+  browser,
+}, testInfo) => {
+  const result = await runFixtureCheck(
+    'keyboard-reachability-check',
+    'keyboard-reachability/popups-large.html',
+    baseUrl,
+    { page, browser, testInfo },
+    { quiet: true },
+  );
+  const details = result.details as KeyboardReachabilityCheckDetails;
+
+  const popup = details.popups.find((p) =>
+    p.triggerSelector.endsWith('#country'),
+  );
+  expect(popup?.status).toBe('sampled');
+  expect(popup?.itemsFound).toBe(12);
+  expect(byId(details, 'c1').reachedBy).toBe('activedescendant');
+  expect(byId(details, 'c2').reachedBy).toBe('activedescendant');
+  expect(details.elements.some((e) => e.selector.endsWith('#c12'))).toBe(false);
+});
+
+test('popups-large page: a large menu that ignores ArrowDown yields one sample-next-failed candidate', async ({
+  baseUrl,
+  page,
+  browser,
+}, testInfo) => {
+  const result = await runFixtureCheck(
+    'keyboard-reachability-check',
+    'keyboard-reachability/popups-large.html',
+    baseUrl,
+    { page, browser, testInfo },
+    { quiet: true },
+  );
+  const details = result.details as KeyboardReachabilityCheckDetails;
+
+  const popup = details.popups.find((p) =>
+    p.triggerSelector.endsWith('#stuck'),
+  );
+  expect(popup?.status).toBe('stopped');
+  expect(popup?.stopReason).toBe('sample-next-failed');
+  const s2 = byId(details, 's2');
+  expect(s2.reason).toBe('popup-sample-next-failed');
+  expect(s2.confidence).toBe('medium');
+  expect(details.unreachableCount).toBe(1);
+  expect(validate(result), JSON.stringify(validate.errors)).toBe(true);
+});

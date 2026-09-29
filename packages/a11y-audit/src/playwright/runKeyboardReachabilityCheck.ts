@@ -55,6 +55,7 @@ import {
   KEYBOARD_REACHABILITY_OPERABLE_ROLES,
   KEYBOARD_REACHABILITY_POPUP_HASPOPUP_VALUES,
   KEYBOARD_REACHABILITY_POPUP_ITEM_ROLES,
+  KEYBOARD_REACHABILITY_POPUP_SAMPLE_THRESHOLD,
   KEYBOARD_REACHABILITY_TAB_SLACK,
   KEYBOARD_REACHABILITY_TIMEOUT_MS,
   KEYBOARD_REACHABILITY_UNSUPPORTED_COMPOSITE_ROLES,
@@ -1082,8 +1083,58 @@ export async function runKeyboardReachabilityCheck(
     // 3b. Popups: open with ArrowDown (one level), explore only if entered
     // ------------------------------------------------------------------
     const popups: KeyboardReachabilityPopup[] = [];
-    /** Popup items whose popup the keyboard got into; index into `popups`. */
-    const popupItems: Array<{ el: EnumeratedElement; popup: number }> = [];
+    /**
+     * Popup items whose popup the keyboard got into; index into `popups`.
+     * `sampleFailed` marks the item ArrowDown should have moved to.
+     */
+    const popupItems: Array<{
+      el: EnumeratedElement;
+      popup: number;
+      sampleFailed?: boolean;
+    }> = [];
+
+    /**
+     * Human-style check for large popups: from the entered state, ArrowDown
+     * must change the state and ArrowUp must return to it. Returns the stop
+     * reason, or null when both worked.
+     */
+    const samplePopup = async (
+      ci: number,
+      p: KeyboardReachabilityPopup,
+    ): Promise<string | null> => {
+      const guardNow = async (): Promise<GuardResult | null> => {
+        const g = await inPage<GuardResult>('guard', ci);
+        if (!g || g.docId !== docId || run.navigatedTo !== null) {
+          abortNavigation();
+          return null;
+        }
+        return g;
+      };
+      const press = async (key: string): Promise<boolean> => {
+        if (timedOut()) return false;
+        await page.keyboard.press(key);
+        p.keysPressed++;
+        totalArrows++;
+        await settle();
+        return (await sync()) !== null;
+      };
+      const start = await guardNow();
+      if (!start) return 'aborted';
+      if (totalArrows + 2 > KEYBOARD_REACHABILITY_MAX_ARROW_PRESSES_TOTAL) {
+        return 'press-cap';
+      }
+      if (!(await press('ArrowDown'))) return 'aborted';
+      const moved = await guardNow();
+      if (!moved) return 'aborted';
+      if (!moved.inside || moved.state === start.state) {
+        return 'sample-next-failed';
+      }
+      if (moved.valueControl) return 'value-control';
+      if (!(await press('ArrowUp'))) return 'aborted';
+      const back = await guardNow();
+      if (!back) return 'aborted';
+      return back.state === start.state ? null : 'sample-back-failed';
+    };
 
     for (const trigger of elements) {
       if (!trigger.popupTrigger || !reachedBy.has(trigger.id)) continue;
@@ -1170,6 +1221,10 @@ export async function runKeyboardReachabilityCheck(
       } else if (!isEntered) {
         // Could be a dialog/tooltip misusing aria-haspopup: don't judge items.
         p.status = 'opened-not-entered';
+      } else if (found.length > KEYBOARD_REACHABILITY_POPUP_SAMPLE_THRESHOLD) {
+        const stop = await samplePopup(popupCi, p);
+        p.status = stop === null ? 'sampled' : 'stopped';
+        p.stopReason = stop;
       } else {
         const stop = await sweep(
           popupCi,
@@ -1181,10 +1236,24 @@ export async function runKeyboardReachabilityCheck(
         p.stopReason = stop;
       }
       if (isEntered) {
-        // A shared popup is judged once, by the first trigger that got in.
+        const sampled =
+          found.length > KEYBOARD_REACHABILITY_POPUP_SAMPLE_THRESHOLD;
+        // Sampled popups list only what was visited, plus the item ArrowDown
+        // should have reached when it could not move on.
+        const entryIndex = found.findIndex((e) => reachedBy.has(e.id));
+        const nextId =
+          p.stopReason === 'sample-next-failed'
+            ? found[entryIndex + 1]?.id
+            : undefined;
         for (const el of found) {
+          if (sampled && !reachedBy.has(el.id) && el.id !== nextId) continue;
+          // A shared popup is judged once, by the first trigger that got in.
           if (!popupItems.some((x) => x.el.id === el.id)) {
-            popupItems.push({ el, popup: popups.length - 1 });
+            popupItems.push({
+              el,
+              popup: popups.length - 1,
+              sampleFailed: el.id === nextId,
+            });
           }
         }
       }
@@ -1280,6 +1349,7 @@ export async function runKeyboardReachabilityCheck(
     const classifyPopupItem = (
       el: EnumeratedElement,
       p: KeyboardReachabilityPopup,
+      sampleFailed: boolean,
     ): Pick<
       KeyboardReachabilityElement,
       'reachedBy' | 'reason' | 'confidence'
@@ -1288,6 +1358,8 @@ export async function runKeyboardReachabilityCheck(
       if (method) return { reachedBy: method, reason: null, confidence: null };
       if (p.stopReason === 'aborted')
         return notEvaluated('exploration-aborted');
+      if (sampleFailed)
+        return unreachable('popup-sample-next-failed', 'medium');
       if (p.status === 'explored') {
         return unreachable('popup-item-not-reached', 'medium');
       }
@@ -1314,13 +1386,13 @@ export async function runKeyboardReachabilityCheck(
         foundIn: 'load' as const,
         ...classify(el),
       })),
-      ...popupItems.map(({ el, popup }) => {
+      ...popupItems.map(({ el, popup, sampleFailed = false }) => {
         const p = popups[popup]!;
         return {
           ...base(el),
           compositeSelector: p.popupSelector ?? `${p.triggerSelector} (popup)`,
           foundIn: 'popup' as const,
-          ...classifyPopupItem(el, p),
+          ...classifyPopupItem(el, p, sampleFailed),
         };
       }),
     ];

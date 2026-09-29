@@ -706,6 +706,7 @@ const KEYBOARD_REACHABILITY_POPUP_SCHEMA: JsonSchema = {
     status: {
       enum: [
         'explored',
+        'sampled',
         'stopped',
         'opened-not-entered',
         'not-opened',
