@@ -305,6 +305,66 @@ test('navigation page: a navigating arrow key aborts the check with an incomplet
   expect(validate(result), JSON.stringify(validate.errors)).toBe(true);
 });
 
+test('edge-cases page: a toolbar after many summary Tab stops is still entered and explored', async ({
+  baseUrl,
+  page,
+  browser,
+}, testInfo) => {
+  const result = await runFixtureCheck(
+    'keyboard-reachability-check',
+    'keyboard-reachability/edge-cases.html',
+    baseUrl,
+    { page, browser, testInfo },
+    { quiet: true },
+  );
+  const details = result.details as KeyboardReachabilityCheckDetails;
+
+  expect(byId(details, 'tb1').reachedBy).toBe('tab');
+  expect(byId(details, 'tb2').reachedBy).toBe('arrow');
+  expect(byId(details, 'tb3').reachedBy).toBe('arrow');
+});
+
+test('edge-cases page: a click-delegating container around a listener-only control is not a candidate', async ({
+  baseUrl,
+  page,
+  browser,
+}, testInfo) => {
+  const result = await runFixtureCheck(
+    'keyboard-reachability-check',
+    'keyboard-reachability/edge-cases.html',
+    baseUrl,
+    { page, browser, testInfo },
+    { quiet: true },
+  );
+  const details = result.details as KeyboardReachabilityCheckDetails;
+
+  expect(details.elements.some((e) => e.selector.endsWith('#delegator'))).toBe(
+    false,
+  );
+  expect(byId(details, 'inner-listener').reachedBy).toBe('tab');
+});
+
+test('edge-cases page: nested onclick spans inside a button are both excluded as insideOperable', async ({
+  baseUrl,
+  page,
+  browser,
+}, testInfo) => {
+  const result = await runFixtureCheck(
+    'keyboard-reachability-check',
+    'keyboard-reachability/edge-cases.html',
+    baseUrl,
+    { page, browser, testInfo },
+    { quiet: true },
+  );
+  const details = result.details as KeyboardReachabilityCheckDetails;
+
+  expect(details.elements.some((e) => e.selector.endsWith('#inner-span'))).toBe(
+    false,
+  );
+  expect(details.excluded.insideOperable).toBe(2);
+  expect(details.unreachableCount).toBe(0);
+});
+
 test('reload page: a same-URL reload aborts the check with an incomplete result', async ({
   baseUrl,
   page,

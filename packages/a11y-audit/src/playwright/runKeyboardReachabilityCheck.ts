@@ -326,12 +326,22 @@ function installReachTracker(): void {
     const candidates = new Set<Element>(
       document.querySelectorAll(operableSelector),
     );
-    for (const el of listenerEls) {
-      if (candidates.has(el) || !el.isConnected) continue;
-      if (el === document.body || el === document.documentElement) continue;
-      if (getComputedStyle(el).cursor !== 'pointer') continue;
-      // A container with operable descendants is likely a delegation root.
+    const listenerCandidates = listenerEls.filter(
+      (el) =>
+        !candidates.has(el) &&
+        el.isConnected &&
+        el !== document.body &&
+        el !== document.documentElement &&
+        getComputedStyle(el).cursor === 'pointer',
+    );
+    for (const el of listenerCandidates) {
+      // A container with operable descendants (including other listener
+      // candidates) is likely a delegation root.
       if (el.querySelector(operableSelector)) continue;
+      if (
+        listenerCandidates.some((other) => other !== el && el.contains(other))
+      )
+        continue;
       candidates.add(el);
     }
     const ordered = [...candidates].sort((a, b) =>
@@ -363,14 +373,19 @@ function installReachTracker(): void {
         excluded.hidden++;
         continue;
       }
-      const ancestor = el.parentElement?.closest(operableSelector);
-      const role = getRole(el) ?? '';
-      if (
-        ancestor &&
-        (ancestor as HTMLElement).tabIndex >= 0 &&
-        !ancestor.matches(':disabled') &&
-        !ITEM_ROLES.includes(role)
+      // Walk every operable ancestor: the Tab stop may sit above another
+      // unfocusable operable wrapper (<button><span onclick><span onclick>).
+      let tabbableAncestor = false;
+      for (
+        let a = el.parentElement?.closest(operableSelector);
+        a && !tabbableAncestor;
+        a = a.parentElement?.closest(operableSelector)
       ) {
+        tabbableAncestor =
+          (a as HTMLElement).tabIndex >= 0 && !a.matches(':disabled');
+      }
+      const role = getRole(el) ?? '';
+      if (tabbableAncestor && !ITEM_ROLES.includes(role)) {
         excluded.insideOperable++;
         continue;
       }
@@ -475,9 +490,18 @@ function installReachTracker(): void {
       };
     });
 
+    // Tab budget: the shared FOCUSABLE_SELECTOR misses some Tab stops this
+    // check enumerates (summary, contenteditable, tabindex=0 listeners).
+    const tabStops = new Set<Element>(
+      document.querySelectorAll(args.focusableSelector),
+    );
+    for (const el of kept) {
+      if ((el as HTMLElement).tabIndex >= 0) tabStops.add(el);
+    }
+
     return {
       docId,
-      focusableCount: document.querySelectorAll(args.focusableSelector).length,
+      focusableCount: tabStops.size,
       excluded,
       elements,
       composites: compositeMeta,
@@ -536,17 +560,17 @@ function installReachTracker(): void {
   }
 
   /** Put focus back on a composite's entry without recording it as reached. */
-  function restore(ci: number): boolean {
+  function restore(ci: number): unknown {
     phase = 'idle';
     const entry = entries.get(ci);
     if (!(entry instanceof HTMLElement || entry instanceof SVGElement)) {
-      return false;
+      return { docId, ok: false };
     }
     entry.focus();
-    if (document.activeElement !== entry) return false;
+    if (document.activeElement !== entry) return { docId, ok: false };
     mutations = 0;
     phase = 'arrow';
-    return true;
+    return { docId, ok: true };
   }
 
   function setPhase(next: 'idle' | 'tab' | 'arrow'): boolean {
@@ -673,11 +697,11 @@ export async function runKeyboardReachabilityCheck(
         )) as R;
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
+        // Only Playwright's document-replacement errors count as navigation;
+        // anything else is a real failure and must surface.
         if (
           run.navigatedTo !== null ||
-          /context was destroyed|navigat|Target closed|__a11yReach/i.test(
-            message,
-          )
+          /Execution context was destroyed|Frame was detached/i.test(message)
         ) {
           abortNavigation();
           return null;
@@ -805,12 +829,18 @@ export async function runKeyboardReachabilityCheck(
         continue;
       }
 
-      const restored = await inPage<boolean>('restore', ci);
-      if (restored === null) {
+      // A late reload lands a fresh tracker with no entries: check the
+      // document before trusting a failed restore.
+      const restored = await inPage<{ docId: string; ok: boolean }>(
+        'restore',
+        ci,
+      );
+      if (!restored || restored.docId !== docId || run.navigatedTo !== null) {
+        abortNavigation();
         comp.stopReason = 'aborted';
         continue;
       }
-      if (!restored) {
+      if (!restored.ok) {
         comp.status = 'stopped';
         comp.stopReason = 'entry-restore-failed';
         continue;

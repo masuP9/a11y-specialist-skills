@@ -1,0 +1,118 @@
+<!doctype html>
+<!--
+  keyboard-reachability-check: edge cases
+  - 15 <summary> Tab stops before a roving toolbar. FOCUSABLE_SELECTOR does not
+    count <summary>, so the Tab budget must still cover them: the toolbar is
+    entered and its items are reached by 'arrow'.
+  - #delegator: pointer-cursor container with a click listener around
+    #inner-listener (tabindex=0, own click listener). The container is a
+    delegation root, not an operable element of its own.
+  - #outer-btn contains nested onclick spans; both spans are excluded as
+    insideOperable (the button is the Tab stop).
+  Expected: a11y-skills/keyboard-unreachable → passes.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Keyboard reachability: edge cases</title>
+  </head>
+  <body>
+    <h1>Keyboard reachability: edge cases</h1>
+    <details>
+      <summary>S1</summary>
+      1
+    </details>
+    <details>
+      <summary>S2</summary>
+      2
+    </details>
+    <details>
+      <summary>S3</summary>
+      3
+    </details>
+    <details>
+      <summary>S4</summary>
+      4
+    </details>
+    <details>
+      <summary>S5</summary>
+      5
+    </details>
+    <details>
+      <summary>S6</summary>
+      6
+    </details>
+    <details>
+      <summary>S7</summary>
+      7
+    </details>
+    <details>
+      <summary>S8</summary>
+      8
+    </details>
+    <details>
+      <summary>S9</summary>
+      9
+    </details>
+    <details>
+      <summary>S10</summary>
+      10
+    </details>
+    <details>
+      <summary>S11</summary>
+      11
+    </details>
+    <details>
+      <summary>S12</summary>
+      12
+    </details>
+    <details>
+      <summary>S13</summary>
+      13
+    </details>
+    <details>
+      <summary>S14</summary>
+      14
+    </details>
+    <details>
+      <summary>S15</summary>
+      15
+    </details>
+
+    <div role="toolbar" aria-label="Late toolbar" id="toolbar">
+      <button type="button" id="tb1" tabindex="0">One</button>
+      <button type="button" id="tb2" tabindex="-1">Two</button>
+      <button type="button" id="tb3" tabindex="-1">Three</button>
+    </div>
+
+    <div id="delegator" style="cursor: pointer">
+      <div id="inner-listener" tabindex="0" style="cursor: pointer">Inner</div>
+    </div>
+
+    <button type="button" id="outer-btn">
+      <span onclick="void 0"
+        ><span id="inner-span" onclick="void 0">Nested</span></span
+      >
+    </button>
+
+    <script>
+      document.getElementById('delegator').addEventListener('click', () => {});
+      document
+        .getElementById('inner-listener')
+        .addEventListener('click', () => {});
+
+      const items = [...document.querySelectorAll('#toolbar button')];
+      document.getElementById('toolbar').addEventListener('keydown', (e) => {
+        const i = items.indexOf(document.activeElement);
+        let j = i;
+        if (e.key === 'ArrowRight') j = Math.min(i + 1, items.length - 1);
+        else if (e.key === 'ArrowLeft') j = Math.max(i - 1, 0);
+        else return;
+        e.preventDefault();
+        items[i].tabIndex = -1;
+        items[j].tabIndex = 0;
+        items[j].focus();
+      });
+    </script>
+  </body>
+</html>
