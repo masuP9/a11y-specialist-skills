@@ -1,0 +1,27 @@
+<!doctype html>
+<!--
+  keyboard-reachability-check: reload
+  Same as navigation.html, but ArrowDown reloads the page: the URL does not
+  change, so the check must detect the replaced document by other means.
+  Expected: details.aborted.reason === 'navigation',
+  a11y-skills/keyboard-unreachable → incomplete (one page-level node).
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Keyboard reachability: reload</title>
+  </head>
+  <body>
+    <h1>Keyboard reachability: reload</h1>
+    <div role="menu" aria-label="Actions" id="menu">
+      <div role="menuitem" id="mi1" tabindex="0">Open</div>
+      <div role="menuitem" id="mi2" tabindex="-1">Save</div>
+      <div role="menuitem" id="mi3" tabindex="-1">Close</div>
+    </div>
+    <script>
+      document.getElementById('menu').addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') location.reload();
+      });
+    </script>
+  </body>
+</html>

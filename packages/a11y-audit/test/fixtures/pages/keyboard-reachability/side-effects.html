@@ -1,0 +1,62 @@
+<!doctype html>
+<!--
+  keyboard-reachability-check: side-effects
+  A roving toolbar whose 2nd item is a slider. Arrow keys on a button move
+  focus; arrow keys on the slider change aria-valuenow (focus stays).
+  The check must stop exploring when focus lands on the slider (value-control
+  guard evaluated BEFORE the next press), so the 3rd button stays unreached.
+  If the slider value ever changes, the page navigates to ?value-changed, which
+  shows up as details.aborted — the runner closes its own page, so this is how
+  the test observes the side effect.
+  Expected: toolbar stopReason 'value-control', slider reached by 'arrow',
+  #tb3 → composite-exploration-stopped / low (1 node), aborted === null.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Keyboard reachability: side effects</title>
+  </head>
+  <body>
+    <h1>Keyboard reachability: side effects</h1>
+    <div role="toolbar" aria-label="Volume" id="toolbar">
+      <button type="button" id="tb1" tabindex="0">Mute</button>
+      <div
+        role="slider"
+        id="slider"
+        tabindex="-1"
+        aria-label="Volume"
+        aria-valuemin="0"
+        aria-valuemax="10"
+        aria-valuenow="5"
+      >
+        5
+      </div>
+      <button type="button" id="tb3" tabindex="-1">Max</button>
+    </div>
+    <script>
+      const toolbar = document.getElementById('toolbar');
+      const slider = document.getElementById('slider');
+      const items = [...toolbar.children];
+      toolbar.addEventListener('keydown', (e) => {
+        if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+        e.preventDefault();
+        if (document.activeElement === slider) {
+          const delta = e.key === 'ArrowRight' ? 1 : -1;
+          const value = Number(slider.getAttribute('aria-valuenow')) + delta;
+          slider.setAttribute('aria-valuenow', String(value));
+          slider.textContent = String(value);
+          location.assign('?value-changed');
+          return;
+        }
+        const i = items.indexOf(document.activeElement);
+        const j =
+          e.key === 'ArrowRight'
+            ? Math.min(i + 1, items.length - 1)
+            : Math.max(i - 1, 0);
+        items[i].tabIndex = -1;
+        items[j].tabIndex = 0;
+        items[j].focus();
+      });
+    </script>
+  </body>
+</html>

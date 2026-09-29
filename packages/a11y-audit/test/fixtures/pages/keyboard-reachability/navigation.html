@@ -1,0 +1,28 @@
+<!doctype html>
+<!--
+  keyboard-reachability-check: navigation
+  A roving menu whose ArrowDown handler navigates to another document.
+  The check must stop at the navigation, return a result without throwing,
+  keep the original URL, and mark the untested menu items 'not-evaluated'.
+  Expected: details.aborted.reason === 'navigation',
+  a11y-skills/keyboard-unreachable → incomplete (one page-level node).
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Keyboard reachability: navigation</title>
+  </head>
+  <body>
+    <h1>Keyboard reachability: navigation</h1>
+    <div role="menu" aria-label="Actions" id="menu">
+      <div role="menuitem" id="mi1" tabindex="0">Open</div>
+      <div role="menuitem" id="mi2" tabindex="-1">Save</div>
+      <div role="menuitem" id="mi3" tabindex="-1">Close</div>
+    </div>
+    <script>
+      document.getElementById('menu').addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') location.assign('clear.html');
+      });
+    </script>
+  </body>
+</html>

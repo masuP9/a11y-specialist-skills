@@ -1,0 +1,32 @@
+<!doctype html>
+<!--
+  keyboard-reachability-check: finding
+  Three operable elements that no keyboard path reaches:
+  - #negative: <button tabindex="-1"> outside any composite
+      → tabindex-negative-outside-composite / high
+  - #onclick-div: <div onclick> without tabindex → onclick-not-focusable / high
+  - #listener-div: <div style="cursor:pointer"> with addEventListener('click')
+      → click-listener-not-focusable / medium
+  #reachable is an ordinary button reached by Tab.
+  Expected: a11y-skills/keyboard-unreachable → incomplete (3 nodes).
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Keyboard reachability: finding</title>
+  </head>
+  <body>
+    <h1>Keyboard reachability: finding</h1>
+    <button type="button" id="reachable">Reachable</button>
+    <button type="button" id="negative" tabindex="-1">Negative tabindex</button>
+    <div id="onclick-div" onclick="this.textContent = 'clicked'">
+      Onclick div
+    </div>
+    <div id="listener-div" style="cursor: pointer">Listener div</div>
+    <script>
+      document.getElementById('listener-div').addEventListener('click', (e) => {
+        e.currentTarget.textContent = 'clicked';
+      });
+    </script>
+  </body>
+</html>
