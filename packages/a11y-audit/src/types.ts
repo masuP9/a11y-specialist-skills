@@ -713,6 +713,8 @@ export interface KeyboardReachabilityElement {
   reachedBy: KeyboardReachMethod;
   /** Selector of the nearest composite widget (or native radio group), if any. */
   compositeSelector: string | null;
+  /** 'popup' when found only after ArrowDown opened a popup (hidden at load). */
+  foundIn: 'load' | 'popup';
   /** Set only when reachedBy is 'unreachable' or 'not-evaluated'. */
   reason: string | null;
   /** Set only when reachedBy is 'unreachable'. */
@@ -725,6 +727,26 @@ export interface KeyboardReachabilityComposite {
   orientation: 'horizontal' | 'vertical' | 'both' | 'none';
   keysPressed: number;
   status: 'explored' | 'stopped' | 'not-explored';
+  stopReason: string | null;
+}
+
+/**
+ * A popup opened with ArrowDown from a combobox or aria-haspopup trigger.
+ * Items are judged only when the keyboard got inside ('explored'/'stopped').
+ */
+export interface KeyboardReachabilityPopup {
+  triggerSelector: string;
+  /** aria-controls / aria-owns target, or null when found by visibility diff. */
+  popupSelector: string | null;
+  status:
+    | 'explored'
+    | 'stopped'
+    | 'opened-not-entered'
+    | 'not-opened'
+    | 'not-explored';
+  /** Items (option / menuitem* / treeitem) that became visible when opened. */
+  itemsFound: number;
+  keysPressed: number;
   stopReason: string | null;
 }
 
@@ -744,6 +766,7 @@ export interface KeyboardReachabilityCheckDetails {
   /** Every operable element (reached and unreached). */
   elements: KeyboardReachabilityElement[];
   composites: KeyboardReachabilityComposite[];
+  popups: KeyboardReachabilityPopup[];
   /** `true` when the Tab walk hit its press limit before cycling the page. */
   tabWalkCapped: boolean;
   /** Set when exploration stopped early for the whole page. */

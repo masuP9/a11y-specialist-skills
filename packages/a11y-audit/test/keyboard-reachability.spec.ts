@@ -386,3 +386,115 @@ test('reload page: a same-URL reload aborts the check with an incomplete result'
   );
   expect(rule?.nodes.map((n) => n.target)).toEqual([['html']]);
 });
+
+test('popups page: combobox options are reached via activedescendant after ArrowDown opens the list', async ({
+  baseUrl,
+  page,
+  browser,
+}, testInfo) => {
+  const result = await runFixtureCheck(
+    'keyboard-reachability-check',
+    'keyboard-reachability/popups.html',
+    baseUrl,
+    { page, browser, testInfo },
+    { quiet: true },
+  );
+  const details = result.details as KeyboardReachabilityCheckDetails;
+
+  expect(byId(details, 'fruit-apple').reachedBy).toBe('activedescendant');
+  expect(byId(details, 'fruit-banana').reachedBy).toBe('activedescendant');
+  expect(byId(details, 'fruit-cherry').reachedBy).toBe('activedescendant');
+  expect(byId(details, 'fruit-cherry').foundIn).toBe('popup');
+  const popup = details.popups.find((p) =>
+    p.triggerSelector.endsWith('#fruit'),
+  );
+  expect(popup?.status).toBe('explored');
+  expect(popup?.popupSelector).toBe('ul#fruit-list');
+});
+
+test('popups page: a portal menu without aria-controls is found and its items are reached by arrow keys', async ({
+  baseUrl,
+  page,
+  browser,
+}, testInfo) => {
+  const result = await runFixtureCheck(
+    'keyboard-reachability-check',
+    'keyboard-reachability/popups.html',
+    baseUrl,
+    { page, browser, testInfo },
+    { quiet: true },
+  );
+  const details = result.details as KeyboardReachabilityCheckDetails;
+
+  expect(byId(details, 'act-copy').reachedBy).toBe('arrow');
+  expect(byId(details, 'act-paste').reachedBy).toBe('arrow');
+  expect(byId(details, 'act-delete').reachedBy).toBe('arrow');
+  const popup = details.popups.find((p) =>
+    p.triggerSelector.endsWith('#actions'),
+  );
+  expect(popup?.status).toBe('explored');
+  expect(popup?.itemsFound).toBe(3);
+});
+
+test('popups page: a menu item the roving focus skips is a medium-confidence candidate', async ({
+  baseUrl,
+  page,
+  browser,
+}, testInfo) => {
+  const result = await runFixtureCheck(
+    'keyboard-reachability-check',
+    'keyboard-reachability/popups.html',
+    baseUrl,
+    { page, browser, testInfo },
+    { quiet: true },
+  );
+  const details = result.details as KeyboardReachabilityCheckDetails;
+
+  const skipped = byId(details, 'broken-skipped');
+  expect(skipped.reachedBy).toBe('unreachable');
+  expect(skipped.reason).toBe('popup-item-not-reached');
+  expect(skipped.confidence).toBe('medium');
+  expect(details.unreachableCount).toBe(1);
+});
+
+test('popups page: a popup shown without moving focus is recorded as opened-not-entered and not judged', async ({
+  baseUrl,
+  page,
+  browser,
+}, testInfo) => {
+  const result = await runFixtureCheck(
+    'keyboard-reachability-check',
+    'keyboard-reachability/popups.html',
+    baseUrl,
+    { page, browser, testInfo },
+    { quiet: true },
+  );
+  const details = result.details as KeyboardReachabilityCheckDetails;
+
+  const popup = details.popups.find((p) => p.triggerSelector.endsWith('#hint'));
+  expect(popup?.status).toBe('opened-not-entered');
+  expect(details.elements.some((e) => e.selector.endsWith('#hint-item'))).toBe(
+    false,
+  );
+});
+
+test('popups page: an aria-haspopup="dialog" button is not a popup trigger and the envelope is schema-valid', async ({
+  baseUrl,
+  page,
+  browser,
+}, testInfo) => {
+  const result = await runFixtureCheck(
+    'keyboard-reachability-check',
+    'keyboard-reachability/popups.html',
+    baseUrl,
+    { page, browser, testInfo },
+    { quiet: true },
+  );
+  const details = result.details as KeyboardReachabilityCheckDetails;
+
+  expect(
+    details.popups.some((p) => p.triggerSelector.endsWith('#dialog-trigger')),
+  ).toBe(false);
+  expect(details.popups).toHaveLength(4);
+  expect(validate(result), JSON.stringify(validate.errors)).toBe(true);
+});

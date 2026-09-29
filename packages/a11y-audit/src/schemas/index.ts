@@ -638,6 +638,7 @@ const KEYBOARD_REACHABILITY_ELEMENT_SCHEMA: JsonSchema = {
     'evidence',
     'reachedBy',
     'compositeSelector',
+    'foundIn',
     'reason',
     'confidence',
   ],
@@ -660,6 +661,7 @@ const KEYBOARD_REACHABILITY_ELEMENT_SCHEMA: JsonSchema = {
       ],
     },
     compositeSelector: { type: ['string', 'null'] },
+    foundIn: { enum: ['load', 'popup'] },
     reason: { type: ['string', 'null'] },
     confidence: {
       type: ['string', 'null'],
@@ -688,6 +690,34 @@ const KEYBOARD_REACHABILITY_COMPOSITE_SCHEMA: JsonSchema = {
   },
 };
 
+const KEYBOARD_REACHABILITY_POPUP_SCHEMA: JsonSchema = {
+  type: 'object',
+  required: [
+    'triggerSelector',
+    'popupSelector',
+    'status',
+    'itemsFound',
+    'keysPressed',
+    'stopReason',
+  ],
+  properties: {
+    triggerSelector: { type: 'string' },
+    popupSelector: { type: ['string', 'null'] },
+    status: {
+      enum: [
+        'explored',
+        'stopped',
+        'opened-not-entered',
+        'not-opened',
+        'not-explored',
+      ],
+    },
+    itemsFound: { type: 'number' },
+    keysPressed: { type: 'number' },
+    stopReason: { type: ['string', 'null'] },
+  },
+};
+
 export const KEYBOARD_REACHABILITY_CHECK_RESULT_SCHEMA: JsonSchema =
   buildEnvelopeSchema({
     id: 'keyboard-reachability-check-result',
@@ -703,6 +733,7 @@ export const KEYBOARD_REACHABILITY_CHECK_RESULT_SCHEMA: JsonSchema =
         'excluded',
         'elements',
         'composites',
+        'popups',
         'tabWalkCapped',
         'aborted',
         'screenshotPath',
@@ -729,6 +760,10 @@ export const KEYBOARD_REACHABILITY_CHECK_RESULT_SCHEMA: JsonSchema =
         composites: {
           type: 'array',
           items: KEYBOARD_REACHABILITY_COMPOSITE_SCHEMA,
+        },
+        popups: {
+          type: 'array',
+          items: KEYBOARD_REACHABILITY_POPUP_SCHEMA,
         },
         tabWalkCapped: { type: 'boolean' },
         aborted: {

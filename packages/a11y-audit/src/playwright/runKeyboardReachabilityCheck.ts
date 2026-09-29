@@ -16,8 +16,12 @@
  *   Listener evidence is registration history (removeEventListener is not
  *   tracked).
  * - Shadow DOM and iframes are not inspected.
- * - Elements are enumerated once, right after load; content shown later
- *   (submenus, other tab panels, combobox popups) is out of scope.
+ * - Elements are enumerated once, right after load. The only later content
+ *   examined is one level of popups opened with ArrowDown from an explicit
+ *   role=combobox or an aria-haspopup (true/menu/listbox/tree) trigger, and
+ *   only their option / menuitem (incl. checkbox, radio) / treeitem items, judged only when the keyboard
+ *   got inside. Nested submenus, other tab panels and popups opened by
+ *   Enter/Space/Alt+ArrowDown are out of scope.
  * - Arrow keys change the selection of native radios, single-select listboxes
  *   and automatically activated tablists (in this check's throwaway context).
  * - grid / treegrid are not explored; their items are 'not-evaluated'.
@@ -34,6 +38,7 @@ import type {
   KeyboardReachabilityCheckResult,
   KeyboardReachabilityComposite,
   KeyboardReachabilityElement,
+  KeyboardReachabilityPopup,
 } from '../types.js';
 import {
   DEFAULT_KEYBOARD_REACHABILITY_RESULT_FILE,
@@ -48,6 +53,8 @@ import {
   KEYBOARD_REACHABILITY_MAX_TAB_PRESSES,
   KEYBOARD_REACHABILITY_NATIVE_SELECTOR,
   KEYBOARD_REACHABILITY_OPERABLE_ROLES,
+  KEYBOARD_REACHABILITY_POPUP_HASPOPUP_VALUES,
+  KEYBOARD_REACHABILITY_POPUP_ITEM_ROLES,
   KEYBOARD_REACHABILITY_TAB_SLACK,
   KEYBOARD_REACHABILITY_TIMEOUT_MS,
   KEYBOARD_REACHABILITY_UNSUPPORTED_COMPOSITE_ROLES,
@@ -94,6 +101,8 @@ interface EnumerateArgs {
   compositeRoles: string[];
   unsupportedRoles: string[];
   focusableSelector: string;
+  popupHaspopupValues: string[];
+  popupItemRoles: string[];
   maxLen: number;
 }
 
@@ -109,6 +118,8 @@ interface EnumeratedElement {
   evidence: KeyboardReachabilityElement['evidence'];
   focusable: boolean;
   compositeId: number | null;
+  /** Explicit role=combobox (not <select>) or a qualifying aria-haspopup. */
+  popupTrigger: boolean;
 }
 
 interface EnumeratedComposite {
@@ -141,7 +152,22 @@ interface GuardResult {
   state: string;
 }
 
-type InPageMethod = 'enumerate' | 'sync' | 'guard' | 'restore' | 'setPhase';
+interface PopupScanResult {
+  docId: string;
+  /** In-page composite index of the popup (trigger + found items). */
+  ci: number;
+  popupSelector: string | null;
+  newItems: EnumeratedElement[];
+}
+
+type InPageMethod =
+  | 'enumerate'
+  | 'sync'
+  | 'guard'
+  | 'restore'
+  | 'setPhase'
+  | 'popupBegin'
+  | 'popupScan';
 
 /**
  * Installed with `page.addInitScript`, so it must be self-contained: it is
@@ -151,6 +177,8 @@ function installReachTracker(): void {
   interface Composite {
     el: Element | null;
     members: Element[] | null;
+    /** Set for popups: the combobox / button that opened it. */
+    trigger?: Element;
   }
   const w = window as unknown as { __a11yReach?: unknown };
   if (w.__a11yReach) return;
@@ -197,7 +225,9 @@ function installReachTracker(): void {
   };
 
   function inComposite(c: Composite, el: Element): boolean {
-    return c.members ? c.members.includes(el) : c.el!.contains(el);
+    return c.members
+      ? c.members.some((m) => m === el || m.contains(el))
+      : c.el!.contains(el);
   }
 
   origAdd.call(
@@ -310,17 +340,77 @@ function installReachTracker(): void {
     'radio',
   ];
 
+  function isInvisible(el: Element): boolean {
+    const checkVisibility = (
+      el as Element & { checkVisibility?: (o: object) => boolean }
+    ).checkVisibility;
+    const invisible =
+      typeof checkVisibility === 'function'
+        ? !checkVisibility.call(el, { checkVisibilityCSS: true })
+        : getComputedStyle(el).visibility === 'hidden';
+    return invisible || el.getClientRects().length === 0;
+  }
+
+  function isDisabled(el: Element): boolean {
+    return (
+      el.matches(':disabled') || el.getAttribute('aria-disabled') === 'true'
+    );
+  }
+
+  // Set by enumerate(); reused by popupScan() to describe popup items.
+  let nativeSelector = '';
+  let roleSelector = '';
+  let popupItemSelector = '';
+  let haspopupValues: string[] = [];
+  let maxLen = 0;
+  let popupBefore = new Set<Element>();
+  const popupComposites = new Map<Element, number>();
+
+  function describe(el: Element, id: number, compositeId: number | null) {
+    let evidence: string;
+    if (el.matches(nativeSelector)) evidence = 'native';
+    else if (roleSelector && el.matches(roleSelector)) evidence = 'role';
+    else if (el.hasAttribute('onclick')) evidence = 'onclick';
+    else evidence = 'click-listener';
+    const rawHtml = el.outerHTML;
+    const htmlTruncated = rawHtml.length > maxLen;
+    const explicitRole = el.getAttribute('role')?.trim().split(/\s+/)[0];
+    const haspopup = el.getAttribute('aria-haspopup')?.trim().toLowerCase();
+    return {
+      id,
+      selector: getSelector(el),
+      tag: el.tagName.toLowerCase(),
+      role: getRole(el),
+      name: getName(el),
+      html: htmlTruncated ? rawHtml.slice(0, maxLen) : rawHtml,
+      htmlTruncated,
+      tabindex: el.getAttribute('tabindex'),
+      evidence,
+      focusable: (el as HTMLElement).tabIndex >= 0,
+      compositeId,
+      popupTrigger:
+        (explicitRole === 'combobox' && !(el instanceof HTMLSelectElement)) ||
+        (haspopup !== undefined && haspopupValues.includes(haspopup)),
+    };
+  }
+
   function enumerate(args: {
     nativeSelector: string;
     operableRoles: string[];
     compositeRoles: string[];
     unsupportedRoles: string[];
     focusableSelector: string;
+    popupHaspopupValues: string[];
+    popupItemRoles: string[];
     maxLen: number;
   }): unknown {
-    const roleSelector = args.operableRoles
+    nativeSelector = args.nativeSelector;
+    roleSelector = args.operableRoles.map((r) => `[role="${r}"]`).join(', ');
+    popupItemSelector = args.popupItemRoles
       .map((r) => `[role="${r}"]`)
       .join(', ');
+    haspopupValues = args.popupHaspopupValues;
+    maxLen = args.maxLen;
     const operableSelector = `${args.nativeSelector}, ${roleSelector}, [onclick]`;
 
     const candidates = new Set<Element>(
@@ -351,10 +441,7 @@ function installReachTracker(): void {
     const excluded = { disabled: 0, inert: 0, hidden: 0, insideOperable: 0 };
     const kept: Element[] = [];
     for (const el of ordered) {
-      if (
-        el.matches(':disabled') ||
-        el.getAttribute('aria-disabled') === 'true'
-      ) {
+      if (isDisabled(el)) {
         excluded.disabled++;
         continue;
       }
@@ -362,14 +449,7 @@ function installReachTracker(): void {
         excluded.inert++;
         continue;
       }
-      const checkVisibility = (
-        el as Element & { checkVisibility?: (o: object) => boolean }
-      ).checkVisibility;
-      const invisible =
-        typeof checkVisibility === 'function'
-          ? !checkVisibility.call(el, { checkVisibilityCSS: true })
-          : getComputedStyle(el).visibility === 'hidden';
-      if (invisible || el.getClientRects().length === 0) {
+      if (isInvisible(el)) {
         excluded.hidden++;
         continue;
       }
@@ -468,26 +548,7 @@ function installReachTracker(): void {
           compositeId = ci;
         }
       });
-      let evidence: string;
-      if (el.matches(args.nativeSelector)) evidence = 'native';
-      else if (roleSelector && el.matches(roleSelector)) evidence = 'role';
-      else if (el.hasAttribute('onclick')) evidence = 'onclick';
-      else evidence = 'click-listener';
-      const rawHtml = el.outerHTML;
-      const htmlTruncated = rawHtml.length > args.maxLen;
-      return {
-        id,
-        selector: getSelector(el),
-        tag: el.tagName.toLowerCase(),
-        role: getRole(el),
-        name: getName(el),
-        html: htmlTruncated ? rawHtml.slice(0, args.maxLen) : rawHtml,
-        htmlTruncated,
-        tabindex: el.getAttribute('tabindex'),
-        evidence,
-        focusable: (el as HTMLElement).tabIndex >= 0,
-        compositeId,
-      };
+      return describe(el, id, compositeId);
     });
 
     // Tab budget: the shared FOCUSABLE_SELECTOR misses some Tab stops this
@@ -538,7 +599,9 @@ function installReachTracker(): void {
     const c = composites[ci];
     const inside = !!a && !!c && a !== document.body && inComposite(c, a);
     let valueControl = false;
-    if (a) {
+    // A popup's own trigger (e.g. a combobox input) takes ArrowDown/ArrowUp
+    // to move through the popup, not to edit its value.
+    if (a && a !== c?.trigger) {
       const role = getRole(a);
       const type = a instanceof HTMLInputElement ? a.type : null;
       valueControl =
@@ -578,7 +641,84 @@ function installReachTracker(): void {
     return true;
   }
 
-  w.__a11yReach = { enumerate, sync, guard, restore, setPhase };
+  function visiblePopupItems(): Element[] {
+    return [...document.querySelectorAll(popupItemSelector)].filter(
+      (el) => !isDisabled(el) && !el.closest('[inert]') && !isInvisible(el),
+    );
+  }
+
+  /** Focus a popup trigger (unrecorded) and remember which items are visible. */
+  function popupBegin(id: number): unknown {
+    phase = 'idle';
+    const t = items[id];
+    if (!(t instanceof HTMLElement || t instanceof SVGElement)) {
+      return { docId, ok: false };
+    }
+    t.focus();
+    if (document.activeElement !== t) return { docId, ok: false };
+    popupBefore = new Set(visiblePopupItems());
+    mutations = 0;
+    phase = 'arrow';
+    return { docId, ok: true };
+  }
+
+  /**
+   * Register popup items that became visible since popupBegin(): inside the
+   * aria-controls / aria-owns target when there is one, anywhere otherwise
+   * (portals). Only item roles count, so dialog controls and tooltips don't.
+   */
+  function popupScan(id: number): unknown {
+    const t = items[id]!;
+    const refs =
+      `${t.getAttribute('aria-controls') ?? ''} ${t.getAttribute('aria-owns') ?? ''}`
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((ref) => document.getElementById(ref))
+        .filter((el): el is HTMLElement => el !== null);
+    let ci = popupComposites.get(t);
+    if (ci === undefined) {
+      composites.push({ el: null, members: [t], trigger: t });
+      ci = composites.length - 1;
+      popupComposites.set(t, ci);
+    }
+    const popup = composites[ci]!;
+    const fresh = visiblePopupItems().filter(
+      (el) =>
+        !popupBefore.has(el) &&
+        !items.includes(el) &&
+        (refs.length === 0 || refs.some((r) => r.contains(el))),
+    );
+    const newItems = fresh.map((el) => {
+      items.push(el);
+      // Membership is the item's list container, so focus landing on an
+      // uncounted but focusable entry (APG keeps aria-disabled menu items
+      // focusable) still counts as inside the popup.
+      const container =
+        el.closest('[role="menu"], [role="listbox"], [role="tree"]') ?? el;
+      if (!popup.members!.includes(container)) popup.members!.push(container);
+      return describe(el, items.length - 1, null);
+    });
+    recordActiveDescendant();
+    // Opening a popup can rebuild a large subtree; count churn from here.
+    mutations = 0;
+    return {
+      docId,
+      ci,
+      popupSelector: refs[0] ? getSelector(refs[0]) : null,
+      newItems,
+    };
+  }
+
+  w.__a11yReach = {
+    enumerate,
+    sync,
+    guard,
+    restore,
+    setPhase,
+    popupBegin,
+    popupScan,
+  };
 }
 
 // =============================================================================
@@ -719,6 +859,8 @@ export async function runKeyboardReachabilityCheck(
       compositeRoles: [...KEYBOARD_REACHABILITY_COMPOSITE_ROLES],
       unsupportedRoles: [...KEYBOARD_REACHABILITY_UNSUPPORTED_COMPOSITE_ROLES],
       focusableSelector: FOCUSABLE_SELECTOR,
+      popupHaspopupValues: [...KEYBOARD_REACHABILITY_POPUP_HASPOPUP_VALUES],
+      popupItemRoles: [...KEYBOARD_REACHABILITY_POPUP_ITEM_ROLES],
       maxLen: HTML_SNIPPET_MAX_LENGTH,
     };
     const enumeration = await inPage<Enumeration>('enumerate', enumerateArgs);
@@ -773,6 +915,7 @@ export async function runKeyboardReachabilityCheck(
         excluded: enumeration.excluded,
         elements: [],
         composites,
+        popups: [],
         tabWalkCapped: false,
         aborted: null,
         screenshotPath: '',
@@ -810,6 +953,53 @@ export async function runKeyboardReachabilityCheck(
     // 3. Arrow keys inside each entered composite
     // ------------------------------------------------------------------
     let totalArrows = 0;
+
+    /**
+     * Press each key repeatedly (up to itemCount + 1 times) inside in-page
+     * composite `ci`. Returns the stop reason, or null when every sweep ran
+     * to its end. Guards run BEFORE each press: never press arrows on a
+     * value control, outside the widget, or past a budget.
+     */
+    const sweep = async (
+      ci: number,
+      sweepKeys: string[],
+      itemCount: number,
+      counter: { keysPressed: number },
+    ): Promise<string | null> => {
+      for (const key of sweepKeys) {
+        const seen = new Set<string>();
+        for (let i = 0; i <= itemCount; i++) {
+          const g = await inPage<GuardResult>('guard', ci);
+          if (!g || g.docId !== docId || run.navigatedTo !== null) {
+            abortNavigation();
+            return 'aborted';
+          }
+          if (!g.inside) return 'left-composite';
+          if (g.valueControl) return 'value-control';
+          if (seen.has(g.state)) break; // reached the end (or wrapped)
+          seen.add(g.state);
+          if (timedOut()) return 'aborted';
+          if (
+            totalArrows >= KEYBOARD_REACHABILITY_MAX_ARROW_PRESSES_TOTAL ||
+            counter.keysPressed >=
+              KEYBOARD_REACHABILITY_MAX_ARROW_PRESSES_PER_COMPOSITE
+          ) {
+            return 'press-cap';
+          }
+          await page.keyboard.press(key);
+          counter.keysPressed++;
+          totalArrows++;
+          await settle();
+          const r = await sync();
+          if (!r) return 'aborted';
+          if (r.mutations > KEYBOARD_REACHABILITY_MAX_DOM_MUTATIONS) {
+            return 'dom-churn';
+          }
+        }
+      }
+      return null;
+    };
+
     for (const [ci, meta] of enumeration.composites.entries()) {
       const comp = composites[ci]!;
       if (!meta.supported) {
@@ -853,57 +1043,106 @@ export async function runKeyboardReachabilityCheck(
         meta.orientation === 'horizontal'
           ? ['ArrowRight', 'ArrowLeft']
           : ['ArrowDown', 'ArrowUp'];
-      let stop: string | null = null;
-      sweeps: for (const key of sweepKeys) {
-        const seen = new Set<string>();
-        for (let i = 0; i <= itemCount; i++) {
-          // Guards run BEFORE each press: never press arrows on a value control.
-          const g = await inPage<GuardResult>('guard', ci);
-          if (!g || g.docId !== docId || run.navigatedTo !== null) {
-            abortNavigation();
-            stop = 'aborted';
-            break sweeps;
-          }
-          if (!g.inside) {
-            stop = 'left-composite';
-            break sweeps;
-          }
-          if (g.valueControl) {
-            stop = 'value-control';
-            break sweeps;
-          }
-          if (seen.has(g.state)) break; // reached the end (or wrapped)
-          seen.add(g.state);
-          if (timedOut()) {
-            stop = 'aborted';
-            break sweeps;
-          }
-          if (
-            totalArrows >= KEYBOARD_REACHABILITY_MAX_ARROW_PRESSES_TOTAL ||
-            comp.keysPressed >=
-              KEYBOARD_REACHABILITY_MAX_ARROW_PRESSES_PER_COMPOSITE
-          ) {
-            stop = 'press-cap';
-            break sweeps;
-          }
-          await page.keyboard.press(key);
-          comp.keysPressed++;
-          totalArrows++;
-          await settle();
-          const r = await sync();
-          if (!r) {
-            stop = 'aborted';
-            break sweeps;
-          }
-          if (r.mutations > KEYBOARD_REACHABILITY_MAX_DOM_MUTATIONS) {
-            stop = 'dom-churn';
-            break sweeps;
-          }
-        }
-      }
+      const stop = await sweep(ci, sweepKeys, itemCount, comp);
       comp.status = stop === null ? 'explored' : 'stopped';
       comp.stopReason = stop;
       if (!run.aborted) await inPage('setPhase', 'idle');
+    }
+
+    // ------------------------------------------------------------------
+    // 3b. Popups: open with ArrowDown (one level), explore only if entered
+    // ------------------------------------------------------------------
+    const popups: KeyboardReachabilityPopup[] = [];
+    /** Popup items whose popup the keyboard got into; index into `popups`. */
+    const popupItems: Array<{ el: EnumeratedElement; popup: number }> = [];
+
+    for (const trigger of elements) {
+      if (!trigger.popupTrigger || !reachedBy.has(trigger.id)) continue;
+      const p: KeyboardReachabilityPopup = {
+        triggerSelector: trigger.selector,
+        popupSelector: null,
+        status: 'not-explored',
+        itemsFound: 0,
+        keysPressed: 0,
+        stopReason: null,
+      };
+      popups.push(p);
+      if (run.aborted || timedOut()) {
+        p.stopReason = 'aborted';
+        continue;
+      }
+      if (totalArrows >= KEYBOARD_REACHABILITY_MAX_ARROW_PRESSES_TOTAL) {
+        p.stopReason = 'arrow-budget-exhausted';
+        continue;
+      }
+      const begun = await inPage<{ docId: string; ok: boolean }>(
+        'popupBegin',
+        trigger.id,
+      );
+      if (!begun || begun.docId !== docId || run.navigatedTo !== null) {
+        abortNavigation();
+        p.stopReason = 'aborted';
+        continue;
+      }
+      if (!begun.ok) {
+        p.stopReason = 'entry-restore-failed';
+        continue;
+      }
+
+      // Open with ArrowDown; if items appear but the keyboard is not inside
+      // yet, try one more ArrowDown before giving up on judging them.
+      const found: EnumeratedElement[] = [];
+      let popupCi = -1;
+      let isEntered = false;
+      for (let attempt = 0; attempt < 2 && !isEntered; attempt++) {
+        if (attempt === 1 && found.length === 0) break; // never opened
+        await page.keyboard.press('ArrowDown');
+        p.keysPressed++;
+        totalArrows++;
+        await settle();
+        const scan = await inPage<PopupScanResult>('popupScan', trigger.id);
+        if (!scan || scan.docId !== docId) {
+          abortNavigation();
+          break;
+        }
+        popupCi = scan.ci;
+        p.popupSelector ??= scan.popupSelector;
+        found.push(...scan.newItems);
+        if (!(await sync())) break;
+        isEntered = found.some((e) => reachedBy.has(e.id));
+      }
+      p.itemsFound = found.length;
+
+      if (run.aborted) {
+        p.status = isEntered ? 'stopped' : 'not-explored';
+        p.stopReason = 'aborted';
+      } else if (found.length === 0) {
+        p.status = 'not-opened';
+      } else if (!isEntered) {
+        // Could be a dialog/tooltip misusing aria-haspopup: don't judge items.
+        p.status = 'opened-not-entered';
+      } else {
+        const stop = await sweep(
+          popupCi,
+          ['ArrowDown', 'ArrowUp'],
+          found.length,
+          p,
+        );
+        p.status = stop === null ? 'explored' : 'stopped';
+        p.stopReason = stop;
+      }
+      if (isEntered) {
+        for (const el of found)
+          popupItems.push({ el, popup: popups.length - 1 });
+      }
+
+      if (!run.aborted) {
+        // Close without recording the focus move back to the trigger.
+        await inPage('setPhase', 'idle');
+        await page.keyboard.press('Escape');
+        await settle();
+        await sync();
+      }
     }
 
     // ------------------------------------------------------------------
@@ -979,7 +1218,25 @@ export async function runKeyboardReachabilityCheck(
       return unreachable('focusable-but-not-reached', 'low');
     };
 
-    const outElements: KeyboardReachabilityElement[] = elements.map((el) => ({
+    /** Popup items exist only because the keyboard got inside the popup. */
+    const classifyPopupItem = (
+      el: EnumeratedElement,
+      p: KeyboardReachabilityPopup,
+    ): Pick<
+      KeyboardReachabilityElement,
+      'reachedBy' | 'reason' | 'confidence'
+    > => {
+      const method = reachedBy.get(el.id);
+      if (method) return { reachedBy: method, reason: null, confidence: null };
+      if (p.stopReason === 'aborted')
+        return notEvaluated('exploration-aborted');
+      if (p.status === 'explored') {
+        return unreachable('popup-item-not-reached', 'medium');
+      }
+      return unreachable('composite-exploration-stopped', 'low');
+    };
+
+    const base = (el: EnumeratedElement) => ({
       selector: el.selector,
       tag: el.tag,
       role: el.role,
@@ -988,12 +1245,27 @@ export async function runKeyboardReachabilityCheck(
       htmlTruncated: el.htmlTruncated,
       tabindex: el.tabindex,
       evidence: el.evidence,
-      compositeSelector:
-        el.compositeId === null
-          ? null
-          : enumeration.composites[el.compositeId]!.selector,
-      ...classify(el),
-    }));
+    });
+    const outElements: KeyboardReachabilityElement[] = [
+      ...elements.map((el) => ({
+        ...base(el),
+        compositeSelector:
+          el.compositeId === null
+            ? null
+            : enumeration.composites[el.compositeId]!.selector,
+        foundIn: 'load' as const,
+        ...classify(el),
+      })),
+      ...popupItems.map(({ el, popup }) => {
+        const p = popups[popup]!;
+        return {
+          ...base(el),
+          compositeSelector: p.popupSelector ?? `${p.triggerSelector} (popup)`,
+          foundIn: 'popup' as const,
+          ...classifyPopupItem(el, p),
+        };
+      }),
+    ];
 
     const count = (m: KeyboardReachabilityElement['reachedBy']): number =>
       outElements.filter((e) => e.reachedBy === m).length;
@@ -1008,6 +1280,7 @@ export async function runKeyboardReachabilityCheck(
       excluded: enumeration.excluded,
       elements: outElements,
       composites,
+      popups,
       tabWalkCapped,
       aborted: run.aborted,
       screenshotPath: '',

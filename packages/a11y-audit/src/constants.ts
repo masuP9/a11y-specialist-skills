@@ -640,6 +640,21 @@ export const KEYBOARD_REACHABILITY_OPERABLE_ROLES = [
   'textbox',
   'searchbox',
 ] as const;
+/** aria-haspopup values whose popup is opened with ArrowDown (dialog/grid excluded). */
+export const KEYBOARD_REACHABILITY_POPUP_HASPOPUP_VALUES = [
+  'true',
+  'menu',
+  'listbox',
+  'tree',
+] as const;
+/** Only these roles count as popup contents (not dialog controls or tooltips). */
+export const KEYBOARD_REACHABILITY_POPUP_ITEM_ROLES = [
+  'option',
+  'menuitem',
+  'menuitemcheckbox',
+  'menuitemradio',
+  'treeitem',
+] as const;
 /** Tab walk: extra Tab presses beyond the focusable count. */
 export const KEYBOARD_REACHABILITY_TAB_SLACK = 10;
 export const KEYBOARD_REACHABILITY_MAX_TAB_PRESSES = 600;

@@ -230,6 +230,7 @@ test('keyboard-reachability-check envelope with every reachedBy value validates 
     tabindex: null,
     evidence: 'native' as const,
     compositeSelector: null,
+    foundIn: 'load' as const,
   };
   const details: KeyboardReachabilityCheckDetails = {
     totalOperableElements: 5,
@@ -262,6 +263,7 @@ test('keyboard-reachability-check envelope with every reachedBy value validates 
         role: 'option',
         reachedBy: 'activedescendant',
         compositeSelector: '#lb',
+        foundIn: 'popup',
         reason: null,
         confidence: null,
       },
@@ -299,6 +301,24 @@ test('keyboard-reachability-check envelope with every reachedBy value validates 
         orientation: 'vertical',
         keysPressed: 4,
         status: 'explored',
+        stopReason: null,
+      },
+    ],
+    popups: [
+      {
+        triggerSelector: '#combo',
+        popupSelector: '#lb',
+        status: 'explored',
+        itemsFound: 1,
+        keysPressed: 2,
+        stopReason: null,
+      },
+      {
+        triggerSelector: '#hint',
+        popupSelector: null,
+        status: 'opened-not-entered',
+        itemsFound: 1,
+        keysPressed: 2,
         stopReason: null,
       },
     ],
