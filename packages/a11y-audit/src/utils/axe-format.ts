@@ -17,6 +17,7 @@ import type {
   CheckSource,
   FocusCheckDetails,
   FocusElementRef,
+  KeyboardReachabilityCheckDetails,
   KeyboardTrapCheckDetails,
   NormalizedImpact,
   NormalizedNode,
@@ -589,6 +590,48 @@ export function normalizeKeyboardTrapCheck(
     applicable,
   );
 
+  return buckets;
+}
+
+// =============================================================================
+// Keyboard Reachability Check normalization (WCAG 2.1.1)
+// =============================================================================
+
+export function normalizeKeyboardReachabilityCheck(
+  details: KeyboardReachabilityCheckDetails,
+): NormalizedBuckets {
+  const buckets = emptyBuckets();
+  const applicable = details.totalOperableElements > 0;
+  buckets.checkedNodes = details.totalOperableElements;
+
+  const nodes = details.elements
+    .filter((el) => el.reachedBy === 'unreachable')
+    .map((el) =>
+      toNode(
+        el,
+        `<${el.tag.toLowerCase()}> "${el.name}" (role: ${el.role ?? 'none'}) ` +
+          'was not reached by Tab, arrow keys within its composite widget, or ' +
+          `aria-activedescendant. Reason: ${el.reason} (confidence: ${el.confidence}). ` +
+          'Verify whether the same function is keyboard operable elsewhere.',
+      ),
+    );
+
+  // Untested elements are not "unreachable", but the page must not pass
+  // while part of it was never exercised.
+  if (details.notEvaluatedCount > 0) {
+    const cause = details.aborted
+      ? `exploration aborted: ${details.aborted.reason}`
+      : 'arrow-key budget, Tab walk cap, or unsupported grid widget';
+    nodes.push(
+      pageNode(
+        `${details.notEvaluatedCount} operable element(s) could not be ` +
+          `evaluated (${cause}). Keyboard reachability for these is unknown; ` +
+          'test them manually.',
+      ),
+    );
+  }
+
+  bucketize(buckets, 'keyboard-unreachable', nodes, applicable);
   return buckets;
 }
 

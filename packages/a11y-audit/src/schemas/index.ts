@@ -625,6 +625,125 @@ export const KEYBOARD_TRAP_CHECK_RESULT_SCHEMA: JsonSchema =
     },
   });
 
+const KEYBOARD_REACHABILITY_ELEMENT_SCHEMA: JsonSchema = {
+  type: 'object',
+  required: [
+    'selector',
+    'tag',
+    'role',
+    'name',
+    'html',
+    'htmlTruncated',
+    'tabindex',
+    'evidence',
+    'reachedBy',
+    'compositeSelector',
+    'reason',
+    'confidence',
+  ],
+  properties: {
+    selector: { type: 'string' },
+    tag: { type: 'string' },
+    role: { type: ['string', 'null'] },
+    name: { type: 'string' },
+    html: { type: 'string' },
+    htmlTruncated: { type: 'boolean' },
+    tabindex: { type: ['string', 'null'] },
+    evidence: { enum: ['native', 'role', 'onclick', 'click-listener'] },
+    reachedBy: {
+      enum: [
+        'tab',
+        'arrow',
+        'activedescendant',
+        'unreachable',
+        'not-evaluated',
+      ],
+    },
+    compositeSelector: { type: ['string', 'null'] },
+    reason: { type: ['string', 'null'] },
+    confidence: {
+      type: ['string', 'null'],
+      enum: ['high', 'medium', 'low', null],
+    },
+  },
+};
+
+const KEYBOARD_REACHABILITY_COMPOSITE_SCHEMA: JsonSchema = {
+  type: 'object',
+  required: [
+    'selector',
+    'role',
+    'orientation',
+    'keysPressed',
+    'status',
+    'stopReason',
+  ],
+  properties: {
+    selector: { type: 'string' },
+    role: { type: 'string' },
+    orientation: { enum: ['horizontal', 'vertical', 'both', 'none'] },
+    keysPressed: { type: 'number' },
+    status: { enum: ['explored', 'stopped', 'not-explored'] },
+    stopReason: { type: ['string', 'null'] },
+  },
+};
+
+export const KEYBOARD_REACHABILITY_CHECK_RESULT_SCHEMA: JsonSchema =
+  buildEnvelopeSchema({
+    id: 'keyboard-reachability-check-result',
+    title: 'KeyboardReachabilityCheckResult',
+    source: 'keyboard-reachability-check',
+    details: {
+      type: 'object',
+      required: [
+        'totalOperableElements',
+        'reachedCount',
+        'unreachableCount',
+        'notEvaluatedCount',
+        'excluded',
+        'elements',
+        'composites',
+        'tabWalkCapped',
+        'aborted',
+        'screenshotPath',
+      ],
+      properties: {
+        totalOperableElements: { type: 'number' },
+        reachedCount: { type: 'number' },
+        unreachableCount: { type: 'number' },
+        notEvaluatedCount: { type: 'number' },
+        excluded: {
+          type: 'object',
+          required: ['disabled', 'inert', 'hidden', 'insideOperable'],
+          properties: {
+            disabled: { type: 'number' },
+            inert: { type: 'number' },
+            hidden: { type: 'number' },
+            insideOperable: { type: 'number' },
+          },
+        },
+        elements: {
+          type: 'array',
+          items: KEYBOARD_REACHABILITY_ELEMENT_SCHEMA,
+        },
+        composites: {
+          type: 'array',
+          items: KEYBOARD_REACHABILITY_COMPOSITE_SCHEMA,
+        },
+        tabWalkCapped: { type: 'boolean' },
+        aborted: {
+          type: ['object', 'null'],
+          required: ['reason', 'url'],
+          properties: {
+            reason: { enum: ['navigation', 'timeout'] },
+            url: { type: 'string' },
+          },
+        },
+        screenshotPath: { type: 'string' },
+      },
+    },
+  });
+
 /** All result schemas keyed by check id. */
 export const RESULT_SCHEMAS = {
   'axe-audit': AXE_AUDIT_RESULT_SCHEMA,
@@ -638,4 +757,5 @@ export const RESULT_SCHEMAS = {
   'time-limit-detector': TIME_LIMIT_DETECTOR_RESULT_SCHEMA,
   'auto-play-detection': AUTO_PLAY_DETECTION_RESULT_SCHEMA,
   'keyboard-trap-check': KEYBOARD_TRAP_CHECK_RESULT_SCHEMA,
+  'keyboard-reachability-check': KEYBOARD_REACHABILITY_CHECK_RESULT_SCHEMA,
 } as const;
