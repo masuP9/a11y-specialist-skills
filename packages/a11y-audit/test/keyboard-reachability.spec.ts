@@ -498,3 +498,67 @@ test('popups page: an aria-haspopup="dialog" button is not a popup trigger and t
   expect(details.popups).toHaveLength(4);
   expect(validate(result), JSON.stringify(validate.errors)).toBe(true);
 });
+
+test('popups-edge page: a menu shared by two triggers is still judged when only the second one gets inside', async ({
+  baseUrl,
+  page,
+  browser,
+}, testInfo) => {
+  const result = await runFixtureCheck(
+    'keyboard-reachability-check',
+    'keyboard-reachability/popups-edge.html',
+    baseUrl,
+    { page, browser, testInfo },
+    { quiet: true },
+  );
+  const details = result.details as KeyboardReachabilityCheckDetails;
+
+  const a = details.popups.find((p) => p.triggerSelector.endsWith('#shared-a'));
+  const b = details.popups.find((p) => p.triggerSelector.endsWith('#shared-b'));
+  expect(a?.status).toBe('opened-not-entered');
+  expect(b?.status).toBe('explored');
+  expect(byId(details, 'shared-one').reachedBy).toBe('arrow');
+  expect(byId(details, 'shared-two').reachedBy).toBe('arrow');
+});
+
+test('popups-edge page: an aria-controls pointing to a missing id collects no unrelated items', async ({
+  baseUrl,
+  page,
+  browser,
+}, testInfo) => {
+  const result = await runFixtureCheck(
+    'keyboard-reachability-check',
+    'keyboard-reachability/popups-edge.html',
+    baseUrl,
+    { page, browser, testInfo },
+    { quiet: true },
+  );
+  const details = result.details as KeyboardReachabilityCheckDetails;
+
+  const bad = details.popups.find((p) =>
+    p.triggerSelector.endsWith('#bad-ref'),
+  );
+  expect(bad?.status).toBe('not-opened');
+  expect(
+    details.elements.some((e) => e.selector.endsWith('#unrelated-two')),
+  ).toBe(false);
+  expect(details.unreachableCount).toBe(0);
+});
+
+test('popup-reload page: a reload while opening a popup aborts instead of throwing', async ({
+  baseUrl,
+  page,
+  browser,
+}, testInfo) => {
+  const result = await runFixtureCheck(
+    'keyboard-reachability-check',
+    'keyboard-reachability/popup-reload.html',
+    baseUrl,
+    { page, browser, testInfo },
+    { quiet: true },
+  );
+  const details = result.details as KeyboardReachabilityCheckDetails;
+
+  expect(details.aborted?.reason).toBe('navigation');
+  expect(details.popups[0]?.stopReason).toBe('aborted');
+});

@@ -158,6 +158,8 @@ interface PopupScanResult {
   ci: number;
   popupSelector: string | null;
   newItems: EnumeratedElement[];
+  /** Focus or aria-activedescendant is on an item shown by this opening. */
+  entered: boolean;
 }
 
 type InPageMethod =
@@ -668,14 +670,28 @@ function installReachTracker(): void {
    * (portals). Only item roles count, so dialog controls and tooltips don't.
    */
   function popupScan(id: number): unknown {
-    const t = items[id]!;
-    const refs =
+    const t = items[id];
+    // A reload lands a fresh tracker with no items: report only the document
+    // so the runner sees the docId change and aborts.
+    if (!t) {
+      return {
+        docId,
+        ci: -1,
+        popupSelector: null,
+        newItems: [],
+        entered: false,
+      };
+    }
+    const tokens =
       `${t.getAttribute('aria-controls') ?? ''} ${t.getAttribute('aria-owns') ?? ''}`
         .trim()
         .split(/\s+/)
-        .filter(Boolean)
-        .map((ref) => document.getElementById(ref))
-        .filter((el): el is HTMLElement => el !== null);
+        .filter(Boolean);
+    // With explicit references, only their targets count — an unresolved
+    // reference collects nothing rather than falling back to "anywhere".
+    const refs = tokens
+      .map((ref) => document.getElementById(ref))
+      .filter((el): el is HTMLElement => el !== null);
     let ci = popupComposites.get(t);
     if (ci === undefined) {
       composites.push({ el: null, members: [t], trigger: t });
@@ -683,23 +699,35 @@ function installReachTracker(): void {
       popupComposites.set(t, ci);
     }
     const popup = composites[ci]!;
+    // Items shown by THIS opening. Items an earlier trigger already
+    // registered (shared menus) are reused, not skipped.
     const fresh = visiblePopupItems().filter(
       (el) =>
         !popupBefore.has(el) &&
-        !items.includes(el) &&
-        (refs.length === 0 || refs.some((r) => r.contains(el))),
+        (tokens.length === 0 || refs.some((r) => r.contains(el))),
     );
     const newItems = fresh.map((el) => {
-      items.push(el);
+      let itemId = items.indexOf(el);
+      if (itemId < 0) {
+        items.push(el);
+        itemId = items.length - 1;
+      }
       // Membership is the item's list container, so focus landing on an
       // uncounted but focusable entry (APG keeps aria-disabled menu items
       // focusable) still counts as inside the popup.
       const container =
         el.closest('[role="menu"], [role="listbox"], [role="tree"]') ?? el;
       if (!popup.members!.includes(container)) popup.members!.push(container);
-      return describe(el, items.length - 1, null);
+      return describe(el, itemId, null);
     });
     recordActiveDescendant();
+    // Entered = the keyboard is inside NOW (not "was ever reached").
+    const active = document.activeElement;
+    const ref = active?.getAttribute('aria-activedescendant');
+    const target = ref ? document.getElementById(ref) : null;
+    const entered =
+      (!!active && fresh.includes(active)) ||
+      (!!target && fresh.includes(target));
     // Opening a popup can rebuild a large subtree; count churn from here.
     mutations = 0;
     return {
@@ -707,6 +735,7 @@ function installReachTracker(): void {
       ci,
       popupSelector: refs[0] ? getSelector(refs[0]) : null,
       newItems,
+      entered,
     };
   }
 
@@ -1094,28 +1123,48 @@ export async function runKeyboardReachabilityCheck(
       const found: EnumeratedElement[] = [];
       let popupCi = -1;
       let isEntered = false;
+      let budgetOut = false;
       for (let attempt = 0; attempt < 2 && !isEntered; attempt++) {
-        if (attempt === 1 && found.length === 0) break; // never opened
+        if (attempt === 1) {
+          if (found.length === 0) break; // never opened
+          // Retry only while focus is still on the trigger/popup and not on
+          // a value control the opening moved it to.
+          const g = await inPage<GuardResult>('guard', popupCi);
+          if (!g || g.docId !== docId || run.navigatedTo !== null) {
+            abortNavigation();
+            break;
+          }
+          if (!g.inside || g.valueControl) break;
+        }
+        if (timedOut()) break;
+        if (totalArrows >= KEYBOARD_REACHABILITY_MAX_ARROW_PRESSES_TOTAL) {
+          budgetOut = true;
+          break;
+        }
         await page.keyboard.press('ArrowDown');
         p.keysPressed++;
         totalArrows++;
         await settle();
         const scan = await inPage<PopupScanResult>('popupScan', trigger.id);
-        if (!scan || scan.docId !== docId) {
+        if (!scan || scan.docId !== docId || run.navigatedTo !== null) {
           abortNavigation();
           break;
         }
         popupCi = scan.ci;
         p.popupSelector ??= scan.popupSelector;
-        found.push(...scan.newItems);
+        for (const item of scan.newItems) {
+          if (!found.some((f) => f.id === item.id)) found.push(item);
+        }
         if (!(await sync())) break;
-        isEntered = found.some((e) => reachedBy.has(e.id));
+        isEntered = scan.entered;
       }
       p.itemsFound = found.length;
 
       if (run.aborted) {
         p.status = isEntered ? 'stopped' : 'not-explored';
         p.stopReason = 'aborted';
+      } else if (budgetOut && !isEntered) {
+        p.stopReason = 'arrow-budget-exhausted';
       } else if (found.length === 0) {
         p.status = 'not-opened';
       } else if (!isEntered) {
@@ -1132,16 +1181,25 @@ export async function runKeyboardReachabilityCheck(
         p.stopReason = stop;
       }
       if (isEntered) {
-        for (const el of found)
-          popupItems.push({ el, popup: popups.length - 1 });
+        // A shared popup is judged once, by the first trigger that got in.
+        for (const el of found) {
+          if (!popupItems.some((x) => x.el.id === el.id)) {
+            popupItems.push({ el, popup: popups.length - 1 });
+          }
+        }
       }
 
-      if (!run.aborted) {
-        // Close without recording the focus move back to the trigger.
+      if (!run.aborted && popupCi >= 0) {
+        // Close without recording the focus move back to the trigger — but
+        // only while focus is still ours; Escape elsewhere could close an
+        // unrelated dialog.
         await inPage('setPhase', 'idle');
-        await page.keyboard.press('Escape');
-        await settle();
-        await sync();
+        const g = await inPage<GuardResult>('guard', popupCi);
+        if (g && g.docId === docId && g.inside) {
+          await page.keyboard.press('Escape');
+          await settle();
+          await sync();
+        }
       }
     }
 

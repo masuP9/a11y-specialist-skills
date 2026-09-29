@@ -1,0 +1,24 @@
+<!doctype html>
+<!--
+  keyboard-reachability-check: popup-reload
+  A menu button whose ArrowDown reloads the page (same URL) while the popup
+  phase is opening it. The check must return an aborted result, not throw.
+  Expected: details.aborted.reason === 'navigation'.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Keyboard reachability: popup reload</title>
+  </head>
+  <body>
+    <h1>Keyboard reachability: popup reload</h1>
+    <button type="button" id="reloader" aria-haspopup="menu">
+      Reload menu
+    </button>
+    <script>
+      document.getElementById('reloader').addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') location.reload();
+      });
+    </script>
+  </body>
+</html>
