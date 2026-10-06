@@ -19,8 +19,10 @@
  * elements count as separate targets (an undersized control inside a larger
  * clickable ancestor fails the exception); only a `<label>` (explicit or
  * implicit), its control and that control's other labels are treated as one
- * target. `position: fixed` targets are swept over the scroll range in which
- * the subject is visible; `position: sticky` is treated as normal flow.
+ * target. `position: fixed` targets are compared with each other as they
+ * are, and with a normal-flow target at the scroll position where the two are
+ * farthest apart (scroll 0 when the fixed target is above, the maximum scroll
+ * when it is below); `position: sticky` is treated as normal flow.
  *
  * Limitations:
  * - Essential exception requires manual review
@@ -99,8 +101,8 @@ interface BasicTargetInfo {
   /**
    * `true` when the element (or an ancestor) is `position: fixed`. For such
    * targets `boundingRect`/`clientRects` are viewport coordinates (they do
-   * not move with the document); the spacing evaluator sweeps them over the
-   * scroll range in which the subject target is visible.
+   * not move with the document), which equal document coordinates at
+   * scroll 0.
    */
   fixed: boolean;
   /**
@@ -114,10 +116,8 @@ interface CollectedTargets {
   targets: BasicTargetInfo[];
   /** Targets skipped because another element covers their hit-test point. */
   occludedCount: number;
-  /** Viewport size in CSS px. */
-  viewport: { width: number; height: number };
-  /** Maximum window scroll offsets in CSS px. */
-  maxScroll: Point;
+  /** Maximum vertical window scroll offset in CSS px. */
+  maxScrollY: number;
   /** Window scroll offsets at collection time (restored on return). */
   scroll: Point;
 }
@@ -455,15 +455,13 @@ function collectBasicTargetInfo(args: {
     };
   });
 
-  const doc = document.documentElement;
   return {
     targets,
     occludedCount: occluded.size,
-    viewport: { width: window.innerWidth, height: window.innerHeight },
-    maxScroll: {
-      x: Math.max(0, doc.scrollWidth - window.innerWidth),
-      y: Math.max(0, doc.scrollHeight - window.innerHeight),
-    },
+    maxScrollY: Math.max(
+      0,
+      document.documentElement.scrollHeight - window.innerHeight,
+    ),
     scroll: { x: originalScrollX, y: originalScrollY },
   };
 }
@@ -568,91 +566,51 @@ function findRedundantTargets(
 function buildSpacingEvaluator(
   targets: readonly BasicTargetInfo[],
   aaThreshold: number,
-  env: { viewport: { width: number; height: number }; maxScroll: Point },
+  maxScrollY: number,
 ): (target: BasicTargetInfo) => TargetSpacingResult {
-  const undersized = (t: BasicTargetInfo): boolean =>
-    Math.min(t.width, t.height) < aaThreshold;
-
-  const toSpacingTarget = (t: BasicTargetInfo): SpacingTarget => ({
+  // Viewport coordinates of a fixed target equal its document coordinates at
+  // scroll 0, so every target is compared in the page at scroll 0, except
+  // that fixed/flow pairs are moved to the scroll position chosen below.
+  const spacingTargets: SpacingTarget[] = targets.map((t) => ({
     index: t.index,
     selector: t.selector,
     bounds: t.boundingRect,
     rects: t.clientRects,
-    undersized: undersized(t),
+    undersized: Math.min(t.width, t.height) < aaThreshold,
+  }));
+  const centerY = (t: BasicTargetInfo): number => rectCenter(t.boundingRect).y;
+  const moveY = (r: Rect, dy: number): Rect => ({
+    ...r,
+    top: r.top + dy,
+    bottom: r.bottom + dy,
   });
-
-  /** A rectangle swept over a range of offsets (Minkowski sum with a box). */
-  const sweep = (r: Rect, range: SweepRange): Rect => ({
-    left: r.left + range.minX,
-    top: r.top + range.minY,
-    right: r.right + range.maxX,
-    bottom: r.bottom + range.maxY,
-  });
-  interface SweepRange {
-    minX: number;
-    maxX: number;
-    minY: number;
-    maxY: number;
-  }
-
-  /**
-   * Represent a target whose frame differs from the subject's as a swept
-   * shape: its painted rects and its circle center may lie anywhere the
-   * relative scroll offset can put them.
-   */
-  const sweptTarget = (
-    t: BasicTargetInfo,
-    range: SweepRange,
-  ): SpacingTarget => {
-    const c = rectCenter(t.boundingRect);
-    return {
-      index: t.index,
-      selector: t.selector,
-      bounds: sweep(t.boundingRect, range),
-      rects: t.clientRects.map((r) => sweep(r, range)),
-      undersized: undersized(t),
-      centerRect: sweep(
-        { left: c.x, top: c.y, right: c.x, bottom: c.y },
-        range,
-      ),
-    };
-  };
-
-  const flow = targets.filter((t) => !t.fixed);
-  const fixed = targets.filter((t) => t.fixed);
-  const flowTargets = flow.map(toSpacingTarget);
-  const fixedTargets = fixed.map(toSpacingTarget);
 
   const isSameTarget = (a: SpacingTarget, b: SpacingTarget): boolean =>
     targets[a.index]?.sameTargetIndices.includes(b.index) ?? false;
 
   return (target) => {
-    let neighbors: SpacingTarget[];
-    if (target.fixed) {
-      // Viewport frame: fixed neighbors are static, flow neighbors slide by
-      // -scroll over the whole scroll range.
-      const range: SweepRange = {
-        minX: -env.maxScroll.x,
-        maxX: 0,
-        minY: -env.maxScroll.y,
-        maxY: 0,
+    // A fixed/flow pair is compared at the scroll position where the flow
+    // target is farthest from the fixed one. Scrolling down moves the flow
+    // target up: when the fixed one is above (fixed header) that is scroll
+    // 0; when it is below (back-to-top button) it is the maximum scroll.
+    // Passing a fixed element mid-scroll is never a failure.
+    const neighbors = spacingTargets.map((n) => {
+      const other = targets[n.index]!;
+      if (other.fixed === target.fixed) {
+        return n;
+      }
+      const fixedT = target.fixed ? target : other;
+      const flowT = target.fixed ? other : target;
+      const scrollY = centerY(fixedT) < centerY(flowT) ? 0 : maxScrollY;
+      // Move the neighbor into the subject's frame at that scroll position.
+      const dy = other.fixed ? scrollY : -scrollY;
+      return {
+        ...n,
+        bounds: moveY(n.bounds, dy),
+        rects: n.rects.map((r) => moveY(r, dy)),
       };
-      neighbors = [...fixedTargets, ...flow.map((t) => sweptTarget(t, range))];
-    } else {
-      // Document frame: fixed neighbors slide by +scroll over the scroll
-      // positions at which the subject's center is inside the viewport.
-      const c = rectCenter(target.boundingRect);
-      const clamp = (v: number, max: number): number =>
-        Math.min(Math.max(v, 0), max);
-      const range: SweepRange = {
-        minX: clamp(c.x - env.viewport.width, env.maxScroll.x),
-        maxX: clamp(c.x, env.maxScroll.x),
-        minY: clamp(c.y - env.viewport.height, env.maxScroll.y),
-        maxY: clamp(c.y, env.maxScroll.y),
-      };
-      neighbors = [...flowTargets, ...fixed.map((t) => sweptTarget(t, range))];
-    }
-    return evaluateTargetSpacing(toSpacingTarget(target), neighbors, {
+    });
+    return evaluateTargetSpacing(spacingTargets[target.index]!, neighbors, {
       diameter: aaThreshold,
       isSameTarget,
     });
@@ -666,11 +624,7 @@ function analyzeTargets(
   targets: Array<BasicTargetInfo & { accessibleName: string | null }>,
   aaThreshold: number,
   aaaThreshold: number,
-  env: {
-    viewport: { width: number; height: number };
-    maxScroll: Point;
-    scroll: Point;
-  },
+  env: { scroll: Point; maxScrollY: number },
 ): {
   failAA: TargetSizeIssue[];
   failAAAOnly: TargetSizeIssue[];
@@ -684,7 +638,11 @@ function analyzeTargets(
 
   // Build href map for redundancy check
   const hrefMap = findRedundantTargets(targets);
-  const evaluateSpacing = buildSpacingEvaluator(targets, aaThreshold, env);
+  const evaluateSpacing = buildSpacingEvaluator(
+    targets,
+    aaThreshold,
+    env.maxScrollY,
+  );
 
   for (const target of targets) {
     const minDimension = Math.min(target.width, target.height);
@@ -847,8 +805,7 @@ export async function runTargetSizeCheck(
   const {
     targets: basicTargets,
     occludedCount,
-    viewport,
-    maxScroll,
+    maxScrollY,
     scroll,
   } = await page.evaluate(collectBasicTargetInfo, {
     interactiveSelector: INTERACTIVE_SELECTOR,
@@ -883,7 +840,7 @@ export async function runTargetSizeCheck(
     targets,
     aaThreshold,
     aaaThreshold,
-    { viewport, maxScroll, scroll },
+    { scroll, maxScrollY },
   );
 
   const verifiedSpacing = excepted.filter(
