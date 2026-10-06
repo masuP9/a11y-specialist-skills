@@ -149,9 +149,58 @@
     <!-- Far below the initial viewport: exercises the scroll + hit-test path -->
     <button id="far" class="t" style="left: 20px; top: 2000px">f</button>
 
-    <!-- position: fixed 44x44 button at viewport (121, 350). When #near-fixed
-         (document (100, 1000), center (110, 1010)) is scrolled into view the
-         fixed button's left edge is 11px from that center → intersects. -->
+    <!-- Fixed "header" button at viewport (900, 0), 44x44. #under-hdr sits
+         just below it at scroll 0: center (910, 54) is 10px from its bottom
+         edge → intersects (scrolling only moves #under-hdr toward it). -->
+    <button
+      id="hdr-fixed"
+      class="t"
+      style="position: fixed; left: 900px; top: 0; width: 44px; height: 44px"
+    >
+      H
+    </button>
+    <button id="under-hdr" class="t" style="left: 900px; top: 44px">h</button>
+
+    <!-- Fixed "bottom bar" button at viewport (1000, 676), 44x44. #above-bottom
+         is 10px above it at scroll 0, but at the maximum scroll it is far
+         above → not an intersection. -->
+    <button
+      id="bottom-fixed"
+      class="t"
+      style="position: fixed; left: 1000px; top: 676px; width: 44px; height: 44px"
+    >
+      B
+    </button>
+    <button id="above-bottom" class="t" style="left: 1000px; top: 656px">
+      b
+    </button>
+
+    <!-- Undersized fixed button with flow neighbors 22px below (compared at
+         scroll 0) and 22px above (compared at the maximum scroll: far). -->
+    <button
+      id="tiny-fixed2"
+      class="t"
+      style="position: fixed; left: 1100px; top: 100px"
+    >
+      w
+    </button>
+    <button id="below-tiny" class="t" style="left: 1100px; top: 122px">
+      y
+    </button>
+    <button
+      id="tiny-fixed3"
+      class="t"
+      style="position: fixed; left: 1200px; top: 200px"
+    >
+      z
+    </button>
+    <button id="above-tiny" class="t" style="left: 1200px; top: 178px">
+      a
+    </button>
+
+    <!-- position: fixed 44x44 button at viewport (121, 350). #near-fixed
+         (document (100, 1000), center (110, 1010)) only comes near it when
+         scrolled; at scroll 0 they are far apart → not an intersection. -->
     <button
       id="fixed-btn"
       class="t"

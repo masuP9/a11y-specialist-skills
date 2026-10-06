@@ -3,6 +3,20 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixed
+
+- `target-size-check`: a small target that only passes under a
+  `position: fixed` element while scrolling (e.g. a footer link under a fixed
+  header) no longer fails the spacing exception. A fixed and a normal-flow
+  target are now compared at the scroll position where they are farthest
+  apart: scroll position 0 when the fixed target is above (a link just below a
+  fixed header still fails), the maximum scroll when it is below (a footer
+  link still close to a back-to-top button at the bottom of the page, or on a
+  page that cannot scroll, still fails). Fixed targets are still compared
+  with each other.
+
 ## 0.8.0 — 2026-09-29
 
 ### Added

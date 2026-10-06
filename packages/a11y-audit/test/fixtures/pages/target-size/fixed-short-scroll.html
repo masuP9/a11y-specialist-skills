@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>target-size fixed targets with little scroll room</title>
+    <style>
+      /*
+       * The page is 725px tall in a 720px viewport: it scrolls by only 5px,
+       * so targets above a fixed element near the bottom cannot be scrolled
+       * far enough away from it. Coordinates are document CSS px.
+       */
+      body {
+        margin: 0;
+        font-family: sans-serif;
+        min-height: 725px;
+      }
+      .t {
+        position: absolute;
+        box-sizing: border-box;
+        width: 20px;
+        height: 20px;
+        padding: 0;
+        border: 0;
+        margin: 0;
+        background: #cde;
+        font-size: 10px;
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Fixed 44x44 button at viewport (1000, 676). #near-bottom's center
+         (1010, 670) is 6px above it at scroll 0 and 11px at the maximum
+         scroll (5px) → intersects. -->
+    <button
+      id="bottom-btn"
+      class="t"
+      style="position: fixed; left: 1000px; top: 676px; width: 44px; height: 44px"
+    >
+      B
+    </button>
+    <button id="near-bottom" class="t" style="left: 1000px; top: 660px">
+      n
+    </button>
+
+    <!-- Undersized fixed button at viewport (1100, 600), center (1110, 610).
+         #above-tiny-bottom (document y 584..604, center y 594) is 16px above
+         it at scroll 0 and 21px at the maximum scroll; each circle still
+         reaches 11px into the other button → intersects. -->
+    <button
+      id="tiny-bottom"
+      class="t"
+      style="position: fixed; left: 1100px; top: 600px"
+    >
+      t
+    </button>
+    <button id="above-tiny-bottom" class="t" style="left: 1100px; top: 584px">
+      a
+    </button>
+  </body>
+</html>

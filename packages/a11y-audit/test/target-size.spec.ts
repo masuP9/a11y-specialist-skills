@@ -116,11 +116,26 @@ test('target-size-check — spacing exception geometry', async ({
   expectVerified('#dual-b');
   expectVerified('#dual');
 
-  // position: fixed neighbor: evaluated over the scroll range in which the
-  // subject is visible, not at the scroll position of collection.
-  expect(issue('#near-fixed').spacing?.intersections).toEqual([
-    { selector: '#fixed-btn', kind: 'target', distance: 11, required: 12 },
+  // A fixed/flow pair is compared where the flow target is farthest from the
+  // fixed one: scroll 0 when the fixed one is above, the maximum scroll when
+  // it is below. Only passing the fixed element while scrolling is fine.
+  expectVerified('#near-fixed');
+  // Just below a fixed header at scroll 0 → intersects.
+  expect(issue('#under-hdr').spacing?.intersections).toEqual([
+    { selector: '#hdr-fixed', kind: 'target', distance: 10, required: 12 },
   ]);
+  // Just above a fixed bottom bar at scroll 0, far at the maximum scroll.
+  expectVerified('#above-bottom');
+  // Undersized fixed target: the flow neighbor below is too close at scroll
+  // 0; the one above is far at the maximum scroll.
+  expect(issue('#tiny-fixed2').spacing?.intersections).toEqual([
+    { selector: '#below-tiny', kind: 'circle', distance: 22, required: 24 },
+  ]);
+  expect(issue('#below-tiny').spacing?.intersections).toEqual([
+    { selector: '#tiny-fixed2', kind: 'circle', distance: 22, required: 24 },
+  ]);
+  expectVerified('#tiny-fixed3');
+  expectVerified('#above-tiny');
 
   // position: fixed under a transformed ancestor scrolls with the page: it is
   // a normal flow neighbor (centers 22px apart → circles intersect).
@@ -209,8 +224,9 @@ test('target-size-check — pre-scrolled page with smooth scrolling', async ({
   expect(await page.evaluate(() => window.scrollY)).toBe(500);
 
   // The fixed-neighbor result does not depend on the caller's scroll position.
-  expect(bySelector('#near-fixed')?.spacing?.intersections).toEqual([
-    { selector: '#fixed-btn', kind: 'target', distance: 11, required: 12 },
+  expect(bySelector('#near-fixed')?.exceptionAssessment).toBe('verified');
+  expect(bySelector('#under-hdr')?.spacing?.intersections).toEqual([
+    { selector: '#hdr-fixed', kind: 'target', distance: 10, required: 12 },
   ]);
 
   // A fixed element under a transformed ancestor sits above the viewport at
@@ -230,6 +246,40 @@ test('target-size-check — pre-scrolled page with smooth scrolling', async ({
     x: 610,
     y: 810,
   });
+});
+
+test('target-size-check — fixed target below a flow target with little scroll room', async ({
+  baseUrl,
+  page,
+}, testInfo) => {
+  await page.goto(`${baseUrl}/target-size/fixed-short-scroll.html`, {
+    waitUntil: 'networkidle',
+  });
+
+  const { details } = await runTargetSizeCheck({
+    page,
+    outputDir: testInfo.outputDir,
+  });
+  const all = [...details.failAA, ...details.exceptedTargets];
+  const bySelector = (s: string): TargetSizeIssue | undefined =>
+    all.find((i) => i.selector === s);
+
+  // A fixed element below is compared at the maximum scroll (5px), where the
+  // flow target is farthest from it: still too close → intersects.
+  expect(bySelector('#near-bottom')?.spacing?.intersections).toEqual([
+    { selector: '#bottom-btn', kind: 'target', distance: 11, required: 12 },
+  ]);
+  expect(bySelector('#tiny-bottom')?.spacing?.intersections).toEqual([
+    {
+      selector: '#above-tiny-bottom',
+      kind: 'target',
+      distance: 11,
+      required: 12,
+    },
+  ]);
+  expect(bySelector('#above-tiny-bottom')?.spacing?.intersections).toEqual([
+    { selector: '#tiny-bottom', kind: 'target', distance: 11, required: 12 },
+  ]);
 });
 
 test.describe('target-size-check — resolveAccessibleNames', () => {
