@@ -3,6 +3,15 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## 0.8.2 — 2026-10-08
+
+### Fixed
+
+- `time-limit` / `orientation`: no longer wait for `networkidle`, which never
+  comes on pages with constant analytics traffic (they timed out after 30s).
+  They now wait for `load` and give network idle at most 5s, like the capture
+  service.
+
 ## 0.8.1 — 2026-10-06
 
 ### Fixed
