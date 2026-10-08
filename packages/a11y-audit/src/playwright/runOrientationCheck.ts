@@ -17,6 +17,7 @@
  */
 
 import type { Page } from '@playwright/test';
+import { gotoAndSettle } from './gotoAndSettle.js';
 import type {
   OrientationCheckResult,
   OrientationCheckDetails,
@@ -183,7 +184,7 @@ export async function runOrientationCheck(
 
   // Test portrait orientation
   await page.setViewportSize(ORIENTATION_VIEWPORTS.portrait);
-  await page.goto(url, { waitUntil: 'networkidle' });
+  await gotoAndSettle(page, url);
   const portraitState = await page.evaluate(captureOrientationState, checkArgs);
 
   let portraitScreenshotPath: string | undefined;
@@ -198,7 +199,7 @@ export async function runOrientationCheck(
 
   // Test landscape orientation
   await page.setViewportSize(ORIENTATION_VIEWPORTS.landscape);
-  await page.goto(url, { waitUntil: 'networkidle' });
+  await gotoAndSettle(page, url);
   const landscapeState = await page.evaluate(
     captureOrientationState,
     checkArgs,

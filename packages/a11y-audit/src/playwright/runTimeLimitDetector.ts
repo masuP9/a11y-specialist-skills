@@ -12,6 +12,7 @@
  */
 
 import type { Page } from '@playwright/test';
+import { gotoAndSettle } from './gotoAndSettle.js';
 import type {
   TimeLimitDetectorResult,
   TimeLimitDetectorDetails,
@@ -256,7 +257,7 @@ export async function runTimeLimitDetector(
 
   await page.addInitScript(createTimerHookScript, { minMs, maxMs });
 
-  await page.goto(targetUrl, { waitUntil: 'networkidle' });
+  await gotoAndSettle(page, targetUrl);
   await page.waitForTimeout(settleMs);
 
   const timers: TimerInfo[] = await page.evaluate(() => {
