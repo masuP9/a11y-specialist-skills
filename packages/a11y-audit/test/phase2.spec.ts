@@ -13,6 +13,7 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { startStaticServer } from './helpers/static-server.js';
 import {
   runTextSpacingCheck,
   runZoomCheck,
@@ -119,6 +120,55 @@ test('runTimeLimitDetector reports a meta refresh as incomplete', async ({
   expect(result.incomplete.map((r) => r.id)).toContain(
     'a11y-skills/meta-refresh',
   );
+});
+
+test('runTimeLimitDetector は、通信が止まないページでも 15 秒以内に結果を返す', async ({
+  page,
+}, testInfo) => {
+  test.setTimeout(60_000);
+  // Playwright Test's page has no default navigation timeout; the capture
+  // service's Playwright library page has 30s. Match production.
+  page.setDefaultNavigationTimeout(30_000);
+  const server = await startStaticServer(
+    new URL('./fixtures/pages', import.meta.url).pathname,
+  );
+  try {
+    const startedAt = Date.now();
+    const result = await runTimeLimitDetector({
+      page,
+      targetUrl: `${server.baseUrl}/network-busy/busy.html`,
+      settleMs: 200,
+      outputDir: testInfo.outputDir,
+    });
+    const elapsed = Date.now() - startedAt;
+    expect(result.source).toBe('time-limit-detector');
+    expect(elapsed).toBeLessThan(15_000);
+  } finally {
+    await server.close();
+  }
+});
+
+test('runOrientationCheck は、通信が止まないページでも 20 秒以内に結果を返す', async ({
+  page,
+}, testInfo) => {
+  test.setTimeout(60_000);
+  page.setDefaultNavigationTimeout(30_000);
+  const server = await startStaticServer(
+    new URL('./fixtures/pages', import.meta.url).pathname,
+  );
+  try {
+    const startedAt = Date.now();
+    const result = await runOrientationCheck({
+      page,
+      targetUrl: `${server.baseUrl}/network-busy/busy.html`,
+      outputDir: testInfo.outputDir,
+    });
+    const elapsed = Date.now() - startedAt;
+    expect(result.source).toBe('orientation-check');
+    expect(elapsed).toBeLessThan(20_000);
+  } finally {
+    await server.close();
+  }
 });
 
 // runAutoPlayDetection clear and finding cases migrated to auto-play.spec.ts
