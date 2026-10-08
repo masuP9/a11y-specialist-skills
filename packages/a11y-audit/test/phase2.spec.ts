@@ -122,7 +122,7 @@ test('runTimeLimitDetector reports a meta refresh as incomplete', async ({
   );
 });
 
-test('runTimeLimitDetector は、通信が止まないページでも 15 秒以内に結果を返す', async ({
+test('runTimeLimitDetector returns within 15s on a page whose network never goes idle', async ({
   page,
 }, testInfo) => {
   test.setTimeout(60_000);
@@ -148,7 +148,7 @@ test('runTimeLimitDetector は、通信が止まないページでも 15 秒以�
   }
 });
 
-test('runOrientationCheck は、通信が止まないページでも 20 秒以内に結果を返す', async ({
+test('runOrientationCheck returns within 20s on a page whose network never goes idle', async ({
   page,
 }, testInfo) => {
   test.setTimeout(60_000);
