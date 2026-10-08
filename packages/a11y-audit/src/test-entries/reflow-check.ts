@@ -10,6 +10,7 @@
 import { test } from '@playwright/test';
 import { runReflowCheck } from '../playwright/runReflowCheck.js';
 import { requireTargetUrl } from '../utils/test-harness.js';
+import { gotoAndSettle } from '../playwright/gotoAndSettle.js';
 import { REFLOW_VIEWPORT } from '../constants.js';
 
 test('reflow check (WCAG 1.4.10)', async ({ page }) => {
@@ -18,6 +19,6 @@ test('reflow check (WCAG 1.4.10)', async ({ page }) => {
     height: REFLOW_VIEWPORT.height,
   });
   const targetUrl = requireTargetUrl();
-  await page.goto(targetUrl, { waitUntil: 'networkidle' });
+  await gotoAndSettle(page, targetUrl);
   await runReflowCheck({ page, screenshot: true });
 });

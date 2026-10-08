@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>network-busy fixture</title>
+  </head>
+  <body>
+    <main>
+      <h1>Constant network traffic</h1>
+      <p>
+        This page keeps requesting itself every 200ms, so the network never goes
+        idle (like pages with constant analytics traffic).
+      </p>
+    </main>
+    <script>
+      setInterval(() => fetch(location.href + '?t=' + Date.now()), 200);
+    </script>
+  </body>
+</html>

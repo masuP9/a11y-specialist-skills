@@ -3,6 +3,17 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## 0.8.2 — 2026-10-08
+
+### Fixed
+
+- No navigation waits for `networkidle` any more, which never comes on pages
+  with constant analytics traffic (navigation timed out after 30s). The CLI's
+  pre-navigation, every check that navigates itself (`time-limit`,
+  `orientation`, `focus-indicator`, `keyboard-trap`, `keyboard-reachability`,
+  `zoom` with a target URL) and the `test-entries/*` wrappers now wait for
+  `load` and give network idle at most 5s, like the capture service.
+
 ## 0.8.1 — 2026-10-06
 
 ### Fixed

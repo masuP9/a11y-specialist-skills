@@ -38,6 +38,7 @@ import {
   HTML_SNIPPET_MAX_LENGTH,
 } from '../constants.js';
 import { buildAuditResult, normalizeFocusCheck } from '../utils/axe-format.js';
+import { gotoAndSettle } from './gotoAndSettle.js';
 import {
   resolveScreenshotPath,
   takeAuditScreenshot,
@@ -221,7 +222,7 @@ export async function runFocusIndicatorCheck(
       });
 
       // Navigate to target page
-      await page.goto(targetUrl, { waitUntil: 'networkidle' });
+      await gotoAndSettle(page, targetUrl);
 
       // Initialize focus tracker and get element count
       const count = await page.evaluate(() =>

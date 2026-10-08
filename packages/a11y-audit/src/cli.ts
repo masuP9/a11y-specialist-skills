@@ -388,6 +388,8 @@ async function main(): Promise<void> {
     );
     process.exit(2);
   }
+  // Loaded only now, like the checks, because it imports @playwright/test.
+  const { gotoAndSettle } = await import('./playwright/gotoAndSettle.js');
 
   // Ensure output directory exists
   fs.mkdirSync(outputDir, { recursive: true });
@@ -417,10 +419,8 @@ async function main(): Promise<void> {
         page = await context.newPage();
 
         if (!check.ownsNavigation) {
-          // Use 'load' for file: URLs to avoid networkidle hanging
-          const waitUntil = url.startsWith('file:') ? 'load' : 'networkidle';
           try {
-            await page.goto(url, { waitUntil });
+            await gotoAndSettle(page, url);
           } catch (navErr) {
             const msg =
               navErr instanceof Error ? navErr.message : String(navErr);
