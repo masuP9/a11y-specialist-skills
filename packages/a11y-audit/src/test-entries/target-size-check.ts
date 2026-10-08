@@ -9,9 +9,10 @@
 import { test } from '@playwright/test';
 import { runTargetSizeCheck } from '../playwright/runTargetSizeCheck.js';
 import { requireTargetUrl } from '../utils/test-harness.js';
+import { gotoAndSettle } from '../playwright/gotoAndSettle.js';
 
 test('target size check (WCAG 2.5.5 / 2.5.8)', async ({ page }) => {
   const targetUrl = requireTargetUrl();
-  await page.goto(targetUrl, { waitUntil: 'networkidle' });
+  await gotoAndSettle(page, targetUrl);
   await runTargetSizeCheck({ page, screenshot: true });
 });

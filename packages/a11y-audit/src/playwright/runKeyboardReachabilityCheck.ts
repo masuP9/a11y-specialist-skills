@@ -33,6 +33,7 @@
  */
 
 import type { Browser, BrowserContextOptions } from '@playwright/test';
+import { gotoAndSettle } from './gotoAndSettle.js';
 import type {
   KeyboardReachabilityCheckDetails,
   KeyboardReachabilityCheckResult,
@@ -813,9 +814,7 @@ export async function runKeyboardReachabilityCheck(
 
   try {
     await page.addInitScript(installReachTracker);
-    // Use 'load' for file: URLs — networkidle never resolves for file: protocol.
-    const waitUntil = targetUrl.startsWith('file:') ? 'load' : 'networkidle';
-    await page.goto(targetUrl, { waitUntil });
+    await gotoAndSettle(page, targetUrl);
     startUrl = page.url();
 
     const stripHash = (u: string): string => u.split('#')[0] ?? u;

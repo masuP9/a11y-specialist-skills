@@ -8,8 +8,9 @@
 import { test } from '@playwright/test';
 import { runAutoPlayDetection } from '../playwright/runAutoPlayDetection.js';
 import { requireTargetUrl } from '../utils/test-harness.js';
+import { gotoAndSettle } from '../playwright/gotoAndSettle.js';
 
 test('auto-play content detection', async ({ page }) => {
-  await page.goto(requireTargetUrl(), { waitUntil: 'networkidle' });
+  await gotoAndSettle(page, requireTargetUrl());
   await runAutoPlayDetection({ page });
 });

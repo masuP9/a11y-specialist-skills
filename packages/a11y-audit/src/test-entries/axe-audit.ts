@@ -14,9 +14,10 @@
 import { test } from '@playwright/test';
 import { runAxeAudit } from '../playwright/runAxeAudit.js';
 import { requireTargetUrl } from '../utils/test-harness.js';
+import { gotoAndSettle } from '../playwright/gotoAndSettle.js';
 
 test('axe-core accessibility audit', async ({ page }) => {
   const targetUrl = requireTargetUrl();
-  await page.goto(targetUrl, { waitUntil: 'networkidle' });
+  await gotoAndSettle(page, targetUrl);
   await runAxeAudit({ page });
 });

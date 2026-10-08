@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import { errors, type Page } from '@playwright/test';
 
 /**
  * Navigate and wait for `load`, then give network idle at most
@@ -17,6 +17,6 @@ export async function gotoAndSettle(
     });
   } catch (error) {
     // Only the grace period elapsing is expected; anything else is real.
-    if ((error as Error)?.name !== 'TimeoutError') throw error;
+    if (!(error instanceof errors.TimeoutError)) throw error;
   }
 }

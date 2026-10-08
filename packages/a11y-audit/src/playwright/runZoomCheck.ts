@@ -28,6 +28,7 @@ import {
   HTML_SNIPPET_MAX_LENGTH,
 } from '../constants.js';
 import { buildAuditResult, normalizeZoomCheck } from '../utils/axe-format.js';
+import { gotoAndSettle } from './gotoAndSettle.js';
 import {
   takeAuditScreenshot,
   resolveScreenshotPath,
@@ -217,7 +218,7 @@ export async function runZoomCheck(
   // If a URL is available, navigate at the base viewport (legacy ordering).
   const targetUrl = targetUrlOption ?? process.env.TEST_PAGE;
   if (targetUrl) {
-    await page.goto(targetUrl, { waitUntil: 'networkidle' });
+    await gotoAndSettle(page, targetUrl);
   }
 
   const zoomResult = await page.evaluate(applyZoomAndCheck, {

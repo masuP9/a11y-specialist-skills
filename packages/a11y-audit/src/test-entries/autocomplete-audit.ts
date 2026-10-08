@@ -6,8 +6,9 @@
 import { test } from '@playwright/test';
 import { runAutocompleteAudit } from '../playwright/runAutocompleteAudit.js';
 import { requireTargetUrl } from '../utils/test-harness.js';
+import { gotoAndSettle } from '../playwright/gotoAndSettle.js';
 
 test('autocomplete audit (WCAG 1.3.5)', async ({ page }) => {
-  await page.goto(requireTargetUrl(), { waitUntil: 'networkidle' });
+  await gotoAndSettle(page, requireTargetUrl());
   await runAutocompleteAudit({ page });
 });

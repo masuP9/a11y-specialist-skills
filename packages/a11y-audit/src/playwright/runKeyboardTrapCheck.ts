@@ -4,8 +4,7 @@
  * Tabs through every focusable element on the page and detects regions where
  * focus cannot escape. Like the focus-indicator check, this owns its
  * BrowserContext (accepts `browser`, not `page`) so it can perform its own
- * navigation with `waitUntil: 'load'` for file: URLs (required for CI smoke
- * tests).
+ * navigation.
  *
  * Limitations:
  * - Shadow DOM: querySelectorAll does not pierce shadow roots; traps inside
@@ -22,6 +21,7 @@
  */
 
 import type { Browser, BrowserContextOptions } from '@playwright/test';
+import { gotoAndSettle } from './gotoAndSettle.js';
 import type {
   KeyboardTrapCheckResult,
   KeyboardTrapCheckDetails,
@@ -140,9 +140,7 @@ export async function runKeyboardTrapCheck(
   };
 
   try {
-    // Use 'load' for file: URLs — networkidle never resolves for file: protocol.
-    const waitUntil = targetUrl.startsWith('file:') ? 'load' : 'networkidle';
-    await page.goto(targetUrl, { waitUntil });
+    await gotoAndSettle(page, targetUrl);
 
     // ------------------------------------------------------------------
     // 1. Enumerate focusable elements
