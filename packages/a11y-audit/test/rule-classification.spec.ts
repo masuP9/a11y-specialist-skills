@@ -52,6 +52,10 @@ const FINDING_EXPECTATIONS: Array<{
     expectedBucket: 'violations',
   },
   {
+    ruleId: 'a11y-skills/autocomplete-invalid-unverified',
+    expectedBucket: 'incomplete',
+  },
+  {
     ruleId: 'a11y-skills/autocomplete-missing',
     expectedBucket: 'incomplete',
   },
@@ -120,14 +124,14 @@ test('all manifest finding expectations agree with rule-registry classification'
   }
 });
 
-test('all 19 custom finding rules have a manifest entry', () => {
+test('all 20 custom finding rules have a manifest entry', () => {
   const manifestRuleIds = new Set(FINDING_EXPECTATIONS.map((e) => e.ruleId));
 
   const registryRuleIds = Object.values(RULES).map((r) => r.id);
   expect(
     registryRuleIds.length,
-    'rule-registry should have 19 custom rules',
-  ).toBe(19);
+    'rule-registry should have 20 custom rules',
+  ).toBe(20);
 
   for (const ruleId of registryRuleIds) {
     expect(

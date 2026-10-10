@@ -3,6 +3,57 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## 0.9.0 — 2026-10-11
+
+**Breaking** — `AutocompleteIssue.expectedToken` and `matchedBy` can now be
+`null`, and disabled / readonly fields are no longer checked. The public API is not yet stable in `0.x`, so this lands as a minor
+release.
+
+### Changed (breaking)
+
+- `autocomplete-audit`: `AutocompleteIssue.expectedToken` is `string | null`
+  and `matchedBy` is `'name' | 'id' | 'label' | 'placeholder' | null`. Both
+  are `null` on an invalid issue whose field purpose could not be inferred
+  from name / id / label / placeholder. Missing issues always have both.
+- `autocomplete-audit`: disabled fields (including those in a disabled
+  `fieldset`) and readonly fields are no longer checked, so they are reported
+  neither as missing nor as invalid and are not counted in
+  `totalFieldsChecked`.
+
+### Added
+
+- Rule `a11y-skills/autocomplete-invalid-unverified` (incomplete): an invalid
+  autocomplete value on a field whose purpose could not be inferred. 1.3.5
+  applies only when the field collects information about the user, so this
+  needs a human to confirm. `a11y-skills/autocomplete-invalid` (violation)
+  now covers only fields whose purpose was inferred. Both come from
+  `details.invalidAutocomplete`; `expectedToken === null` tells them apart.
+
+### Fixed
+
+- `autocomplete-audit`: the autocomplete value is now checked on every field
+  that has one, not only on fields whose purpose was inferred. A misspelled
+  value such as `autocomplete="emial"` on a field labelled "連絡先メール" was
+  not reported before (it is now reported under
+  `autocomplete-invalid-unverified`).
+- `autocomplete-audit`: the whole value is checked against the HTML autofill
+  grammar instead of only its last token: an optional `section-*`, an
+  optional `shipping` / `billing`, a field name (a contact field name — `tel*`,
+  `email`, `impp` — may be preceded by `home` / `work` / `mobile` / `fax` /
+  `pager`), an optional `webauthn`, in that order and each at most once;
+  `on` / `off` only alone. Values such as `email name` or `mobile name` are
+  now reported as invalid. Tokens are compared ASCII case-insensitively, so
+  `OFF` now counts as `off` for the missing check. Only ASCII whitespace
+  separates tokens, so a non-breaking space (e.g. `work&nbsp;email`) makes
+  the value invalid. A whitespace-only value (e.g. `autocomplete=" "`) on a
+  field whose purpose was inferred is now reported as missing instead of
+  invalid.
+- The invalid message and the CLI output omit the "Expected" part when the
+  purpose was not inferred.
+- Known limitation: whether a field name suits the control type (e.g. `email`
+  on a checkbox) and whether `webauthn` is used on `input` / `textarea` only
+  are not checked.
+
 ## 0.8.2 — 2026-10-08
 
 ### Fixed

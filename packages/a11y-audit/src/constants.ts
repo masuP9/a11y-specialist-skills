@@ -381,10 +381,34 @@ export const AUTOCOMPLETE_FIELD_PATTERNS: Record<string, RegExp> = {
   photo: /^(photo|avatar|写真|アバター)$/i,
 } as const;
 
-/** Valid autocomplete token values */
-export const VALID_AUTOCOMPLETE_TOKENS = [
-  'off',
-  'on',
+/**
+ * Autofill field names that may follow a contact type token
+ * (home/work/mobile/fax/pager).
+ * https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#autofill-detail-tokens
+ */
+export const AUTOCOMPLETE_CONTACT_FIELD_NAMES = [
+  'tel',
+  'tel-country-code',
+  'tel-national',
+  'tel-area-code',
+  'tel-local',
+  'tel-local-prefix',
+  'tel-local-suffix',
+  'tel-extension',
+  'email',
+  'impp',
+] as const;
+
+export const AUTOCOMPLETE_CONTACT_TYPES = [
+  'home',
+  'work',
+  'mobile',
+  'fax',
+  'pager',
+] as const;
+
+/** Autofill field names that may not take a contact type token. */
+export const AUTOCOMPLETE_NORMAL_FIELD_NAMES = [
   'name',
   'honorific-prefix',
   'given-name',
@@ -392,7 +416,6 @@ export const VALID_AUTOCOMPLETE_TOKENS = [
   'family-name',
   'honorific-suffix',
   'nickname',
-  'email',
   'username',
   'new-password',
   'current-password',
@@ -428,15 +451,6 @@ export const VALID_AUTOCOMPLETE_TOKENS = [
   'bday-month',
   'bday-year',
   'sex',
-  'tel',
-  'tel-country-code',
-  'tel-national',
-  'tel-area-code',
-  'tel-local',
-  'tel-local-prefix',
-  'tel-local-suffix',
-  'tel-extension',
-  'impp',
   'url',
   'photo',
 ] as const;

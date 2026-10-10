@@ -521,8 +521,12 @@ export interface AutocompleteIssue {
   id: string | null;
   labelText: string | null;
   currentAutocomplete: string | null;
-  expectedToken: string;
-  matchedBy: 'name' | 'id' | 'label' | 'placeholder';
+  /**
+   * Token inferred from name/id/label/placeholder. Always set on missing
+   * issues; null on invalid issues whose field purpose was not inferred.
+   */
+  expectedToken: string | null;
+  matchedBy: 'name' | 'id' | 'label' | 'placeholder' | null;
   issueType: 'missing' | 'invalid';
 }
 

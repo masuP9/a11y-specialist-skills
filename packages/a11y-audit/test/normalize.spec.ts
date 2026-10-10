@@ -375,6 +375,38 @@ test('autocomplete: invalid tokens are violations, missing ones incomplete', () 
   ]);
 });
 
+test('autocomplete: invalid tokens on a field whose purpose was not inferred are incomplete', () => {
+  const buckets = normalizeAutocompleteAudit({
+    totalFieldsChecked: 1,
+    missingAutocomplete: [],
+    invalidAutocomplete: [
+      {
+        selector: '#q',
+        tagName: 'input',
+        html: '<input id="q" autocomplete="nope">',
+        htmlTruncated: false,
+        inputType: 'search',
+        name: null,
+        id: 'q',
+        labelText: 'Search',
+        currentAutocomplete: 'nope',
+        expectedToken: null,
+        matchedBy: null,
+        issueType: 'invalid',
+      },
+    ],
+  });
+  expect(buckets.violations).toEqual([]);
+  expect(buckets.incomplete.map((r) => r.id)).toEqual([
+    'a11y-skills/autocomplete-invalid-unverified',
+  ]);
+  expect(buckets.incomplete[0].nodes[0].failureSummary).toBe(
+    'autocomplete="nope" is not a valid autocomplete value. The field ' +
+      'purpose could not be inferred; confirm whether it collects ' +
+      'information about the user.',
+  );
+});
+
 // =============================================================================
 // Envelope contract
 // =============================================================================

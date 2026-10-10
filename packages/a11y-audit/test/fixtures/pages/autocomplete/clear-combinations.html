@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>autocomplete clear fixture: valid token combinations</title>
+  </head>
+  <body>
+    <h1>Valid Token Combinations</h1>
+    <form>
+      <!-- section-* + shipping + field name -->
+      <label for="deliver-to">Deliver to</label>
+      <textarea
+        id="deliver-to"
+        name="deliver-to"
+        autocomplete="section-x shipping street-address"
+      ></textarea>
+
+      <!-- contact type + contact field name -->
+      <label for="office-mail">Office mail</label>
+      <input
+        type="email"
+        id="office-mail"
+        name="office-mail"
+        autocomplete="work email"
+      />
+
+      <!-- every optional part, in order, mixed case -->
+      <label for="billing-phone">Billing phone</label>
+      <input
+        type="tel"
+        id="billing-phone"
+        name="billing-phone"
+        autocomplete="Section-Blue BILLING mobile tel webauthn"
+      />
+
+      <!-- field name + webauthn -->
+      <label for="login-id">Login ID</label>
+      <input
+        type="text"
+        id="login-id"
+        name="login-id"
+        autocomplete="username webauthn"
+      />
+
+      <!-- on / off alone -->
+      <label for="memo">Memo</label>
+      <input type="text" id="memo" name="memo" autocomplete="off" />
+      <label for="note">Note</label>
+      <input type="text" id="note" name="note" autocomplete="on" />
+
+      <!-- disabled / readonly fields cannot be filled in, so they are skipped -->
+      <label for="old-mail">Old email</label>
+      <input type="email" id="old-mail" name="email" disabled />
+      <label for="account-id">Account ID</label>
+      <input
+        type="text"
+        id="account-id"
+        name="account-id"
+        autocomplete="emial"
+        readonly
+      />
+
+      <button type="submit">Submit</button>
+    </form>
+  </body>
+</html>

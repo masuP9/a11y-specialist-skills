@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>autocomplete finding: autocomplete-invalid token combination</title>
+  </head>
+  <body>
+    <h1>Invalid Token Combinations</h1>
+    <form>
+      <!--
+        Each field's purpose is inferred from its name, so an invalid value
+        is a violation (not autocomplete-invalid-unverified).
+      -->
+
+      <!--
+        "mobile" may only precede a contact field name (tel*, email, impp),
+        not "name" → autocomplete-invalid violation
+      -->
+      <label for="fullname">Full name</label>
+      <input
+        type="text"
+        id="fullname"
+        name="fullname"
+        autocomplete="mobile name"
+      />
+
+      <!--
+        Two field names → autocomplete-invalid violation
+      -->
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" autocomplete="email name" />
+
+      <!--
+        "shipping" must come after the section-* token → autocomplete-invalid violation
+      -->
+      <label for="address">Address</label>
+      <textarea
+        id="address"
+        name="address"
+        autocomplete="shipping section-x street-address"
+      ></textarea>
+
+      <button type="submit">Submit</button>
+    </form>
+  </body>
+</html>

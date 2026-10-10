@@ -445,16 +445,37 @@ export function normalizeAutocompleteAudit(
   const applicable = details.totalFieldsChecked > 0;
   buckets.checkedNodes = details.totalFieldsChecked;
 
+  // A field whose purpose was not inferred may not collect information about
+  // the user (1.3.5 would not apply), so its invalid value needs review.
   bucketize(
     buckets,
     'autocomplete-invalid',
-    details.invalidAutocomplete.map((field) =>
-      toNode(
-        field,
-        `autocomplete="${field.currentAutocomplete}" is not a valid token. ` +
-          `Expected "${field.expectedToken}" (purpose matched by ${field.matchedBy}).`,
+    details.invalidAutocomplete
+      .filter((field) => field.expectedToken !== null)
+      .map((field) =>
+        toNode(
+          field,
+          `autocomplete="${field.currentAutocomplete}" is not a valid ` +
+            `autocomplete value. Expected "${field.expectedToken}" ` +
+            `(purpose matched by ${field.matchedBy}).`,
+        ),
       ),
-    ),
+    applicable,
+  );
+
+  bucketize(
+    buckets,
+    'autocomplete-invalid-unverified',
+    details.invalidAutocomplete
+      .filter((field) => field.expectedToken === null)
+      .map((field) =>
+        toNode(
+          field,
+          `autocomplete="${field.currentAutocomplete}" is not a valid ` +
+            'autocomplete value. The field purpose could not be inferred; ' +
+            'confirm whether it collects information about the user.',
+        ),
+      ),
     applicable,
   );
 

@@ -190,8 +190,23 @@ export const RULES = {
     description: 'Ensure autocomplete attribute values are valid tokens',
     help: 'autocomplete attributes must use valid token values',
     helpUrl: `${UNDERSTANDING}/identify-input-purpose.html`,
-    // syntactic validity is machine-checkable.
+    // syntactic validity is machine-checkable; reported only on fields whose
+    // purpose was inferred (see autocomplete-invalid-unverified).
     classification: 'violation',
+  },
+  'autocomplete-invalid-unverified': {
+    id: 'a11y-skills/autocomplete-invalid-unverified',
+    sc: ['1.3.5'],
+    tags: ['a11y-skills', 'wcag21aa', 'wcag135'],
+    impact: 'moderate',
+    scope: 'node',
+    description:
+      'Ensure autocomplete attribute values are valid tokens on fields whose purpose could not be inferred',
+    help: 'Fix the autocomplete value if the field collects information about the user',
+    helpUrl: `${UNDERSTANDING}/identify-input-purpose.html`,
+    // the value is invalid, but 1.3.5 applies only if the field collects
+    // information about the user — which needs a human to confirm.
+    classification: 'incomplete',
   },
   'autocomplete-missing': {
     id: 'a11y-skills/autocomplete-missing',

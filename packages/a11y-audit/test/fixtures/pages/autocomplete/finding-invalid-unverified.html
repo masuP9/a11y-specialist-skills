@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>autocomplete finding: autocomplete-invalid-unverified</title>
+  </head>
+  <body>
+    <h1>Invalid Token on a Field Whose Purpose Is Not Inferred</h1>
+    <form>
+      <!--
+        The label/id/name match no AUTOCOMPLETE_FIELD_PATTERNS entry, so the
+        purpose is not inferred. autocomplete="emial" is still not a valid
+        autofill field name, but whether the field collects user information
+        is unknown → autocomplete-invalid-unverified (incomplete)
+      -->
+      <label for="contact-mail">連絡先メール</label>
+      <input
+        type="email"
+        id="contact-mail"
+        name="contact-mail"
+        autocomplete="emial"
+      />
+
+      <button type="submit">送信</button>
+    </form>
+  </body>
+</html>

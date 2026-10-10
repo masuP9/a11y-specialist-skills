@@ -4,8 +4,10 @@
  * Finds all form fields (input/select/textarea), uses Playwright's
  * `ariaSnapshot()` to compute accessible names (following the ARIA naming
  * algorithm), matches field names/ids/labels/placeholders to expected
- * autocomplete tokens, and reports fields that are missing or have invalid
- * autocomplete values.
+ * autocomplete tokens, and reports those fields when autocomplete is missing.
+ * Every field's autocomplete value is also checked against the HTML grammar
+ * and reported as invalid when it breaks it, whether or not its purpose was
+ * inferred. Disabled and readonly fields are skipped.
  *
  * The caller is responsible for navigating the page before calling this.
  *
@@ -21,8 +23,10 @@ import type {
   AutocompleteIssue,
 } from '../types.js';
 import {
+  AUTOCOMPLETE_CONTACT_FIELD_NAMES,
+  AUTOCOMPLETE_CONTACT_TYPES,
   AUTOCOMPLETE_FIELD_PATTERNS,
-  VALID_AUTOCOMPLETE_TOKENS,
+  AUTOCOMPLETE_NORMAL_FIELD_NAMES,
   DEFAULT_AUTOCOMPLETE_RESULT_FILE,
   HTML_SNIPPET_MAX_LENGTH,
 } from '../constants.js';
@@ -126,6 +130,14 @@ function collectBasicFieldInfo(args: {
     if (el instanceof HTMLInputElement && skipTypes.includes(el.type)) {
       return;
     }
+    // The user cannot fill in disabled (including via a disabled fieldset) or
+    // readonly fields, so there is no input purpose to identify.
+    if (
+      el.matches(':disabled') ||
+      (!(el instanceof HTMLSelectElement) && el.readOnly)
+    ) {
+      return;
+    }
 
     const inputType =
       el instanceof HTMLInputElement ? el.type : el.tagName.toLowerCase();
@@ -187,63 +199,95 @@ function findPatternMatch(
   return null;
 }
 
-/** Analyze fields for autocomplete issues. */
+/**
+ * Lowercased tokens of an autocomplete value. The spec splits on ASCII
+ * whitespace only (a non-breaking space stays inside a token) and compares
+ * tokens ASCII case-insensitively.
+ */
+function autocompleteTokens(value: string): string[] {
+  return value
+    .replace(/[A-Z]/g, (c) => c.toLowerCase())
+    .split(/[\t\n\f\r ]+/)
+    .filter((token) => token !== '');
+}
+
+const includes = (list: readonly string[], token: string | undefined) =>
+  token !== undefined && list.includes(token);
+
+/**
+ * Whether non-empty autocomplete tokens follow the HTML grammar: "on" or
+ * "off" alone, or
+ * [section-*] [shipping|billing] (field-name | [contact-type] contact-field-name) [webauthn].
+ * https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#autofill-detail-tokens
+ *
+ * Limitation: does not check whether a field name suits the control type
+ * (e.g. "email" on <input type="checkbox">) or that webauthn is used only on
+ * input/textarea.
+ */
+function isValidAutocompleteTokens(tokens: string[]): boolean {
+  if (tokens.length === 1 && (tokens[0] === 'on' || tokens[0] === 'off')) {
+    return true;
+  }
+
+  let i = 0;
+  if (tokens[i]?.startsWith('section-')) i++;
+  if (tokens[i] === 'shipping' || tokens[i] === 'billing') i++;
+  if (includes(AUTOCOMPLETE_CONTACT_TYPES, tokens[i])) {
+    i++;
+    if (!includes(AUTOCOMPLETE_CONTACT_FIELD_NAMES, tokens[i])) return false;
+    i++;
+  } else if (
+    includes(AUTOCOMPLETE_NORMAL_FIELD_NAMES, tokens[i]) ||
+    includes(AUTOCOMPLETE_CONTACT_FIELD_NAMES, tokens[i])
+  ) {
+    i++;
+  } else {
+    return false;
+  }
+  if (tokens[i] === 'webauthn') i++;
+  return i === tokens.length;
+}
+
+/**
+ * Analyze fields for autocomplete issues.
+ *
+ * - missing: the purpose was inferred from name/id/label/placeholder, and the
+ *   field has no autocomplete value (or "off").
+ * - invalid: every field with an autocomplete value that breaks the grammar,
+ *   whether or not its purpose was inferred (expectedToken/matchedBy are null
+ *   when it was not).
+ */
 function analyzeFields(
   fields: FieldInfo[],
   patterns: [string, RegExp][],
-  validTokens: readonly string[],
 ): { missing: AutocompleteIssue[]; invalid: AutocompleteIssue[] } {
   const missing: AutocompleteIssue[] = [];
   const invalid: AutocompleteIssue[] = [];
 
   for (const field of fields) {
     const match = findPatternMatch(field, patterns);
+    const tokens = autocompleteTokens(field.autocomplete ?? '');
+    const toIssue = (issueType: 'missing' | 'invalid'): AutocompleteIssue => ({
+      selector: field.selector,
+      tagName: field.tagName,
+      html: field.html,
+      htmlTruncated: field.htmlTruncated,
+      inputType: field.inputType,
+      name: field.name,
+      id: field.id,
+      labelText: field.labelText,
+      currentAutocomplete: field.autocomplete,
+      expectedToken: match?.token ?? null,
+      matchedBy: match?.matchedBy ?? null,
+      issueType,
+    });
 
-    if (!match) {
-      continue;
-    }
-
-    const { token: expectedToken, matchedBy } = match;
-
-    if (!field.autocomplete || field.autocomplete === 'off') {
-      missing.push({
-        selector: field.selector,
-        tagName: field.tagName,
-        html: field.html,
-        htmlTruncated: field.htmlTruncated,
-        inputType: field.inputType,
-        name: field.name,
-        id: field.id,
-        labelText: field.labelText,
-        currentAutocomplete: field.autocomplete,
-        expectedToken,
-        matchedBy,
-        issueType: 'missing',
-      });
-      continue;
-    }
-
-    const autocompleteTokens = field.autocomplete.toLowerCase().split(/\s+/);
-    const mainToken = autocompleteTokens[autocompleteTokens.length - 1];
-
-    if (
-      mainToken === undefined ||
-      !validTokens.includes(mainToken as (typeof validTokens)[number])
-    ) {
-      invalid.push({
-        selector: field.selector,
-        tagName: field.tagName,
-        html: field.html,
-        htmlTruncated: field.htmlTruncated,
-        inputType: field.inputType,
-        name: field.name,
-        id: field.id,
-        labelText: field.labelText,
-        currentAutocomplete: field.autocomplete,
-        expectedToken,
-        matchedBy,
-        issueType: 'invalid',
-      });
+    const isEmptyOrOff =
+      tokens.length === 0 || (tokens.length === 1 && tokens[0] === 'off');
+    if (match && isEmptyOrOff) {
+      missing.push(toIssue('missing'));
+    } else if (tokens.length > 0 && !isValidAutocompleteTokens(tokens)) {
+      invalid.push(toIssue('invalid'));
     }
   }
 
@@ -296,11 +340,7 @@ export async function runAutocompleteAudit(
     string,
     RegExp,
   ][];
-  const { missing, invalid } = analyzeFields(
-    fields,
-    patterns,
-    VALID_AUTOCOMPLETE_TOKENS,
-  );
+  const { missing, invalid } = analyzeFields(fields, patterns);
 
   const details: AutocompleteAuditDetails = {
     totalFieldsChecked: fields.length,
@@ -341,7 +381,11 @@ export async function runAutocompleteAudit(
     (el, i) => [
       `${i + 1}. <${el.tagName}> "${el.selector}"`,
       `   Current: autocomplete="${el.currentAutocomplete}"`,
-      `   Expected: autocomplete="${el.expectedToken}"`,
+      ...(el.expectedToken === null
+        ? []
+        : [
+            `   Expected: autocomplete="${el.expectedToken}" (matched by ${el.matchedBy})`,
+          ]),
     ],
   );
 
