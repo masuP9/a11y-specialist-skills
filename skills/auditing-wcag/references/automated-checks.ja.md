@@ -126,7 +126,7 @@ Playwrightのアクセシビリティツリーから機械的に判定できる�
 |---|---|---|---|
 | 1.3.5 | 入力フィールドに適切なautocomplete属性がある | `autocomplete-audit` **[CLI]** | ユーザーデータフィールドでautocomplete欠落/不正 |
 
-> **CLIチェック:** `autocomplete-audit` チェックはフィールド名/ラベルから期待されるautocompleteトークンと照合し、欠落・不正値を報告。
+> **CLIチェック:** `autocomplete-audit` チェックはフィールド名/ラベルから期待されるautocompleteトークンを推定して欠落を報告し、autocomplete属性を持つすべてのフィールドで値をHTML仕様の文法（`section-*`・`shipping`/`billing`・連絡先種別・`webauthn` の順序と組み合わせ）と照合して不正値を報告。目的を推定できないフィールドの不正値は、利用者の情報を集める欄かどうかの確認が要るため `autocomplete-invalid-unverified`（要確認）として報告。disabled・readonly のフィールドは対象外。入力タイプに合わないトークンは検出しない。
 > 実行: `npx -y @a11y-skills/audit --url "<url>" --checks autocomplete-audit`
 
 ## 言語

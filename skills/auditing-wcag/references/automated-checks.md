@@ -126,7 +126,7 @@ Only machine-verifiable items from the Playwright accessibility tree are covered
 |---|---|---|---|
 | 1.3.5 | Input fields have appropriate autocomplete attribute | `autocomplete-audit` **[CLI]** | autocomplete missing/incorrect for user data fields |
 
-> **CLI Check:** The `autocomplete-audit` check matches field names/labels to expected autocomplete tokens and reports missing or invalid values.
+> **CLI Check:** The `autocomplete-audit` check infers expected autocomplete tokens from field names/labels to report missing values, and checks the value of every field with an autocomplete attribute against the HTML grammar (order and combination of `section-*`, `shipping`/`billing`, contact type, and `webauthn`) to report invalid values. Invalid values on fields whose purpose cannot be inferred are reported as `autocomplete-invalid-unverified` (needs review), since it must be confirmed whether the field collects information about the user. Disabled and readonly fields are skipped. Tokens that do not suit the input type are not detected.
 > Run via: `npx -y @a11y-skills/audit --url "<url>" --checks autocomplete-audit`
 
 ## Language
