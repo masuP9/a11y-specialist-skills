@@ -10,7 +10,7 @@
  * - For 'passes' expectations: also guards against silent inapplicable pass.
  * - Validates the result envelope against RESULT_SCHEMAS[check] via Ajv.
  *
- * Coverage: all 19 custom finding-capable rules from rule-registry.ts.
+ * Coverage: all 20 custom finding-capable rules from rule-registry.ts.
  * axe-audit: representative rule (image-alt); full rule coverage is out of
  * scope for axe (hundreds of external rules).
  */
@@ -220,6 +220,26 @@ const MANIFEST: ManifestEntry[] = [
       'a11y-skills/autocomplete-invalid': 'violations',
     },
   },
+  {
+    check: 'autocomplete-audit',
+    scenario:
+      'finding: autocomplete-invalid (valid tokens in an invalid combination)',
+    fixture: 'autocomplete/finding-invalid-combination.html',
+    expectRules: {
+      'a11y-skills/autocomplete-invalid': 'violations',
+    },
+  },
+  // Rule 9b: a11y-skills/autocomplete-invalid-unverified (incomplete)
+  {
+    check: 'autocomplete-audit',
+    scenario:
+      'finding: autocomplete-invalid-unverified (misspelled token on a field whose purpose is not inferred)',
+    fixture: 'autocomplete/finding-invalid-unverified.html',
+    expectRules: {
+      'a11y-skills/autocomplete-invalid-unverified': 'incomplete',
+      'a11y-skills/autocomplete-invalid': 'passes',
+    },
+  },
   // Rule 10: a11y-skills/autocomplete-missing (incomplete)
   {
     check: 'autocomplete-audit',
@@ -236,6 +256,18 @@ const MANIFEST: ManifestEntry[] = [
     fixture: 'autocomplete/clear.html',
     expectRules: {
       'a11y-skills/autocomplete-invalid': 'passes',
+      'a11y-skills/autocomplete-invalid-unverified': 'passes',
+      'a11y-skills/autocomplete-missing': 'passes',
+    },
+  },
+  {
+    check: 'autocomplete-audit',
+    scenario:
+      'clear: valid token combinations; disabled/readonly fields are skipped',
+    fixture: 'autocomplete/clear-combinations.html',
+    expectRules: {
+      'a11y-skills/autocomplete-invalid': 'passes',
+      'a11y-skills/autocomplete-invalid-unverified': 'passes',
       'a11y-skills/autocomplete-missing': 'passes',
     },
   },
