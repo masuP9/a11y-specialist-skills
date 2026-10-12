@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>focus-indicator: border color and underline only</title>
+    <style>
+      /* The only focus cue is a border color change or an added underline */
+      button {
+        outline: none;
+        box-shadow: none;
+        border: 2px solid #ccc;
+        background-color: #fff;
+      }
+      button:focus {
+        border-color: #000;
+      }
+      a {
+        outline: none;
+        text-decoration: none;
+      }
+      a:focus {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Border and underline focus cues</h1>
+    <button id="border-button">Border color only</button>
+    <a href="#section" id="underline-link">Underline only</a>
+    <section id="section">
+      <p>Section content</p>
+    </section>
+  </body>
+</html>
