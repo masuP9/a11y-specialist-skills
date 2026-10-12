@@ -1,5 +1,5 @@
 /**
- * Auto-play Content Detection — WCAG 1.4.2 (Audio Control) / 2.2.2 (Pause, Stop, Hide)
+ * Auto-play Content Detection — WCAG 2.2.2 (Pause, Stop, Hide)
  *
  * Takes screenshots at 2s intervals (0/2/4/6s), pixel-diffs consecutive frames,
  * detects whether visual content continues past 5s, finds pause/stop controls,

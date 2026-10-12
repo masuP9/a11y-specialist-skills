@@ -576,7 +576,7 @@ export type TimeLimitDetectorResult =
   AuditCheckResult<TimeLimitDetectorDetails>;
 
 // =============================================================================
-// Auto-play Detection (WCAG 1.4.2 / 2.2.2)
+// Auto-play Detection (WCAG 2.2.2)
 // =============================================================================
 
 export interface ScreenshotRecord {

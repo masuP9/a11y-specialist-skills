@@ -96,9 +96,9 @@ outerHTML 証跡、`nodes[].failureSummary` は判断理由の説明。
   - `<button>` 要素名...
   - ...
 
-### 自動再生検出（1.4.2 / 2.2.2）
+### 自動再生検出（2.2.2）
 
-自動再生コンテンツを検出するため、一定間隔でスクリーンショットを撮影して比較。
+自動再生コンテンツを検出するため、一定間隔でスクリーンショットを撮影して比較。音は見ないため、1.4.2 は axe の `no-autoplay-audio` と手動確認で扱う。
 
 ![自動再生検出 - 0秒](./auto-play-screenshots/screenshot-0.png)
 ![自動再生検出 - 3秒](./auto-play-screenshots/screenshot-3.png)

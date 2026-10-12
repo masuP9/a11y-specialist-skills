@@ -24,7 +24,7 @@ Claude Code skill から機能本体を切り出したものです。10 個の�
 | `runOrientationCheck` | 1.3.4 表示の向き |
 | `runAutocompleteAudit` | 1.3.5 入力目的の特定 |
 | `runTimeLimitDetector` | 2.2.1 タイミング調整可能 |
-| `runAutoPlayDetection` | 1.4.2 音声制御 / 2.2.2 一時停止、停止、非表示 |
+| `runAutoPlayDetection` | 2.2.2 一時停止、停止、非表示（音は見ない。1.4.2 は axe の `no-autoplay-audio` と手動確認で扱う） |
 | `runKeyboardReachabilityCheck` | 2.1.1 キーボード（Tab・複合部品内の矢印キー・activedescendant） |
 
 多くの検査は遷移済みの `page` を受けます。一部は navigation を所有し `targetUrl`
