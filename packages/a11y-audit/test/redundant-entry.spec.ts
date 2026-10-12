@@ -276,3 +276,45 @@ for (const formId of ['checkout.form', '1-step']) {
     ).toEqual(['#same']);
   });
 }
+
+test('form の外にあり form 属性で関連付けられた「お届け先と同じ」チェックボックスも copyControls に入る', async ({
+  page,
+}, testInfo) => {
+  await page.setContent(
+    html(`<form id="f">
+        <input id="a" autocomplete="shipping email" aria-label="Shipping email">
+        <input id="b" autocomplete="billing email" aria-label="Billing email">
+      </form>
+      <label><input type="checkbox" id="same" form="f"> お届け先と同じ</label>`),
+  );
+
+  const result = await runRedundantEntryCheck({
+    page,
+    outputDir: testInfo.outputDir,
+  });
+
+  expect(result.details.groups).toHaveLength(1);
+  expect(result.details.groups[0]?.copyControls.map((c) => c.selector)).toEqual(
+    ['#same'],
+  );
+});
+
+test('form なしの欄のグループでは、別の form の中にある「同じ」チェックボックスを copyControls に入れない', async ({
+  page,
+}, testInfo) => {
+  await page.setContent(
+    html(`<input id="a" autocomplete="shipping email" aria-label="Shipping email">
+      <input id="b" autocomplete="billing email" aria-label="Billing email">
+      <form id="other">
+        <label><input type="checkbox" id="same"> お届け先と同じ</label>
+      </form>`),
+  );
+
+  const result = await runRedundantEntryCheck({
+    page,
+    outputDir: testInfo.outputDir,
+  });
+
+  expect(result.details.groups).toHaveLength(1);
+  expect(result.details.groups[0]?.copyControls).toEqual([]);
+});

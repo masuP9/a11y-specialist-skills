@@ -222,17 +222,34 @@ function collectCopyControls(args: {
   for (const formSelector of args.formSelectors) {
     // A form selector of the form "#id" is not escaped, so ids such as
     // "checkout.form" or "1-step" are not valid CSS; look those up by id.
-    const root = !formSelector
-      ? document
+    const formElement = !formSelector
+      ? null
       : formSelector.startsWith('#')
         ? document.getElementById(formSelector.slice(1))
         : document.querySelector(formSelector);
     const controls: RedundantEntryCopyControl[] = [];
-    root
-      ?.querySelectorAll(
+    if (formSelector && !formElement) {
+      result[formSelector] = controls;
+      continue;
+    }
+    // Native controls belong to their owner form (`element.form`, which also
+    // covers the `form` attribute); other elements belong to the form they
+    // are inside, if any.
+    const belongsToGroup = (element: Element): boolean => {
+      const owner =
+        element instanceof HTMLInputElement ||
+        element instanceof HTMLButtonElement ||
+        element instanceof HTMLSelectElement
+          ? element.form
+          : element.closest('form');
+      return owner === formElement;
+    };
+    document
+      .querySelectorAll(
         'input[type=checkbox], input[type=radio], button, select, [role=button], [role=checkbox], [role=switch]',
       )
       .forEach((element) => {
+        if (!belongsToGroup(element)) return;
         const text = matchingText(element);
         if (text) {
           controls.push({
