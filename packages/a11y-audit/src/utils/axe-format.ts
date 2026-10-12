@@ -642,6 +642,19 @@ export function normalizeChangeOnInputCheck(
         'Unless users are advised of this behavior before using the control, this fails 3.2.2.',
     );
   });
+  for (const { control, reason } of details.untested) {
+    nodes.push(
+      toNode(
+        {
+          selector: control.selector,
+          html: control.html,
+          htmlTruncated: control.htmlTruncated,
+          tag: control.type,
+        },
+        `Could not change this ${control.type} control (${reason}). Check manually whether changing it causes a change of context.`,
+      ),
+    );
+  }
   if (details.aborted) {
     const { reason, testedCount, foundCount } = details.aborted;
     nodes.push(

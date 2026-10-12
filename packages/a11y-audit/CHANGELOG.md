@@ -18,7 +18,8 @@ adheres to [Semantic Versioning](https://semver.org/).
   focus) and dialogs in `details.findings`, one node each. After a navigation
   it restarts in a fresh context and skips the controls already tried
   (`details.restarts`); `settleMs`, `timeBudgetMs` and `maxControls` bound the
-  walk (`details.aborted`). Values are put back through properties without
+  walk (`details.aborted`). Controls that could not be operated are listed in
+  `details.untested` and reported as `incomplete` nodes. Values are put back through properties without
   events. Known limitations: only controls in the main frame's light DOM (no
   iframes, shadow roots, ARIA-only widgets); one value per control; changes
   made by handlers are not undone, so an earlier control can affect a later

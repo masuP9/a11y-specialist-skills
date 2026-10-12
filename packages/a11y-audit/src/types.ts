@@ -1150,7 +1150,10 @@ export interface ChangeOnInputFinding {
 export interface ChangeOnInputCheckDetails {
   controlsFound: number;
   controlsTested: number;
+  /** Intentional exclusions (no alternative value, value unchanged, on-focus change). */
   skipped: { selector: string; reason: string }[];
+  /** Controls an error kept us from changing; whether they change context is unknown. */
+  untested: { control: ChangeOnInputControl; reason: string }[];
   findings: ChangeOnInputFinding[];
   restarts: number;
   aborted: {

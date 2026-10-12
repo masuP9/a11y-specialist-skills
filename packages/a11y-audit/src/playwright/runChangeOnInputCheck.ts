@@ -104,7 +104,7 @@ const NAVIGATION_ERROR =
 interface CollectedControl extends ChangeOnInputControl {
   /** CSS locating the element to act on (for radio: the unchecked one). */
   locator: string;
-  /** Why the control cannot be changed; such controls are listed in `skipped`. */
+  /** Why the control cannot be changed; such controls are listed in `skipped` (intentional exclusion). */
   skipReason: string | null;
   currentValue: string;
   /** `maxlength`, or -1. */
@@ -528,6 +528,7 @@ export async function runChangeOnInputCheck(
 
   const findings: ChangeOnInputFinding[] = [];
   const skipped: ChangeOnInputCheckDetails['skipped'] = [];
+  const untested: ChangeOnInputCheckDetails['untested'] = [];
   // Marked before the control is touched, so one that navigates or throws is
   // never tried again after the restart.
   const tried = new Set<string>();
@@ -755,8 +756,8 @@ export async function runChangeOnInputCheck(
           if (!focusMoved) {
             // The control vanished, was hidden or could not be operated.
             await restoreValue();
-            skipped.push({
-              selector: control.selector,
+            untested.push({
+              control: publicControl(control),
               reason: (trialError instanceof Error
                 ? (trialError.message.split('\n')[0] ?? '')
                 : String(trialError)
@@ -822,6 +823,7 @@ export async function runChangeOnInputCheck(
       controlsFound,
       controlsTested,
       skipped,
+      untested,
       findings,
       restarts,
       aborted,

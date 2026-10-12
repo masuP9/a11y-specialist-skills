@@ -557,6 +557,12 @@ test('change-on-input-check envelope with every kind of context change validates
     controlsFound: 3,
     controlsTested: 2,
     skipped: [{ selector: '#only', reason: 'no-alternative-option' }],
+    untested: [
+      {
+        control: { ...CHANGE_ON_INPUT_CONTROL, selector: '#covered' },
+        reason: 'locator.click: Timeout 5000ms exceeded.',
+      },
+    ],
     findings: [
       {
         control: CHANGE_ON_INPUT_CONTROL,
@@ -586,6 +592,7 @@ test('change-on-input-check envelope that stopped early validates against its sc
     controlsFound: 5,
     controlsTested: 1,
     skipped: [],
+    untested: [],
     findings: [],
     restarts: 0,
     aborted: { reason: 'control-limit', testedCount: 1, foundCount: 5 },

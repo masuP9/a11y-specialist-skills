@@ -1074,6 +1074,31 @@ const INPUT_CONTEXT_CHANGE_SCHEMA: JsonSchema = {
   ],
 };
 
+const CHANGE_ON_INPUT_CONTROL_SCHEMA: JsonSchema = {
+  type: 'object',
+  required: [
+    'selector',
+    'controlKind',
+    'type',
+    'name',
+    'label',
+    'html',
+    'htmlTruncated',
+  ],
+  properties: {
+    selector: { type: 'string' },
+    controlKind: {
+      type: 'string',
+      enum: ['select', 'radio', 'checkbox', 'text'],
+    },
+    type: { type: 'string' },
+    name: { type: ['string', 'null'] },
+    label: { type: ['string', 'null'] },
+    html: { type: 'string' },
+    htmlTruncated: { type: 'boolean' },
+  },
+};
+
 export const CHANGE_ON_INPUT_CHECK_RESULT_SCHEMA: JsonSchema =
   buildEnvelopeSchema({
     id: 'change-on-input-check-result',
@@ -1085,6 +1110,7 @@ export const CHANGE_ON_INPUT_CHECK_RESULT_SCHEMA: JsonSchema =
         'controlsFound',
         'controlsTested',
         'skipped',
+        'untested',
         'findings',
         'restarts',
         'aborted',
@@ -1103,36 +1129,24 @@ export const CHANGE_ON_INPUT_CHECK_RESULT_SCHEMA: JsonSchema =
             },
           },
         },
+        untested: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['control', 'reason'],
+            properties: {
+              control: CHANGE_ON_INPUT_CONTROL_SCHEMA,
+              reason: { type: 'string' },
+            },
+          },
+        },
         findings: {
           type: 'array',
           items: {
             type: 'object',
             required: ['control', 'action', 'changes'],
             properties: {
-              control: {
-                type: 'object',
-                required: [
-                  'selector',
-                  'controlKind',
-                  'type',
-                  'name',
-                  'label',
-                  'html',
-                  'htmlTruncated',
-                ],
-                properties: {
-                  selector: { type: 'string' },
-                  controlKind: {
-                    type: 'string',
-                    enum: ['select', 'radio', 'checkbox', 'text'],
-                  },
-                  type: { type: 'string' },
-                  name: { type: ['string', 'null'] },
-                  label: { type: ['string', 'null'] },
-                  html: { type: 'string' },
-                  htmlTruncated: { type: 'boolean' },
-                },
-              },
+              control: CHANGE_ON_INPUT_CONTROL_SCHEMA,
               action: { type: 'string' },
               changes: { type: 'array', items: INPUT_CONTEXT_CHANGE_SCHEMA },
             },
