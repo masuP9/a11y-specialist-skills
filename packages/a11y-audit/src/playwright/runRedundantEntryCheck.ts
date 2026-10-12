@@ -19,6 +19,8 @@
  *   and radio buttons are not candidate fields.
  * - `copyControls` are matched by visible text only; whether the value is
  *   actually copied is not verified.
+ * - Disabled and readonly fields count as earlier information, but only an
+ *   editable field after the first one is reported as a re-entry.
  * - Fields hidden at load time (e.g. revealed by "billing address differs")
  *   are counted too.
  * - The 3.3.7 exceptions (essential, security, no longer valid) cannot be
@@ -296,6 +298,7 @@ export async function runRedundantEntryCheck(
   const basicFields = (
     await page.evaluate(collectBasicFieldInfo, {
       htmlSnippetMaxLength: HTML_SNIPPET_MAX_LENGTH,
+      includeNonEditable: true,
     })
   )
     // Same-name radios repeat by design; checkboxes are looked at as copy controls.
@@ -327,6 +330,7 @@ export async function runRedundantEntryCheck(
       labelText,
       autocomplete: field.autocomplete,
       ...info,
+      editable: field.editable,
       formSelector: field.formSelector,
     });
   }
@@ -342,8 +346,10 @@ export async function runRedundantEntryCheck(
     ]);
     byKey.set(key, [...(byKey.get(key) ?? []), field]);
   }
+  // Disabled/readonly fields count as earlier information, but only an
+  // editable field after the first one is a re-entry.
   const overlapping = [...byKey.values()].filter(
-    (fields) => fields.length >= 2,
+    (fields) => fields.length >= 2 && fields.slice(1).some((f) => f.editable),
   );
 
   const formSelectors = [

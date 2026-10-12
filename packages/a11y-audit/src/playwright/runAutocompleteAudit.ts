@@ -67,6 +67,8 @@ export interface BasicFieldInfo {
   formSelector: string | null;
   /** Nearest group heading (fieldset legend or labelled group), max 80 chars. */
   groupLabel: string | null;
+  /** False for disabled or readonly fields (only returned on request). */
+  editable: boolean;
 }
 
 /**
@@ -75,8 +77,10 @@ export interface BasicFieldInfo {
  */
 export function collectBasicFieldInfo(args: {
   htmlSnippetMaxLength: number;
+  /** Also return disabled and readonly fields (default false). */
+  includeNonEditable?: boolean;
 }): BasicFieldInfo[] {
-  const { htmlSnippetMaxLength } = args;
+  const { htmlSnippetMaxLength, includeNonEditable = false } = args;
 
   function getHtmlSnippet(element: Element): {
     html: string;
@@ -169,10 +173,11 @@ export function collectBasicFieldInfo(args: {
     }
     // The user cannot fill in disabled (including via a disabled fieldset) or
     // readonly fields, so there is no input purpose to identify.
-    if (
+    const editable = !(
       el.matches(':disabled') ||
       (!(el instanceof HTMLSelectElement) && el.readOnly)
-    ) {
+    );
+    if (!editable && !includeNonEditable) {
       return;
     }
 
@@ -194,6 +199,7 @@ export function collectBasicFieldInfo(args: {
       autocomplete: autocompleteAttr,
       formSelector: el.form ? getUniqueSelector(el.form, 0) : null,
       groupLabel: getGroupLabel(el),
+      editable,
     });
   });
 

@@ -45,7 +45,9 @@ placeholder (scope words such as "shipping" and confirmation words such as
 (`shipping` / `billing`) have `kind: 'scoped'`; repeats within the same scope
 have `kind: 'repeated'`. Checkboxes, buttons and selects in the same form whose
 text suggests "same as ..." are listed in `copyControls`; whether the value is
-actually copied is not verified. Password and one-time-code fields, different
+actually copied is not verified. Disabled / readonly fields count as earlier
+information, but only an editable field after the first one is reported (made a
+node) as a re-entry (`fields[].editable`). Password and one-time-code fields, different
 `section-*` tokens and different forms are not compared. **Multi-page flows
 (steps split across several pages) are out of scope**, because a single-page
 check cannot know what an earlier page asked for.

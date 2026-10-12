@@ -23,7 +23,9 @@ adheres to [Semantic Versioning](https://semver.org/).
   scope; only fields in the same form are compared; the purpose is inferred by
   word matching and checkboxes / radios are not candidate fields;
   `copyControls` are matched by text and whether the value is actually copied
-  is not verified; fields hidden at load time are counted; the exceptions
+  is not verified; disabled / readonly fields count as earlier information
+  (`fields[].editable` is `false`) but only editable fields after the first
+  one are reported as re-entry; fields hidden at load time are counted; the exceptions
   (essential, security, no longer valid) cannot be judged, only password and
   one-time-code fields are excluded; shadow DOM and iframes are not inspected.
 - `a11y-skills/auto-play-audio` (WCAG 1.4.2; tags `wcag2a`, `wcag142`;

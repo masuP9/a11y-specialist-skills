@@ -41,7 +41,9 @@ Claude Code skill から機能本体を切り出したものです。10 個の�
 などの確認用の語は取り除いてから照合します）。範囲（`shipping` / `billing`）が異なる組は
 `kind: 'scoped'`、同じ範囲の繰り返しは `kind: 'repeated'` です。同じ form の中の「〜と同じ」
 のようなチェックボックス・ボタン・選択肢は `copyControls` に載せますが、値が実際に写るかは
-確かめません。パスワード・ワンタイムコードの欄、別の `section-*`、別の form は対象外です。
+確かめません。disabled / readonly の欄は既出の情報として数えますが、再入力として報告する
+（node にする）のは 1 つ目より後ろにある編集できる欄だけです（`fields[].editable`）。
+パスワード・ワンタイムコードの欄、別の `section-*`、別の form は対象外です。
 **手順が複数ページに分かれるフォームは範囲外**です（前のページの入力を知り得ないため）。
 
 `runAutoPlayDetection` の 1.4.2（`a11y-skills/auto-play-audio`）は、ページと iframe（入れ子・

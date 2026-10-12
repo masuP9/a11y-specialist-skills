@@ -330,6 +330,49 @@ test('shipping/billing トークンが無い autocomplete="email" でも、field
   ]);
 });
 
+test('読み取り専用の shipping street-address のあとに編集できる billing street-address があると、後者だけが node になる', async ({
+  page,
+}, testInfo) => {
+  await page.setContent(
+    html(`<form id="f">
+      <input id="a" readonly autocomplete="shipping street-address" aria-label="Shipping address">
+      <input id="b" autocomplete="billing street-address" aria-label="Billing address">
+    </form>`),
+  );
+
+  const result = await runRedundantEntryCheck({
+    page,
+    outputDir: testInfo.outputDir,
+  });
+
+  expect(result.details.groups).toHaveLength(1);
+  expect(result.details.groups[0]?.kind).toBe('scoped');
+  expect(result.details.groups[0]?.fields.map((f) => f.editable)).toEqual([
+    false,
+    true,
+  ]);
+  expect(result.incomplete[0]?.nodes.map((n) => n.target)).toEqual([['#b']]);
+});
+
+test('すべて readonly の同じ目的の欄 2 つはグループにならない', async ({
+  page,
+}, testInfo) => {
+  await page.setContent(
+    html(`<form id="f">
+      <input id="a" readonly autocomplete="shipping street-address" aria-label="Shipping address">
+      <input id="b" readonly autocomplete="billing street-address" aria-label="Billing address">
+    </form>`),
+  );
+
+  const result = await runRedundantEntryCheck({
+    page,
+    outputDir: testInfo.outputDir,
+  });
+
+  expect(result.details.groups).toEqual([]);
+  expect(result.incomplete).toEqual([]);
+});
+
 test('autocomplete が home tel と work tel の欄はグループにならない', async ({
   page,
 }, testInfo) => {

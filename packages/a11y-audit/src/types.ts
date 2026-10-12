@@ -680,6 +680,8 @@ export interface RedundantEntryField {
   section: string | null;
   /** Contact type token (home, work, mobile, fax, pager); null when absent. */
   contactType: string | null;
+  /** False for disabled or readonly fields (earlier information, not re-entry). */
+  editable: boolean;
   formSelector: string | null;
 }
 

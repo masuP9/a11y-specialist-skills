@@ -421,6 +421,7 @@ test('redundant-entry-check envelope with scoped and repeated groups (with and w
     scope: null,
     section: null,
     contactType: null,
+    editable: true,
     formSelector: '#checkout',
     ...overrides,
   });

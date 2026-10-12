@@ -905,6 +905,7 @@ export const REDUNDANT_ENTRY_CHECK_RESULT_SCHEMA: JsonSchema =
                     'purposeSource',
                     'scope',
                     'contactType',
+                    'editable',
                   ],
                   properties: {
                     selector: { type: 'string' },
@@ -922,6 +923,7 @@ export const REDUNDANT_ENTRY_CHECK_RESULT_SCHEMA: JsonSchema =
                     scope: { enum: ['shipping', 'billing', null] },
                     section: { type: ['string', 'null'] },
                     contactType: { type: ['string', 'null'] },
+                    editable: { type: 'boolean' },
                     formSelector: { type: ['string', 'null'] },
                     name: { type: ['string', 'null'] },
                     id: { type: ['string', 'null'] },
