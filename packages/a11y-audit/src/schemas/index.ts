@@ -1042,6 +1042,124 @@ export const MOTION_ACTUATION_CHECK_RESULT_SCHEMA: JsonSchema =
     },
   });
 
+const INPUT_CONTEXT_CHANGE_SCHEMA: JsonSchema = {
+  oneOf: [
+    {
+      type: 'object',
+      required: ['kind', 'toUrl'],
+      properties: { kind: { const: 'navigation' }, toUrl: { type: 'string' } },
+    },
+    {
+      type: 'object',
+      required: ['kind', 'url'],
+      properties: { kind: { const: 'new-window' }, url: { type: 'string' } },
+    },
+    {
+      type: 'object',
+      required: ['kind', 'toSelector'],
+      properties: {
+        kind: { const: 'focus-moved' },
+        toSelector: { type: 'string' },
+      },
+    },
+    {
+      type: 'object',
+      required: ['kind', 'dialogType', 'message'],
+      properties: {
+        kind: { const: 'dialog' },
+        dialogType: { type: 'string' },
+        message: { type: 'string' },
+      },
+    },
+  ],
+};
+
+export const CHANGE_ON_INPUT_CHECK_RESULT_SCHEMA: JsonSchema =
+  buildEnvelopeSchema({
+    id: 'change-on-input-check-result',
+    title: 'ChangeOnInputCheckResult',
+    source: 'change-on-input-check',
+    details: {
+      type: 'object',
+      required: [
+        'controlsFound',
+        'controlsTested',
+        'skipped',
+        'findings',
+        'restarts',
+        'aborted',
+      ],
+      properties: {
+        controlsFound: { type: 'integer' },
+        controlsTested: { type: 'integer' },
+        skipped: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['selector', 'reason'],
+            properties: {
+              selector: { type: 'string' },
+              reason: { type: 'string' },
+            },
+          },
+        },
+        findings: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['control', 'action', 'changes'],
+            properties: {
+              control: {
+                type: 'object',
+                required: [
+                  'selector',
+                  'controlKind',
+                  'type',
+                  'name',
+                  'label',
+                  'html',
+                  'htmlTruncated',
+                ],
+                properties: {
+                  selector: { type: 'string' },
+                  controlKind: {
+                    type: 'string',
+                    enum: ['select', 'radio', 'checkbox', 'text'],
+                  },
+                  type: { type: 'string' },
+                  name: { type: ['string', 'null'] },
+                  label: { type: ['string', 'null'] },
+                  html: { type: 'string' },
+                  htmlTruncated: { type: 'boolean' },
+                },
+              },
+              action: { type: 'string' },
+              changes: { type: 'array', items: INPUT_CONTEXT_CHANGE_SCHEMA },
+            },
+          },
+        },
+        restarts: { type: 'integer' },
+        aborted: {
+          oneOf: [
+            { type: 'null' },
+            {
+              type: 'object',
+              required: ['reason', 'testedCount', 'foundCount'],
+              properties: {
+                reason: {
+                  type: 'string',
+                  enum: ['timeout', 'control-limit', 'restart-limit'],
+                },
+                testedCount: { type: 'integer' },
+                foundCount: { type: 'integer' },
+              },
+            },
+          ],
+        },
+      },
+    },
+  });
+
 /** All result schemas keyed by check id. */
 export const RESULT_SCHEMAS = {
   'axe-audit': AXE_AUDIT_RESULT_SCHEMA,
@@ -1058,4 +1176,5 @@ export const RESULT_SCHEMAS = {
   'keyboard-reachability-check': KEYBOARD_REACHABILITY_CHECK_RESULT_SCHEMA,
   'redundant-entry-check': REDUNDANT_ENTRY_CHECK_RESULT_SCHEMA,
   'motion-actuation-check': MOTION_ACTUATION_CHECK_RESULT_SCHEMA,
+  'change-on-input-check': CHANGE_ON_INPUT_CHECK_RESULT_SCHEMA,
 } as const;

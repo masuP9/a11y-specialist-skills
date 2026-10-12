@@ -14,6 +14,7 @@ import type {
   AuditResultSummary,
   AutocompleteAuditDetails,
   AutoPlayDetectionDetails,
+  ChangeOnInputCheckDetails,
   CheckSource,
   FocusCheckDetails,
   FocusElementRef,
@@ -601,6 +602,60 @@ export function normalizeRedundantEntryCheck(
       });
   });
   bucketize(buckets, 'redundant-entry', nodes, applicable);
+
+  return buckets;
+}
+
+/**
+ * Findings become incomplete nodes (advice given beforehand makes the change
+ * conform, which only a human can judge). A walk stopped early adds a page node
+ * so the untested controls are not silently reported as passing.
+ */
+export function normalizeChangeOnInputCheck(
+  details: ChangeOnInputCheckDetails,
+): NormalizedBuckets {
+  const buckets = emptyBuckets();
+
+  const nodes = details.findings.map(({ control, action, changes }) => {
+    const caused = changes
+      .map((change) => {
+        switch (change.kind) {
+          case 'navigation':
+            return `navigation to ${change.toUrl}`;
+          case 'new-window':
+            return `a new window (${change.url})`;
+          case 'focus-moved':
+            return `focus moving to ${change.toSelector}`;
+          case 'dialog':
+            return `a ${change.dialogType} dialog ("${change.message}")`;
+        }
+      })
+      .join('; ');
+    return toNode(
+      {
+        selector: control.selector,
+        html: control.html,
+        htmlTruncated: control.htmlTruncated,
+        tag: control.type,
+      },
+      `Changing this ${control.type} control (${control.label ?? control.name ?? 'unlabeled'}) — ${action} — caused: ${caused}. ` +
+        'Unless users are advised of this behavior before using the control, this fails 3.2.2.',
+    );
+  });
+  if (details.aborted) {
+    const { reason, testedCount, foundCount } = details.aborted;
+    nodes.push(
+      pageNode(
+        `Stopped early (${reason}): ${testedCount} of ${foundCount} controls were tested. Check the rest manually.`,
+      ),
+    );
+  }
+  bucketize(
+    buckets,
+    'no-context-change-on-input',
+    nodes,
+    nodes.length > 0 || details.controlsTested > 0,
+  );
 
   return buckets;
 }
