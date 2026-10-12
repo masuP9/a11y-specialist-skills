@@ -3,7 +3,13 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 0.12.0 — 2026-10-13
+
+**Heads-up** — the CLI now launches Chromium with
+`--autoplay-policy=no-user-gesture-required`, so pages that autoplay video with
+sound play it during every check (see Changed). `change-on-input-check` changes
+form values and fires `change` on the live page, so pages that autosave or
+submit on change may send requests (see README).
 
 ### Added
 
