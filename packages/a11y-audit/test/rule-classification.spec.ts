@@ -140,3 +140,13 @@ test('all 20 custom finding rules have a manifest entry', () => {
     ).toBe(true);
   }
 });
+
+// auto-play detection diffs screenshots only and never inspects audio, so it
+// must not claim 1.4.2; axe-core's no-autoplay-audio covers that SC.
+test('auto-play 規則は音を調べないので SC に 1.4.2 を含めない', () => {
+  expect(RULES['auto-play'].sc).toEqual(['2.2.2']);
+});
+
+test('auto-play 規則は音を調べないのでタグに wcag142 を含めない', () => {
+  expect(RULES['auto-play'].tags).toEqual(['a11y-skills', 'wcag2a', 'wcag222']);
+});

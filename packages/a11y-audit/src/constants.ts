@@ -493,7 +493,7 @@ export const TIME_LIMIT_MIN_MS = 10000;
 export const DEFAULT_TIME_LIMIT_RESULT_FILE = 'time-limit-result.json';
 
 // =============================================================================
-// Auto-play Detection Constants (WCAG 1.4.2 / 2.2.2)
+// Auto-play Detection Constants (WCAG 2.2.2)
 // =============================================================================
 
 /** Screenshot intervals in milliseconds (0s, 2s, 4s, 6s) */
@@ -515,7 +515,7 @@ export const DEFAULT_AUTO_PLAY_OUTPUT_DIR = './auto-play-screenshots';
 export const DETECTION_RESULT_FILENAME = 'detection-result.json';
 
 // =============================================================================
-// Pause Control Detection Patterns (WCAG 1.4.2 / 2.2.2)
+// Pause Control Detection Patterns (WCAG 2.2.2)
 // =============================================================================
 
 /** Keywords for pause/stop controls (EN/JP) */

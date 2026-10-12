@@ -38,16 +38,16 @@ export function generateRecommendation(ctx: RecommendationContext): string {
     }
 
     if (pauseVerification.pauseWorked === false) {
-      return 'Auto-playing content detected. Pause control found but does NOT stop the animation. Fix the control or add a working one (WCAG 1.4.2, 2.2.2).';
+      return 'Auto-playing content detected. Pause control found but does NOT stop the animation. Fix the control or add a working one (WCAG 2.2.2).';
     }
 
     // Verification not conclusive
     return pauseControls.hasAccessibleName
       ? 'Auto-playing content detected with pause controls. Manually verify controls work and are keyboard accessible.'
-      : 'Auto-playing content detected. Pause control found but lacks accessible name (aria-label). Add accessible labels (WCAG 1.4.2, 2.2.2, 4.1.2).';
+      : 'Auto-playing content detected. Pause control found but lacks accessible name (aria-label). Add accessible labels (WCAG 2.2.2, 4.1.2).';
   }
 
-  return 'Auto-playing content detected and continues beyond 5 seconds. No pause/stop controls found. Add controls (WCAG 1.4.2, 2.2.2).';
+  return 'Auto-playing content detected and continues beyond 5 seconds. No pause/stop controls found. Add controls (WCAG 2.2.2).';
 }
 
 /**

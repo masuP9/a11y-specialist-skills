@@ -5,6 +5,18 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+### Changed
+
+- Rule `a11y-skills/auto-play` no longer claims WCAG 1.4.2: its `sc` is now
+  `['2.2.2']` and its `tags` no longer include `wcag142`. The detection only
+  diffs screenshots and never inspects audio, so 1.4.2 is left to axe-core's
+  `no-autoplay-audio` and manual review. Consumers that filter or count
+  findings by `wcag142` will no longer see this rule there.
+- `auto-play-detection`: the recommendation texts no longer cite 1.4.2.
+  `(WCAG 1.4.2, 2.2.2)` is now `(WCAG 2.2.2)` and `(WCAG 1.4.2, 2.2.2, 4.1.2)`
+  is now `(WCAG 2.2.2, 4.1.2)`. Consumers that match these strings need to
+  update them.
+
 ### Fixed
 
 - `focus-indicator-check`: an element whose focus is obscured is no longer

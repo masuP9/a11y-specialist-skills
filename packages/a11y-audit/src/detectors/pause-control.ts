@@ -1,6 +1,6 @@
 /**
  * Pause/Stop control detection for auto-playing content.
- * WCAG 1.4.2 (Audio Control) / 2.2.2 (Pause, Stop, Hide)
+ * WCAG 2.2.2 (Pause, Stop, Hide)
  */
 
 import * as path from 'node:path';

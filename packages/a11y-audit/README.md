@@ -25,7 +25,7 @@ test entries.
 | `runOrientationCheck` | 1.3.4 Orientation |
 | `runAutocompleteAudit` | 1.3.5 Identify Input Purpose |
 | `runTimeLimitDetector` | 2.2.1 Timing Adjustable |
-| `runAutoPlayDetection` | 1.4.2 Audio Control / 2.2.2 Pause, Stop, Hide |
+| `runAutoPlayDetection` | 2.2.2 Pause, Stop, Hide (audio is not inspected; 1.4.2 is left to axe's `no-autoplay-audio` and manual review) |
 | `runKeyboardReachabilityCheck` | 2.1.1 Keyboard (Tab, arrow keys in composite widgets, activedescendant) |
 
 Most checks take an already-navigated `page`. A few own navigation and take a

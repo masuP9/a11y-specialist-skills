@@ -88,7 +88,7 @@ The following criteria can be automatically checked via the `a11y-audit` CLI (se
 | Multiple | `axe-audit` | `axe-result.json` |
 | 1.3.4 | `orientation-check` | `orientation-result.json` |
 | 1.3.5 | `autocomplete-audit` | `autocomplete-result.json` |
-| 1.4.2, 2.2.2 | `auto-play-detection` | `auto-play-screenshots/` |
+| 2.2.2 | `auto-play-detection` | `auto-play-screenshots/` |
 | 1.4.4 | `zoom-200-check` | `zoom-200-result.json` |
 | 1.4.10 | `reflow-check` | `reflow-result.json` |
 | 1.4.12 | `text-spacing-check` | `text-spacing-result.json` |

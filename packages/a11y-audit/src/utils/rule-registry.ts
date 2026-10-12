@@ -262,8 +262,10 @@ export const RULES = {
   // --- auto-play-detection ---
   'auto-play': {
     id: 'a11y-skills/auto-play',
-    sc: ['2.2.2', '1.4.2'],
-    tags: ['a11y-skills', 'wcag2a', 'wcag222', 'wcag142'],
+    // Audio is not inspected, so 1.4.2 is left to axe-core's
+    // no-autoplay-audio and manual review.
+    sc: ['2.2.2'],
+    tags: ['a11y-skills', 'wcag2a', 'wcag222'],
     impact: 'moderate',
     scope: 'page',
     description:
