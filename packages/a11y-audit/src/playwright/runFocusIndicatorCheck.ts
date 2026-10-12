@@ -369,6 +369,8 @@ export async function runFocusIndicatorCheck(
             `${data.tag.toLowerCase()}:nth-of-type(${data.id + 1})`,
           html: data.html,
           htmlTruncated: data.htmlTruncated,
+          frame: data.frame,
+          shadowHosts: data.shadowHosts,
           ...(data.echo !== undefined && { echo: data.echo }),
         };
       });
@@ -399,12 +401,22 @@ export async function runFocusIndicatorCheck(
       // Navigate to target page
       await gotoAndSettle(page, targetUrl);
 
-      // Initialize focus tracker and get element count
-      const count = await page.evaluate(() =>
-        (
-          window as unknown as { initFocusTracker: () => number }
-        ).initFocusTracker(),
+      // Initialize the focus tracker in every frame (it records each frame's
+      // elements' styles before focus) and add up the element counts. A frame
+      // that is mid-navigation counts as zero.
+      const mainFrame = page.mainFrame();
+      const counts = await Promise.all(
+        page.frames().map((frame) => {
+          const init = frame.evaluate(
+            () =>
+              (
+                window as unknown as { initFocusTracker?: () => number }
+              ).initFocusTracker?.() ?? 0,
+          );
+          return frame === mainFrame ? init : init.catch(() => 0);
+        }),
       );
+      const count = counts.reduce((sum, n) => sum + n, 0);
 
       // Mark elements that caused navigation violations (from previous attempts)
       if (skipSelectors.length > 0) {
@@ -469,58 +481,24 @@ export async function runFocusIndicatorCheck(
         // Get currently focused element IMMEDIATELY after Tab
         let currentFocusedElement: FocusElementRef | null = null;
         try {
-          currentFocusedElement = await page.evaluate(
-            ({ htmlSnippetMaxLength, echoAttribute }) => {
-              const el = document.activeElement;
-              if (!el || el === document.body) return null;
-
-              const getSelector = (element: Element): string => {
-                if (element.id) return `#${element.id}`;
-                const tag = element.tagName.toLowerCase();
-                const parent = element.parentElement;
-                if (!parent) return tag;
-                const siblings = [...parent.children].filter(
-                  (c) => c.tagName === element.tagName,
-                );
-                if (siblings.length === 1)
-                  return `${getSelector(parent)} > ${tag}`;
-                const index = siblings.indexOf(element) + 1;
-                return `${getSelector(parent)} > ${tag}:nth-of-type(${index})`;
-              };
-
-              let html = '';
-              try {
-                html = el.outerHTML || '';
-              } catch {
-                html = '';
+          // While focus is inside an iframe the main frame's activeElement is
+          // the iframe element itself, so prefer what a child frame reports.
+          // Only the main frame's evaluate may throw (navigation in flight).
+          const describeActive = () =>
+            (
+              window as unknown as {
+                describeActiveElement?: () => FocusElementRef | null;
               }
-              if (!html) {
-                html = `<${el.tagName.toLowerCase()}>`;
-              }
-              const htmlTruncated = html.length > htmlSnippetMaxLength;
-
-              return {
-                tag: el.tagName,
-                role: el.getAttribute('role'),
-                name:
-                  el.getAttribute('aria-label') ||
-                  el.textContent?.slice(0, 30) ||
-                  '',
-                selector: getSelector(el),
-                html: htmlTruncated
-                  ? html.slice(0, htmlSnippetMaxLength)
-                  : html,
-                htmlTruncated,
-                ...(echoAttribute !== null && {
-                  echo: el.getAttribute(echoAttribute),
-                }),
-              };
-            },
-            {
-              htmlSnippetMaxLength: HTML_SNIPPET_MAX_LENGTH,
-              echoAttribute: echoAttribute ?? null,
-            },
+            ).describeActiveElement?.() ?? null;
+          const childRefs = await Promise.all(
+            page
+              .frames()
+              .filter((frame) => frame !== page.mainFrame())
+              .map((frame) => frame.evaluate(describeActive).catch(() => null)),
           );
+          currentFocusedElement =
+            childRefs.find((ref) => ref !== null) ??
+            (await page.mainFrame().evaluate(describeActive));
         } catch {
           // Page might have navigated, use lastFocusedElement as fallback
           currentFocusedElement = lastFocusedElement;
@@ -569,7 +547,10 @@ export async function runFocusIndicatorCheck(
           imageCompare &&
           baseline &&
           focusedRecord &&
-          focusHistory.length > recordedBeforeTab
+          focusHistory.length > recordedBeforeTab &&
+          // An iframe element's rect is relative to its own document, so it
+          // cannot be cut out of the main-page baseline; leave visualDiff null.
+          focusedRecord.frame === null
         ) {
           focusedRecord.visualDiff = await measureVisualDiff(
             page,
@@ -641,6 +622,8 @@ export async function runFocusIndicatorCheck(
         selector: el.selector,
         html: el.html,
         htmlTruncated: el.htmlTruncated,
+        frame: el.frame,
+        shadowHosts: el.shadowHosts,
         ...(el.echo !== undefined && { echo: el.echo }),
         ...(el.visualDiff !== undefined && { visualDiff: el.visualDiff }),
       })),
@@ -776,6 +759,39 @@ function createFocusTrackerScript(args: {
   const getEcho = (el: Element): { echo?: string | null } =>
     echoAttribute === null ? {} : { echo: el.getAttribute(echoAttribute) };
 
+  /**
+   * Where the element lives: this window's frame (null for the main frame) and
+   * the shadow hosts above it, outermost first. `window.frameElement` is null
+   * when the parent is cross-origin, so `frame.selector` is null then.
+   */
+  const getLocation = (
+    el: Element,
+  ): {
+    frame: { url: string; selector: string | null } | null;
+    shadowHosts: string[];
+  } => {
+    const shadowHosts: string[] = [];
+    let root = el.getRootNode();
+    while (root instanceof ShadowRoot) {
+      shadowHosts.unshift(getSelector(root.host));
+      root = root.host.getRootNode();
+    }
+    let frame: { url: string; selector: string | null } | null = null;
+    if (window !== window.top) {
+      let frameElement: Element | null = null;
+      try {
+        frameElement = window.frameElement;
+      } catch {
+        frameElement = null;
+      }
+      frame = {
+        url: window.location.href,
+        selector: frameElement ? getSelector(frameElement) : null,
+      };
+    }
+    return { frame, shadowHosts };
+  };
+
   const getHtmlSnippet = (
     el: Element,
   ): { html: string; htmlTruncated: boolean } => {
@@ -848,19 +864,25 @@ function createFocusTrackerScript(args: {
   );
 
   /**
-   * Generate a CSS selector for an element
+   * Generate a CSS selector for an element, relative to the document or the
+   * shadow root that contains it
    */
   const getSelector = (el: Element): string => {
     if (el.id) return `#${el.id}`;
     const tag = el.tagName.toLowerCase();
     const parent = el.parentElement;
-    if (!parent) return tag;
-    const siblings = [...parent.children].filter(
+    // A shadow root's top-level children have no parent element
+    const container =
+      parent ?? (el.parentNode instanceof ShadowRoot ? el.parentNode : null);
+    if (!container) return tag;
+    const siblings = [...container.children].filter(
       (c) => c.tagName === el.tagName,
     );
-    if (siblings.length === 1) return `${getSelector(parent)} > ${tag}`;
-    const index = siblings.indexOf(el) + 1;
-    return `${getSelector(parent)} > ${tag}:nth-of-type(${index})`;
+    const own =
+      siblings.length === 1
+        ? tag
+        : `${tag}:nth-of-type(${siblings.indexOf(el) + 1})`;
+    return parent ? `${getSelector(parent)} > ${own}` : own;
   };
 
   /**
@@ -948,8 +970,11 @@ function createFocusTrackerScript(args: {
    * Check if element should be skipped (caused navigation in previous attempt)
    */
   const shouldSkip = (el: Element): boolean => {
-    const selector = getSelector(el);
-    return skipSelectors.includes(selector);
+    // Skipping is applied to the main document only (see the retry loop), so
+    // a same-selector element in a frame or shadow root must not be dropped.
+    const { frame, shadowHosts } = getLocation(el);
+    if (frame !== null || shadowHosts.length > 0) return false;
+    return skipSelectors.includes(getSelector(el));
   };
 
   /**
@@ -1284,6 +1309,7 @@ function createFocusTrackerScript(args: {
           selector: getSelector(focusedEl),
           ...getHtmlSnippet(focusedEl),
           ...getEcho(focusedEl),
+          ...getLocation(focusedEl),
         },
         elementRect: {
           left: focusedRect.left,
@@ -1306,7 +1332,25 @@ function createFocusTrackerScript(args: {
       // Create overlay container
       createOverlay();
 
-      const elements = [...document.querySelectorAll(focusableSelector)]
+      // querySelectorAll does not see into shadow roots, so descend into the
+      // open ones; their elements need base styles to be compared on focus.
+      // Each shadow root also gets its own focusin listener: when focus moves
+      // between two elements of one shadow root, both retarget to the host at
+      // the document, so the event is not delivered there. (An element focused
+      // from outside reaches both listeners; `data-focus-visited` makes the
+      // second one a no-op.)
+      const queryFocusable = (root: Document | ShadowRoot): Element[] => [
+        ...root.querySelectorAll(focusableSelector),
+        ...[...root.querySelectorAll('*')].flatMap((host) => {
+          if (!host.shadowRoot) return [];
+          host.shadowRoot.addEventListener(
+            'focusin',
+            onFocusIn as EventListener,
+          );
+          return queryFocusable(host.shadowRoot);
+        }),
+      ];
+      const elements = queryFocusable(document)
         .filter(isVisible)
         .filter((el) => !shouldSkip(el));
       elements.forEach((el) => {
@@ -1317,10 +1361,38 @@ function createFocusTrackerScript(args: {
     };
 
   /**
+   * The focused element as seen from the main frame's code, for 3.2.1: the
+   * innermost element (through open shadow roots) of this frame, or null when
+   * nothing is focused here. A child frame whose focus is elsewhere reports
+   * null, as its `activeElement` stays on the last element it had.
+   */
+  (
+    window as unknown as {
+      describeActiveElement: () => unknown;
+    }
+  ).describeActiveElement = () => {
+    if (window !== window.top && !document.hasFocus()) return null;
+    let el = document.activeElement;
+    while (el?.shadowRoot?.activeElement) el = el.shadowRoot.activeElement;
+    if (!el || el === document.body) return null;
+    return {
+      tag: el.tagName,
+      role: el.getAttribute('role'),
+      name: el.getAttribute('aria-label') || el.textContent?.slice(0, 30) || '',
+      selector: getSelector(el),
+      ...getHtmlSnippet(el),
+      ...getEcho(el),
+      ...getLocation(el),
+    };
+  };
+
+  /**
    * Handle focus events
    */
-  document.addEventListener('focusin', (e) => {
-    const el = e.target as Element;
+  const onFocusIn = (e: FocusEvent): void => {
+    // focusin's target is retargeted to the shadow host; the first entry of
+    // the composed path is the element that really received focus.
+    const el = e.composedPath()[0] as Element;
     if (el.hasAttribute('data-focus-visited')) return;
     if (el.hasAttribute('data-focus-navigation-violation')) return;
 
@@ -1384,10 +1456,12 @@ function createFocusTrackerScript(args: {
         selector: elementSelectors.get(el) || getSelector(el),
         ...getHtmlSnippet(el),
         ...getEcho(el),
+        ...getLocation(el),
       },
     );
 
     // Check for WCAG 2.4.11 / 2.4.12 - focus obscured by fixed/sticky elements
     checkFocusObscured(el);
-  });
+  };
+  document.addEventListener('focusin', onFocusIn);
 }

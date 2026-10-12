@@ -246,6 +246,23 @@ contexts, so the attribute must already be on the element when the page loads
 The name is passed to `getAttribute` as a plain string; an invalid name throws
 an `Error`.
 
+The focus indicator check's element records (`allElements`, `issues`, and the
+`element` in `focusObscuredIssues` and `onFocusViolations`) carry `frame` and
+`shadowHosts`, which say which document the element is in.
+
+- `frame`: `null` for the main frame. For an element inside an iframe it is
+  `{ url, selector }`: the iframe document's URL and the iframe element's
+  selector in its parent (`selector` is `null` when the parent is cross-origin).
+  For nested iframes it describes the innermost one only.
+- `shadowHosts`: for an element inside an open shadow root, the hosts'
+  selectors, outermost first; `[]` otherwise. `selector` is relative to that
+  shadow root (the inner element is recorded, not the host).
+- `rect` of an element in an iframe is relative to that iframe's document, not
+  the main page.
+- Closed shadow roots are not seen (the host is recorded). Fixed content outside
+  an iframe is not detected as hiding an element inside it (obscuring is judged
+  per document).
+
 **Before/after focus screenshot comparison (`screenshotDiff`):**
 
 Pass `screenshotDiff: true` to `runFocusIndicatorCheck` to compare screenshots
@@ -261,7 +278,7 @@ that computed styles cannot show (`::before` / `::after`, a parent's
 - The baseline is one full-page capture taken before the Tab walk starts, with nothing focused. Annotation boxes and the styles kept on earlier elements are hidden while capturing.
 - Classification does not change. An element with no computed-style change stays `incomplete` under `focus-visible`; the message says the screenshot differs around it (a cue may exist) or that it shows no visual change either.
 - Without the optional `pixelmatch` and `pngjs`, a warning is printed instead of an error, the comparison is skipped and `visualDiff` is `null`. It is also `null` for an element that could not be captured.
-- **Limits:** fixed / sticky content, animations, video, and anything that changes with scroll position or time can show up as a difference that is not a focus indicator. An element already focused at load (autofocus) has no baseline to differ from. A difference means "a cue may exist"; verify it by eye.
+- **Limits:** fixed / sticky content, animations, video, and anything that changes with scroll position or time can show up as a difference that is not a focus indicator. An element already focused at load (autofocus) has no baseline to differ from. A difference means "a cue may exist"; verify it by eye. Elements inside an iframe are not compared; their `visualDiff` is `null`.
 
 ### Output location resolution
 

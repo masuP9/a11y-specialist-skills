@@ -235,6 +235,19 @@ context でページを開くため、属性はページの読み込み時点で
 （ページのマークアップ、または `createContext` で作る context に `addInitScript` で付ける）。
 属性名は文字列としてそのまま `getAttribute` に渡され、不正な名前は `Error` になります。
 
+フォーカス表示検査の要素の記録（`allElements`、`issues`、`focusObscuredIssues` と
+`onFocusViolations` の `element`）には、要素がどの文書にあるかを示す `frame` と
+`shadowHosts` が付きます。
+
+- `frame`: 主フレームの要素は `null`。iframe の中の要素は `{ url, selector }`（その文書の URL と、
+  親文書での iframe 要素の selector。親から辿れない別オリジンでは `selector` が `null`）。
+  入れ子の iframe は一番内側の iframe だけを表します。
+- `shadowHosts`: open な shadow root の中の要素は、外側から順に host の selector。外の要素は `[]`。
+  `selector` はその shadow root の中での selector です（host ではなく、中の要素そのものを記録します）。
+- iframe の中の要素の `rect` は、主ページではなくその iframe の文書の左上が原点です。
+- closed な shadow root の中は見えず、host として記録されます。iframe の外の固定要素が iframe の
+  中の要素を隠す場合は検出しません（隠れ判定は文書ごと）。
+
 **フォーカス前後の画像の差（`screenshotDiff`）:**
 
 `runFocusIndicatorCheck` に `screenshotDiff: true` を渡すと、各要素について「フォーカスしていないとき」と
@@ -247,7 +260,7 @@ context でページを開くため、属性はページの読み込み時点で
 - 基準の画像は、Tab で回り始める前に何もフォーカスしていない状態で 1 回撮ったページ全体です。注釈の枠と、前の要素に残した見た目は撮影中だけ隠します。
 - 分類は変わりません。スタイルの差が無い要素は `focus-visible` の `incomplete` のままで、画像に差があればメッセージに「画像では周りが変わっている。印がある可能性」と出ます。差が無ければ「画像にも変化なし」と出ます。
 - `pixelmatch` と `pngjs`（optionalDependencies）が入っていない環境では、エラーにせず警告を出して比較を飛ばし、`visualDiff` は `null` になります。画像を撮れなかった要素も `null` です。
-- **限界:** fixed / sticky の要素、アニメーション・動画、スクロール位置や時間で変わる内容は、印ではない差として出ることがあります。読み込み時点でフォーカスされている要素（autofocus）は、基準の画像との差がありません。差があっても「印がある可能性」であり、目視で確かめてください。
+- **限界:** fixed / sticky の要素、アニメーション・動画、スクロール位置や時間で変わる内容は、印ではない差として出ることがあります。読み込み時点でフォーカスされている要素（autofocus）は、基準の画像との差がありません。差があっても「印がある可能性」であり、目視で確かめてください。iframe の中の要素は比べず、`visualDiff` は `null` です。
 
 ### 出力先の解決順
 

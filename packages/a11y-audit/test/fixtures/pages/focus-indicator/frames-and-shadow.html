@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>focus-indicator: iframe and shadow DOM elements</title>
+    <style>
+      button:focus,
+      a:focus {
+        outline: 3px solid #005fcc;
+        outline-offset: 2px;
+      }
+      body {
+        margin: 0;
+        padding: 20px;
+      }
+      iframe {
+        display: block;
+        width: 300px;
+        height: 80px;
+        margin: 40px 0 0 100px;
+        border: 1px solid #333;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="shared">Outside</button>
+
+    <!-- Same-origin frame: holds an element whose selector equals the one above. -->
+    <iframe
+      id="same-origin-frame"
+      title="same origin"
+      srcdoc='<!doctype html><style>button:focus{outline:3px solid #005fcc}body{margin:0}</style><button id="shared">Inside same-origin</button>'
+    ></iframe>
+
+    <!-- Cross-origin frame: src is set to another host by the test (placeholder
+         here so the page also loads on its own). -->
+    <iframe id="cross-origin-frame" title="cross origin"></iframe>
+
+    <div id="shadow-host"></div>
+    <script>
+      const host = document.getElementById('shadow-host');
+      const root = host.attachShadow({ mode: 'open' });
+      root.innerHTML =
+        '<style>button:focus{outline:3px solid #005fcc}</style>' +
+        '<button id="shared">Inside shadow</button>' +
+        '<button id="plain" style="outline: none">Shadow plain</button>';
+
+      const crossOriginUrl = new URL(location.href).searchParams.get('child');
+      if (crossOriginUrl) {
+        document.getElementById('cross-origin-frame').src = crossOriginUrl;
+      }
+    </script>
+  </body>
+</html>

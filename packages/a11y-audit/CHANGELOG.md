@@ -27,8 +27,26 @@ the old rule, check both.
 - focus-indicator: each `details.focusObscuredIssues` record has
   `fullyObscured: boolean` (true when 99% or more of the element is covered).
   The JSON schema now requires it.
+- focus-indicator: every record that points at an element (`allElements`,
+  `issues`, `focusObscuredIssues[].element`, `onFocusViolations[].element`) has
+  `frame` and `shadowHosts` (new required schema fields). `frame` is `null` for
+  the main frame, otherwise `{ url, selector }`: the iframe document's URL and
+  the iframe element's selector in its parent (`null` when the parent is
+  cross-origin). `shadowHosts` lists the shadow hosts' selectors, outermost
+  first (`[]` outside shadow DOM). `rect` of an element in an iframe is
+  relative to that iframe's document.
 
 ### Changed
+
+- focus-indicator now records the element inside an open shadow root instead of
+  its shadow host, and `selector` is relative to that shadow root. Results for
+  pages with shadow DOM change: the host record (usually `hasFocusStyle:
+  false`) is gone, and the inner elements are recorded with their own focus
+  style comparison.
+- focus-indicator now compares focus styles for elements inside iframes and
+  shadow roots. Before, they always had `hasFocusStyle: false` (no base style
+  was captured), so they could be reported as missing a focus indicator.
+  Elements in iframes also count toward the Tab walk now.
 
 - `a11y-skills/focus-not-obscured` is now WCAG 2.4.11 only (`sc: ['2.4.11']`) and
   reports only records with `fullyObscured: true`.

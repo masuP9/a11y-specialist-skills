@@ -82,6 +82,8 @@ test('focus-indicator-check envelope validates against its schema', () => {
     selector: '#x',
     html: '<button id="x">x</button>',
     htmlTruncated: false,
+    frame: null,
+    shadowHosts: [],
   };
   const details: FocusCheckDetails = {
     totalFocusableElements: 1,
@@ -122,6 +124,8 @@ test('focus-indicator-check envelope with a visualDiff validates, and a non-nume
     selector: '#x',
     html: '<button id="x">x</button>',
     htmlTruncated: false,
+    frame: null,
+    shadowHosts: [],
     visualDiff: {
       diffRatio: 0.25,
       rect: { x: 1, y: 2, width: 3, height: 4 },
