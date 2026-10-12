@@ -27,12 +27,28 @@ test entries.
 | `runTimeLimitDetector` | 2.2.1 Timing Adjustable |
 | `runAutoPlayDetection` | 2.2.2 Pause, Stop, Hide (visual changes) / 1.4.2 Audio Control (playback state of `<audio>` / `<video>`; whether sound is actually heard needs manual review) |
 | `runKeyboardReachabilityCheck` | 2.1.1 Keyboard (Tab, arrow keys in composite widgets, activedescendant) |
+| `runRedundantEntryCheck` | 3.3.7 Redundant Entry (fields in the same form asking for the same information, reported as candidates) |
 
 Most checks take an already-navigated `page`. A few own navigation and take a
 `targetUrl` instead (or `TEST_PAGE`): `runOrientationCheck` and
 `runTimeLimitDetector` (and `runZoomCheck` when a URL is given).
 `runFocusIndicatorCheck` and `runKeyboardReachabilityCheck` take a `browser`. `runAutoPlayDetection` needs the
 optional `pixelmatch` + `pngjs` deps (see Install).
+
+`runRedundantEntryCheck` (3.3.7, `a11y-skills/redundant-entry`) takes an
+already-navigated `page`. Within the same form (the whole page for fields
+outside any form), when two or more fields ask for the same purpose, the second
+and later fields are reported as `incomplete` candidates. The purpose comes from
+the `autocomplete` field name, or is inferred from the name / id / label /
+placeholder (scope words such as "shipping" and confirmation words such as
+"confirm" are removed before matching). Groups whose scope differs
+(`shipping` / `billing`) have `kind: 'scoped'`; repeats within the same scope
+have `kind: 'repeated'`. Checkboxes, buttons and selects in the same form whose
+text suggests "same as ..." are listed in `copyControls`; whether the value is
+actually copied is not verified. Password and one-time-code fields, different
+`section-*` tokens and different forms are not compared. **Multi-page flows
+(steps split across several pages) are out of scope**, because a single-page
+check cannot know what an earlier page asked for.
 
 For 1.4.2 (`a11y-skills/auto-play-audio`), `runAutoPlayDetection` records
 whether every `<audio>` / `<video>` in the page and its iframes (nested frames
@@ -142,6 +158,7 @@ time-limit-detector
 auto-play-detection
 target-size-check
 keyboard-reachability-check
+redundant-entry-check
 ```
 
 ### Exit codes
@@ -426,7 +443,8 @@ import "@a11y-skills/audit/test-entries/reflow-check";
 // tests/a11y/target-size.spec.ts
 import "@a11y-skills/audit/test-entries/target-size-check";
 // ...also: text-spacing-check, zoom-200-check, orientation-check,
-// autocomplete-audit, time-limit-detector, auto-play-detection
+// autocomplete-audit, time-limit-detector, auto-play-detection,
+// redundant-entry-check
 import "@a11y-skills/audit/test-entries/text-spacing-check";
 ```
 

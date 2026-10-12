@@ -26,12 +26,23 @@ Claude Code skill から機能本体を切り出したものです。10 個の�
 | `runTimeLimitDetector` | 2.2.1 タイミング調整可能 |
 | `runAutoPlayDetection` | 2.2.2 一時停止、停止、非表示（画面の変化）／ 1.4.2 音声の制御（`<audio>`・`<video>` の再生状態。実際に音が聞こえるかは手で確かめる） |
 | `runKeyboardReachabilityCheck` | 2.1.1 キーボード（Tab・複合部品内の矢印キー・activedescendant） |
+| `runRedundantEntryCheck` | 3.3.7 冗長な入力（同じ form の中で同じ情報を求める欄の重なり。候補として報告） |
 
 多くの検査は遷移済みの `page` を受けます。一部は navigation を所有し `targetUrl`
 （または `TEST_PAGE`）を受けます: `runOrientationCheck` と `runTimeLimitDetector`
 （`runZoomCheck` は URL 指定時）。`runFocusIndicatorCheck` と
 `runKeyboardReachabilityCheck` は `browser` を受けます。
 `runAutoPlayDetection` は optional 依存 `pixelmatch` + `pngjs` が必要です（インストール参照）。
+
+`runRedundantEntryCheck`（3.3.7、`a11y-skills/redundant-entry`）は遷移済みの `page` を受けます。
+同じ form（form に属さない欄はページ全体）の中で、同じ目的の欄が 2 つ以上ある場合に、その
+2 つ目以降を `incomplete` の候補にします。目的は `autocomplete` の欄名トークンで決め、無ければ
+名前・id・ラベル・placeholder から推定します（「shipping」「お届け先」などの範囲の語と「確認」
+などの確認用の語は取り除いてから照合します）。範囲（`shipping` / `billing`）が異なる組は
+`kind: 'scoped'`、同じ範囲の繰り返しは `kind: 'repeated'` です。同じ form の中の「〜と同じ」
+のようなチェックボックス・ボタン・選択肢は `copyControls` に載せますが、値が実際に写るかは
+確かめません。パスワード・ワンタイムコードの欄、別の `section-*`、別の form は対象外です。
+**手順が複数ページに分かれるフォームは範囲外**です（前のページの入力を知り得ないため）。
 
 `runAutoPlayDetection` の 1.4.2（`a11y-skills/auto-play-audio`）は、ページと iframe（入れ子・
 shadow root の中も含む）の `<audio>`・`<video>` について、「再生中・消音でない・音量が 0 より大きい・
@@ -127,6 +138,7 @@ time-limit-detector
 auto-play-detection
 target-size-check
 keyboard-reachability-check
+redundant-entry-check
 ```
 
 ### 終了コード
@@ -376,7 +388,8 @@ import "@a11y-skills/audit/test-entries/reflow-check";
 // tests/a11y/target-size.spec.ts
 import "@a11y-skills/audit/test-entries/target-size-check";
 // 他にも: text-spacing-check, zoom-200-check, orientation-check,
-// autocomplete-audit, time-limit-detector, auto-play-detection
+// autocomplete-audit, time-limit-detector, auto-play-detection,
+// redundant-entry-check
 import "@a11y-skills/audit/test-entries/text-spacing-check";
 ```
 

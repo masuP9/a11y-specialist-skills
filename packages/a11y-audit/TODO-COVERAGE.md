@@ -113,6 +113,27 @@
 
 ---
 
+### 3.3.7 Redundant Entry - **部分実装** ✅
+**概要**: 同じ手順の中で一度入力した情報を再入力させない
+
+**実装**: `redundant-entry-check`（`runRedundantEntryCheck.ts`）
+- 同じ form（form に属さない欄はページ全体）・同じ `section-*` の中で、同じ目的の欄が
+  2 つ以上ある組を `incomplete` の候補として報告（2 つ目以降が node）
+- 目的は `autocomplete` の欄名トークン、無ければ名前・id・ラベル・placeholder から推定
+  （範囲の語「shipping」「お届け先」「請求先」と確認用の語「確認」「confirm」は取り除いて照合）
+- 範囲が違う組は `scoped`、同じ範囲の繰り返しは `repeated`
+- 同じ form の中の「〜と同じ」などのチェックボックス・ボタン・選択肢を `copyControls` に添える
+- パスワード・ワンタイムコードの欄は対象外（3.3.7 のセキュリティ例外）
+
+**残る制限**:
+- **手順が複数ページに分かれるフォームは範囲外**（前のページの入力を知り得ない）
+- 別の form にまたがる重なりは拾わない。目的の推定は語の一致による推測
+- `copyControls` は文字の一致による推測で、値が実際に写るかは確かめない
+- 読み込み時に非表示の欄も数える。Shadow DOM / iframe の中は見ない
+- 例外（再入力が必須、以前の情報が無効）は判断できず、人手で確認する
+
+---
+
 ### 2.1.2 No Keyboard Trap
 **概要**: フォーカスがキーボードトラップに陥らない
 
@@ -167,6 +188,7 @@
 | 2.5.8 Target Size (Minimum) | `target-size-check.ts` ✅ |
 | 3.1.1 Language of Page | axe-core + `automated-checks.md` |
 | 3.2.1 On Focus | `focus-indicator-check.ts` ✅ |
+| 3.3.7 Redundant Entry | `redundant-entry-check`（部分） ✅ |
 
 ---
 

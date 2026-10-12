@@ -24,6 +24,7 @@
 - **Category**: feature
 - **Planned at**: commit `69b4049`, 2026-10-13
 - **Codex plan review**: 通過(1 巡目、2026-10-13、medium 1 件を反映、low 0 件)
+- **Progress**: DONE
 
 ## Why this matters
 
