@@ -732,15 +732,18 @@ function describeAutoPlayingAudio(media: MediaPlaybackRecord): string | null {
       : ' It has the controls attribute, but it could not be determined ' +
         'whether its controls are visible (e.g. clip-path or clip is ' +
         'applied to it, an ancestor or an iframe element).';
-  const path =
-    media.frame && media.framePath === null
+  const path = media.removed
+    ? ' It was removed from the page during the check, so the target points ' +
+      'at its document.'
+    : media.frame && media.framePath === null
       ? ' The iframe path is unknown, so the target is relative to the frame.'
       : '';
   return (
     `Unmuted <${media.tag}>${location} played automatically for ` +
     `${media.audibleSeconds.toFixed(1)}s with sound ${state} (volume ` +
-    `${media.volume}). Sound is sampled every ~2s from when the check ` +
-    'started, not from page load.' +
+    `${media.volume}). Sound is recorded from when the check started ` +
+    '(every ~2s, on playback events, and from when media is added), not ' +
+    'from page load.' +
     `${decoded}${nativeControls}${path} ${controls} Controls are matched by ` +
     'name only and were not clicked, and controls elsewhere on the page or ' +
     'in a parent frame are not searched: verify that the audio can be ' +
@@ -752,18 +755,17 @@ function describeAutoPlayingAudio(media: MediaPlaybackRecord): string | null {
  * A node for a media element. `target` is the full path: iframes (with the
  * shadow hosts above them), then the shadow hosts above the element, then the
  * element; each entry is looked up in the document or shadow root opened by
- * the entry before it.
+ * the entry before it. A removed element no longer resolves, so its target
+ * ends at its document's `html`.
  */
 function mediaNode(
   media: MediaPlaybackRecord,
   failureSummary: string,
 ): NormalizedNode {
   const node = toNode(media, failureSummary);
-  node.target = [
-    ...(media.framePath ?? []),
-    ...media.shadowHosts,
-    media.selector,
-  ];
+  node.target = media.removed
+    ? [...(media.framePath ?? []), 'html']
+    : [...(media.framePath ?? []), ...media.shadowHosts, media.selector];
   return node;
 }
 

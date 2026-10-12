@@ -86,6 +86,7 @@ const playingAudio = (
   muted: false,
   volume: 1,
   playbackRate: 1,
+  removed: false,
   duration: 10,
   endless: false,
   currentTime: 6,
@@ -901,6 +902,32 @@ test('auto-play-audio: autoplay 属性があっても読み込みに失敗した
       }),
     ),
   ).toBe('passes');
+});
+
+test('auto-play-audio: 検査中に DOM から消えた要素は、target がその frame の html になり、説明に消えたことが入る', () => {
+  const nodes = audioIncompleteNodes(
+    autoPlayDetails({
+      mediaElements: [
+        playingAudio({
+          removed: true,
+          paused: true,
+          frame: { url: 'https://player.example/embed', selector: '#player' },
+          framePath: ['#player'],
+        }),
+      ],
+    }),
+  );
+  expect(nodes[0]?.target).toEqual(['#player', 'html']);
+  expect(nodes[0]?.failureSummary).toContain('removed from the page');
+});
+
+test('auto-play-audio: 主フレームで DOM から消えた要素の target は html になる', () => {
+  const nodes = audioIncompleteNodes(
+    autoPlayDetails({
+      mediaElements: [playingAudio({ removed: true, paused: true })],
+    }),
+  );
+  expect(nodes[0]?.target).toEqual(['html']);
 });
 
 test('auto-play-audio: 読めなかった frame があるとページ単位の incomplete になる', () => {

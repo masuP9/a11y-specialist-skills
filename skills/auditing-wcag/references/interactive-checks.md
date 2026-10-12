@@ -239,7 +239,7 @@ Use the `auto-play-detection` check to detect auto-playing content via pixel-lev
 - Verifies if pause controls actually work by clicking and re-comparing
 - Generates visual diff images highlighting changed areas
 - Reports findings with accessibility recommendations
-- Records every `<audio>` / `<video>` in the page and its iframes (nested frames and shadow roots included) when the check starts, with each screenshot, and on every play / pause / mute / rate change, and reports media without visible `controls` that was heard for more than 3 seconds (`audibleSeconds`), or that is playing with sound at the last sample and will keep playing for more than 3 seconds (`loop`, endless stream, or more than 3 seconds of real time left at the playback rate), as `a11y-skills/auto-play-audio` (incomplete) (1.4.2). Sound muted or stopped partway, and short loops, still count
+- Records every `<audio>` / `<video>` in the page and its iframes (nested frames and shadow roots included) when the check starts, with each screenshot, and on every play / pause / mute / rate change, and reports media without visible `controls` that was heard for more than 3 seconds (`audibleSeconds`), or that is playing with sound at the last sample and will keep playing for more than 3 seconds (`loop`, endless stream, or more than 3 seconds of real time left at the playback rate), as `a11y-skills/auto-play-audio` (incomplete) (1.4.2). Sound muted or stopped partway, short loops, and media added during the check (from when it is added) still count, and media removed from the DOM during the check stays in the result with `removed: true`
 
 **Usage:**
 ```bash
@@ -274,7 +274,7 @@ When auto-play is detected and continues beyond 5 seconds:
 - Screenshot comparison (2.2.2) detects visual changes only (carousels, animations, video playback)
 - Audio (1.4.2) is measured by playback state only; whether sound is actually heard requires manual verification (listening). Audio controls are found by name only, never clicked, and controls in a parent frame or elsewhere on the page are not searched
 - Audio is sampled about every 2 seconds from when the check starts, so sound before that is not counted. Sound that starts just before the last sample is flagged if it will keep playing for more than 3 seconds, but not if 3 seconds or less remain
-- Whether `controls` are visible is judged by size, `display`, `visibility` and `opacity` (iframe elements above included). `clip-path` / `clip` makes it undetermined (incomplete); overflow clipping and off-screen position are not checked
+- Whether `controls` are visible is judged by size, `display`, `visibility` and `opacity` (iframe elements above included) and rendered ancestors (an assigned slot before the DOM parent). A non-overlapping ancestor with overflow `hidden` / `clip` makes them invisible; `clip-path` / `clip`, a non-overlapping scroll container, or a fixed / absolute box that may escape makes it undetermined (incomplete). Partial clipping and off-screen position are not checked
 - Sound that does not use `<audio>` / `<video>` (e.g. the Web Audio API) is not measured
 - Small animations below 0.1% threshold may not be detected
 

@@ -448,3 +448,111 @@ test(
   },
   { timeout: 90_000 },
 );
+
+test(
+  '検査開始の 0.2 秒後に追加され 3.7 秒後に止まった audio は、追加された時点から数えられ auto-play-audio が incomplete になる',
+  async ({ baseUrl, page }, testInfo) => {
+    await page.goto(`${baseUrl}/auto-play-audio/no-media.html`, {
+      waitUntil: 'networkidle',
+    });
+
+    const [result] = await Promise.all([
+      runAutoPlayDetection({
+        page,
+        outputDir: testInfo.outputDir,
+        quiet: true,
+      }),
+      page.waitForTimeout(200).then(() =>
+        page.evaluate(() => {
+          const audio = document.createElement('audio');
+          audio.id = 'late';
+          audio.autoplay = true;
+          audio.src = (
+            window as unknown as { toneUrl: () => string }
+          ).toneUrl();
+          document.body.append(audio);
+        }),
+      ),
+      page
+        .waitForTimeout(3700)
+        .then(() =>
+          page.evaluate(() =>
+            document.querySelector<HTMLAudioElement>('#late')?.pause(),
+          ),
+        ),
+    ]);
+
+    assertRuleBuckets(result, { 'a11y-skills/auto-play-audio': 'incomplete' });
+    const media = result.details.mediaElements;
+    expect(media[0]?.selector).toBe('#late');
+    expect(media[0]?.audibleSeconds).toBeGreaterThan(3);
+  },
+  { timeout: 60_000 },
+);
+
+test(
+  '検査中に 3.5 秒鳴ってから DOM から消された audio は、消えたことが分かる印付きで結果に残り auto-play-audio が incomplete になる',
+  async ({ baseUrl, page }, testInfo) => {
+    await page.goto(`${baseUrl}/auto-play-audio/finding.html`, {
+      waitUntil: 'networkidle',
+    });
+
+    const [result] = await Promise.all([
+      runAutoPlayDetection({
+        page,
+        outputDir: testInfo.outputDir,
+        quiet: true,
+      }),
+      page.waitForTimeout(3500).then(() =>
+        page.evaluate(() => {
+          const audio = document.querySelector('audio');
+          audio?.pause();
+          audio?.remove();
+        }),
+      ),
+    ]);
+
+    assertRuleBuckets(result, { 'a11y-skills/auto-play-audio': 'incomplete' });
+    const media = result.details.mediaElements;
+    expect(media).toHaveLength(1);
+    expect(media[0]?.removed).toBe(true);
+    expect(media[0]?.audibleSeconds).toBeGreaterThan(3);
+  },
+  { timeout: 60_000 },
+);
+
+test(
+  '高さ 0・overflow:hidden の折り畳みの中で controls 付きの audio が自動再生すると、controls は見えないとして auto-play-audio が incomplete になる',
+  async ({ baseUrl, page, browser }, testInfo) => {
+    const result = await runFixtureCheck(
+      'auto-play-detection',
+      'auto-play-audio/finding-collapsed.html',
+      baseUrl,
+      { page, browser, testInfo },
+      { quiet: true },
+    );
+
+    assertRuleBuckets(result, { 'a11y-skills/auto-play-audio': 'incomplete' });
+    const media = (result.details as AutoPlayDetectionDetails).mediaElements;
+    expect(media[0]).toMatchObject({ controls: true, visible: false });
+  },
+  { timeout: 60_000 },
+);
+
+test(
+  'slot に割り当てられた audio は、shadow tree 側の包み要素の clip-path も見て、見えているか決めきれず auto-play-audio が incomplete になる',
+  async ({ baseUrl, page, browser }, testInfo) => {
+    const result = await runFixtureCheck(
+      'auto-play-detection',
+      'auto-play-audio/finding-slot-clip.html',
+      baseUrl,
+      { page, browser, testInfo },
+      { quiet: true },
+    );
+
+    assertRuleBuckets(result, { 'a11y-skills/auto-play-audio': 'incomplete' });
+    const media = (result.details as AutoPlayDetectionDetails).mediaElements;
+    expect(media[0]).toMatchObject({ controls: true, visible: null });
+  },
+  { timeout: 60_000 },
+);

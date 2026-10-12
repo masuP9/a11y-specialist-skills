@@ -804,6 +804,11 @@ export interface MediaPlaybackRecord {
   muted: boolean;
   volume: number;
   playbackRate: number;
+  /**
+   * The element was recorded during the check but is no longer in its
+   * document. Its selector then no longer resolves.
+   */
+  removed: boolean;
   /** Seconds; null when unknown (no metadata) or endless (see `endless`). */
   duration: number | null;
   /** `duration` is Infinity (a live stream). */

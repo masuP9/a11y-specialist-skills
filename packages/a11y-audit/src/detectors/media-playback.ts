@@ -6,9 +6,12 @@
  * records, in each frame, whether every <audio>/<video> is playing with sound
  * and attaches play / pause / ended / volumechange / ratechange listeners
  * that record each change; the runner calls it with each screenshot (every
- * ~2s). `measure()` takes a last sample and reads each element's state,
- * location and the seconds it was heard. Each tracker has its own id, so a
- * second check on the same page starts a fresh history.
+ * ~2s). The first sample also starts a MutationObserver on each frame's
+ * document and open shadow roots, so media added later is recorded from the
+ * moment it is added. `measure()` takes a last sample and reads each
+ * element's state, location and the seconds it was heard, including media
+ * removed during the check. Each tracker has its own id, so a second check
+ * on the same page starts a fresh history.
  *
  * Limits:
  * - Recording starts when the check starts. The caller navigates the page
@@ -16,10 +19,17 @@
  *   Sound that starts near the last sample is heard for less than 3 seconds;
  *   the normalizer also flags media still audible at the last sample that
  *   will keep playing for more than 3 seconds to cover it.
+ * - Frames are observed from their first sample; media in a frame created
+ *   during the check is recorded from the next sample. A shadow root
+ *   attached to an element already in the page is not observed. Media in a
+ *   frame removed during the check is lost.
  * - Controls are matched by name only and are not clicked; controls in a
  *   parent frame or elsewhere on the page are not searched.
- * - Visibility is undetermined (null) under clip-path / clip; overflow
- *   clipping and off-screen position are not considered.
+ * - Visibility follows rendered ancestors (assigned slots first). It is
+ *   false when an ancestor with overflow hidden / clip does not overlap the
+ *   element, and undetermined (null) under clip-path / clip, or when the
+ *   non-overlapping ancestor scrolls or a fixed / absolute box may escape it.
+ *   Partial clipping and off-screen position are not considered.
  */
 
 import { randomUUID } from 'node:crypto';
@@ -40,26 +50,22 @@ interface HistoryArgs {
 }
 
 /**
- * Runs in the browser: record the current state of each media element, and
- * start listening for state changes on elements seen for the first time in
- * this check. A different `runId` discards the previous history and removes
- * its listeners. Self-contained so Playwright can serialize it.
+ * Runs in the browser: record the current state of each media element.
+ * The first call of a check (a new `runId`) discards the previous check's
+ * history, listeners and observer, and starts a MutationObserver on the
+ * document and its open shadow roots so media added later is recorded from
+ * the moment it is added. Each recorded element gets play / pause / ended /
+ * volumechange / ratechange listeners and stays in `tracked` even if it is
+ * removed. Self-contained so Playwright can serialize it.
  */
 function recordSamples(elements: Element[], args: HistoryArgs): void {
   type Point = { time: number; audible: boolean };
   type History = {
     runId: string;
     points: WeakMap<Element, Point[]>;
+    tracked: Set<HTMLMediaElement>;
     cleanups: Array<() => void>;
   };
-  const win = window as unknown as Record<string, History | undefined>;
-  let history = win[args.key];
-  if (history?.runId !== args.runId) {
-    history?.cleanups.forEach((cleanup) => cleanup());
-    history = { runId: args.runId, points: new WeakMap(), cleanups: [] };
-    win[args.key] = history;
-  }
-
   const isAudible = (media: HTMLMediaElement) =>
     !media.paused &&
     !media.ended &&
@@ -67,23 +73,94 @@ function recordSamples(elements: Element[], args: HistoryArgs): void {
     media.volume > 0 &&
     media.playbackRate > 0;
   const events = ['play', 'pause', 'ended', 'volumechange', 'ratechange'];
+
+  const win = window as unknown as Record<string, History | undefined>;
+  const previous = win[args.key];
+  let history: History;
+  if (previous?.runId === args.runId) {
+    history = previous;
+  } else {
+    previous?.cleanups.forEach((cleanup) => cleanup());
+    history = {
+      runId: args.runId,
+      points: new WeakMap(),
+      tracked: new Set(),
+      cleanups: [],
+    };
+    win[args.key] = history;
+  }
+  const current = history;
+
+  const track = (el: HTMLMediaElement, time: number) => {
+    if (current.points.has(el)) return;
+    const list: Point[] = [{ time, audible: isAudible(el) }];
+    current.points.set(el, list);
+    current.tracked.add(el);
+    const onChange = () =>
+      list.push({ time: performance.now(), audible: isAudible(el) });
+    for (const type of events) el.addEventListener(type, onChange);
+    current.cleanups.push(() => {
+      for (const type of events) el.removeEventListener(type, onChange);
+    });
+  };
+
+  if (previous !== current) {
+    // Media and open shadow roots in (and including) a subtree.
+    const scan = (
+      node: Node,
+      media: HTMLMediaElement[],
+      roots: ShadowRoot[],
+    ): void => {
+      if (node instanceof HTMLMediaElement) media.push(node);
+      if (node instanceof Element && node.shadowRoot) {
+        roots.push(node.shadowRoot);
+        scan(node.shadowRoot, media, roots);
+      }
+      for (const child of node.childNodes) scan(child, media, roots);
+    };
+    const observer = new MutationObserver((mutations) => {
+      const time = performance.now();
+      for (const mutation of mutations) {
+        for (const node of mutation.addedNodes) {
+          const media: HTMLMediaElement[] = [];
+          const roots: ShadowRoot[] = [];
+          scan(node, media, roots);
+          for (const el of media) track(el, time);
+          for (const root of roots) observe(root);
+        }
+      }
+    });
+    const observe = (root: Document | ShadowRoot) =>
+      observer.observe(root, { childList: true, subtree: true });
+    const roots: ShadowRoot[] = [];
+    scan(document, [], roots);
+    observe(document);
+    for (const root of roots) observe(root);
+    current.cleanups.push(() => observer.disconnect());
+  }
+
   const time = performance.now();
   for (const el of elements) {
     if (!(el instanceof HTMLMediaElement)) continue;
-    let points = history.points.get(el);
-    if (!points) {
-      const list: Point[] = [];
-      points = list;
-      history.points.set(el, list);
-      const onChange = () =>
-        list.push({ time: performance.now(), audible: isAudible(el) });
-      for (const type of events) el.addEventListener(type, onChange);
-      history.cleanups.push(() => {
-        for (const type of events) el.removeEventListener(type, onChange);
-      });
-    }
-    points.push({ time, audible: isAudible(el) });
+    const points = current.points.get(el);
+    if (points) points.push({ time, audible: isAudible(el) });
+    else track(el, time);
   }
+}
+
+/**
+ * Runs in the browser: media recorded in this check that is no longer in
+ * its document. Self-contained so Playwright can serialize it.
+ */
+function removedMedia(args: HistoryArgs): HTMLMediaElement[] {
+  const history = (
+    window as unknown as Record<
+      string,
+      { runId: string; tracked: Set<HTMLMediaElement> } | undefined
+    >
+  )[args.key];
+  if (history?.runId !== args.runId) return [];
+  return [...history.tracked].filter((el) => !el.isConnected);
 }
 
 /**
@@ -123,28 +200,60 @@ function inspectElement(
     root = root.host.getRootNode();
   }
 
+  // Walk the rendered ancestors: a slotted element is drawn inside its slot,
+  // so follow assignedSlot before the DOM parent, and cross shadow roots.
+  const renderedParent = (node: Element): Element | null =>
+    node.assignedSlot ??
+    node.parentElement ??
+    (node.parentNode instanceof ShadowRoot ? node.parentNode.host : null);
+
+  const rect = el.getBoundingClientRect();
   // clip-path / clip can cut an element away while it still passes
   // checkVisibility. How much is cut is not measured, so any clip on the
-  // element or an ancestor (across shadow boundaries) leaves it undetermined.
+  // element or a rendered ancestor leaves it undetermined.
   let clipped = false;
-  for (
-    let node: Element | null = el;
-    node && !clipped;
-    node =
-      node.parentElement ??
-      (node.parentNode instanceof ShadowRoot ? node.parentNode.host : null)
-  ) {
+  // An ancestor whose overflow is not visible hides the element when their
+  // boxes do not overlap: certainly for hidden / clip, but a scroll
+  // container can be scrolled to it, and a fixed / absolute box may escape
+  // the ancestor, so those cases stay undetermined.
+  let overflowHidden = false;
+  let overflowUnknown = false;
+  let escapes = false;
+  for (let node: Element | null = el; node; node = renderedParent(node)) {
     const style = getComputedStyle(node);
-    clipped = style.clipPath !== 'none' || style.clip !== 'auto';
+    if (style.clipPath !== 'none' || style.clip !== 'auto') clipped = true;
+    if (
+      node !== el &&
+      [style.overflowX, style.overflowY].some((v) => v !== 'visible')
+    ) {
+      const box = node.getBoundingClientRect();
+      const overlaps =
+        Math.min(rect.right, box.right) > Math.max(rect.left, box.left) &&
+        Math.min(rect.bottom, box.bottom) > Math.max(rect.top, box.top);
+      if (!overlaps) {
+        const scrolls = [style.overflowX, style.overflowY].some(
+          (v) => v === 'auto' || v === 'scroll',
+        );
+        if (scrolls || escapes) overflowUnknown = true;
+        else overflowHidden = true;
+      }
+    }
+    if (style.position === 'fixed' || style.position === 'absolute') {
+      escapes = true;
+    }
   }
-  const rect = el.getBoundingClientRect();
   const shown =
     typeof el.checkVisibility === 'function'
       ? rect.width > 0 &&
         rect.height > 0 &&
         el.checkVisibility({ opacityProperty: true, visibilityProperty: true })
       : null;
-  const visible = shown === false ? false : clipped ? null : shown;
+  const visible =
+    shown === false || overflowHidden
+      ? false
+      : clipped || overflowUnknown
+        ? null
+        : shown;
 
   const outerHtml = el.outerHTML;
   const location = {
@@ -198,6 +307,7 @@ function inspectElement(
       muted: el.muted,
       volume: el.volume,
       playbackRate: el.playbackRate,
+      removed: !el.isConnected,
       duration: Number.isFinite(el.duration) ? el.duration : null,
       endless: el.duration === Infinity,
       currentTime: el.currentTime,
@@ -266,7 +376,13 @@ async function measureFrame(
   frame: Frame,
   history: HistoryArgs,
 ): Promise<MediaPlaybackRecord[]> {
-  const handles = await frame.locator('audio, video').elementHandles();
+  const connected = await frame.locator('audio, video').elementHandles();
+  // Media recorded during the check but removed since is reported too.
+  const removedList = await frame.evaluateHandle(removedMedia, history);
+  const removed = [...(await removedList.getProperties()).values()].flatMap(
+    (property) => property.asElement() ?? [],
+  );
+  const handles = [...connected, ...removed];
   if (handles.length === 0) return [];
 
   const isMain = frame === page.mainFrame();

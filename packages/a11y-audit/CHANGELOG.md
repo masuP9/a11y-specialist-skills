@@ -42,23 +42,27 @@ element that navigated the page could not be identified (see Fixed).
   `incomplete`): `auto-play-detection` now records every `<audio>` /
   `<video>` in the page and its iframes (nested frames and open shadow roots
   included) when the check starts, with each screenshot, and on every play /
-  pause / ended / volumechange / ratechange event, into the new required
+  pause / ended / volumechange / ratechange event, and from the moment media
+  is added during the check (MutationObserver), into the new required
   `details.mediaElements` (with `frame` / `shadowHosts` like focus-indicator,
-  plus `framePath`, `audibleSeconds` and `playbackRate`) and
-  `details.unmeasuredFrames`. `audibleSeconds` adds up the time the media was
-  playing, unmuted, with volume and playback rate above 0 (each record lasts
-  until the next), so sound muted or stopped between screenshots, or a short
-  loop, still counts. Media heard for more than 3 seconds, or playing with
-  sound at the last sample and lasting more than 3 more seconds of real time
-  (`loop`, endless, or remaining duration divided by the playback rate),
-  whose `controls` are not visible (size, display, visibility and opacity of
-  the element and its iframe elements; undetermined under `clip-path` /
-  `clip`; overflow clipping and off-screen position not checked), or that
-  requests autoplay but did not start, is a finding; pause/mute controls
-  found by name in the same frame are listed in its message but are not
-  clicked. Its `target` is the full path (outer iframes, shadow hosts,
-  element). Recording starts when the check starts, not at page load, and is
-  fresh for each check. Inapplicable when the page has no media.
+  plus `framePath`, `audibleSeconds`, `playbackRate` and `removed` for media
+  removed during the check) and `details.unmeasuredFrames`. `audibleSeconds`
+  adds up the time the media was playing, unmuted, with volume and playback
+  rate above 0 (each record lasts until the next), so sound muted or stopped
+  between screenshots, or a short loop, still counts. Media heard for more
+  than 3 seconds, or playing with sound at the last sample and lasting more
+  than 3 more seconds of real time (`loop`, endless, or remaining duration
+  divided by the playback rate), whose `controls` are not visible (size,
+  display, visibility and opacity of the element and its iframe elements;
+  hidden by a non-overlapping overflow `hidden` / `clip` rendered ancestor,
+  slots included; undetermined under `clip-path` / `clip`, a non-overlapping
+  scroll container or an escaping fixed / absolute box; partial clipping and
+  off-screen position not checked), or that requests autoplay but did not
+  start, is a finding; pause/mute controls found by name in the same frame
+  are listed in its message but are not clicked. Its `target` is the full
+  path (outer iframes, shadow hosts, element; the document's `html` for
+  removed media). Recording starts when the check starts, not at page load,
+  and is fresh for each check. Inapplicable when the page has no media.
 
 ### Changed
 

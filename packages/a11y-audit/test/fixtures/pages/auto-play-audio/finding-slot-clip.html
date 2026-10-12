@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      auto-play-audio finding: slotted controls clipped in the shadow tree
+    </title>
+    <script src="tone.js"></script>
+  </head>
+  <body>
+    <h1>Slotted player</h1>
+    <!--
+      The audio is a light-DOM child of #host and is rendered through a <slot>
+      whose wrapper in the shadow tree has clip-path: inset(100%). Its DOM
+      ancestors have no clip; only the rendered (slot) ancestors do.
+      Expected: auto-play-audio (incomplete).
+    -->
+    <div id="host"><audio id="bgm" autoplay controls></audio></div>
+    <script>
+      document.getElementById('host').attachShadow({ mode: 'open' }).innerHTML =
+        '<div style="clip-path: inset(100%)"><slot></slot></div>';
+      document.getElementById('bgm').src = toneUrl();
+    </script>
+  </body>
+</html>
