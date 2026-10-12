@@ -33,11 +33,16 @@ Claude Code skill から機能本体を切り出したものです。10 個の�
 `runKeyboardReachabilityCheck` は `browser` を受けます。
 `runAutoPlayDetection` は optional 依存 `pixelmatch` + `pngjs` が必要です（インストール参照）。
 
-`runAutoPlayDetection` の 1.4.2（`a11y-skills/auto-play-audio`）は、ページと iframe の中の
-`<audio>`・`<video>` について、読み込みから約 6 秒後の再生状態（`paused`・`muted`・`volume`・
-`duration`・再生済みの秒数）を `details.mediaElements` に記録します。消音でなく 3 秒を超えて
-鳴るもので、見えている `controls` が無いものを `incomplete` にします。同じ frame で名前から
-見つけた止める・消音の部品は記録しますが、クリックして確かめはしません。
+`runAutoPlayDetection` の 1.4.2（`a11y-skills/auto-play-audio`）は、ページと iframe（入れ子・
+shadow root の中も含む）の `<audio>`・`<video>` について、スクリーンショットのたび（約 2 秒ごと）に
+「再生中・消音でない・音量が 0 より大きい」かを測り、続く 2 回の測定でどちらもそうだった区間の
+時間を足して `audibleSeconds`（音ありで鳴った秒数）とします。これが 3 秒を超え、見えている
+`controls` が無いものを `incomplete` にします。見えているかは、要素とその上の iframe 要素の
+大きさ・`display`・`visibility`・`opacity` で判断し、切り取りや画面外の位置までは見ません。
+決めきれないときも `incomplete` です。測るのは検査を始めてから（ページを開いた後）なので、
+それより前に鳴った音は数えません。同じ frame で名前から見つけた止める・消音の部品は
+記録しますが、クリックして確かめはしません。結果の `target` は、外側の iframe・shadow host・
+要素の順に並び、それぞれ一つ前の要素が開く文書（または shadow root）の中で探します。
 
 Chromium は利用者の操作が無いと音ありの自動再生を止めるので、自分でブラウザを起動する
 場合は次の引数を付けてください。付けないと音ありのメディアは再生が始まらず、

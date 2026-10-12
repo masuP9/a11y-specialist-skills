@@ -175,3 +175,171 @@ test(
   },
   { timeout: 60_000 },
 );
+
+test(
+  '祖先が opacity:0 で controls が見えない audio は、auto-play-audio が incomplete になる',
+  async ({ baseUrl, page, browser }, testInfo) => {
+    const result = await runFixtureCheck(
+      'auto-play-detection',
+      'auto-play-audio/finding-ancestor-opacity.html',
+      baseUrl,
+      { page, browser, testInfo },
+      { quiet: true },
+    );
+
+    assertRuleBuckets(result, { 'a11y-skills/auto-play-audio': 'incomplete' });
+    const media = (result.details as AutoPlayDetectionDetails).mediaElements;
+    expect(media[0]).toMatchObject({ controls: true, visible: false });
+  },
+  { timeout: 60_000 },
+);
+
+test(
+  'iframe 要素が visibility:hidden なら、中の controls が見えていても auto-play-audio は incomplete になる',
+  async ({ baseUrl, page, browser }, testInfo) => {
+    const result = await runFixtureCheck(
+      'auto-play-detection',
+      'auto-play-audio/finding-hidden-iframe.html',
+      baseUrl,
+      { page, browser, testInfo },
+      { quiet: true },
+    );
+
+    assertRuleBuckets(result, { 'a11y-skills/auto-play-audio': 'incomplete' });
+    const media = (result.details as AutoPlayDetectionDetails).mediaElements;
+    expect(media[0]).toMatchObject({ controls: true, visible: false });
+  },
+  { timeout: 60_000 },
+);
+
+test(
+  '2 秒の音をループで 6 秒鳴らしてから止めると、played の合計は 3 秒以下でも auto-play-audio は incomplete になる',
+  async ({ baseUrl, page, browser }, testInfo) => {
+    const result = await runFixtureCheck(
+      'auto-play-detection',
+      'auto-play-audio/finding-loop-then-stop.html',
+      baseUrl,
+      { page, browser, testInfo },
+      { quiet: true },
+    );
+
+    assertRuleBuckets(result, { 'a11y-skills/auto-play-audio': 'incomplete' });
+    const media = (result.details as AutoPlayDetectionDetails).mediaElements;
+    expect(media[0]?.paused).toBe(true);
+    expect(media[0]?.playedSeconds).toBeLessThanOrEqual(3);
+    expect(media[0]?.audibleSeconds).toBeGreaterThan(3);
+  },
+  { timeout: 60_000 },
+);
+
+test(
+  '音ありで 6 秒鳴らしてから消音すると、最後の測定で消音されていても auto-play-audio は incomplete になる',
+  async ({ baseUrl, page, browser }, testInfo) => {
+    const result = await runFixtureCheck(
+      'auto-play-detection',
+      'auto-play-audio/finding-mute-after-playing.html',
+      baseUrl,
+      { page, browser, testInfo },
+      { quiet: true },
+    );
+
+    assertRuleBuckets(result, { 'a11y-skills/auto-play-audio': 'incomplete' });
+    const media = (result.details as AutoPlayDetectionDetails).mediaElements;
+    expect(media[0]?.muted).toBe(true);
+    expect(media[0]?.audibleSeconds).toBeGreaterThan(3);
+  },
+  { timeout: 60_000 },
+);
+
+test(
+  '消音で 6 秒鳴らしてから最後に消音を解くと、音ありで鳴った秒数は 3 秒以下で auto-play-audio は passes になる',
+  async ({ baseUrl, page, browser }, testInfo) => {
+    const result = await runFixtureCheck(
+      'auto-play-detection',
+      'auto-play-audio/clear-unmute-at-end.html',
+      baseUrl,
+      { page, browser, testInfo },
+      { quiet: true },
+    );
+
+    assertRuleBuckets(result, { 'a11y-skills/auto-play-audio': 'passes' });
+    const media = (result.details as AutoPlayDetectionDetails).mediaElements;
+    expect(media[0]?.muted).toBe(false);
+    expect(media[0]?.playedSeconds).toBeGreaterThan(3);
+    expect(media[0]?.audibleSeconds).toBeLessThanOrEqual(3);
+  },
+  { timeout: 60_000 },
+);
+
+/**
+ * Follow a target the way auto-play-audio defines it: each selector is looked
+ * up in the document or shadow root opened by the element before it (an
+ * iframe's document, or a shadow host's shadow root). Same-origin only.
+ * Returns the found element's data-marker.
+ */
+function resolveTargetMarker(
+  page: import('@playwright/test').Page,
+  target: string[],
+): Promise<string | null> {
+  return page.evaluate((selectors) => {
+    let scope: Document | ShadowRoot = document;
+    let element: Element | null = null;
+    for (const selector of selectors) {
+      // tagName, not instanceof: an iframe inside another frame belongs to
+      // that frame's realm.
+      if (element?.tagName === 'IFRAME') {
+        scope = (element as HTMLIFrameElement).contentDocument as Document;
+      } else if (element?.shadowRoot) {
+        scope = element.shadowRoot;
+      }
+      element = scope.querySelector(selector);
+    }
+    return element?.getAttribute('data-marker') ?? null;
+  }, target);
+}
+
+test(
+  'shadow root の中の audio の target は、たどると元の要素を指す',
+  async ({ baseUrl, page, browser }, testInfo) => {
+    const result = await runFixtureCheck(
+      'auto-play-detection',
+      'auto-play-audio/finding-nested.html',
+      baseUrl,
+      { page, browser, testInfo },
+      { quiet: true },
+    );
+
+    const nodes =
+      result.incomplete.find((r) => r.id === 'a11y-skills/auto-play-audio')
+        ?.nodes ?? [];
+    const shadowNode = nodes.find((n) => n.html.includes('shadow-audio'));
+    expect(shadowNode?.target).toEqual(['#host', 'div > audio']);
+    expect(await resolveTargetMarker(page, shadowNode?.target ?? [])).toBe(
+      'shadow-audio',
+    );
+  },
+  { timeout: 60_000 },
+);
+
+test(
+  '入れ子の iframe の中の audio の target は、外側の iframe から順にたどると元の要素を指す',
+  async ({ baseUrl, page, browser }, testInfo) => {
+    const result = await runFixtureCheck(
+      'auto-play-detection',
+      'auto-play-audio/finding-nested.html',
+      baseUrl,
+      { page, browser, testInfo },
+      { quiet: true },
+    );
+
+    const nodes =
+      result.incomplete.find((r) => r.id === 'a11y-skills/auto-play-audio')
+        ?.nodes ?? [];
+    const childNode = nodes.find((n) => n.html.includes('child-audio'));
+    expect(childNode?.target).toEqual(['#outer', '#inner', '#bgm']);
+    expect(await resolveTargetMarker(page, childNode?.target ?? [])).toBe(
+      'child-audio',
+    );
+  },
+  { timeout: 60_000 },
+);

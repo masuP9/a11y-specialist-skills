@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>auto-play-audio finding: shadow root and nested iframes</title>
+    <script src="tone.js"></script>
+  </head>
+  <body>
+    <h1>Nested players</h1>
+    <!--
+      1. An audio inside an open shadow root, under a <div>, so its selector
+         ("div > audio") is relative to the shadow root.
+      2. An audio two iframes deep (#outer > #inner).
+      A muted decoy in the document also matches "div > audio", so a target
+      without the shadow host would point at the wrong element.
+      Expected: auto-play-audio (incomplete) for 1 and 2, targets resolving to
+      them.
+    -->
+    <div><audio data-marker="decoy" muted></audio></div>
+    <div id="host"></div>
+    <iframe
+      id="outer"
+      title="outer"
+      allow="autoplay"
+      src="nested-middle.html"
+      width="360"
+      height="160"
+    ></iframe>
+    <script>
+      const root = document
+        .getElementById('host')
+        .attachShadow({ mode: 'open' });
+      root.innerHTML =
+        '<div><audio data-marker="shadow-audio" autoplay></audio></div>';
+      root.querySelector('audio').src = toneUrl();
+    </script>
+  </body>
+</html>

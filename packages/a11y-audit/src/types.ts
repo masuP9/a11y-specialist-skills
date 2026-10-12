@@ -750,27 +750,52 @@ export interface PauseVerificationResult {
 
 /**
  * Playback state of one `<audio>` / `<video>` (WCAG 1.4.2), read in its own
- * frame once the screenshot window (~6s after the caller's navigation) ends.
+ * frame. The state fields are the last sample, taken once the screenshot
+ * window (~6s after the check starts) ends; `audibleSeconds` covers all
+ * samples.
  */
 export interface MediaPlaybackRecord {
   tag: 'audio' | 'video';
+  /**
+   * Selector relative to the element's document, or to its shadow root when
+   * `shadowHosts` is not empty (same rules as focus-indicator records).
+   */
   selector: string;
   html: string;
   htmlTruncated: boolean;
   /**
    * The iframe document holding the element (null for the main frame).
-   * `selector` is the iframe element's selector in its parent, null when the
-   * parent is cross-origin.
+   * `selector` is the innermost iframe element's selector in its parent
+   * (same shape as focus-indicator records).
    */
   frame: { url: string; selector: string | null } | null;
+  /**
+   * Path from the top document to the element's document: for each iframe,
+   * outermost first, the shadow hosts above it and then its selector. Each
+   * entry is looked up in the document or shadow root opened by the entry
+   * before it. `[]` for the main frame; null when it could not be read.
+   */
+  framePath: string[] | null;
   /** Shadow hosts between the element and its document, outermost first. */
   shadowHosts: string[];
   autoplay: boolean;
   loop: boolean;
   /** Whether the `controls` attribute is present. */
   controls: boolean;
-  /** Rendered with a non-zero box and not `visibility: hidden`. */
-  visible: boolean;
+  /**
+   * The element has a non-zero box and `checkVisibility()` (opacity and
+   * visibility included) passes for it and for every iframe element above
+   * it. null when it could not be determined. Clipping, overflow and
+   * off-screen position are not considered.
+   */
+  visible: boolean | null;
+  /**
+   * Seconds with sound: the sum of intervals between consecutive samples
+   * (taken with each screenshot, every ~2s, and once more at the end) where
+   * both samples were playing, unmuted and with volume > 0. Sampling starts
+   * when the check starts, not at page load.
+   */
+  audibleSeconds: number;
   paused: boolean;
   ended: boolean;
   muted: boolean;
@@ -780,7 +805,10 @@ export interface MediaPlaybackRecord {
   /** `duration` is Infinity (a live stream). */
   endless: boolean;
   currentTime: number;
-  /** Sum of the `played` time ranges, in seconds. */
+  /**
+   * Sum of the `played` time ranges, in seconds (reference only: repeated
+   * loops are counted once).
+   */
   playedSeconds: number;
   /** The element failed to load (`error` is set). */
   hasError: boolean;

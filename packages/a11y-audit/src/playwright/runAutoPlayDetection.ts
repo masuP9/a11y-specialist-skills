@@ -41,10 +41,14 @@ import {
   type AuditOutputOptions,
 } from '../utils/test-harness.js';
 
-/** Capture screenshots at configured intervals. */
+/**
+ * Capture screenshots at configured intervals, calling `beforeEach` right
+ * before each capture.
+ */
 async function captureScreenshots(
   page: Page,
   outputDir: string,
+  beforeEach: () => Promise<void>,
 ): Promise<ScreenshotRecord[]> {
   const screenshots: ScreenshotRecord[] = [];
 
@@ -59,6 +63,7 @@ async function captureScreenshots(
     const filename = `screenshot-${timeLabel}.png`;
     const filepath = path.join(outputDir, filename);
 
+    await beforeEach();
     await page.screenshot({ path: filepath, fullPage: false });
 
     screenshots.push({ time: timeLabel, path: filepath });
@@ -142,6 +147,7 @@ export async function runAutoPlayDetection(
     verifyPauseControl,
     createSkippedVerification,
     measureMediaPlayback,
+    sampleMediaPlayback,
   } = detectors;
 
   const out = createAuditOutput({
@@ -153,10 +159,14 @@ export async function runAutoPlayDetection(
   ensureOutputDir(outputDir);
 
   // Take screenshots at intervals.
-  const screenshots = await captureScreenshots(page, outputDir);
+  // Sample media playback (1.4.2) with each screenshot, so sound heard
+  // between samples is counted even if it is muted or stopped later.
+  const screenshots = await captureScreenshots(page, outputDir, () =>
+    sampleMediaPlayback(page),
+  );
 
-  // Read media playback state (1.4.2) once the ~6s screenshot window ends,
-  // before the pause-control verification below clicks anything.
+  // Read media playback state once the ~6s screenshot window ends, before
+  // the pause-control verification below clicks anything.
   const { mediaElements, unmeasuredFrames } = await measureMediaPlayback(page);
 
   // Compare consecutive screenshots.

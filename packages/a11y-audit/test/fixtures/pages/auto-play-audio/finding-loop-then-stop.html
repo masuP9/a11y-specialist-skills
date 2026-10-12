@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      auto-play-audio finding: 2-second loop stopped after 6 seconds
+    </title>
+    <script src="tone.js"></script>
+  </head>
+  <body>
+    <h1>Looping jingle</h1>
+    <!--
+      A 2-second tone loops with sound, then is paused 6 seconds after load,
+      before the check's last sample. The `played` ranges add up to only
+      2 seconds, but it was heard for about 6.
+      Expected: auto-play-audio (incomplete).
+    -->
+    <audio id="bgm" autoplay loop></audio>
+    <script>
+      const bgm = document.getElementById('bgm');
+      bgm.src = toneUrl(2);
+      setTimeout(() => bgm.pause(), 6000);
+    </script>
+  </body>
+</html>

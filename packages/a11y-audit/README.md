@@ -34,12 +34,20 @@ Most checks take an already-navigated `page`. A few own navigation and take a
 `runFocusIndicatorCheck` and `runKeyboardReachabilityCheck` take a `browser`. `runAutoPlayDetection` needs the
 optional `pixelmatch` + `pngjs` deps (see Install).
 
-For 1.4.2 (`a11y-skills/auto-play-audio`), `runAutoPlayDetection` records the
-playback state (`paused`, `muted`, `volume`, `duration`, seconds played) of
-every `<audio>` / `<video>` in the page and its iframes about 6 seconds after
-load in `details.mediaElements`. Unmuted media that plays for more than 3
-seconds without visible `controls` goes to `incomplete`. Pause/mute controls
-found by name in the same frame are recorded but not clicked to verify.
+For 1.4.2 (`a11y-skills/auto-play-audio`), `runAutoPlayDetection` checks, with
+each screenshot (about every 2 seconds), whether every `<audio>` / `<video>` in
+the page and its iframes (nested frames and shadow roots included) is playing,
+unmuted and with volume above 0. The time between consecutive checks that both
+found it so is added up as `audibleSeconds`. Media heard for more than 3
+seconds without visible `controls` goes to `incomplete`. Visibility uses the
+size, `display`, `visibility` and `opacity` of the element and the iframe
+elements above it, not clipping or off-screen position; when it cannot be
+determined, the result is also `incomplete`. Checking starts when the check
+starts (after the page is opened), so sound before that is not counted.
+Pause/mute controls found by name in the same frame are recorded but not
+clicked to verify. A result's `target` lists the outer iframes, shadow hosts
+and the element in order; each entry is looked up in the document (or shadow
+root) opened by the entry before it.
 
 Chromium blocks unmuted autoplay until the user interacts with the page, so
 when you launch the browser yourself, pass the flag below. Without it, unmuted

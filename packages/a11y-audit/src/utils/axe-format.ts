@@ -662,19 +662,20 @@ const AUDIO_CONTROL_THRESHOLD_SECONDS = 3;
 
 /**
  * Why this media element needs review under 1.4.2, or null when it does not:
- * it is silent (muted / volume 0), stopped within 3 seconds, or carries native
- * controls that are actually rendered.
+ * it was heard for 3 seconds or less between samples, or it carries native
+ * controls that are visible.
  */
 function describeAutoPlayingAudio(media: MediaPlaybackRecord): string | null {
-  if (media.controls && media.visible) return null;
-  if (media.muted || media.volume === 0) return null;
+  if (media.controls && media.visible === true) return null;
 
   const location = media.frame ? ` in frame ${media.frame.url}` : '';
   const blocked =
     media.autoplay &&
     media.paused &&
     media.playedSeconds === 0 &&
-    !media.hasError;
+    !media.hasError &&
+    !media.muted &&
+    media.volume > 0;
   if (blocked) {
     return (
       `<${media.tag}>${location} requests autoplay but playback did not start ` +
@@ -683,16 +684,12 @@ function describeAutoPlayingAudio(media: MediaPlaybackRecord): string | null {
     );
   }
 
-  const stillPlaying = !media.paused && !media.ended;
-  const longEnough =
-    media.playedSeconds > AUDIO_CONTROL_THRESHOLD_SECONDS ||
-    (stillPlaying &&
-      (media.loop ||
-        media.endless ||
-        (media.duration ?? 0) > AUDIO_CONTROL_THRESHOLD_SECONDS));
-  if (!longEnough) return null;
+  if (media.audibleSeconds <= AUDIO_CONTROL_THRESHOLD_SECONDS) return null;
 
-  const state = stillPlaying ? 'is still playing' : 'has played';
+  const state =
+    !media.paused && !media.ended && !media.muted && media.volume > 0
+      ? 'and is still playing'
+      : 'and has since been muted or stopped';
   const decoded =
     media.audioDecodedBytes === 0
       ? ' No audio data was decoded, so the track may be silent.'
@@ -703,28 +700,49 @@ function describeAutoPlayingAudio(media: MediaPlaybackRecord): string | null {
           .map((c) => `"${c.name}" (${c.selector})`)
           .join(', ')}.`
       : 'No pause/stop/mute control was found in the same frame by name.';
-  const nativeControls = media.controls
-    ? ' It has the controls attribute but is not rendered.'
-    : '';
+  // Visibility covers size, display, visibility and opacity of the element
+  // and its iframes; clipping, overflow and off-screen position are not
+  // checked.
+  const nativeControls = !media.controls
+    ? ''
+    : media.visible === false
+      ? ' It has the controls attribute but they are not visible (size, ' +
+        'display, visibility and opacity of the element and its iframes ' +
+        'are checked; clipping, overflow and off-screen position are not).'
+      : ' It has the controls attribute, but it could not be determined ' +
+        'whether its controls are visible.';
+  const path =
+    media.frame && media.framePath === null
+      ? ' The iframe path is unknown, so the target is relative to the frame.'
+      : '';
   return (
-    `Unmuted <${media.tag}>${location} ${state} automatically for ` +
-    `${media.playedSeconds.toFixed(1)}s (volume ${media.volume}).` +
-    `${decoded}${nativeControls} ${controls} Controls are matched by name ` +
-    'only and were not clicked, and controls elsewhere on the page or in a ' +
-    'parent frame are not searched: verify that the audio can be paused, ' +
-    'stopped, or its volume controlled independently.'
+    `Unmuted <${media.tag}>${location} played automatically for ` +
+    `${media.audibleSeconds.toFixed(1)}s with sound ${state} (volume ` +
+    `${media.volume}). Sound is sampled every ~2s from when the check ` +
+    'started, not from page load.' +
+    `${decoded}${nativeControls}${path} ${controls} Controls are matched by ` +
+    'name only and were not clicked, and controls elsewhere on the page or ' +
+    'in a parent frame are not searched: verify that the audio can be ' +
+    'paused, stopped, or its volume controlled independently.'
   );
 }
 
-/** A node for a media element; frame elements are targeted axe-style. */
+/**
+ * A node for a media element. `target` is the full path: iframes (with the
+ * shadow hosts above them), then the shadow hosts above the element, then the
+ * element; each entry is looked up in the document or shadow root opened by
+ * the entry before it.
+ */
 function mediaNode(
   media: MediaPlaybackRecord,
   failureSummary: string,
 ): NormalizedNode {
   const node = toNode(media, failureSummary);
-  if (media.frame?.selector) {
-    node.target = [media.frame.selector, ...node.target];
-  }
+  node.target = [
+    ...(media.framePath ?? []),
+    ...media.shadowHosts,
+    media.selector,
+  ];
   return node;
 }
 

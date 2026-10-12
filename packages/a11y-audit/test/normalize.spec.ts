@@ -62,7 +62,10 @@ const emptyFocusDetails = (
   ...overrides,
 });
 
-/** An unmuted <audio> that has played 6 seconds and is still playing. */
+/**
+ * An unmuted <audio> in the main frame that was audible at every sample
+ * (6 seconds with sound) and is still playing.
+ */
 const playingAudio = (
   overrides: Partial<MediaPlaybackRecord> = {},
 ): MediaPlaybackRecord => ({
@@ -71,7 +74,9 @@ const playingAudio = (
   html: '<audio id="bgm" autoplay="">',
   htmlTruncated: false,
   frame: null,
+  framePath: [],
   shadowHosts: [],
+  audibleSeconds: 6,
   autoplay: true,
   loop: false,
   controls: false,
@@ -514,23 +519,27 @@ test('auto-play-audio: 消音でない音が 3 秒を超えて鳴り、見える
   expect(nodes[0]?.html).toBe('<audio id="bgm" autoplay="">');
 });
 
-test('auto-play-audio: muted で再生中なら passes になる', () => {
+test('auto-play-audio: ずっと muted で再生していれば passes になる', () => {
   expect(
     audioBucket(
-      autoPlayDetails({ mediaElements: [playingAudio({ muted: true })] }),
+      autoPlayDetails({
+        mediaElements: [playingAudio({ muted: true, audibleSeconds: 0 })],
+      }),
     ),
   ).toBe('passes');
 });
 
-test('auto-play-audio: volume が 0 で再生中なら passes になる', () => {
+test('auto-play-audio: ずっと volume 0 で再生していれば passes になる', () => {
   expect(
     audioBucket(
-      autoPlayDetails({ mediaElements: [playingAudio({ volume: 0 })] }),
+      autoPlayDetails({
+        mediaElements: [playingAudio({ volume: 0, audibleSeconds: 0 })],
+      }),
     ),
   ).toBe('passes');
 });
 
-test('auto-play-audio: 3 秒以内で鳴り終わっていれば passes になる', () => {
+test('auto-play-audio: 音ありで鳴った秒数がちょうど 3 秒なら passes になる', () => {
   expect(
     audioBucket(
       autoPlayDetails({
@@ -538,9 +547,10 @@ test('auto-play-audio: 3 秒以内で鳴り終わっていれば passes にな�
           playingAudio({
             paused: true,
             ended: true,
-            duration: 2.5,
-            currentTime: 2.5,
-            playedSeconds: 2.5,
+            duration: 3,
+            currentTime: 3,
+            playedSeconds: 3,
+            audibleSeconds: 3,
           }),
         ],
       }),
@@ -548,21 +558,51 @@ test('auto-play-audio: 3 秒以内で鳴り終わっていれば passes にな�
   ).toBe('passes');
 });
 
-test('auto-play-audio: 再生済みが 3 秒以下でも loop で鳴り続けていれば incomplete になる', () => {
+test('auto-play-audio: 最後の測定で消音されていても、音ありで鳴った秒数が 3 秒を超えていれば incomplete になる', () => {
+  expect(
+    audioBucket(
+      autoPlayDetails({
+        mediaElements: [playingAudio({ muted: true, audibleSeconds: 4 })],
+      }),
+    ),
+  ).toBe('incomplete');
+});
+
+test('auto-play-audio: played の合計が 2 秒（ループ）で止まっていても、音ありで鳴った秒数が 3 秒を超えていれば incomplete になる', () => {
   expect(
     audioBucket(
       autoPlayDetails({
         mediaElements: [
           playingAudio({
             loop: true,
+            paused: true,
             duration: 2,
-            currentTime: 0.5,
+            currentTime: 1,
             playedSeconds: 2,
+            audibleSeconds: 4,
           }),
         ],
       }),
     ),
   ).toBe('incomplete');
+});
+
+test('auto-play-audio: 最後に消音を解いて鳴っていても、音ありで鳴った秒数が 3 秒以下なら passes になる', () => {
+  expect(
+    audioBucket(
+      autoPlayDetails({
+        mediaElements: [playingAudio({ playedSeconds: 6, audibleSeconds: 0 })],
+      }),
+    ),
+  ).toBe('passes');
+});
+
+test('auto-play-audio: 説明文に音ありで鳴った秒数と、記録は検査の開始からであることが入る', () => {
+  const nodes = audioIncompleteNodes(
+    autoPlayDetails({ mediaElements: [playingAudio({ audibleSeconds: 4 })] }),
+  );
+  expect(nodes[0]?.failureSummary).toContain('4.0s with sound');
+  expect(nodes[0]?.failureSummary).toContain('not from page load');
 });
 
 test('auto-play-audio: 見えている controls 付きの要素なら鳴っていても passes になる', () => {
@@ -585,12 +625,34 @@ test('auto-play-audio: controls 属性があっても見えていなければ in
   ).toBe('incomplete');
 });
 
-test('auto-play-audio: iframe の中の要素は target が iframe の selector と要素の selector の順になり、説明に frame の URL が入る', () => {
+test('auto-play-audio: 見えているか決めきれない controls 付きの要素は incomplete になり、説明にそう書く', () => {
+  const nodes = audioIncompleteNodes(
+    autoPlayDetails({
+      mediaElements: [playingAudio({ controls: true, visible: null })],
+    }),
+  );
+  expect(nodes).toHaveLength(1);
+  expect(nodes[0]?.failureSummary).toContain(
+    'could not be determined whether its controls are visible',
+  );
+});
+
+test('auto-play-audio: 見えない controls の説明には、切り取りや画面外までは見ていないことが入る', () => {
+  const nodes = audioIncompleteNodes(
+    autoPlayDetails({
+      mediaElements: [playingAudio({ controls: true, visible: false })],
+    }),
+  );
+  expect(nodes[0]?.failureSummary).toContain('clipping');
+});
+
+test('auto-play-audio: iframe の中の要素は target が iframe の経路と要素の selector の順になり、説明に frame の URL が入る', () => {
   const nodes = audioIncompleteNodes(
     autoPlayDetails({
       mediaElements: [
         playingAudio({
           frame: { url: 'https://player.example/embed', selector: '#player' },
+          framePath: ['#player'],
         }),
       ],
     }),
@@ -599,17 +661,40 @@ test('auto-play-audio: iframe の中の要素は target が iframe の selector 
   expect(nodes[0]?.failureSummary).toContain('https://player.example/embed');
 });
 
-test('auto-play-audio: 親が別オリジンで iframe の selector が分からなければ target は要素の selector だけになる', () => {
+test('auto-play-audio: 入れ子の iframe と shadow root の中の要素は、target に外側から順にすべての経路が入る', () => {
+  const nodes = audioIncompleteNodes(
+    autoPlayDetails({
+      mediaElements: [
+        playingAudio({
+          selector: 'div > audio',
+          frame: { url: 'https://player.example/inner', selector: '#inner' },
+          framePath: ['#outer', '#inner'],
+          shadowHosts: ['#host'],
+        }),
+      ],
+    }),
+  );
+  expect(nodes[0]?.target).toEqual([
+    '#outer',
+    '#inner',
+    '#host',
+    'div > audio',
+  ]);
+});
+
+test('auto-play-audio: iframe の経路が分からなければ target は shadow host と要素の selector だけになり、説明にそう書く', () => {
   const nodes = audioIncompleteNodes(
     autoPlayDetails({
       mediaElements: [
         playingAudio({
           frame: { url: 'https://player.example/embed', selector: null },
+          framePath: null,
         }),
       ],
     }),
   );
   expect(nodes[0]?.target).toEqual(['#bgm']);
+  expect(nodes[0]?.failureSummary).toContain('iframe path is unknown');
 });
 
 test('auto-play-audio: 同じ frame に止める部品が見つかれば incomplete のまま説明にその名前が入る', () => {
@@ -645,7 +730,12 @@ test('auto-play-audio: autoplay 属性があるのに再生が始まっていな
   const nodes = audioIncompleteNodes(
     autoPlayDetails({
       mediaElements: [
-        playingAudio({ paused: true, currentTime: 0, playedSeconds: 0 }),
+        playingAudio({
+          paused: true,
+          currentTime: 0,
+          playedSeconds: 0,
+          audibleSeconds: 0,
+        }),
       ],
     }),
   );
@@ -662,6 +752,7 @@ test('auto-play-audio: autoplay 属性があっても読み込みに失敗した
             paused: true,
             currentTime: 0,
             playedSeconds: 0,
+            audibleSeconds: 0,
             hasError: true,
           }),
         ],

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      auto-play-audio finding: controls inside an opacity:0 ancestor
+    </title>
+    <script src="tone.js"></script>
+  </head>
+  <body>
+    <h1>Invisible player</h1>
+    <!--
+      The audio has a non-zero box and its own visibility is visible, but an
+      ancestor has opacity:0, so its controls cannot be seen.
+      Expected: auto-play-audio (incomplete).
+    -->
+    <div style="opacity: 0">
+      <audio id="bgm" autoplay controls></audio>
+    </div>
+    <script>
+      document.getElementById('bgm').src = toneUrl();
+    </script>
+  </body>
+</html>
