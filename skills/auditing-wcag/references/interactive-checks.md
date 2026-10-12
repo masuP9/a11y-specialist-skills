@@ -229,7 +229,7 @@ Supports criteria:
 
 ### `auto-play-detection` CLI Check
 
-Use the `auto-play-detection` check to detect auto-playing content via pixel-level screenshot comparison.
+Use the `auto-play-detection` check to detect auto-playing content via pixel-level screenshot comparison (2.2.2) and to measure media playback state (1.4.2).
 
 **Features:**
 - Takes screenshots at 2-second intervals (0s, 2s, 4s, 6s)
@@ -239,6 +239,7 @@ Use the `auto-play-detection` check to detect auto-playing content via pixel-lev
 - Verifies if pause controls actually work by clicking and re-comparing
 - Generates visual diff images highlighting changed areas
 - Reports findings with accessibility recommendations
+- Records every `<audio>` / `<video>` in the page and its iframes (nested frames and shadow roots included) when the check starts, with each screenshot, and on every play / pause / mute / rate change, and reports media without visible `controls` that was heard for more than 3 seconds (`audibleSeconds`), or that is playing with sound at the last sample and will keep playing for more than 3 seconds (`loop`, endless stream, or more than 3 seconds of real time left at the playback rate), as `a11y-skills/auto-play-audio` (incomplete) (1.4.2). Sound muted or stopped partway, short loops, and media added during the check (from when it is added) still count, and media removed from the DOM during the check stays in the result with `removed: true`. When its iframe is removed or its frame's content replaced, its last record stays with `documentRemoved: true` (target: the nearest remaining parent document's `html`; the message names the original frame URL). If that record was playing with sound, the time it kept playing is unknown, so it is incomplete regardless of `audibleSeconds`
 
 **Usage:**
 ```bash
@@ -254,6 +255,7 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks auto-play-detecti
     - Whether content stops within 5 seconds
     - Detected pause controls with accessibility info
     - Pause control verification results
+    - `mediaElements` - Playback state of each media element and the pause/mute controls found in the same frame
 
 **Pause Control Detection:**
 The script automatically searches for pause/stop controls by:
@@ -269,8 +271,11 @@ When auto-play is detected and continues beyond 5 seconds:
 4. Reports whether the control works
 
 **Limitations:**
-- Detects visual changes only (carousels, animations, video playback)
-- Audio auto-play requires manual verification (listening)
+- Screenshot comparison (2.2.2) detects visual changes only (carousels, animations, video playback)
+- Audio (1.4.2) is measured by playback state only; whether sound is actually heard requires manual verification (listening). Audio controls are found by name only, never clicked, and controls in a parent frame or elsewhere on the page are not searched
+- Audio is sampled about every 2 seconds from when the check starts, so sound before that is not counted. Sound that starts just before the last sample is flagged if it will keep playing for more than 3 seconds, but not if 3 seconds or less remain
+- Whether `controls` are visible is judged by size, `display`, `visibility` and `opacity` (iframe elements above included) and rendered ancestors (an assigned slot before the DOM parent). An ancestor with overflow `hidden` / `clip` whose padding box (inside the border) does not overlap them makes them invisible; `clip-path` / `clip`, a non-overlapping scroll container, a fixed / absolute box that may escape, or a transform that keeps the padding box from being placed makes it undetermined (incomplete). Partial clipping and off-screen position are not checked
+- Sound that does not use `<audio>` / `<video>` (e.g. the Web Audio API) is not measured
 - Small animations below 0.1% threshold may not be detected
 
 **Manual Verification Required:**

@@ -449,6 +449,184 @@
         </tr>
       </tbody>
     </table>
+    <p>
+      The auto-play-audio fixtures build a 30-second tone in the page
+      (<code>tone.js</code>). Browsers block unmuted autoplay without a user
+      gesture unless launched with
+      <code>--autoplay-policy=no-user-gesture-required</code>.
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>Scenario</th>
+          <th>Fixture</th>
+          <th>Expected rule(s)</th>
+          <th>Bucket</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/auto-play-audio/finding.html"
+              >auto-play-audio/finding.html</a
+            >
+          </td>
+          <td><code>a11y-skills/auto-play-audio</code></td>
+          <td>incomplete</td>
+        </tr>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/auto-play-audio/finding-hidden-controls.html"
+              >auto-play-audio/finding-hidden-controls.html</a
+            >
+          </td>
+          <td><code>a11y-skills/auto-play-audio</code></td>
+          <td>incomplete</td>
+        </tr>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/auto-play-audio/finding-mute-button.html"
+              >auto-play-audio/finding-mute-button.html</a
+            >
+          </td>
+          <td><code>a11y-skills/auto-play-audio</code></td>
+          <td>incomplete</td>
+        </tr>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/auto-play-audio/finding-iframe.html"
+              >auto-play-audio/finding-iframe.html</a
+            >
+          </td>
+          <td><code>a11y-skills/auto-play-audio</code></td>
+          <td>incomplete</td>
+        </tr>
+        <tr>
+          <td class="scenario-clear">clear</td>
+          <td>
+            <a href="pages/auto-play-audio/clear-muted.html"
+              >auto-play-audio/clear-muted.html</a
+            >
+          </td>
+          <td><code>a11y-skills/auto-play-audio</code></td>
+          <td>passes</td>
+        </tr>
+        <tr>
+          <td class="scenario-clear">clear</td>
+          <td>
+            <a href="pages/auto-play-audio/clear-visible-controls.html"
+              >auto-play-audio/clear-visible-controls.html</a
+            >
+          </td>
+          <td><code>a11y-skills/auto-play-audio</code></td>
+          <td>passes</td>
+        </tr>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/auto-play-audio/finding-unmute-at-end.html"
+              >auto-play-audio/finding-unmute-at-end.html</a
+            >
+          </td>
+          <td><code>a11y-skills/auto-play-audio</code></td>
+          <td>incomplete</td>
+        </tr>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/auto-play-audio/finding-ancestor-opacity.html"
+              >auto-play-audio/finding-ancestor-opacity.html</a
+            >
+          </td>
+          <td><code>a11y-skills/auto-play-audio</code></td>
+          <td>incomplete</td>
+        </tr>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/auto-play-audio/finding-collapsed.html"
+              >auto-play-audio/finding-collapsed.html</a
+            >
+          </td>
+          <td><code>a11y-skills/auto-play-audio</code></td>
+          <td>incomplete</td>
+        </tr>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/auto-play-audio/finding-collapsed-border.html"
+              >auto-play-audio/finding-collapsed-border.html</a
+            >
+          </td>
+          <td><code>a11y-skills/auto-play-audio</code></td>
+          <td>incomplete</td>
+        </tr>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/auto-play-audio/finding-slot-clip.html"
+              >auto-play-audio/finding-slot-clip.html</a
+            >
+          </td>
+          <td><code>a11y-skills/auto-play-audio</code></td>
+          <td>incomplete</td>
+        </tr>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/auto-play-audio/finding-clipped-controls.html"
+              >auto-play-audio/finding-clipped-controls.html</a
+            >
+          </td>
+          <td><code>a11y-skills/auto-play-audio</code></td>
+          <td>incomplete</td>
+        </tr>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/auto-play-audio/finding-hidden-iframe.html"
+              >auto-play-audio/finding-hidden-iframe.html</a
+            >
+          </td>
+          <td><code>a11y-skills/auto-play-audio</code></td>
+          <td>incomplete</td>
+        </tr>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/auto-play-audio/finding-loop-then-stop.html"
+              >auto-play-audio/finding-loop-then-stop.html</a
+            >
+          </td>
+          <td><code>a11y-skills/auto-play-audio</code></td>
+          <td>incomplete</td>
+        </tr>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/auto-play-audio/finding-mute-after-playing.html"
+              >auto-play-audio/finding-mute-after-playing.html</a
+            >
+          </td>
+          <td><code>a11y-skills/auto-play-audio</code></td>
+          <td>incomplete</td>
+        </tr>
+        <tr>
+          <td class="scenario-finding">finding</td>
+          <td>
+            <a href="pages/auto-play-audio/finding-nested.html"
+              >auto-play-audio/finding-nested.html</a
+            >
+          </td>
+          <td><code>a11y-skills/auto-play-audio</code></td>
+          <td>incomplete</td>
+        </tr>
+      </tbody>
+    </table>
 
     <!-- ------------------------------------------------------------------ -->
     <h2>target-size-check</h2>

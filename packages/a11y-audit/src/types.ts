@@ -748,6 +748,96 @@ export interface PauseVerificationResult {
   error: string | null;
 }
 
+/**
+ * Playback state of one `<audio>` / `<video>` (WCAG 1.4.2), read in its own
+ * frame. The state fields are the last sample, taken once the screenshot
+ * window (~6s after the check starts) ends; `audibleSeconds` covers all
+ * samples.
+ */
+export interface MediaPlaybackRecord {
+  tag: 'audio' | 'video';
+  /**
+   * Selector relative to the element's document, or to its shadow root when
+   * `shadowHosts` is not empty (same rules as focus-indicator records).
+   */
+  selector: string;
+  html: string;
+  htmlTruncated: boolean;
+  /**
+   * The iframe document holding the element (null for the main frame).
+   * `selector` is the innermost iframe element's selector in its parent
+   * (same shape as focus-indicator records).
+   */
+  frame: { url: string; selector: string | null } | null;
+  /**
+   * Path from the top document to the element's document: for each iframe,
+   * outermost first, the shadow hosts above it and then its selector. Each
+   * entry is looked up in the document or shadow root opened by the entry
+   * before it. `[]` for the main frame; null when it could not be read.
+   */
+  framePath: string[] | null;
+  /** Shadow hosts between the element and its document, outermost first. */
+  shadowHosts: string[];
+  autoplay: boolean;
+  loop: boolean;
+  /** Whether the `controls` attribute is present. */
+  controls: boolean;
+  /**
+   * The element has a non-zero box and `checkVisibility()` (opacity and
+   * visibility included) passes for it and for every iframe element above
+   * it. null when it could not be determined, including when the element,
+   * an ancestor or an iframe element above it has `clip-path` (not `none`) or
+   * `clip` (not `auto`). Overflow clipping and off-screen position are not
+   * considered.
+   */
+  visible: boolean | null;
+  /**
+   * Seconds with sound (playing, unmuted, volume > 0, playbackRate > 0).
+   * State is recorded when the check starts, on every play / pause / ended /
+   * volumechange / ratechange event, with each screenshot (every ~2s) and
+   * once more at the end; each state lasts until the next record. Recording
+   * starts when the check starts, not at page load.
+   */
+  audibleSeconds: number;
+  paused: boolean;
+  ended: boolean;
+  muted: boolean;
+  volume: number;
+  playbackRate: number;
+  /**
+   * The element was recorded during the check but is no longer in its
+   * document. Its selector then no longer resolves.
+   */
+  removed: boolean;
+  /**
+   * The element's whole document went away during the check: its iframe was
+   * removed, or the frame navigated / was replaced. The record is the last
+   * one taken while the document existed (`removed` is true too), and
+   * `framePath` then points at the nearest ancestor document that remains,
+   * while `frame.url` keeps the original frame's URL.
+   */
+  documentRemoved: boolean;
+  /** Seconds; null when unknown (no metadata) or endless (see `endless`). */
+  duration: number | null;
+  /** `duration` is Infinity (a live stream). */
+  endless: boolean;
+  currentTime: number;
+  /**
+   * Sum of the `played` time ranges, in seconds (reference only: repeated
+   * loops are counted once).
+   */
+  playedSeconds: number;
+  /** The element failed to load (`error` is set). */
+  hasError: boolean;
+  /**
+   * Chromium's `webkitAudioDecodedByteCount`: 0 suggests no audio track was
+   * decoded. null in browsers without it.
+   */
+  audioDecodedBytes: number | null;
+  /** Pause/stop/mute/volume controls found by keyword in the same frame. */
+  controlsInFrame: PauseControl[];
+}
+
 export interface AutoPlayDetectionDetails {
   screenshotRecords: ScreenshotRecord[];
   comparisons: ComparisonResult[];
@@ -756,6 +846,10 @@ export interface AutoPlayDetectionDetails {
   pauseControls: PauseControlInfo;
   pauseVerification: PauseVerificationResult;
   recommendation: string;
+  /** Every `<audio>` / `<video>` found in the page and its frames (1.4.2). */
+  mediaElements: MediaPlaybackRecord[];
+  /** Frames whose media could not be read (detached or navigating). */
+  unmeasuredFrames: number;
 }
 
 export type AutoPlayDetectionResult =

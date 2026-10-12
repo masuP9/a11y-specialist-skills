@@ -4,7 +4,7 @@
  */
 
 import * as path from 'node:path';
-import type { Page } from '@playwright/test';
+import type { Frame, Page } from '@playwright/test';
 import type { PauseControlInfo, PauseVerificationResult } from '../types.js';
 import {
   compareImages,
@@ -23,13 +23,15 @@ import {
 } from '../constants.js';
 
 /**
- * Detect pause/stop controls in the page.
+ * Detect pause/stop controls in a page or a single frame. `keywords` are
+ * matched against accessible names (default: the 2.2.2 pause keywords).
  */
 export async function detectPauseControls(
-  page: Page,
+  target: Page | Frame,
+  keywords: readonly string[] = PAUSE_KEYWORDS,
 ): Promise<PauseControlInfo> {
   const config = {
-    pauseKeywords: [...PAUSE_KEYWORDS],
+    pauseKeywords: [...keywords],
     controlClassPatterns: [...CONTROL_CLASS_PATTERNS],
     carouselPatterns: [...CAROUSEL_PATTERNS],
     navKeywords: [...NAV_KEYWORDS],
@@ -37,7 +39,7 @@ export async function detectPauseControls(
     maxParentLevels: MAX_PARENT_LEVELS,
   };
 
-  return await page.evaluate((cfg) => {
+  return await target.evaluate((cfg) => {
     const controls: Array<{
       element: string;
       name: string;

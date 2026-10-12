@@ -116,7 +116,7 @@ npx -y @a11y-skills/audit --url "https://example.com" --output-dir ./results
 | `orientation-check` | 1.3.4 | Orientation lock detection |
 | `autocomplete-audit` | 1.3.5 | Missing/invalid autocomplete |
 | `time-limit-detector` | 2.2.1 | Timer/meta refresh detection |
-| `auto-play-detection` | 2.2.2 | Auto-play content detection (visual changes only; audio is not inspected) |
+| `auto-play-detection` | 1.4.2, 2.2.2 | Auto-play content detection (visual changes and the playback state of `<audio>` / `<video>`; whether sound is actually heard needs manual review) |
 | `focus-indicator-check` | 2.4.7 | Focus indicator visibility |
 | `target-size-check` | 2.5.5, 2.5.8 | Target size measurement |
 | `keyboard-trap-check` | 2.1.2 | Keyboard trap detection |

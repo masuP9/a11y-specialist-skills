@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>auto-play-audio finding: controls attribute but hidden</title>
+    <script src="tone.js"></script>
+  </head>
+  <body>
+    <h1>Hidden audio player</h1>
+    <!--
+      Has the controls attribute, but display:none hides them, so users cannot
+      reach them. Expected: auto-play-audio (incomplete).
+    -->
+    <audio id="bgm" autoplay controls style="display: none"></audio>
+    <script>
+      document.getElementById('bgm').src = toneUrl();
+    </script>
+  </body>
+</html>

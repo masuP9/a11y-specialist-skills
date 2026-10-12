@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      auto-play-audio finding: muted for a long time, unmuted at the end
+    </title>
+    <script src="tone.js"></script>
+  </head>
+  <body>
+    <h1>Muted preview</h1>
+    <!--
+      Plays muted and is unmuted 6 seconds after load, so the check hears it
+      for well under 3 seconds. At the last sample it is playing with sound
+      and about 23 seconds of the 30-second tone remain.
+      Expected: auto-play-audio (incomplete).
+    -->
+    <audio id="bgm" autoplay muted></audio>
+    <script>
+      const bgm = document.getElementById('bgm');
+      bgm.src = toneUrl();
+      setTimeout(() => {
+        bgm.muted = false;
+      }, 6000);
+    </script>
+  </body>
+</html>

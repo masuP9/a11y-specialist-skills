@@ -24,7 +24,7 @@ Claude Code skill から機能本体を切り出したものです。10 個の�
 | `runOrientationCheck` | 1.3.4 表示の向き |
 | `runAutocompleteAudit` | 1.3.5 入力目的の特定 |
 | `runTimeLimitDetector` | 2.2.1 タイミング調整可能 |
-| `runAutoPlayDetection` | 2.2.2 一時停止、停止、非表示（音は見ない。1.4.2 は axe の `no-autoplay-audio` と手動確認で扱う） |
+| `runAutoPlayDetection` | 2.2.2 一時停止、停止、非表示（画面の変化）／ 1.4.2 音声の制御（`<audio>`・`<video>` の再生状態。実際に音が聞こえるかは手で確かめる） |
 | `runKeyboardReachabilityCheck` | 2.1.1 キーボード（Tab・複合部品内の矢印キー・activedescendant） |
 
 多くの検査は遷移済みの `page` を受けます。一部は navigation を所有し `targetUrl`
@@ -32,6 +32,40 @@ Claude Code skill から機能本体を切り出したものです。10 個の�
 （`runZoomCheck` は URL 指定時）。`runFocusIndicatorCheck` と
 `runKeyboardReachabilityCheck` は `browser` を受けます。
 `runAutoPlayDetection` は optional 依存 `pixelmatch` + `pngjs` が必要です（インストール参照）。
+
+`runAutoPlayDetection` の 1.4.2（`a11y-skills/auto-play-audio`）は、ページと iframe（入れ子・
+shadow root の中も含む）の `<audio>`・`<video>` について、「再生中・消音でない・音量が 0 より大きい・
+再生速度が 0 より大きい」かを、検査の開始時とスクリーンショットのたび（約 2 秒ごと）に測り、
+あわせて play / pause / ended / volumechange / ratechange の発生時刻も記録します。検査中に
+追加されたメディアは、文書と開いている shadow root の変化を見て、追加された時点から記録します。
+記録した状態は次の記録まで続くものとして、音ありだった時間を足して `audibleSeconds`（音ありで
+鳴った秒数）とします。測定の間に止めたり消音したりしても、それまでの時間は数えます。検査中に
+DOM から消えたメディアも `removed: true` の印付きで結果に残します（その `target` は属していた文書の
+`html` です）。iframe ごと消えたり中身が置き換わったりしたときは、消える前の最後の測定の記録を
+`documentRemoved: true` の印付きで残し、`target` は残っている親の文書の `html`、説明には元の frame の
+URL を書きます。最後の測定から消えるまでの音は数えませんが、最後の記録で音ありの再生中だったものは、その後どれだけ鳴ったか分からないので、鳴った秒数に関係なく `incomplete` にします。これが 3 秒を超えるもの、または最後の測定で音ありで再生中で、この先も 3 秒を超えて
+鳴るもの（`loop`、終わりのない配信、残りの再生時間を再生速度で割った実時間が 3 秒超）のうち、
+見えている `controls` が無いものを `incomplete` にします。見えているかは、要素とその上の iframe 要素の
+大きさ・`display`・`visibility`・`opacity` と、表示上の祖先（slot に割り当てられた要素は slot 側）で
+判断します。`overflow` が `hidden`・`clip` の祖先の枠線より内側の領域と重ならなければ見えないとし、
+`clip-path`（`none` 以外）や `clip`（`auto` 以外）があるとき、重ならない祖先がスクロールできるとき、
+`fixed`・`absolute` の箱が祖先からはみ出しうるとき、`transform` などで領域の位置が決まらないときは
+決めきれないとして `incomplete` にします。
+一部だけの切り取りや画面外の位置までは見ません。測るのは検査を始めてから（ページを開いた後）
+なので、それより前に鳴った音は数えません。同じ page で検査を繰り返しても、記録は検査ごとに
+作り直します。同じ frame で名前から見つけた止める・消音の部品は記録しますが、クリックして
+確かめはしません。結果の `target` は、外側の iframe・shadow host・要素の順に並び、それぞれ
+一つ前の要素が開く文書（または shadow root）の中で探します。
+
+Chromium は利用者の操作が無いと音ありの自動再生を止めるので、自分でブラウザを起動する
+場合は次の引数を付けてください。付けないと音ありのメディアは再生が始まらず、
+「再生が始まらなかった」という `incomplete` になります（CLI は付けて起動します）。
+
+```ts
+const browser = await chromium.launch({
+  args: ["--autoplay-policy=no-user-gesture-required"],
+});
+```
 
 ## インストール
 

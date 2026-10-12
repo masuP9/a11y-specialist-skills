@@ -381,7 +381,12 @@ async function main(): Promise<void> {
   let browser: Browser;
   try {
     const { chromium } = await import('@playwright/test');
-    browser = await chromium.launch();
+    // Chromium blocks unmuted autoplay on navigated pages until a user
+    // gesture. Allow it so auto-play-detection can measure the audio a page
+    // tries to play (WCAG 1.4.2) instead of always seeing it blocked.
+    browser = await chromium.launch({
+      args: ['--autoplay-policy=no-user-gesture-required'],
+    });
   } catch (err) {
     process.stderr.write(
       `Error launching browser: ${err instanceof Error ? err.message : String(err)}\n`,

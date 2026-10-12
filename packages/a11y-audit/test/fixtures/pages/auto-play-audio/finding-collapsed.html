@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>auto-play-audio finding: controls inside a collapsed panel</title>
+    <script src="tone.js"></script>
+  </head>
+  <body>
+    <h1>Collapsed panel</h1>
+    <!--
+      The audio has native controls and passes checkVisibility, but its panel
+      is collapsed (height: 0; overflow: hidden), so the controls are fully
+      hidden. Expected: auto-play-audio (incomplete).
+    -->
+    <div style="height: 0; overflow: hidden">
+      <audio id="bgm" autoplay controls></audio>
+    </div>
+    <script>
+      document.getElementById('bgm').src = toneUrl();
+    </script>
+  </body>
+</html>

@@ -10,7 +10,8 @@
  * - For 'passes' expectations: also guards against silent inapplicable pass.
  * - Validates the result envelope against RESULT_SCHEMAS[check] via Ajv.
  *
- * Coverage: all 21 custom finding-capable rules from rule-registry.ts.
+ * Coverage: all 22 custom finding-capable rules from rule-registry.ts
+ * (auto-play and auto-play-audio live in their own specs).
  * axe-audit: representative rule (image-alt); full rule coverage is out of
  * scope for axe (hundreds of external rules).
  */

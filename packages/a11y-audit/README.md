@@ -25,7 +25,7 @@ test entries.
 | `runOrientationCheck` | 1.3.4 Orientation |
 | `runAutocompleteAudit` | 1.3.5 Identify Input Purpose |
 | `runTimeLimitDetector` | 2.2.1 Timing Adjustable |
-| `runAutoPlayDetection` | 2.2.2 Pause, Stop, Hide (audio is not inspected; 1.4.2 is left to axe's `no-autoplay-audio` and manual review) |
+| `runAutoPlayDetection` | 2.2.2 Pause, Stop, Hide (visual changes) / 1.4.2 Audio Control (playback state of `<audio>` / `<video>`; whether sound is actually heard needs manual review) |
 | `runKeyboardReachabilityCheck` | 2.1.1 Keyboard (Tab, arrow keys in composite widgets, activedescendant) |
 
 Most checks take an already-navigated `page`. A few own navigation and take a
@@ -33,6 +33,54 @@ Most checks take an already-navigated `page`. A few own navigation and take a
 `runTimeLimitDetector` (and `runZoomCheck` when a URL is given).
 `runFocusIndicatorCheck` and `runKeyboardReachabilityCheck` take a `browser`. `runAutoPlayDetection` needs the
 optional `pixelmatch` + `pngjs` deps (see Install).
+
+For 1.4.2 (`a11y-skills/auto-play-audio`), `runAutoPlayDetection` records
+whether every `<audio>` / `<video>` in the page and its iframes (nested frames
+and shadow roots included) is playing, unmuted, with volume above 0 and a
+playback rate above 0: when the check starts, with each screenshot (about
+every 2 seconds), and on every play / pause / ended / volumechange /
+ratechange event. Media added during the check is recorded from the moment
+it is added (the document and open shadow roots are observed). Each recorded
+state lasts until the next record, and the time with sound is added up as
+`audibleSeconds`, so stopping or muting between screenshots does not erase
+the time before it. Media removed from the DOM during the check stays in the
+result with `removed: true` (its `target` is its document's `html`). When its
+iframe is removed or its frame's content is replaced, the last record taken
+before that stays with `documentRemoved: true`; its `target` is the nearest
+remaining parent document's `html`, and the message names the original
+frame's URL. Sound after that last record is not counted, but if the last
+record was playing with sound, the time it kept playing is unknown, so it
+goes to `incomplete` regardless of `audibleSeconds`. Media without
+visible `controls` goes to `incomplete` when it was heard for more
+than 3 seconds, or when it is playing with sound at the last check and will
+keep playing for more than 3 seconds (`loop`, an endless stream, or more than
+3 seconds of real time left at the current playback rate). Visibility uses
+the size, `display`, `visibility` and `opacity` of the element and the iframe
+elements above it, and its rendered ancestors (an assigned slot before the
+DOM parent). An ancestor with overflow `hidden` / `clip` whose padding box
+(inside its border) does not overlap the element makes it invisible;
+`clip-path` (not `none`) or `clip` (not `auto`), a non-overlapping scroll
+container, a fixed / absolute box that may escape the ancestor, or a
+transform that keeps the padding box from being placed makes visibility
+undetermined (`incomplete`).
+Partial clipping and off-screen position are not checked. Recording starts
+when the check starts (after the page is opened), so sound before that is not
+counted, and each check on the same page starts a fresh record.
+Pause/mute controls found by name in the same frame are recorded but not
+clicked to verify. A result's `target` lists the outer iframes, shadow hosts
+and the element in order; each entry is looked up in the document (or shadow
+root) opened by the entry before it.
+
+Chromium blocks unmuted autoplay until the user interacts with the page, so
+when you launch the browser yourself, pass the flag below. Without it, unmuted
+media never starts and is reported as `incomplete` ("playback did not start").
+The CLI launches with it.
+
+```ts
+const browser = await chromium.launch({
+  args: ["--autoplay-policy=no-user-gesture-required"],
+});
+```
 
 ## Install
 

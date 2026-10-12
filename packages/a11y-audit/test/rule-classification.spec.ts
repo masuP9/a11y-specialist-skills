@@ -74,6 +74,7 @@ const FINDING_EXPECTATIONS: Array<{
 
   // auto-play-detection
   { ruleId: 'a11y-skills/auto-play', expectedBucket: 'incomplete' },
+  { ruleId: 'a11y-skills/auto-play-audio', expectedBucket: 'incomplete' },
 
   // target-size-check
   {
@@ -128,14 +129,14 @@ test('all manifest finding expectations agree with rule-registry classification'
   }
 });
 
-test('all 21 custom finding rules have a manifest entry', () => {
+test('all 22 custom finding rules have a manifest entry', () => {
   const manifestRuleIds = new Set(FINDING_EXPECTATIONS.map((e) => e.ruleId));
 
   const registryRuleIds = Object.values(RULES).map((r) => r.id);
   expect(
     registryRuleIds.length,
-    'rule-registry should have 21 custom rules',
-  ).toBe(21);
+    'rule-registry should have 22 custom rules',
+  ).toBe(22);
 
   for (const ruleId of registryRuleIds) {
     expect(
@@ -153,4 +154,14 @@ test('auto-play 規則は音を調べないので SC に 1.4.2 を含めない',
 
 test('auto-play 規則は音を調べないのでタグに wcag142 を含めない', () => {
   expect(RULES['auto-play'].tags).toEqual(['a11y-skills', 'wcag2a', 'wcag222']);
+});
+
+// auto-play-audio measures media playback state, so 1.4.2 is claimed there.
+test('auto-play-audio 規則は SC 1.4.2 と wcag142 タグを持つ', () => {
+  expect(RULES['auto-play-audio'].sc).toEqual(['1.4.2']);
+  expect(RULES['auto-play-audio'].tags).toEqual([
+    'a11y-skills',
+    'wcag2a',
+    'wcag142',
+  ]);
 });

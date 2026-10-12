@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>auto-play-audio finding: audio inside an iframe</title>
+  </head>
+  <body>
+    <h1>Embedded player</h1>
+    <!--
+      The frame plays unmuted audio with no control. `?child=<url>` points the
+      frame at another origin; without it the same-origin child is used.
+      Expected: auto-play-audio (incomplete), targeted through the iframe.
+    -->
+    <iframe
+      id="player"
+      title="player"
+      allow="autoplay"
+      width="320"
+      height="120"
+    ></iframe>
+    <script>
+      const child = new URLSearchParams(location.search).get('child');
+      document.getElementById('player').src = child ?? 'frame-child.html';
+    </script>
+  </body>
+</html>

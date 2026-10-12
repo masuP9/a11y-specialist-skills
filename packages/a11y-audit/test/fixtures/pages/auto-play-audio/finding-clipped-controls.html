@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>auto-play-audio finding: controls clipped away</title>
+    <script src="tone.js"></script>
+  </head>
+  <body>
+    <h1>Clipped player</h1>
+    <!--
+      The audio has native controls and passes checkVisibility, but an
+      ancestor's clip-path: inset(100%) cuts it away entirely. Clipping is not
+      measured, so visibility is undetermined.
+      Expected: auto-play-audio (incomplete).
+    -->
+    <div style="clip-path: inset(100%)">
+      <audio id="bgm" autoplay controls></audio>
+    </div>
+    <script>
+      document.getElementById('bgm').src = toneUrl();
+    </script>
+  </body>
+</html>

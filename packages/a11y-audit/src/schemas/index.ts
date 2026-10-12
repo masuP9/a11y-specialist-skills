@@ -673,6 +673,8 @@ export const AUTO_PLAY_DETECTION_RESULT_SCHEMA: JsonSchema =
         'pauseControls',
         'pauseVerification',
         'recommendation',
+        'mediaElements',
+        'unmeasuredFrames',
       ],
       properties: {
         screenshotRecords: { type: 'array', items: { type: 'object' } },
@@ -682,6 +684,8 @@ export const AUTO_PLAY_DETECTION_RESULT_SCHEMA: JsonSchema =
         pauseControls: { type: 'object' },
         pauseVerification: { type: 'object' },
         recommendation: { type: 'string' },
+        mediaElements: { type: 'array', items: { type: 'object' } },
+        unmeasuredFrames: { type: 'number' },
       },
     },
   });

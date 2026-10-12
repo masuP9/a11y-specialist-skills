@@ -412,3 +412,12 @@ test('the pre-0.3.0 flat result shape is rejected', () => {
   const validate = ajv.compile(RESULT_SCHEMAS['axe-audit']);
   expect(validate(legacy)).toBe(false);
 });
+
+test('auto-play-detection のスキーマは mediaElements と unmeasuredFrames を必須にする', () => {
+  const details = RESULT_SCHEMAS['auto-play-detection'].properties?.details as {
+    required: string[];
+  };
+  expect(details.required).toEqual(
+    expect.arrayContaining(['mediaElements', 'unmeasuredFrames']),
+  );
+});

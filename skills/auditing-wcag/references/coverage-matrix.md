@@ -21,7 +21,7 @@ Methods are labeled as Automated/Interactive/Manual/Content and can be combined.
 | 1.3.4 | Automated + Manual | `orientation-check` **[CLI]** + captures | Fail if one orientation blocks function |
 | 1.3.5 | Automated | `autocomplete-audit` **[CLI]** | Fail on incorrect/missing autocomplete |
 | 1.4.1 | Automated + Manual | a11y tree text + screenshots | Fail if color-only cue |
-| 1.4.2 | Manual | logs | Fail if audio cannot be paused/stopped |
+| 1.4.2 | Automated + Manual | `auto-play-detection` **[CLI]** (`a11y-skills/auto-play-audio`) + logs | Fail if audio over 3 seconds cannot be paused/stopped or its volume controlled |
 | 1.4.3 | Automated | axe color-contrast | Fail below AA |
 | 1.4.4 | Automated + Manual | `zoom-200-check` **[CLI]** + screenshots | Fail if loss/overlap at 200% |
 | 1.4.5 | Manual + Content | screenshots | Fail if text is image-based |
@@ -88,7 +88,7 @@ The following criteria can be automatically checked via the `a11y-audit` CLI (se
 | Multiple | `axe-audit` | `axe-result.json` |
 | 1.3.4 | `orientation-check` | `orientation-result.json` |
 | 1.3.5 | `autocomplete-audit` | `autocomplete-result.json` |
-| 2.2.2 | `auto-play-detection` | `auto-play-screenshots/` |
+| 1.4.2, 2.2.2 | `auto-play-detection` | `auto-play-screenshots/` |
 | 1.4.4 | `zoom-200-check` | `zoom-200-result.json` |
 | 1.4.10 | `reflow-check` | `reflow-result.json` |
 | 1.4.12 | `text-spacing-check` | `text-spacing-result.json` |

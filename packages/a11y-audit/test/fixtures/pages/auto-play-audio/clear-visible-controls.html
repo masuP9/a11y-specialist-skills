@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>auto-play-audio clear: unmuted autoplay with visible controls</title>
+    <script src="tone.js"></script>
+  </head>
+  <body>
+    <h1>Audio with native controls</h1>
+    <!--
+      Unmuted autoplay, but the native controls (pause, volume) are rendered.
+      Expected: auto-play-audio (passes).
+    -->
+    <audio id="bgm" autoplay controls></audio>
+    <script>
+      document.getElementById('bgm').src = toneUrl();
+    </script>
+  </body>
+</html>

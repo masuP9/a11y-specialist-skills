@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      auto-play-audio finding: visible controls inside a hidden iframe
+    </title>
+  </head>
+  <body>
+    <h1>Hidden embedded player</h1>
+    <!--
+      Inside the frame the audio's controls are visible, but the iframe element
+      itself is visibility:hidden in this document.
+      Expected: auto-play-audio (incomplete).
+    -->
+    <iframe
+      id="player"
+      title="player"
+      allow="autoplay"
+      src="frame-child-controls.html"
+      width="320"
+      height="120"
+      style="visibility: hidden"
+    ></iframe>
+  </body>
+</html>

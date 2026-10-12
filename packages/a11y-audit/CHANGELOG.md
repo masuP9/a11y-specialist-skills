@@ -3,6 +3,51 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Added
+
+- `a11y-skills/auto-play-audio` (WCAG 1.4.2; tags `wcag2a`, `wcag142`;
+  `incomplete`): `auto-play-detection` now records every `<audio>` /
+  `<video>` in the page and its iframes (nested frames and open shadow roots
+  included) when the check starts, with each screenshot, and on every play /
+  pause / ended / volumechange / ratechange event, and from the moment media
+  is added during the check (MutationObserver), into the new required
+  `details.mediaElements` (with `frame` / `shadowHosts` like focus-indicator,
+  plus `framePath`, `audibleSeconds`, `playbackRate`, `removed` for media
+  removed during the check, and `documentRemoved` for media whose iframe was
+  removed or whose frame was replaced, reported from its last record and
+  flagged whenever that record was playing with sound, since how long it
+  kept playing is unknown) and `details.unmeasuredFrames`. `audibleSeconds`
+  adds up the time the media was playing, unmuted, with volume and playback
+  rate above 0 (each record lasts until the next), so sound muted or stopped
+  between screenshots, or a short loop, still counts. Media heard for more
+  than 3 seconds, or playing with sound at the last sample and lasting more
+  than 3 more seconds of real time (`loop`, endless, or remaining duration
+  divided by the playback rate), whose `controls` are not visible (size,
+  display, visibility and opacity of the element and its iframe elements;
+  hidden when an overflow `hidden` / `clip` rendered ancestor's padding box
+  does not overlap it, slots included; undetermined under `clip-path` /
+  `clip`, a non-overlapping scroll container, an escaping fixed / absolute
+  box or a transform; partial clipping and off-screen position not checked),
+  or that requests autoplay but did not start, is a finding; pause/mute
+  controls found by name in the same frame are listed in its message but are
+  not clicked. Its `target` is the full path (outer iframes, shadow hosts,
+  element; the document's `html` for removed media, or the nearest remaining
+  parent document's `html` when the document itself went away). Recording
+  starts when the check starts, not at page load, and is fresh for each
+  check. Inapplicable when the page has no media.
+
+### Changed
+
+- The CLI launches Chromium with `--autoplay-policy=no-user-gesture-required`
+  so unmuted autoplay starts and can be measured. Pages that autoplay video
+  with sound now play it during every check (before, Chromium kept it paused).
+  Library users who launch their own browser need the same flag for
+  `auto-play-audio` to measure audio (see README).
+- `a11y-skills/auto-play`: the message no longer asks to verify audio manually;
+  audio is covered by `a11y-skills/auto-play-audio`.
+
 ## 0.11.0 — 2026-10-13
 
 **Heads-up** — `a11y-skills/focus-not-obscured` now reports only elements that

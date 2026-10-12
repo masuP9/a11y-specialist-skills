@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>auto-play-audio finding: unmuted autoplay, no control</title>
+    <script src="tone.js"></script>
+  </head>
+  <body>
+    <h1>Background music</h1>
+    <!--
+      Unmuted 30-second tone that starts on load. No controls attribute and no
+      pause/mute button. Expected: auto-play-audio (incomplete).
+    -->
+    <audio id="bgm" autoplay></audio>
+    <script>
+      document.getElementById('bgm').src = toneUrl();
+    </script>
+  </body>
+</html>

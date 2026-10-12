@@ -100,9 +100,9 @@ Elements without focus styles are highlighted with a red outline and "⚠ No Foc
   - `<button>` element name...
   - ...
 
-### Auto-play Detection (2.2.2)
+### Auto-play Detection (1.4.2, 2.2.2)
 
-Screenshots taken at intervals to detect auto-playing content. Audio is not inspected, so 1.4.2 is left to axe's `no-autoplay-audio` and manual review.
+Screenshots taken at intervals to detect auto-playing content. The playback state of `<audio>` / `<video>` is also measured, and audio playing for more than 3 seconds is reported as `a11y-skills/auto-play-audio` (whether sound is actually heard needs manual review).
 
 ![Auto-play Detection - 0s](./auto-play-screenshots/screenshot-0.png)
 ![Auto-play Detection - 3s](./auto-play-screenshots/screenshot-3.png)

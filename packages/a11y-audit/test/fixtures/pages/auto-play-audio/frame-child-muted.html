@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>auto-play-audio: frame child with muted autoplay</title>
+    <script src="tone.js"></script>
+  </head>
+  <body>
+    <audio id="quiet" autoplay muted></audio>
+    <script>
+      document.getElementById('quiet').src = toneUrl();
+    </script>
+  </body>
+</html>

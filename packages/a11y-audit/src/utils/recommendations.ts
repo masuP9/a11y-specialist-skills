@@ -117,7 +117,9 @@ export function printSummary(
   // Manual verification checklist
   log('\nManual verification required:');
   log('  - Verify pause/stop controls are keyboard accessible');
-  log('  - Check for audio auto-play (requires manual listening)');
+  log(
+    '  - Listen to media flagged by a11y-skills/auto-play-audio (playback state is measured, sound is not)',
+  );
   if (!pauseControls.hasAccessibleName && pauseControls.found) {
     log('  - Add aria-label to pause control buttons');
   }

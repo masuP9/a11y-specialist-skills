@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>auto-play-audio finding: muted after playing with sound</title>
+    <script src="tone.js"></script>
+  </head>
+  <body>
+    <h1>Intro sound</h1>
+    <!--
+      Plays with sound and is muted 6 seconds after load, before the check's
+      last sample. Only the last sample sees it muted.
+      Expected: auto-play-audio (incomplete).
+    -->
+    <audio id="bgm" autoplay></audio>
+    <script>
+      const bgm = document.getElementById('bgm');
+      bgm.src = toneUrl();
+      setTimeout(() => {
+        bgm.muted = true;
+      }, 6000);
+    </script>
+  </body>
+</html>

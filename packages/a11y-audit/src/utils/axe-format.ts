@@ -21,6 +21,7 @@ import type {
   FocusVisualDiff,
   KeyboardReachabilityCheckDetails,
   KeyboardTrapCheckDetails,
+  MediaPlaybackRecord,
   NormalizedImpact,
   NormalizedNode,
   NormalizedRuleResult,
@@ -626,13 +627,162 @@ export function normalizeAutoPlayDetection(
       pageNode(
         `Moving content continues past 5 seconds (pixel-diff detection). ` +
           `${controlsPart} ${details.recommendation} Verify the content type ` +
-          'and audio manually.',
+          'manually.',
       ),
     );
   }
   bucketize(buckets, 'auto-play', nodes, true);
 
+  const audioNodes: NormalizedNode[] = details.mediaElements.flatMap(
+    (media) => {
+      const summary = describeAutoPlayingAudio(media);
+      return summary ? [mediaNode(media, summary)] : [];
+    },
+  );
+  if (details.unmeasuredFrames > 0) {
+    audioNodes.push(
+      pageNode(
+        `${details.unmeasuredFrames} frame(s) could not be inspected for ` +
+          'auto-playing audio. Verify their media manually.',
+      ),
+    );
+  }
+  bucketize(
+    buckets,
+    'auto-play-audio',
+    audioNodes,
+    details.mediaElements.length > 0 || details.unmeasuredFrames > 0,
+  );
+
   return buckets;
+}
+
+/** WCAG 1.4.2 applies to audio that plays automatically for more than 3s. */
+const AUDIO_CONTROL_THRESHOLD_SECONDS = 3;
+
+/**
+ * Why this media element needs review under 1.4.2, or null when it does not:
+ * it carries visible native controls, or it was heard for 3 seconds or less
+ * between samples and will not keep playing with sound for more than 3
+ * seconds after the last sample.
+ */
+function describeAutoPlayingAudio(media: MediaPlaybackRecord): string | null {
+  if (media.controls && media.visible === true) return null;
+
+  const location = media.frame ? ` in frame ${media.frame.url}` : '';
+  const blocked =
+    media.autoplay &&
+    media.paused &&
+    media.playedSeconds === 0 &&
+    !media.hasError &&
+    !media.muted &&
+    media.volume > 0;
+  if (blocked) {
+    return (
+      `<${media.tag}>${location} requests autoplay but playback did not start ` +
+      '(the browser may have blocked unmuted autoplay), so its audio could ' +
+      'not be measured. Verify manually whether it plays audio automatically.'
+    );
+  }
+
+  const audibleInRecord =
+    !media.paused &&
+    !media.ended &&
+    !media.muted &&
+    media.volume > 0 &&
+    media.playbackRate > 0;
+  // A removed element (or one whose document went away) plays no more, even
+  // if its last record was taken while it was playing.
+  const audibleNow = !media.removed && audibleInRecord;
+  // A document that went away after a record taken while it was playing with
+  // sound may have played for any time until then, so it cannot be cleared.
+  const unknownAfterRecord = media.documentRemoved && audibleInRecord;
+  // Sound that starts just before the last sample is heard for too short a
+  // time between samples, so also count what is left to play, in real time
+  // at the current playback rate.
+  const keepsPlaying =
+    audibleNow &&
+    (media.loop ||
+      media.endless ||
+      (media.duration !== null &&
+        (media.duration - media.currentTime) / media.playbackRate >
+          AUDIO_CONTROL_THRESHOLD_SECONDS));
+  const heardLongEnough =
+    media.audibleSeconds > AUDIO_CONTROL_THRESHOLD_SECONDS;
+  if (!heardLongEnough && !keepsPlaying && !unknownAfterRecord) return null;
+
+  const state = unknownAfterRecord
+    ? 'and was still playing with sound at its last record (playback time ' +
+      'after its last record is unknown)'
+    : !audibleNow
+      ? 'and has since been muted or stopped'
+      : keepsPlaying
+        ? 'and will keep playing with sound for more than 3s'
+        : 'and is still playing';
+  const decoded =
+    media.audioDecodedBytes === 0
+      ? ' No audio data was decoded, so the track may be silent.'
+      : '';
+  const controls =
+    media.controlsInFrame.length > 0
+      ? `Possible controls found in the same frame: ${media.controlsInFrame
+          .map((c) => `"${c.name}" (${c.selector})`)
+          .join(', ')}.`
+      : 'No pause/stop/mute control was found in the same frame by name.';
+  // Visibility covers size, display, visibility and opacity of the element
+  // and its iframes, and non-overlapping overflow hidden / clip ancestors;
+  // clip-path / clip, scroll containers, escaping boxes and transforms make
+  // it undetermined; partial clipping and off-screen position are not
+  // checked.
+  const nativeControls = !media.controls
+    ? ''
+    : media.visible === false
+      ? ' It has the controls attribute but they are not visible (size, ' +
+        'display, visibility, opacity and overflow of the element, its ' +
+        'ancestors and its iframes are checked; partial clipping and ' +
+        'off-screen position are not).'
+      : ' It has the controls attribute, but it could not be determined ' +
+        'whether its controls are visible (e.g. clip-path or clip is ' +
+        'applied, or an overflow ancestor scrolls or is transformed).';
+  const path = media.documentRemoved
+    ? ' It is gone because its frame was removed or replaced during the ' +
+      'check, so this is its last record before that, and the target points ' +
+      'at the nearest remaining parent document.'
+    : media.removed
+      ? ' It was removed from the page during the check, so the target ' +
+        'points at its document.'
+      : media.frame && media.framePath === null
+        ? ' The iframe path is unknown, so the target is relative to the frame.'
+        : '';
+  return (
+    `Unmuted <${media.tag}>${location} played automatically for ` +
+    `${media.audibleSeconds.toFixed(1)}s with sound ${state} (volume ` +
+    `${media.volume}). Sound is recorded from when the check started ` +
+    '(every ~2s, on playback events, and from when media is added), not ' +
+    'from page load.' +
+    `${decoded}${nativeControls}${path} ${controls} Controls are matched by ` +
+    'name only and were not clicked, and controls elsewhere on the page or ' +
+    'in a parent frame are not searched: verify that the audio can be ' +
+    'paused, stopped, or its volume controlled independently.'
+  );
+}
+
+/**
+ * A node for a media element. `target` is the full path: iframes (with the
+ * shadow hosts above them), then the shadow hosts above the element, then the
+ * element; each entry is looked up in the document or shadow root opened by
+ * the entry before it. A removed element no longer resolves, so its target
+ * ends at its document's `html`.
+ */
+function mediaNode(
+  media: MediaPlaybackRecord,
+  failureSummary: string,
+): NormalizedNode {
+  const node = toNode(media, failureSummary);
+  node.target = media.removed
+    ? [...(media.framePath ?? []), 'html']
+    : [...(media.framePath ?? []), ...media.shadowHosts, media.selector];
+  return node;
 }
 
 // =============================================================================
