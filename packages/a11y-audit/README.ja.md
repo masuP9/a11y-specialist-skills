@@ -268,6 +268,16 @@ const result = await runTargetSizeCheck({
 
 - keyboard-trap: Tab の押下回数が上限に達して打ち切った場合は `details.tabWalkCapped: true`
 - focus-indicator: フォーカスによる遷移でリトライが上限に達し、未検査の要素が残った場合は `details.interrupted: true`
+- focus-indicator / keyboard-reachability: 上限で打ち切った場合の挙動は下の「時間と Tab 回数の上限」を参照
+
+**時間と Tab 回数の上限:**
+
+`runFocusIndicatorCheck` と `runKeyboardReachabilityCheck` は `timeBudgetMs`（ミリ秒、正の有限数）と `maxTabPresses`（正の整数）を受け取ります。0 以下や数でない値はエラーになります。
+
+| チェック | `timeBudgetMs` の既定 | `maxTabPresses` の既定 | 上限に達したとき |
+|---|---|---|---|
+| focus-indicator | 上限なし | 上限なし | `details.aborted: { reason: 'timeout' \| 'tab-limit', url, recordedCount, focusableCount }`。`recordedCount` 件までを検査し、フォーカスできる要素は `focusableCount` 件あった。時間と回数は 3.2.1 のやり直しを含めた全体で数える。`interrupted`（やり直しの使い切り）とは別 |
+| keyboard-reachability | 60 秒 | 600 回 | 時間は `details.aborted.reason: 'timeout'`、回数は `details.tabWalkCapped: true` |
 
 **同時に実行する場合の前提:**
 

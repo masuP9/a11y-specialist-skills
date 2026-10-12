@@ -16,6 +16,12 @@ adheres to [Semantic Versioning](https://semver.org/).
   (which Tab press moved focus to it, 1-based; `null` for autofocus or scripted
   focus) and `rect` (`{ x, y, width, height }` in page coordinates at focus
   time), so the Tab order can be compared with the visual order (WCAG 2.4.3).
+- `runFocusIndicatorCheck` and `runKeyboardReachabilityCheck` accept
+  `timeBudgetMs` and `maxTabPresses` (invalid values throw). On
+  focus-indicator, which has no limit by default, hitting one sets the new
+  `details.aborted` (`reason: 'timeout' | 'tab-limit'`, `recordedCount`,
+  `focusableCount`); `interrupted` keeps its meaning. On keyboard-reachability
+  they override the previous fixed 60 s / 600-press limits.
 
 ### Changed
 

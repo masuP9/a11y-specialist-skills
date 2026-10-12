@@ -191,6 +191,19 @@ export interface FocusCheckDetails {
   interrupted: boolean;
   interruptedAt?: number;
   /**
+   * Set when `timeBudgetMs` or `maxTabPresses` stopped the Tab walk before it
+   * finished; `null` otherwise (absent in results from older versions).
+   * Elements after the stop point were not tested: `recordedCount` of
+   * `focusableCount` focusable elements were recorded. Distinct from
+   * `interrupted`, which means the 3.2.1 retries were exhausted.
+   */
+  aborted?: {
+    reason: 'timeout' | 'tab-limit';
+    url: string;
+    recordedCount: number;
+    focusableCount: number;
+  } | null;
+  /**
    * Path the screenshot was (or would be) written to. Empty string when
    * `screenshot` was disabled and no screenshot file was produced.
    */
