@@ -207,15 +207,18 @@ export function normalizeFocusCheck(
     applicable,
   );
 
-  const obscuredNode = (issue: FocusObscuredIssue) =>
+  // `checkDismiss`: only 2.4.11 exempts content the user can dismiss
+  // without moving focus.
+  const obscuredNode = (issue: FocusObscuredIssue, checkDismiss: boolean) =>
     toNode(
       issue.element,
       `${describeElement(issue.element)} is ${(issue.obscuredRatio * 100).toFixed(0)}% ` +
         `obscured when focused (${issue.fullyObscured ? 'fully' : 'not fully'} obscured; by ${issue.overlaps
           .map((o) => `<${o.obscuredBy.tag.toLowerCase()}>`)
-          .join(', ')}). Verify whether the focused element is hidden ` +
-        'and whether the user can dismiss the covering content without ' +
-        'moving focus.',
+          .join(', ')}). Verify whether the focused element is hidden` +
+        (checkDismiss
+          ? ' and whether the user can dismiss the covering content without moving focus.'
+          : '.'),
     );
 
   // 2.4.11 fails only for a fully hidden element; 2.4.12 for any hidden part.
@@ -224,14 +227,14 @@ export function normalizeFocusCheck(
     'focus-not-obscured',
     details.focusObscuredIssues
       .filter((issue) => issue.fullyObscured)
-      .map(obscuredNode),
+      .map((issue) => obscuredNode(issue, true)),
     applicable,
   );
 
   bucketize(
     buckets,
     'focus-not-obscured-enhanced',
-    details.focusObscuredIssues.map(obscuredNode),
+    details.focusObscuredIssues.map((issue) => obscuredNode(issue, false)),
     applicable,
   );
 

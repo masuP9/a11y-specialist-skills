@@ -93,8 +93,8 @@ export const RULES = {
       'Ensure no part of the focused element is hidden by fixed or sticky content',
     help: 'Focused elements should not be obscured at all by author-created content',
     helpUrl: `${UNDERSTANDING}/focus-not-obscured-enhanced.html`,
-    // same limits as focus-not-obscured: box overlap only, and dismissable
-    // covering content is out of scope.
+    // only the element's box is compared, not the focus indicator itself.
+    // Unlike 2.4.11, 2.4.12 has no exception for content the user can dismiss.
     classification: 'incomplete',
   },
 
