@@ -5,6 +5,13 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+### Added
+
+- focus-indicator: each `FocusRecord` in `details.allElements` now has `tabStep`
+  (which Tab press moved focus to it, 1-based; `null` for autofocus or scripted
+  focus) and `rect` (`{ x, y, width, height }` in page coordinates at focus
+  time), so the Tab order can be compared with the visual order (WCAG 2.4.3).
+
 ### Changed
 
 - Rule `a11y-skills/auto-play` no longer claims WCAG 1.4.2: its `sc` is now

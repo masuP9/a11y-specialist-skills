@@ -67,7 +67,7 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks focus-indicator-c
   - `focusObscuredIssues` - Focus obscured by fixed/sticky elements (2.4.12)
   - `onFocusViolations` - Focus-triggered context changes (3.2.1)
   - `interrupted` - Whether test was interrupted by navigation
-  - `allElements` - All tested elements with their focus style diffs
+  - `allElements` - All tested elements with their focus style diffs. Each has `tabStep` (which Tab press focused it; null when focus arrived another way) and `rect` (page coordinates at focus time). `id` is the order focusin events arrived, not necessarily the Tab order
 - `focus-indicators.png` - Full-page screenshot with warning labels on problematic elements (use `--screenshot` flag)
 
 **3.2.1 Detection:**
