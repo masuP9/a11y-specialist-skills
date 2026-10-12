@@ -5,6 +5,14 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+### Added
+
+- `focus-indicator-check`, `keyboard-reachability-check`, `keyboard-trap-check`:
+  new `createContext` option (`() => Promise<BrowserContext>`) to create audit
+  contexts yourself, e.g. to attach `context.route` guards. `browser` is now
+  optional; one of the two is required. `contextOptions` is ignored with
+  `createContext`.
+
 ### Changed
 
 - Rule `a11y-skills/auto-play` no longer claims WCAG 1.4.2: its `sc` is now

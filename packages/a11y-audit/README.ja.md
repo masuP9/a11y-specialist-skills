@@ -208,6 +208,25 @@ test("focus indicators", async ({ browser }, testInfo) => {
 });
 ```
 
+`runFocusIndicatorCheck` / `runKeyboardReachabilityCheck` / `runKeyboardTrapCheck` は、
+`browser` の代わりに `createContext` を渡せます。`context.route` による URL 検査のような
+呼び出し側の守りを、検査が使うすべての context に付けたいときに使います。
+
+```ts
+const result = await runKeyboardTrapCheck({
+  createContext: async () => {
+    const context = await browser.newContext({ locale: "ja-JP" });
+    await context.route("**/*", guardRequest); // 呼び出し側の検査
+    return context;
+  },
+  targetUrl: "https://example.com",
+});
+```
+
+- `createContext` と `browser` の両方を渡すと `createContext` が使われます。どちらも無いとエラーになります。
+- `createContext` を使うとき `contextOptions` は使われません。必要なオプションは関数の中で指定してください。
+- 呼ばれるたびに**新しい** context を返してください（検査が使い終わると閉じます。フォーカス表示検査はやり直しのたびに呼びます）。
+
 ### 出力先の解決順
 
 各検査共通:
