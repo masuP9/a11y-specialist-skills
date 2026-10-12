@@ -41,7 +41,7 @@
 
 1. **パスワード・確認コード欄への貼り付けの禁止**。パスワード管理ソフトからの
    貼り付けができないと、記憶や書き写し（認知機能テスト）を強いることになる。
-   実際に貼ってみれば確定できる。
+   実際に貼ってみれば「入らない」ことは確かめられる（別の手段があれば満たしうるので、分類は incomplete）。
 2. **`autocomplete="off"` などで自動入力を妨げている**。パスワード管理ソフトや
    SMS のコード自動入力が使えなくなる。
 3. **CAPTCHA らしき要素**。画像の文字やパズルは認知機能テストになりうるが、
@@ -162,7 +162,7 @@ strict TypeScript、`tsc` ビルド、import 指定子は `.js` 付き、シン�
 
 - 新規: `src/playwright/runAccessibleAuthenticationCheck.ts`、
   `src/test-entries/accessible-authentication-check.ts`、
-  `test/fixtures/pages/accessible-authentication/{paste-blocked,paste-cleared,paste-ok,autocomplete-off,otp,captcha,none,navigates,hangs,hidden}.html`、
+  `test/fixtures/pages/accessible-authentication/{paste-blocked,paste-cleared,paste-ok,autocomplete-off,otp,captcha,none,navigates,hangs,hangs-synthetic,hidden}.html`、
   `test/accessible-authentication.spec.ts`
 - 編集（追加のみ）: `src/constants.ts`、`src/types.ts`、`src/utils/rule-registry.ts`、
   `src/utils/axe-format.ts`、`src/index.ts`、`src/playwright/index.ts`、
@@ -264,25 +264,44 @@ img[src*="captcha" i], img[alt*="captcha" i]
    `PASTE_HELPER_URL = 'https://a11y-audit.invalid/paste-probe'`（`.invalid` は実在しない
    TLD なので外へ通信しない。route で必ず返す）。
    **クリップボードの中身は欄ごとに書き直さない**（1 回書いた値を全欄で使う）。
-4. `page.bringToFront()` してから、欄ごとに:
-   - 元の値を控える（`locator.inputValue()`）。
-   - `locator.focus()`（`timeout: AUTH_PASTE_STEP_TIMEOUT_MS`）→ 空にする
-     （`locator.evaluate(el => { el.value = '' })`。イベントは起こさない）→
-     `page.keyboard.press('ControlOrMeta+V')` → `AUTH_PASTE_SETTLE_MS`（300ms）待つ →
-     `locator.inputValue()`。
-   - 判定: 値が空でなく、**`probe` の先頭部分を含む**（`maxlength` で切られることがあるため、
-     `value.length > 0 && probe.startsWith(value)` または `value === probe`）→ `'inserted'`。
-     それ以外 → `'blocked'`。
-   - `'blocked'` のときだけ、**合成の paste イベント**を送り `defaultPrevented` を
-     `pasteEventPrevented` に記録する（禁止の仕組みの証跡。`true` なら paste の
-     `preventDefault`、`false` なら貼った後に値を消すなど別の仕組み）。
-   - 元の値に戻す（`el.value = original`、イベントは起こさない）。
-   - **時間の上限**: 1 欄分の操作（focus〜値の読み取り）を Node 側で
-     `AUTH_PASTE_FIELD_TIMEOUT_MS`（5000ms）と `Promise.race` する。期限切れなら
-     `openEventListenerInspector(page)` で開いておいた inspector の `terminateExecution()`
-     でページのスクリプトを打ち切り、`error: 'timeout'` を記録して**残りの欄は試さない**。
-     打ち切りに失敗、または inspector が `null`（CDP 不可）なら `error: 'timeout-unrecoverable'`。
-     元の Promise には `.catch(() => {})` を付けて外に漏らさない。借りた page は閉じない。
+4. **（実測より前に）証跡の listener 件数を取る**。inspector が開けていれば対象欄の
+   `paste` / `beforeinput` / `input` の listener の件数を `forEach` で取る
+   （`pasteListenerCount: number | null`）。対象欄を `page.evaluate` でページの一時的な配列
+   （`window.__a11yAuthFields`）に入れ、`forEach('window.__a11yAuthFields', ['paste', 'beforeinput', 'input'])`、
+   取り終わったら `delete window.__a11yAuthFields`。**ページのスクリプトがまだ何も走らされて
+   いない実測前に行う**（実測でハングした後に CDP・evaluate を呼ばないため）。この処理全体も
+   `AUTH_PASTE_STEP_TIMEOUT_MS` で `Promise.race` し、期限切れ・失敗なら全欄 `null` にして
+   実測へ進む。listener は委譲（`document` に付ける）もあるので、判定には使わない。
+5. `page.bringToFront()` してから、欄ごとに **1 欄分の操作列 `pasteOne(field, signal)`** を走らせる。
+   操作列は次のすべてを含む（**合成イベントと復元も期限の内側**）:
+   1. 元の値を控える（`locator.inputValue()`）。
+   2. `locator.focus()`（`timeout: AUTH_PASTE_STEP_TIMEOUT_MS`）→ 空にする
+      （`locator.evaluate(el => { el.value = '' })`。イベントは起こさない）→
+      `page.keyboard.press('ControlOrMeta+V')` → `AUTH_PASTE_SETTLE_MS`（300ms）待つ →
+      `locator.inputValue()`。
+   3. 判定: 値が空でなく、**`probe` の先頭部分を含む**（`maxlength` で切られることがあるため、
+      `value.length > 0 && probe.startsWith(value)` または `value === probe`）→ `'inserted'`。
+      それ以外 → `'blocked'`。
+   4. `'blocked'` のときだけ、**合成の paste イベント**を送り `defaultPrevented` を
+      `pasteEventPrevented` に記録する（禁止の仕組みの証跡。`true` なら paste の
+      `preventDefault`、`false` なら貼った後に値を消すなど別の仕組み）。
+   5. 元の値に戻す（`el.value = original`、イベントは起こさない）。
+
+   - **取り消し**: `signal` は `{ cancelled: boolean }` の Node 側の印。操作列は**各 `await` の
+     直後に `signal.cancelled` を確かめ、立っていれば以後のページ操作をせずに戻る**
+     （`Promise.race` は元の操作列を止めないため。`runMotionActuationCheck.ts` の `simulateOne`
+     がページ側の取消フラグで同じことをしている）。
+   - **時間の上限**: 操作列全体を Node 側で `AUTH_PASTE_FIELD_TIMEOUT_MS`（5000ms）と
+     `Promise.race` する。期限切れなら `signal.cancelled = true` にし、inspector の
+     `terminateExecution()`（これ自体も `AUTH_PASTE_STEP_TIMEOUT_MS` で race する）で
+     ページのスクリプトを打ち切り、`error: 'timeout'` を記録して**残りの欄は試さない**。
+     打ち切りに失敗・期限切れ、または inspector が `null`（CDP 不可）なら
+     `error: 'timeout-unrecoverable'`。元の操作列の Promise には `.catch(() => {})` を付けて
+     外に漏らさない。借りた page は閉じない。
+   - **期限切れ・遷移の後に呼んでよいページ操作は無い**。listener の証跡（手順 4）は実測前に
+     取り終えているので、この後は `page.url()`（Node 側で保持している値を返すだけでページを
+     待たない）以外のページ操作をせず、結果を組み立てて返す。値の復元もしない（未復元である
+     ことは `error` で分かる）。
    - **遷移**: 操作後に `page.url()` が開始時と違う、または「Execution context was destroyed」
      等で失敗したら `navigated: true` を記録し、残りの欄は試さない（OTP 欄で値が入ると
      自動送信するページがあるため）。`probe` はその対策として**短く**する（下記 G）。
@@ -290,14 +309,11 @@ img[src*="captcha" i], img[alt*="captcha" i]
    - 結果: `paste: { result: 'inserted' | 'blocked' | null, valueAfter: string | null,
      pasteEventPrevented: boolean | null, navigated: boolean, error: string | null }`。
      `valueAfter` は**パスワード欄でも記録する**（`probe` しか入らないので漏れる情報は無い）。
-     未計測は `result: null`。
-5. 証跡として、inspector が開けていれば対象欄の `paste` / `beforeinput` / `input` の listener の
-   件数を `forEach` で取る（`pasteListenerCount: number | null`）。対象欄を
-   `page.evaluate` でページの一時的な配列（`window.__a11yAuthFields`）に入れ、
-   `forEach('window.__a11yAuthFields', ['paste', 'beforeinput', 'input'])`、取り終わったら
-   `delete window.__a11yAuthFields`。listener は委譲（`document` に付ける）もあるので、
-   判定には使わない。
-6. inspector はチェック全体の `finally` で `close()`。
+     未計測は `result: null`。期限切れが合成イベントの段で起きた場合は、`result` は
+     `'blocked'` のまま `pasteEventPrevented: null`、`error: 'timeout'`。
+6. inspector はチェック全体の `finally` で `close()`（`close()` は失敗を握りつぶす実装。
+   これも `AUTH_PASTE_STEP_TIMEOUT_MS` で race し、待ちきれなくても結果は返す）。
+   補助ページの `close()` も同様に race する。
 
 ### D. autocomplete の判定（Node 側、全対象欄。editable・visible を問わない）
 
@@ -384,20 +400,20 @@ export type AccessibleAuthenticationCheckResult =
 
 | key | id | classification | scope | impact |
 |-----|----|----|----|----|
-| `auth-paste-blocked` | `a11y-skills/auth-paste-blocked` | `violation` | node | `serious` |
+| `auth-paste-blocked` | `a11y-skills/auth-paste-blocked` | `incomplete` | node | `serious` |
 | `auth-autocomplete` | `a11y-skills/auth-autocomplete` | `incomplete` | node | `moderate` |
 | `auth-captcha` | `a11y-skills/auth-captcha` | `incomplete` | node | `moderate` |
 
 すべて `sc: ['3.3.8']`、`tags: ['a11y-skills', 'wcag22aa', 'wcag338']`、
 `helpUrl: \`${UNDERSTANDING}/accessible-authentication-minimum.html\``。
 
-- `auth-paste-blocked` を `violation` にする根拠（コメントに書く）: 実際に貼って入らなかった
-  ことを確かめている（推定ではない）。3.3.8 の「仕組み（mechanism）」の例外は
-  パスワード管理ソフトの貼り付け・自動入力そのものであり、それを止めている以上
-  例外は当てはまらない。**ただし**同じ画面に認知機能テストを使わない別の手段
-  （パスキー・メールのリンクなど）があれば満たしうるので、`help` に「別の手段がある
-  場合を除き」と書く。分類の方針（死角が無く例外が当てはまらないものだけ violation）と
-  食い違うと Codex レビューで判断された場合は `incomplete` に変える（STOP ではない）。
+- `auth-paste-blocked` を **`incomplete`** にする根拠（コメントに書く）: 貼って入らなかった
+  こと自体は実測で確かめているが、3.3.8 は「認知機能テストを使わない別の手段がある」
+  「自動入力など別の支援の仕組みがある」場合に満たしうる。本チェックはどちらも判定しない
+  （貼り付けの失敗だけでは自動入力が使えないことまでは分からない）。分類の方針
+  （`rule-registry.ts` 冒頭・README「分類は保守的です」: 死角が無く例外が当てはまり得ない
+  ものだけ violation）に従い incomplete とする。Issue #63 の「入らなければ violation」からの
+  変更点として PR 本文に書く。`impact` は確度の高い所見なので `serious` にする。
 - `description` / `help` の例:
   - paste: `'Ensure password and verification code fields allow pasting'` /
     `'Allow pasting into authentication fields so password managers can be used (unless another authentication method without a cognitive function test is offered)'`
@@ -454,19 +470,18 @@ normalizeAccessibleAuthenticationCheck(details) })` → `out.header('Accessible 
 `normalizeAutocompleteAudit` の `toNode` と同じ形（`target: [selector]`、`html`、`htmlTruncated`）。
 
 - **`auth-paste-blocked`**: `applicable = fields.some(kind が password / one-time-code)`。
-  - `pasteTest.status === 'ran'`: `paste.result === 'blocked'` の欄を node（分類は rule どおり violation）。
+  - `pasteTest.status === 'ran'`: `paste.result === 'blocked'` の欄を node（分類は rule どおり incomplete）。
     summary: `` `Pasting into this ${kindLabel} field did not insert the text (value after paste: "${valueAfter}").${how} Allow pasting so password managers can be used.` ``、
     `how` は `pasteEventPrevented === true` なら ` The paste event was cancelled (preventDefault).`、
     `false` なら ` The paste event was not cancelled; a script may clear the value after pasting.`
   - 加えて、`paste.result === null`（未計測: 遷移・期限切れ・例外）または
     実測対象なのに `paste === null`（打ち切りで試さなかった欄）の欄、および
-    **editable でない・見えない欄**（実測しなかった欄）は、
-    `override: 'incomplete'` の別の `bucketize` 呼び出しにまとめる
-    （`Paste could not be tested (${reason}). Check manually whether pasting works.`）。
-    → violation と incomplete の両方の bucket に同じルールが出うる。`bucketize` を 2 回呼ぶ
-    （`mergeNormalizedResults` は violation 優先で統合する）。**ただし**node が 0 の側は
-    呼ばない（passes が二重に出ないように）。両方 0 のときだけ 1 回呼んで passes にする。
-  - `status` が `disabled` / `unavailable`: 対象欄すべてを `override: 'incomplete'` の node
+    **editable でない・見えない欄**（実測しなかった欄）も node にする
+    （`Paste could not be tested (${reason}). Check manually whether pasting works.`。
+    `reason` は `error` の値、`navigated`、`not visible`、`not editable`、`not tried after an earlier timeout or navigation`）。
+    blocked と未計測の node は同じ 1 回の `bucketize` に入れる（どちらも incomplete）。
+    node が 0 なら passes。
+  - `status` が `disabled` / `unavailable`: 対象欄すべてを node
     （`Paste was not tested (${status}${reason ? `: ${reason}` : ''}). Check manually…`）。
 - **`auth-autocomplete`**: `applicable = fields.length > 0`。`autocompleteStatus` が `off` /
   `mismatch` の欄を node。summary:
@@ -512,8 +527,8 @@ normalizeAccessibleAuthenticationCheck(details) })` → `out.header('Accessible 
   （`auth-captcha` は認証欄があるので applicable・node 0 → passes）。パスワード欄の
   `paste.result === 'inserted'`、`valueAfter === '1234'`。
 - `paste-blocked.html`: パスワード欄に `onpaste="return false"`。期待: `auth-paste-blocked` が
-  violation、`pasteEventPrevented === true`。
-- `paste-cleared.html`: `input` で `inputType === 'insertFromPaste'` なら値を消す。期待: violation、
+  incomplete、`paste.result === 'blocked'`、`pasteEventPrevented === true`。
+- `paste-cleared.html`: `input` で `inputType === 'insertFromPaste'` なら値を消す。期待: incomplete、`result === 'blocked'`、
   `pasteEventPrevented === false`、summary に「may clear the value」を含む。
 - `autocomplete-off.html`: ユーザー名欄（autocomplete なし、パスワード欄の直前）と
   パスワード欄が `autocomplete="off"`。期待: `auth-autocomplete` が incomplete で node 1 件
@@ -534,6 +549,11 @@ normalizeAccessibleAuthenticationCheck(details) })` → `out.header('Accessible 
   `AUTH_PASTE_FIELD_TIMEOUT_MS` + 5 秒以内に結果を返し、`error === 'timeout'`、incomplete
   （テストの timeout は 20 秒）。加えて CLI（`--checks accessible-authentication-check`）が
   exit 0〜1 で有限時間内に終わること（`execFile` に 30 秒の timeout）。
+- `hangs-synthetic.html`: 本物の貼り付けは `preventDefault` で止め、**合成の paste イベント
+  （`event.isTrusted === false`）のときだけ** `for (;;) {}` で戻らない handler。
+  期待: 合成イベントの段で期限切れになっても `AUTH_PASTE_FIELD_TIMEOUT_MS` + 5 秒以内に
+  結果を返し、`result === 'blocked'`・`pasteEventPrevented === null`・`error === 'timeout'`。
+  パスワード欄を 2 つ置き、2 つ目が `paste === null`（期限切れの後は試さない）であること。
 
 `test/accessible-authentication.spec.ts` を先に書き（`helpers/fixtures.js` の `test` /
 `runFixtureCheck` を使う）、上の期待を 1 テスト 1 振る舞いで確かめる。失敗理由が
@@ -558,7 +578,7 @@ normalizeAccessibleAuthenticationCheck(details) })` → `out.header('Accessible 
 ### Step 5: 既存テストの更新
 
 - `test/fixture-gallery.spec.ts`: MANIFEST に `paste-blocked.html`
-  （`'a11y-skills/auth-paste-blocked': 'violation'`）、`autocomplete-off.html`
+  （`'a11y-skills/auth-paste-blocked': 'incomplete'`）、`autocomplete-off.html`
   （`'a11y-skills/auth-autocomplete': 'incomplete'`）、`captcha.html`
   （`'a11y-skills/auth-captcha': 'incomplete'`）、`none.html`（3 ルール `'inapplicable'`）。
   冒頭コメントを 15 checks / 27 rules に（#61 が先に入っていれば +1 ずつ）。
@@ -588,7 +608,7 @@ grep -E "accessible-authentication-check|Errors:" /tmp/claude-aa-all.log
   `| \`accessible-authentication-check\` | 3.3.8 | パスワード・確認コード欄の貼り付けの禁止、autocomplete の off、CAPTCHA らしき要素 |`
   / `| ... | 3.3.8 | Paste blocking and autocomplete="off" on password / code fields, CAPTCHA-like elements |`
 - `coverage-matrix.ja.md` / `.md` の 3.3.8 行を
-  `インタラクティブ+自動 | \`accessible-authentication-check\` **[CLI]** + 画面キャプチャ | 貼り付けの禁止でFail、CAPTCHA・別の手段は要確認`
+  `インタラクティブ+自動の候補 | \`accessible-authentication-check\` **[CLI]** + 画面キャプチャ | 貼り付けの禁止は別の手段が無ければFail、CAPTCHA・別の手段は要確認`
   （EN も同様）に。「基準 × チェック名 × 出力ファイル」表に
   `| 3.3.8 | \`accessible-authentication-check\` | \`accessible-authentication-result.json\` |` を SC 順の位置に。
 - `interactive-checks.ja.md` / `.md`: 3.3.8 行の後に短い節「`accessible-authentication-check`
@@ -612,7 +632,7 @@ grep -E "accessible-authentication-check|Errors:" /tmp/claude-aa-all.log
 
 ## Test plan
 
-- **`test/accessible-authentication.spec.ts`**: 10 フィクスチャで欄の分類・貼り付けの実測
+- **`test/accessible-authentication.spec.ts`**: 11 フィクスチャで欄の分類・貼り付けの実測
   （入る / preventDefault / 値を消す）・autocomplete の判定・CAPTCHA の重複除去・
   遷移とハングへの頑健さ・`paste: false`・元の値への復元・schema を検証。
 - **fixture-gallery / rule-classification / schema-validation**: 既存の枠組みに登録。
@@ -638,8 +658,8 @@ ALL must hold:
   落とすかは設計判断）
 - Step 6 で `--checks all` が ERROR・ハング・exit 2 になる
 - いずれかのフィクスチャでチェックがハングする
-- `hangs.html` で `terminateExecution` 後も `keyboard.press` / `inputValue` が戻らない、
-  またはその後の page 操作が止まる
+- `hangs.html` / `hangs-synthetic.html` で `terminateExecution` 後も `keyboard.press` /
+  `inputValue` / `evaluate` が戻らない、またはその後の page 操作（CLI の context close を含む）が止まる
 - schema 検証・lint・format・既存テストのいずれかが green にできない
 
 ## Maintenance notes
@@ -659,9 +679,8 @@ ALL must hold:
     見えない CAPTCHA（スコア型）も候補に出る（summary に not visible と書く）。
   - 別の手段（パスキー・SSO・メールのリンク）があるか、CAPTCHA が物の認識・本人が用意した
     内容の識別か、は判定しない。
-- **`auth-paste-blocked` の分類**: violation の根拠は設計 F。別の手段がある画面で誤って
-  violation になる報告が来たら、`incomplete` に下げるか、同じ画面のパスキー・SSO の
-  ボタンを探して分類を変える拡張を検討する。
+- **`auth-paste-blocked` の分類**: incomplete の根拠は設計 F。violation に上げるなら、
+  別の手段（同じ画面のパスキー・SSO など）と自動入力の可否を排除できる別の設計が要る。
 - **1.3.5 との重なり**: パスワード欄の autocomplete 欠落は `autocomplete-audit`
   （`autocomplete-missing`、1.3.5）が、`off` は両方が報告しうる。SC が違うので重複排除はしない。
 - **バージョン方針**: 本 PR では version を変えない。リリース PR で `@a11y-skills/audit`
