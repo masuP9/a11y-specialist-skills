@@ -17,7 +17,7 @@
 
 ## Status
 
-- **Codex plan review**: 未実施
+- **Codex plan review**: 通過（2 巡目、2026-10-13、見送った low 0 件）
 
 - **Priority**: P2
 - **Effort**: M（2〜3 日相当。値の変え方を欄の種類ごとに分けるのと、移動後のやり直しが中心）
