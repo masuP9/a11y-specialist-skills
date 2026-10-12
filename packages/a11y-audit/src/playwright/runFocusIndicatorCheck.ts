@@ -12,7 +12,6 @@
  */
 
 import type {
-  Browser,
   BrowserContext,
   BrowserContextOptions,
   Page,
@@ -44,7 +43,9 @@ import {
   takeAuditScreenshot,
   requireTargetUrl,
   createAuditOutput,
+  resolveCreateContext,
   type AuditOutputOptions,
+  type ContextSourceOptions,
 } from '../utils/test-harness.js';
 
 // =============================================================================
@@ -105,14 +106,16 @@ const WARNING_STYLES = `
 // Maximum retry attempts to avoid infinite loops
 const MAX_RETRIES = 5;
 
-export interface RunFocusIndicatorCheckOptions extends AuditOutputOptions {
-  /** The browser to create audit contexts in. */
-  browser: Browser;
+export interface RunFocusIndicatorCheckOptions
+  extends AuditOutputOptions, ContextSourceOptions {
   /** Target URL. Falls back to the `TEST_PAGE` env var; required. */
   targetUrl?: string;
   /** Whether to capture a screenshot (default: false). */
   screenshot?: boolean;
-  /** Options forwarded to `browser.newContext()` (locale, viewport, storageState, ...). */
+  /**
+   * Options forwarded to `browser.newContext()` (locale, viewport, storageState, ...).
+   * Ignored when `createContext` is used.
+   */
   contextOptions?: BrowserContextOptions;
   /**
    * Milliseconds to wait after each Tab press for a focus-triggered navigation
@@ -127,8 +130,7 @@ export interface RunFocusIndicatorCheckOptions extends AuditOutputOptions {
    * attribute's value (`null` when the element lacks it), so results can be
    * matched to the caller's own elements. The check opens fresh contexts, so
    * the attribute must already be on the element when the page loads (page
-   * markup, or an init script added by a `browser` whose `newContext` the
-   * caller wraps).
+   * markup, or an init script added to the context `createContext` returns).
    */
   echoAttribute?: string;
 }
@@ -145,6 +147,7 @@ export async function runFocusIndicatorCheck(
 ): Promise<FocusCheckResult> {
   const {
     browser,
+    createContext,
     targetUrl: targetUrlOption,
     screenshot = false,
     contextOptions,
@@ -162,6 +165,10 @@ export async function runFocusIndicatorCheck(
     );
   }
 
+  const newContext = resolveCreateContext(
+    { browser, createContext },
+    contextOptions,
+  );
   const targetUrl = requireTargetUrl(targetUrlOption);
 
   const out = createAuditOutput({
@@ -187,7 +194,7 @@ export async function runFocusIndicatorCheck(
     // Retry loop - restart test when navigation violation is detected
     while (retryCount < MAX_RETRIES) {
       // Create a fresh context for each attempt to reset init scripts
-      context = await browser.newContext(contextOptions);
+      context = await newContext();
       const page = await context.newPage();
 
       // Track main-frame navigations (WCAG 3.2.1). Catches URL changes that

@@ -7,6 +7,11 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- `focus-indicator-check`, `keyboard-reachability-check`, `keyboard-trap-check`:
+  new `createContext` option (`() => Promise<BrowserContext>`) to create audit
+  contexts yourself, e.g. to attach `context.route` guards. `browser` is now
+  optional; one of the two is required. `contextOptions` is ignored with
+  `createContext`.
 - `runFocusIndicatorCheck`: new `echoAttribute` option. Every record that points
   at an element carries the value of that attribute as `echo` (`null` when the
   element lacks it), so results can be matched to the caller's own elements.
