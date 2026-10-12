@@ -162,7 +162,7 @@ strict TypeScript、`tsc` ビルド、import 指定子は `.js` 付き、シン�
 
 - 新規: `src/playwright/runAccessibleAuthenticationCheck.ts`、
   `src/test-entries/accessible-authentication-check.ts`、
-  `test/fixtures/pages/accessible-authentication/{paste-blocked,paste-cleared,paste-ok,autocomplete-off,otp,captcha,none,navigates,hangs,hangs-synthetic,hidden}.html`、
+  `test/fixtures/pages/accessible-authentication/{paste-blocked,paste-cleared,paste-ok,autocomplete-off,otp,captcha,none,navigates,hangs,hangs-synthetic,hidden,secret-restored}.html`、
   `test/accessible-authentication.spec.ts`
 - 編集（追加のみ）: `src/constants.ts`、`src/types.ts`、`src/utils/rule-registry.ts`、
   `src/utils/axe-format.ts`、`src/index.ts`、`src/playwright/index.ts`、
@@ -220,7 +220,7 @@ strict TypeScript、`tsc` ビルド、import 指定子は `.js` 付き、シン�
   `/(otp|one.?time|verification.?code|verify.?code|auth(entication)?.?code|security.?code.?(sms|email)|2fa|mfa|totp|確認コード|認証コード|ワンタイム|検証コード)/i`
   （カードの「セキュリティコード」単独には当てない）。
 - 各欄について記録する: `selector`（`collectBasicFieldInfo` の `getUniqueSelector` と同じ規則。
-  ページ内関数に同じ処理を書く）、`html` / `htmlTruncated`（`HTML_SNIPPET_MAX_LENGTH`）、
+  ページ内関数に同じ処理を書く）、`html` / `htmlTruncated`（`HTML_SNIPPET_MAX_LENGTH`。**`cloneNode(false)` した複製から `value` 属性を外してから outerHTML を取る**。初期値に本物の秘密が入っているページで漏らさないため）、
   `kind`、`inputType`、`name`、`id`、`labelText`、`autocomplete`（属性値。無ければ `null`）、
   `editable`（`:disabled` でも `readOnly` でもない）、`visible`（`getClientRects().length > 0`
   かつ `visibility !== 'hidden'`）、`formSelector`。
@@ -306,10 +306,15 @@ img[src*="captcha" i], img[alt*="captcha" i]
      等で失敗したら `navigated: true` を記録し、残りの欄は試さない（OTP 欄で値が入ると
      自動送信するページがあるため）。`probe` はその対策として**短く**する（下記 G）。
    - その他の例外は `error` に文言を入れて次の欄へ。
-   - 結果: `paste: { result: 'inserted' | 'blocked' | null, valueAfter: string | null,
+   - 結果: `paste: { result: 'inserted' | 'blocked' | null, valueAfterPaste: 'probe' | 'probe-prefix' | 'empty' | 'other' | null,
      pasteEventPrevented: boolean | null, navigated: boolean, error: string | null }`。
-     `valueAfter` は**パスワード欄でも記録する**（`probe` しか入らないので漏れる情報は無い）。
-     未計測は `result: null`。期限切れが合成イベントの段で起きた場合は、`result` は
+   - **欄の値そのものは結果に一切残さない**（details・summary・コンソール出力のどれにも）。
+     貼った後の値は `probe` との比較の種類（`valueAfterPaste`: 一致 / `probe` の先頭部分 /
+     空 / それ以外）だけを記録する。ページが貼り付けを拒んで元の値（既に入っていた本物の
+     パスワードなど）を戻すことがあり、生の値を記録すると認証情報が監査結果に漏れるため。
+     控えた元の値は復元のために Node 側の変数に持つだけで、記録・出力しない。`error` には
+     Playwright の例外の文言を入れるが、欄の値を含む文言を組み立てない。
+     未計測は `result: null`・`valueAfterPaste: null`。期限切れが合成イベントの段で起きた場合は、`result` は
      `'blocked'` のまま `pasteEventPrevented: null`、`error: 'timeout'`。
 6. inspector はチェック全体の `finally` で `close()`（`close()` は失敗を握りつぶす実装。
    これも `AUTH_PASTE_STEP_TIMEOUT_MS` で race し、待ちきれなくても結果は返す）。
@@ -343,7 +348,11 @@ export type AuthFieldKind = 'password' | 'one-time-code' | 'username';
 export interface AuthPasteResult {
   /** null when not measured (navigation, timeout or error). */
   result: 'inserted' | 'blocked' | null;
-  valueAfter: string | null;
+  /**
+   * How the field value compared with the probe after pasting. The raw value is
+   * never recorded: a page may restore a real secret instead of the probe.
+   */
+  valueAfterPaste: 'probe' | 'probe-prefix' | 'empty' | 'other' | null;
   /** Only measured when result is 'blocked'. */
   pasteEventPrevented: boolean | null;
   navigated: boolean;
@@ -471,7 +480,7 @@ normalizeAccessibleAuthenticationCheck(details) })` → `out.header('Accessible 
 
 - **`auth-paste-blocked`**: `applicable = fields.some(kind が password / one-time-code)`。
   - `pasteTest.status === 'ran'`: `paste.result === 'blocked'` の欄を node（分類は rule どおり incomplete）。
-    summary: `` `Pasting into this ${kindLabel} field did not insert the text (value after paste: "${valueAfter}").${how} Allow pasting so password managers can be used.` ``、
+    summary: `` `Pasting into this ${kindLabel} field did not insert the text (field value after paste: ${valueAfterPaste === 'empty' ? 'empty' : 'not the pasted text'}).${how} Allow pasting so password managers can be used.` ``、
     `how` は `pasteEventPrevented === true` なら ` The paste event was cancelled (preventDefault).`、
     `false` なら ` The paste event was not cancelled; a script may clear the value after pasting.`
   - 加えて、`paste.result === null`（未計測: 遷移・期限切れ・例外）または
@@ -496,7 +505,7 @@ normalizeAccessibleAuthenticationCheck(details) })` → `out.header('Accessible 
 
 `ACCESSIBLE_AUTHENTICATION_CHECK_RESULT_SCHEMA` を `buildEnvelopeSchema` で作る。details の
 `required` は型の全フィールド、`kind` / `autocompleteStatus` / `pasteTest.status` /
-`pasteTest.reason` / `paste.result` は `enum`（null 可のものは `null` を enum に含める）、
+`pasteTest.reason` / `paste.result` / `paste.valueAfterPaste` は `enum`（null 可のものは `null` を enum に含める）、
 `string | null` は `['string', 'null']`、`pasteListenerCount` は `['integer', 'null']`、
 `paste` は `oneOf: [{ type: 'null' }, {...object}]`（既存 schema で null 可オブジェクトを
 どう書いているかに合わせる）。`RESULT_SCHEMAS` に `'accessible-authentication-check'` で登録。
@@ -525,7 +534,12 @@ normalizeAccessibleAuthenticationCheck(details) })` → `out.header('Accessible 
 - `paste-ok.html`: `<form>` に `<input type="text" name="user" autocomplete="username">` と
   `<input type="password" autocomplete="current-password">`。期待: 3 ルールとも passes
   （`auth-captcha` は認証欄があるので applicable・node 0 → passes）。パスワード欄の
-  `paste.result === 'inserted'`、`valueAfter === '1234'`。
+  `paste.result === 'inserted'`、`valueAfterPaste === 'probe'`。
+- `secret-restored.html`: パスワード欄に初期値 `value="S3cret-Leak-Canary"` があり、`input` の
+  handler が `insertFromPaste` のとき値を初期値に戻す（貼り付けを拒んで元の値を復元する
+  controlled input の再現）。期待: `result === 'blocked'`、`valueAfterPaste === 'other'`、
+  **結果 JSON 全体（`JSON.stringify(result)`）に `S3cret-Leak-Canary` が含まれない**、
+  検査後の欄の値が `S3cret-Leak-Canary` に戻っている。
 - `paste-blocked.html`: パスワード欄に `onpaste="return false"`。期待: `auth-paste-blocked` が
   incomplete、`paste.result === 'blocked'`、`pasteEventPrevented === true`。
 - `paste-cleared.html`: `input` で `inputType === 'insertFromPaste'` なら値を消す。期待: incomplete、`result === 'blocked'`、
@@ -632,7 +646,7 @@ grep -E "accessible-authentication-check|Errors:" /tmp/claude-aa-all.log
 
 ## Test plan
 
-- **`test/accessible-authentication.spec.ts`**: 11 フィクスチャで欄の分類・貼り付けの実測
+- **`test/accessible-authentication.spec.ts`**: 12 フィクスチャで欄の分類・貼り付けの実測
   （入る / preventDefault / 値を消す）・autocomplete の判定・CAPTCHA の重複除去・
   遷移とハングへの頑健さ・`paste: false`・元の値への復元・schema を検証。
 - **fixture-gallery / rule-classification / schema-validation**: 既存の枠組みに登録。
