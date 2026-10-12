@@ -42,6 +42,7 @@ import {
   resolveScreenshotPath,
   takeAuditScreenshot,
   requireTargetUrl,
+  assertWalkLimits,
   createAuditOutput,
   resolveCreateContext,
   type AuditOutputOptions,
@@ -125,6 +126,18 @@ export interface RunFocusIndicatorCheckOptions
    */
   navigationSettleMs?: number;
   /**
+   * Stop the Tab walk once this many milliseconds have passed since the check
+   * started, counting every 3.2.1 restart (default: no limit). The result then
+   * carries `details.aborted` with `reason: 'timeout'`.
+   */
+  timeBudgetMs?: number;
+  /**
+   * Stop after this many Tab presses in total, counting every 3.2.1 restart
+   * (default: no limit). The result then carries `details.aborted` with
+   * `reason: 'tab-limit'`.
+   */
+  maxTabPresses?: number;
+  /**
    * Name of an attribute on the caller's elements (e.g. `data-test-id`). Every
    * record that points at an element gets an `echo` field holding that
    * attribute's value (`null` when the element lacks it), so results can be
@@ -152,10 +165,13 @@ export async function runFocusIndicatorCheck(
     screenshot = false,
     contextOptions,
     navigationSettleMs = DEFAULT_NAVIGATION_SETTLE_MS,
+    timeBudgetMs,
+    maxTabPresses,
     echoAttribute,
     ...location
   } = options;
 
+  assertWalkLimits({ timeBudgetMs, maxTabPresses });
   if (
     echoAttribute !== undefined &&
     INVALID_ATTRIBUTE_NAME.test(echoAttribute)
@@ -189,6 +205,31 @@ export async function runFocusIndicatorCheck(
   // The context for the current attempt. Held outside the loop so it is always
   // closed in `finally`, including if an attempt throws mid-way.
   let context: BrowserContext | null = null;
+
+  const startedAt = Date.now();
+  let tabPresses = 0;
+  let aborted: FocusCheckDetails['aborted'] = null;
+  const limitReached = (): 'timeout' | 'tab-limit' | null => {
+    if (timeBudgetMs !== undefined && Date.now() - startedAt > timeBudgetMs) {
+      return 'timeout';
+    }
+    if (maxTabPresses !== undefined && tabPresses >= maxTabPresses) {
+      return 'tab-limit';
+    }
+    return null;
+  };
+  const abortWalk = (
+    reason: 'timeout' | 'tab-limit',
+    url: string,
+    recordedCount: number,
+    focusableCount: number,
+  ): NonNullable<FocusCheckDetails['aborted']> => {
+    out.warn(
+      `\n⚠️  Stopped by ${reason === 'timeout' ? 'timeBudgetMs' : 'maxTabPresses'}: ` +
+        `${recordedCount} of ${focusableCount} focusable elements were tested.`,
+    );
+    return { reason, url, recordedCount, focusableCount };
+  };
 
   try {
     // Retry loop - restart test when navigation violation is detected
@@ -304,8 +345,15 @@ export async function runFocusIndicatorCheck(
 
       // Tab through all elements with navigation detection
       for (let i = 0; i < count + EXTRA_TAB_ITERATIONS; i++) {
+        const reason = limitReached();
+        if (reason) {
+          aborted = abortWalk(reason, page.url(), focusHistory.length, count);
+          break;
+        }
+
         const urlBeforeTab = page.url();
 
+        tabPresses++;
         await page.keyboard.press('Tab');
 
         // Get currently focused element IMMEDIATELY after Tab
@@ -425,6 +473,14 @@ export async function runFocusIndicatorCheck(
         break;
       }
 
+      const reason = limitReached();
+      if (reason) {
+        aborted = abortWalk(reason, page.url(), focusHistory.length, count);
+        finalFocusHistory = focusHistory;
+        finalPage = page;
+        break;
+      }
+
       // Close context before retry (only if we're going to retry)
       await context.close();
       context = null;
@@ -468,6 +524,7 @@ export async function runFocusIndicatorCheck(
       allElements: finalFocusHistory,
       // Retries exhausted: elements after the last navigation were not tested.
       interrupted: retryCount >= MAX_RETRIES,
+      aborted,
       screenshotPath: screenshot ? resolvedScreenshotPath : '',
     };
 
@@ -623,6 +680,28 @@ function createFocusTrackerScript(args: {
   const baseStyles = new Map<Element, Record<string, string>>();
   const elementSelectors = new Map<Element, string>();
   let focusId = 0;
+
+  // Tab presses seen on this page load. `tabPending` is true between a Tab
+  // keydown and its keyup, so only a focusin caused by that press gets a tabStep.
+  let tabPresses = 0;
+  let tabPending = false;
+  document.addEventListener(
+    'keydown',
+    (e) => {
+      if (e.key === 'Tab') {
+        tabPresses++;
+        tabPending = true;
+      }
+    },
+    true,
+  );
+  document.addEventListener(
+    'keyup',
+    (e) => {
+      if (e.key === 'Tab') tabPending = false;
+    },
+    true,
+  );
 
   /**
    * Generate a CSS selector for an element
@@ -1085,6 +1164,9 @@ function createFocusTrackerScript(args: {
     }
 
     const id = focusId++;
+    const tabStep = tabPending ? tabPresses : null;
+    tabPending = false;
+    const box = el.getBoundingClientRect();
     el.setAttribute('data-focus-visited', String(id));
 
     // Check if changes are actually visible (not just outline-offset without outline)
@@ -1112,6 +1194,13 @@ function createFocusTrackerScript(args: {
     (window as unknown as { reportFocus: (data: unknown) => void }).reportFocus(
       {
         id,
+        tabStep,
+        rect: {
+          x: box.left + window.scrollX,
+          y: box.top + window.scrollY,
+          width: box.width,
+          height: box.height,
+        },
         tag: el.tagName,
         role: el.getAttribute('role'),
         name:
