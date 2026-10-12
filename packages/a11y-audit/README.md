@@ -48,7 +48,9 @@ result with `removed: true` (its `target` is its document's `html`). When its
 iframe is removed or its frame's content is replaced, the last record taken
 before that stays with `documentRemoved: true`; its `target` is the nearest
 remaining parent document's `html`, and the message names the original
-frame's URL (sound after that last record is not counted). Media without
+frame's URL. Sound after that last record is not counted, but if the last
+record was playing with sound, the time it kept playing is unknown, so it
+goes to `incomplete` regardless of `audibleSeconds`. Media without
 visible `controls` goes to `incomplete` when it was heard for more
 than 3 seconds, or when it is playing with sound at the last check and will
 keep playing for more than 3 seconds (`loop`, an endless stream, or more than

@@ -951,7 +951,47 @@ test('auto-play-audio: frame ごと消えた要素は、説明に frame が消�
   expect(nodes[0]?.failureSummary).toContain('https://player.example/embed');
 });
 
-test('auto-play-audio: 消えた要素は最後の記録が再生中でも、この先も鳴り続けるとはみなさず、鳴った秒数が 3 秒以下なら passes になる', () => {
+test('auto-play-audio: 文書の残っている DOM から消えた要素は、記録が再生中でもこの先も鳴り続けるとはみなさず、鳴った秒数が 3 秒以下なら passes になる', () => {
+  expect(
+    audioBucket(
+      autoPlayDetails({
+        mediaElements: [
+          playingAudio({
+            removed: true,
+            documentRemoved: false,
+            paused: false,
+            duration: 30,
+            currentTime: 2,
+            audibleSeconds: 2,
+          }),
+        ],
+      }),
+    ),
+  ).toBe('passes');
+});
+
+test('auto-play-audio: frame ごと消えた要素の最後の記録が音ありの再生中なら、鳴った秒数が 3 秒以下でも incomplete になり、説明にその後の再生時間は不明と書く', () => {
+  const nodes = audioIncompleteNodes(
+    autoPlayDetails({
+      mediaElements: [
+        playingAudio({
+          removed: true,
+          documentRemoved: true,
+          paused: false,
+          duration: 30,
+          currentTime: 2,
+          audibleSeconds: 2,
+        }),
+      ],
+    }),
+  );
+  expect(nodes).toHaveLength(1);
+  expect(nodes[0]?.failureSummary).toContain(
+    'playback time after its last record is unknown',
+  );
+});
+
+test('auto-play-audio: frame ごと消えた要素の最後の記録が消音なら、鳴った秒数が 3 秒以下で passes になる', () => {
   expect(
     audioBucket(
       autoPlayDetails({
@@ -960,6 +1000,7 @@ test('auto-play-audio: 消えた要素は最後の記録が再生中でも、こ
             removed: true,
             documentRemoved: true,
             paused: false,
+            muted: true,
             duration: 30,
             currentTime: 2,
             audibleSeconds: 2,

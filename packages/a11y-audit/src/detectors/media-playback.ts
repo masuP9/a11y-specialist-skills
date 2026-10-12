@@ -23,8 +23,10 @@
  *   during the check is recorded from the next sample. A shadow root
  *   attached to an element already in the page is not observed. Media in a
  *   frame (document) removed or replaced during the check is reported from
- *   its last record, so sound after that record is not counted, and media
- *   that appears and goes away between two samples is not seen.
+ *   its last record, so sound after that record is not counted (the
+ *   normalizer flags it when that record was playing with sound, since the
+ *   time it played afterwards is unknown), and media that appears and goes
+ *   away with its frame between two samples is not seen.
  * - Controls are matched by name only and are not clicked; controls in a
  *   parent frame or elsewhere on the page are not searched.
  * - Visibility follows rendered ancestors (assigned slots first). It is
@@ -497,7 +499,8 @@ export interface MediaTracker {
  * in-page history with it, so `measure()` reports those elements from their
  * last record, marked `documentRemoved`, targeted at the nearest ancestor
  * document that remains. Sound between that last record and the document's
- * removal is not counted.
+ * removal is not counted; when the last record was playing with sound, the
+ * normalizer flags it because the time it kept playing is unknown.
  */
 export function createMediaTracker(page: Page): MediaTracker {
   const history: HistoryArgs = { key: HISTORY_KEY, runId: randomUUID() };

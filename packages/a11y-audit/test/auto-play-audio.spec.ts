@@ -644,3 +644,66 @@ test(
   },
   { timeout: 60_000 },
 );
+
+test(
+  '最初から鳴る iframe を 3.5 秒後に消すと、最後の記録が音ありの再生中なので、記録上の秒数が 3 秒以下でも auto-play-audio は incomplete になる',
+  async ({ baseUrl, page }, testInfo) => {
+    await page.goto(`${baseUrl}/auto-play-audio/finding-iframe.html`, {
+      waitUntil: 'networkidle',
+    });
+
+    const [result] = await Promise.all([
+      runAutoPlayDetection({
+        page,
+        outputDir: testInfo.outputDir,
+        quiet: true,
+      }),
+      page
+        .waitForTimeout(3500)
+        .then(() =>
+          page.evaluate(() => document.getElementById('player')?.remove()),
+        ),
+    ]);
+
+    assertRuleBuckets(result, { 'a11y-skills/auto-play-audio': 'incomplete' });
+    const media = result.details.mediaElements;
+    expect(media[0]).toMatchObject({ documentRemoved: true, paused: false });
+    expect(media[0]?.audibleSeconds).toBeLessThanOrEqual(3);
+    const node = result.incomplete.find(
+      (r) => r.id === 'a11y-skills/auto-play-audio',
+    )?.nodes[0];
+    expect(node?.failureSummary).toContain(
+      'playback time after its last record is unknown',
+    );
+  },
+  { timeout: 60_000 },
+);
+
+test(
+  '最初から鳴る iframe の中身を 3.5 秒後に消音のページに置き換えると、元のプレイヤーの最後の記録が音ありの再生中なので auto-play-audio は incomplete になる',
+  async ({ baseUrl, page }, testInfo) => {
+    await page.goto(`${baseUrl}/auto-play-audio/finding-iframe.html`, {
+      waitUntil: 'networkidle',
+    });
+
+    const [result] = await Promise.all([
+      runAutoPlayDetection({
+        page,
+        outputDir: testInfo.outputDir,
+        quiet: true,
+      }),
+      page.waitForTimeout(3500).then(() =>
+        page.evaluate(() => {
+          const frame = document.getElementById('player') as HTMLIFrameElement;
+          frame.src = 'frame-child-muted.html';
+        }),
+      ),
+    ]);
+
+    assertRuleBuckets(result, { 'a11y-skills/auto-play-audio': 'incomplete' });
+    const gone = result.details.mediaElements.find((m) => m.documentRemoved);
+    expect(gone).toMatchObject({ selector: '#bgm', paused: false });
+    expect(gone?.audibleSeconds).toBeLessThanOrEqual(3);
+  },
+  { timeout: 60_000 },
+);

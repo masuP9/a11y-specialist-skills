@@ -47,8 +47,9 @@ element that navigated the page could not be identified (see Fixed).
   `details.mediaElements` (with `frame` / `shadowHosts` like focus-indicator,
   plus `framePath`, `audibleSeconds`, `playbackRate`, `removed` for media
   removed during the check, and `documentRemoved` for media whose iframe was
-  removed or whose frame was replaced, reported from its last record) and
-  `details.unmeasuredFrames`. `audibleSeconds`
+  removed or whose frame was replaced, reported from its last record and
+  flagged whenever that record was playing with sound, since how long it
+  kept playing is unknown) and `details.unmeasuredFrames`. `audibleSeconds`
   adds up the time the media was playing, unmuted, with volume and playback
   rate above 0 (each record lasts until the next), so sound muted or stopped
   between screenshots, or a short loop, still counts. Media heard for more

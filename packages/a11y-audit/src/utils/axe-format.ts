@@ -685,15 +685,18 @@ function describeAutoPlayingAudio(media: MediaPlaybackRecord): string | null {
     );
   }
 
-  // A removed element (or one whose document went away) plays no more, even
-  // if its last record was taken while it was playing.
-  const audibleNow =
-    !media.removed &&
+  const audibleInRecord =
     !media.paused &&
     !media.ended &&
     !media.muted &&
     media.volume > 0 &&
     media.playbackRate > 0;
+  // A removed element (or one whose document went away) plays no more, even
+  // if its last record was taken while it was playing.
+  const audibleNow = !media.removed && audibleInRecord;
+  // A document that went away after a record taken while it was playing with
+  // sound may have played for any time until then, so it cannot be cleared.
+  const unknownAfterRecord = media.documentRemoved && audibleInRecord;
   // Sound that starts just before the last sample is heard for too short a
   // time between samples, so also count what is left to play, in real time
   // at the current playback rate.
@@ -706,13 +709,16 @@ function describeAutoPlayingAudio(media: MediaPlaybackRecord): string | null {
           AUDIO_CONTROL_THRESHOLD_SECONDS));
   const heardLongEnough =
     media.audibleSeconds > AUDIO_CONTROL_THRESHOLD_SECONDS;
-  if (!heardLongEnough && !keepsPlaying) return null;
+  if (!heardLongEnough && !keepsPlaying && !unknownAfterRecord) return null;
 
-  const state = !audibleNow
-    ? 'and has since been muted or stopped'
-    : keepsPlaying
-      ? 'and will keep playing with sound for more than 3s'
-      : 'and is still playing';
+  const state = unknownAfterRecord
+    ? 'and was still playing with sound at its last record (playback time ' +
+      'after its last record is unknown)'
+    : !audibleNow
+      ? 'and has since been muted or stopped'
+      : keepsPlaying
+        ? 'and will keep playing with sound for more than 3s'
+        : 'and is still playing';
   const decoded =
     media.audioDecodedBytes === 0
       ? ' No audio data was decoded, so the track may be silent.'
