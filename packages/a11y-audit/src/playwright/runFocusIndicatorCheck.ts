@@ -181,6 +181,9 @@ export async function runFocusIndicatorCheck(
       });
 
       const focusHistory: FocusRecord[] = [];
+      // Elements before the violating one are focused again on every attempt,
+      // so keep only the last attempt's records, like focusHistory.
+      focusObscuredIssues.length = 0;
       let lastFocusedElement: FocusElementRef | null = null;
       let navigationDetected = false;
 
