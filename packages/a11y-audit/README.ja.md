@@ -16,7 +16,7 @@ Claude Code skill から機能本体を切り出したものです。10 個の�
 | 関数 | WCAG |
 | --- | --- |
 | `runAxeAudit` | axe-core による広範な検出 (2.0/2.1/2.2 A & AA) |
-| `runFocusIndicatorCheck` | 2.4.7 フォーカスの可視化 / 2.4.12 フォーカスの非遮蔽 / 3.2.1 オンフォーカス |
+| `runFocusIndicatorCheck` | 2.4.7 フォーカスの可視化 / 2.4.11 フォーカスの非遮蔽（最低限） / 2.4.12 フォーカスの非遮蔽（強化） / 3.2.1 オンフォーカス |
 | `runReflowCheck` | 1.4.10 リフロー |
 | `runTargetSizeCheck` | 2.5.5 / 2.5.8 ターゲットのサイズ |
 | `runTextSpacingCheck` | 1.4.12 テキストの間隔 |

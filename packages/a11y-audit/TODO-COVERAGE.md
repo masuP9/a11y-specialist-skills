@@ -6,23 +6,23 @@
 
 ## 比較的自動化しやすい
 
-### 2.4.12 Focus Not Obscured (Minimum) - **実装済み** ✅
-**概要**: フォーカスを受けた要素がビューポート内で完全に隠れていないこと
+### 2.4.11 Focus Not Obscured (Minimum) / 2.4.12 Focus Not Obscured (Enhanced) - **実装済み** ✅
+**概要**: 2.4.11 は、フォーカスを受けた要素がビューポート内で完全には隠れていないこと。2.4.12（AAA）は、一部でも隠れていないこと
 
 **実装**: `focus-indicator-check.ts` に統合
 - Tab でフォーカス移動し、各要素で遮蔽チェック
 - `getBoundingClientRect()` + `elementFromPoint()` でスタッキング順序を検証
 - fixed/sticky 要素による遮蔽を検出
 - z-index フォールバックで `pointer-events: none` 要素も対応
-- 遮蔽率 20% 以上で報告（閾値は調整可能）
+- 一部でも遮蔽されていれば 2.4.12 として報告（`focus-not-obscured-enhanced`）。ほぼ全部（99% 以上）が遮蔽されていれば `fullyObscured: true` で 2.4.11 としても報告（`focus-not-obscured`）。8px² 未満の端数の重なりだけは無視
 
 **検出可能な問題**:
 - sticky ヘッダー/フッターに隠れるフォーカス要素
 - fixed 位置のバナー/広告による遮蔽
 
 **制限**:
-- 部分的な遮蔽の閾値判定（20%がデフォルト）
-- 複数 obscurer の重複領域は近似計算
+- 見ているのは要素の矩形で、フォーカスの印そのものではない。利用者がフォーカスを動かさずに隠れたものをどけられる場合（2.4.11 の対象外）も判別できないため、どちらも `incomplete`
+- 複数の遮蔽要素が重なる部分は 1 回だけ数える（重なりの合計ではなく和集合の面積）
 
 ---
 
@@ -162,7 +162,7 @@
 |---------|---------|
 | 2.1.1 Keyboard | `keyboard-reachability-check`（部分） ✅ |
 | 2.4.1 Bypass Blocks | `automated-checks.md` |
-| 2.4.12 Focus Not Obscured | `focus-indicator-check.ts` ✅ |
+| 2.4.11 Focus Not Obscured (Minimum) / 2.4.12 (Enhanced) | `focus-indicator-check.ts` ✅ |
 | 2.5.3 Label in Name | `automated-checks.md` |
 | 2.5.8 Target Size (Minimum) | `target-size-check.ts` ✅ |
 | 3.1.1 Language of Page | axe-core + `automated-checks.md` |

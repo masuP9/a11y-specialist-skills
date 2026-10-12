@@ -1,6 +1,6 @@
 /**
  * Compatibility test entry for the focus indicator check
- * (WCAG 2.4.7 / 2.4.12 / 3.2.1).
+ * (WCAG 2.4.7 / 2.4.11 / 2.4.12 / 3.2.1).
  *
  * Thin wrapper around `runFocusIndicatorCheck`. Target URL from `TEST_PAGE`,
  * output dir from `A11Y_OUTPUT_DIR` (falling back to cwd). Captures the legacy

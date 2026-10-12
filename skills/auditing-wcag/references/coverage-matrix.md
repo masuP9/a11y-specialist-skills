@@ -47,7 +47,7 @@ Methods are labeled as Automated/Interactive/Manual/Content and can be combined.
 | 2.4.6 | Automated + Content | a11y tree/excerpts | Fail if headings/labels are unclear |
 | 2.4.7 | Interactive | screenshots | Fail if focus not visible |
 | 2.4.11 | Automated + Interactive | `focus-indicator-check` **[CLI]** + screenshots | Fail if focus is entirely hidden by author-created content |
-| 2.4.12 (AAA) | Interactive | screenshots | Fail if focus is partially obscured |
+| 2.4.12 (AAA) | Automated + Interactive | `focus-indicator-check` **[CLI]** + screenshots | Fail if focus is partially obscured |
 | 2.5.1 | Interactive | logs | Fail if complex gestures required |
 | 2.5.2 | Interactive | logs | Fail if cancellation unavailable |
 | 2.5.3 | Automated + Manual | a11y name diff (axe `label-content-name-mismatch` is experimental and not run by default) | Fail if label text not in accessible name |

@@ -143,7 +143,7 @@ The skill guides through a 4-phase audit:
 4. **Content Review**: Alt text, labels, headings quality
 
 Includes automated test scripts for:
-- Focus indicators (2.4.7, 2.4.12, 3.2.1)
+- Focus indicators (2.4.7, 2.4.11, 2.4.12, 3.2.1)
 - Reflow at 320px (1.4.10)
 - Text spacing (1.4.12)
 - Target size (2.5.5, 2.5.8)

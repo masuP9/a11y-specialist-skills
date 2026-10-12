@@ -289,12 +289,19 @@ export const FOCUS_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
         type: 'array',
         items: {
           type: 'object',
-          required: ['element', 'elementRect', 'overlaps', 'obscuredRatio'],
+          required: [
+            'element',
+            'elementRect',
+            'overlaps',
+            'obscuredRatio',
+            'fullyObscured',
+          ],
           properties: {
             element: FOCUS_ELEMENT_REF_SCHEMA,
             elementRect: { type: 'object' },
             overlaps: { type: 'array', items: { type: 'object' } },
             obscuredRatio: { type: 'number' },
+            fullyObscured: { type: 'boolean' },
           },
         },
       },

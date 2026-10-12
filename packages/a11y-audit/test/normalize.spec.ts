@@ -244,6 +244,7 @@ test('focus check: zero focusable elements → all rules inapplicable', () => {
   expect(buckets.passes).toEqual([]);
   expect(buckets.inapplicable.map((r) => r.id).sort()).toEqual([
     'a11y-skills/focus-not-obscured',
+    'a11y-skills/focus-not-obscured-enhanced',
     'a11y-skills/focus-visible',
     'a11y-skills/no-context-change-on-focus',
   ]);

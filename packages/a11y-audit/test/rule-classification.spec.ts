@@ -32,6 +32,10 @@ const FINDING_EXPECTATIONS: Array<{
     expectedBucket: 'violations',
   },
   { ruleId: 'a11y-skills/focus-not-obscured', expectedBucket: 'incomplete' },
+  {
+    ruleId: 'a11y-skills/focus-not-obscured-enhanced',
+    expectedBucket: 'incomplete',
+  },
 
   // reflow-check
   { ruleId: 'a11y-skills/reflow-overflow', expectedBucket: 'incomplete' },
@@ -124,14 +128,14 @@ test('all manifest finding expectations agree with rule-registry classification'
   }
 });
 
-test('all 20 custom finding rules have a manifest entry', () => {
+test('all 21 custom finding rules have a manifest entry', () => {
   const manifestRuleIds = new Set(FINDING_EXPECTATIONS.map((e) => e.ruleId));
 
   const registryRuleIds = Object.values(RULES).map((r) => r.id);
   expect(
     registryRuleIds.length,
-    'rule-registry should have 20 custom rules',
-  ).toBe(20);
+    'rule-registry should have 21 custom rules',
+  ).toBe(21);
 
   for (const ruleId of registryRuleIds) {
     expect(

@@ -34,8 +34,8 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks keyboard-reachabi
 |---|---|---|---|
 | 2.4.3 | フォーカス順序が視覚順と一致 | フォーカス順ログ | 大きく順序が崩れる |
 | 2.4.7 | フォーカス可視化を確認 | スクショ/動画 | フォーカスが視認不可 |
-| 2.4.11 | フォーカス表示が最低要件を満たす | スクショ/計測 | コントラスト/太さが不足 |
-| 2.4.12 | フォーカスが他のコンテンツに隠されない | スクショ | 固定ヘッダー/フッター/モーダルでフォーカスが隠れる |
+| 2.4.11 | フォーカスが他のコンテンツに完全には隠されない | スクショ/計測 | 固定ヘッダー/フッター/モーダルでフォーカスが全部隠れる |
+| 2.4.12 (AAA) | フォーカスが他のコンテンツに少しも隠されない | スクショ/計測 | 固定ヘッダー/フッター/モーダルでフォーカスが一部でも隠れる |
 
 ### `focus-indicator-check` CLIチェック
 
@@ -43,7 +43,8 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks keyboard-reachabi
 
 **WCAG カバレッジ:**
 - **2.4.7 Focus Visible** - フォーカスインジケーターがない要素を検出
-- **2.4.12 Focus Not Obscured (Minimum)** - fixed/sticky要素によるフォーカス遮蔽を検出
+- **2.4.11 Focus Not Obscured (Minimum)** - fixed/sticky要素にフォーカスが全部隠された要素を検出（`a11y-skills/focus-not-obscured`）
+- **2.4.12 Focus Not Obscured (Enhanced, AAA)** - 一部でも隠された要素をすべて検出（`a11y-skills/focus-not-obscured-enhanced`。全部隠れた要素も含む）
 - **3.2.1 On Focus** - フォーカス時のナビゲーション/コンテキスト変更を検出
 
 **機能:**
@@ -51,7 +52,7 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks keyboard-reachabi
 - Tab キーで各要素にフォーカスを移動し、スタイル変化をキャプチャ
 - フォーカス時のスタイル変化を検出（outline, box-shadow, background-color, border, transform 等）
 - フォーカススタイルがない要素を赤枠と警告ラベルでマーク
-- **fixed/sticky要素によるフォーカス遮蔽を検出（2.4.12）** - `elementFromPoint()` とz-indexフォールバックを使用
+- **fixed/sticky要素によるフォーカス遮蔽を検出（2.4.11 / 2.4.12）** - `elementFromPoint()` とz-indexフォールバックを使用
 - **フォーカスによるナビゲーションを検出（3.2.1違反）**
 - ナビゲーション発生時は元のページに戻ってスクリーンショットを撮影
 - 全ページスクリーンショットで問題箇所を視覚化
@@ -64,7 +65,7 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks focus-indicator-c
 **出力:**
 - `focus-indicator-result.json` - 完全な結果:
   - `issues` - フォーカススタイルがない要素（2.4.7）
-  - `focusObscuredIssues` - fixed/sticky要素によるフォーカス遮蔽（2.4.12）
+  - `focusObscuredIssues` - fixed/sticky要素によるフォーカス遮蔽（一部でも隠れた要素すべて = 2.4.12。`fullyObscured: true` のものが 2.4.11）
   - `onFocusViolations` - フォーカス時のコンテキスト変更（3.2.1）
   - `interrupted` - ナビゲーションによりテストが中断されたかどうか
   - `allElements` - テストした全要素とフォーカススタイルの差分。各要素に Tab の押下回数 `tabStep`（Tab 以外でフォーカスした場合は null）とフォーカス時のページ座標 `rect` を持つ（`id` は focusin を受けた順で、Tab の順とは限らない）

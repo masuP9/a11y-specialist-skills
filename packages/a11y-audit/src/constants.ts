@@ -94,18 +94,20 @@ export const EXTRA_TAB_ITERATIONS = 10;
 export const DEFAULT_NAVIGATION_SETTLE_MS = 50;
 
 // =============================================================================
-// Focus Obscured Detection Constants (WCAG 2.4.12)
+// Focus Obscured Detection Constants (WCAG 2.4.11 / 2.4.12)
 // =============================================================================
 
 /**
- * Minimum overlap ratio to report as obscured (0-1)
- * 0.2 means 20% of the focused element must be covered
+ * Obscured ratio (0-1) from which the element counts as fully obscured
+ * (2.4.11). Slightly below 1 so sub-pixel layout rounding does not leave a
+ * fully covered element looking "almost" covered.
  */
-export const FOCUS_OBSCURED_MIN_OVERLAP_RATIO = 0.2;
+export const FOCUS_OBSCURED_FULL_RATIO = 0.99;
 
 /**
- * Minimum overlap area in pixels to report
- * Ignores tiny overlaps (e.g., 1px border touches)
+ * Minimum overlap area in pixels to report. Any visible overlap counts for
+ * 2.4.12, so this is not a severity threshold: it only drops sub-pixel
+ * slivers from fractional layout (e.g., a 1px border touching a fixed bar).
  */
 export const FOCUS_OBSCURED_MIN_OVERLAP_PX = 8;
 
