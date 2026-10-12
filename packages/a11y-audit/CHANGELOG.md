@@ -7,6 +7,10 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- `focus-indicator-check` now also compares border color/width/style (per
+  side) and text-decoration line/color/thickness/style before and after focus,
+  so a focus cue made only of a border or an underline is no longer reported
+  as "no computed-style change".
 - Rule `a11y-skills/auto-play` no longer claims WCAG 1.4.2: its `sc` is now
   `['2.2.2']` and its `tags` no longer include `wcag142`. The detection only
   diffs screenshots and never inspects audio, so 1.4.2 is left to axe-core's

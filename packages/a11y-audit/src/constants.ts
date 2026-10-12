@@ -59,6 +59,22 @@ export const FOCUS_STYLE_PROPERTIES = [
   'outlineOffset',
   'boxShadow',
   'backgroundColor',
+  'borderTopColor',
+  'borderRightColor',
+  'borderBottomColor',
+  'borderLeftColor',
+  'borderTopWidth',
+  'borderRightWidth',
+  'borderBottomWidth',
+  'borderLeftWidth',
+  'borderTopStyle',
+  'borderRightStyle',
+  'borderBottomStyle',
+  'borderLeftStyle',
+  'textDecorationLine',
+  'textDecorationColor',
+  'textDecorationThickness',
+  'textDecorationStyle',
 ] as const;
 
 /** Selector for focusable elements */
