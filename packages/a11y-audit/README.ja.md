@@ -208,6 +208,14 @@ test("focus indicators", async ({ browser }, testInfo) => {
 });
 ```
 
+結果を呼び出し側の要素に結びつけたいときは、`echoAttribute` に属性名（例: `data-test-id`）を
+渡します。要素を指す記録（`allElements`、`issues`、`focusObscuredIssues` の `element` と
+`obscuredBy`、`onFocusViolations` の `element`）すべてに `echo` として属性の値が付きます
+（属性が無い要素は `null`、オプションを渡さなければ `echo` は付きません）。検査は新しい
+context でページを開くため、属性はページの読み込み時点で要素に付いている必要があります
+（ページのマークアップ、または `browser.newContext` を包んで `addInitScript` で付ける）。
+属性名は文字列としてそのまま `getAttribute` に渡され、不正な名前は `Error` になります。
+
 ### 出力先の解決順
 
 各検査共通:

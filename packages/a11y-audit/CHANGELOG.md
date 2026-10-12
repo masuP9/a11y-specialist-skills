@@ -5,6 +5,12 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+### Added
+
+- `runFocusIndicatorCheck`: new `echoAttribute` option. Every record that points
+  at an element carries the value of that attribute as `echo` (`null` when the
+  element lacks it), so results can be matched to the caller's own elements.
+
 ### Changed
 
 - Rule `a11y-skills/auto-play` no longer claims WCAG 1.4.2: its `sc` is now

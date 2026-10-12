@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>focus-indicator: records carry the caller's attribute value</title>
+    <style>
+      body {
+        margin: 0;
+      }
+      #sticky-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 80px;
+        background: #333;
+        color: white;
+        z-index: 100;
+      }
+      #content {
+        padding-top: 90px;
+        padding-left: 1rem;
+      }
+      #obscured-btn {
+        position: fixed;
+        top: 20px;
+        left: 200px;
+        z-index: 1;
+      }
+      #no-style-btn {
+        outline: none;
+      }
+    </style>
+  </head>
+  <body>
+    <header id="sticky-header" data-test-id="header">
+      <span>Sticky Header (covers the button below)</span>
+    </header>
+    <div id="content">
+      <!-- 2.4.12: covered by the header, which carries its own mark -->
+      <button id="obscured-btn" data-test-id="obscured">Obscured Button</button>
+      <!-- 3.2.1: navigates on focus -->
+      <a
+        id="trigger"
+        href="#"
+        data-test-id="trigger"
+        onfocus="window.location.href = '/navigated'"
+        >Click or focus me</a
+      >
+      <!-- 2.4.7: no focus indicator -->
+      <button id="no-style-btn" data-test-id="no-style">No focus style</button>
+      <!-- No mark at all -->
+      <button id="plain-btn">Unmarked Button</button>
+    </div>
+  </body>
+</html>

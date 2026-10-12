@@ -128,6 +128,11 @@ export interface FocusRecord {
   htmlTruncated: boolean;
   hasFocusStyle: boolean;
   diff: Record<string, string>;
+  /**
+   * Value of the attribute named by the `echoAttribute` option (`null` when
+   * the element lacks it). Absent when the option was not passed.
+   */
+  echo?: string | null;
 }
 
 /** Reference to an element captured in the browser context. */
@@ -138,6 +143,11 @@ export interface FocusElementRef {
   selector: string;
   html: string;
   htmlTruncated: boolean;
+  /**
+   * Value of the attribute named by the `echoAttribute` option (`null` when
+   * the element lacks it). Absent when the option was not passed.
+   */
+  echo?: string | null;
 }
 
 /**
@@ -202,6 +212,7 @@ export interface FocusObscuredOverlap {
     role: string | null;
     name: string;
     selector: string;
+    echo?: string | null;
   };
   /** The overlapping area */
   overlapRect: BoundingRect;

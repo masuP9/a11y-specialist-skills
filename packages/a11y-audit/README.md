@@ -215,6 +215,16 @@ test("focus indicators", async ({ browser }, testInfo) => {
 });
 ```
 
+To match results to your own elements, pass an attribute name (e.g.
+`data-test-id`) as `echoAttribute`. Every record that points at an element
+(`allElements`, `issues`, the `element` and `obscuredBy` in
+`focusObscuredIssues`, the `element` in `onFocusViolations`) then carries the
+attribute's value as `echo` (`null` when the element lacks it; no `echo` at all
+when the option is omitted). The check opens the page in fresh contexts, so the
+attribute must already be on the element when the page loads (page markup, or
+`addInitScript` on a wrapped `browser.newContext`). The name is passed to
+`getAttribute` as a plain string; an invalid name throws an `Error`.
+
 ### Output location resolution
 
 For every check:
