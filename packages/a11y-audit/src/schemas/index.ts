@@ -1004,7 +1004,13 @@ export const MOTION_ACTUATION_CHECK_RESULT_SCHEMA: JsonSchema =
           properties: {
             status: {
               type: 'string',
-              enum: ['ran', 'disabled', 'skipped-no-listeners', 'unsupported'],
+              enum: [
+                'ran',
+                'disabled',
+                'skipped-no-listeners',
+                'skipped-document-only',
+                'unsupported',
+              ],
             },
             results: {
               type: 'array',
@@ -1014,6 +1020,7 @@ export const MOTION_ACTUATION_CHECK_RESULT_SCHEMA: JsonSchema =
                   'type',
                   'eventsDispatched',
                   'domMutations',
+                  'baselineDomMutations',
                   'navigated',
                   'urlAfter',
                   'error',
@@ -1022,6 +1029,7 @@ export const MOTION_ACTUATION_CHECK_RESULT_SCHEMA: JsonSchema =
                   type: MOTION_EVENT_TYPE_SCHEMA,
                   eventsDispatched: { type: ['integer', 'null'] },
                   domMutations: { type: ['integer', 'null'] },
+                  baselineDomMutations: { type: ['integer', 'null'] },
                   navigated: { type: 'boolean' },
                   urlAfter: { type: ['string', 'null'] },
                   error: { type: ['string', 'null'] },

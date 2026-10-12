@@ -24,6 +24,7 @@
  *   when reusing the page afterwards. The CLI uses a fresh context per check.
  */
 
+import { randomUUID } from 'node:crypto';
 import type { Page } from '@playwright/test';
 import type {
   MotionActuationCheckDetails,
@@ -60,22 +61,40 @@ export interface RunMotionActuationCheckOptions extends AuditOutputOptions {
   simulate?: boolean;
 }
 
-type PageSimulationOutcome =
-  | { eventsDispatched: number; domMutations: number }
-  | { error: string };
-
-/** Runs in the page: dispatches synthetic events and counts DOM mutations. */
-async function dispatchMotionEvents(args: {
+interface SimulationArgs {
   type: MotionEventType;
   count: number;
   intervalMs: number;
   settleMs: number;
-}): Promise<PageSimulationOutcome> {
-  const { type, count, intervalMs, settleMs } = args;
+  /**
+   * window[cancelKey].cancelled = true stops the page function before its next
+   * dispatch: Runtime.terminateExecution does not cancel pending timers.
+   */
+  cancelKey: string;
+}
+
+type PageStepOutcome<T> = T | { error: string };
+
+/**
+ * Runs in the page: dispatches `count` events (when `dispatch`) with the same
+ * waits as the baseline, and counts DOM mutations over the whole window. Called
+ * once without dispatching (baseline: changes the page makes by itself) and once
+ * with, so the two windows are structurally identical.
+ */
+async function observeMotionWindow(
+  args: SimulationArgs & { dispatch: boolean },
+): Promise<PageStepOutcome<{ domMutations: number }>> {
+  const { type, count, intervalMs, settleMs, dispatch, cancelKey } = args;
+  const isCancelled = () =>
+    (window as unknown as Record<string, { cancelled?: boolean } | undefined>)[
+      cancelKey
+    ]?.cancelled === true;
   const isMotion = type === 'devicemotion';
+  // `typeof` on an undeclared name is safe (they are missing in non-secure contexts).
   if (
-    typeof (isMotion ? DeviceMotionEvent : DeviceOrientationEvent) !==
-    'function'
+    isMotion
+      ? typeof DeviceMotionEvent !== 'function'
+      : typeof DeviceOrientationEvent !== 'function'
   ) {
     return { error: 'constructor-unavailable' };
   }
@@ -92,39 +111,108 @@ async function dispatchMotionEvents(args: {
   });
 
   for (let i = 0; i < count; i++) {
-    let event: Event;
-    if (isMotion) {
-      const x = i % 2 === 0 ? 25 : -25;
-      event = new DeviceMotionEvent(type, {
-        acceleration: { x, y: 0, z: 0 },
-        accelerationIncludingGravity: { x, y: 0, z: 0 },
-        rotationRate: { alpha: 0, beta: 0, gamma: 0 },
-        interval: 16,
-      });
-    } else {
-      const angle = (60 * i) / Math.max(count - 1, 1);
-      event = new DeviceOrientationEvent(type, {
-        alpha: 0,
-        beta: angle,
-        gamma: angle,
-        absolute: type === 'deviceorientationabsolute',
-      });
+    if (isCancelled()) {
+      observer.disconnect();
+      return { error: 'cancelled' };
     }
-    window.dispatchEvent(event);
+    if (dispatch) {
+      let event: Event;
+      if (isMotion) {
+        const x = i % 2 === 0 ? 25 : -25;
+        event = new DeviceMotionEvent(type, {
+          acceleration: { x, y: 0, z: 0 },
+          accelerationIncludingGravity: { x, y: 0, z: 0 },
+          rotationRate: { alpha: 0, beta: 0, gamma: 0 },
+          interval: 16,
+        });
+      } else {
+        const angle = (60 * i) / Math.max(count - 1, 1);
+        event = new DeviceOrientationEvent(type, {
+          alpha: 0,
+          beta: angle,
+          gamma: angle,
+          absolute: type === 'deviceorientationabsolute',
+        });
+      }
+      window.dispatchEvent(event);
+    }
     await new Promise((resolve) => setTimeout(resolve, intervalMs));
   }
   await new Promise((resolve) => setTimeout(resolve, settleMs));
+  if (isCancelled()) {
+    observer.disconnect();
+    return { error: 'cancelled' };
+  }
 
   // Records still queued count too.
   mutations += observer.takeRecords().length;
   observer.disconnect();
-  return { eventsDispatched: count, domMutations: mutations };
+  return { domMutations: mutations };
 }
 
-const NAVIGATION_ERROR_PATTERN = /Execution context was destroyed|navigat/i;
+const NAVIGATION_ERROR_PATTERN =
+  /Execution context was destroyed|because of a navigation/i;
+
+type StepResult<T> = { outcome: T } | { failure: unknown };
+type SimulationSequence =
+  | {
+      phase: 'baseline';
+      step: StepResult<PageStepOutcome<{ domMutations: number }>>;
+    }
+  | {
+      phase: 'dispatch';
+      baseline: number;
+      step: StepResult<PageStepOutcome<{ domMutations: number }>>;
+    };
+
+function settleStep<T>(promise: Promise<T>): Promise<StepResult<T>> {
+  return promise.then(
+    (outcome) => ({ outcome }),
+    (failure: unknown) => ({ failure }),
+  );
+}
 
 /**
- * Dispatch one event type, bounded by MOTION_SIMULATION_TIMEOUT_MS. A handler
+ * Baseline then dispatch, in two separate evaluates, so a navigation during the
+ * baseline is not attributed to the synthetic events.
+ */
+async function runSequence(
+  page: Page,
+  args: SimulationArgs,
+  onEvaluation: (evaluation: Promise<unknown>) => unknown,
+  urlBefore: string,
+  run: { cancelled: boolean },
+): Promise<SimulationSequence> {
+  const baselineEvaluation = page.evaluate(observeMotionWindow, {
+    ...args,
+    dispatch: false,
+  });
+  onEvaluation(baselineEvaluation);
+  const baselineStep = await settleStep(baselineEvaluation);
+  if (
+    'failure' in baselineStep ||
+    'error' in baselineStep.outcome ||
+    page.url() !== urlBefore ||
+    run.cancelled
+  ) {
+    return { phase: 'baseline', step: baselineStep };
+  }
+  const baseline = baselineStep.outcome.domMutations;
+
+  const dispatchEvaluation = page.evaluate(observeMotionWindow, {
+    ...args,
+    dispatch: true,
+  });
+  onEvaluation(dispatchEvaluation);
+  return {
+    phase: 'dispatch',
+    baseline,
+    step: await settleStep(dispatchEvaluation),
+  };
+}
+
+/**
+ * Simulate one event type, bounded by MOTION_SIMULATION_TIMEOUT_MS. A handler
  * that never returns is stopped through CDP; the page itself is left open
  * (it belongs to the caller).
  */
@@ -138,79 +226,115 @@ async function simulateOne(
     type,
     eventsDispatched: null,
     domMutations: null,
+    baselineDomMutations: null,
     navigated: false,
     urlAfter: null,
   } satisfies Omit<MotionSimulationResult, 'error'>;
 
-  const evaluation = page.evaluate(dispatchMotionEvents, {
-    type,
-    count: MOTION_SIMULATION_EVENT_COUNT,
-    intervalMs: MOTION_SIMULATION_INTERVAL_MS,
-    settleMs: MOTION_SIMULATION_SETTLE_MS,
-  });
-  // If the timeout wins, this promise may reject later (after termination).
-  evaluation.catch(() => {});
+  // Evaluations still pending when the timeout wins may reject later (after
+  // termination); never let that escape.
+  let sequenceSettled = false;
+  const run = { cancelled: false };
+  const cancelKey = `__a11yMotion_${randomUUID()}`;
+  const sequence = runSequence(
+    page,
+    {
+      type,
+      count: MOTION_SIMULATION_EVENT_COUNT,
+      intervalMs: MOTION_SIMULATION_INTERVAL_MS,
+      settleMs: MOTION_SIMULATION_SETTLE_MS,
+      cancelKey,
+    },
+    (evaluation) => evaluation.catch(() => {}),
+    urlBefore,
+    run,
+  );
+  void sequence.then(
+    () => (sequenceSettled = true),
+    () => (sequenceSettled = true),
+  );
+  sequence.catch(() => {});
 
   let timer: NodeJS.Timeout | undefined;
   const timeout = new Promise<'timeout'>((resolve) => {
     timer = setTimeout(() => resolve('timeout'), MOTION_SIMULATION_TIMEOUT_MS);
   });
-  let settled:
-    | { outcome: PageSimulationOutcome }
-    | { failure: unknown }
-    | 'timeout';
+  let settled: SimulationSequence | 'timeout';
   try {
-    settled = await Promise.race([
-      evaluation.then(
-        (outcome) => ({ outcome }),
-        (failure: unknown) => ({ failure }),
-      ),
-      timeout,
-    ]);
+    settled = await Promise.race([sequence, timeout]);
   } finally {
     clearTimeout(timer);
   }
 
+  // A sequence that finished just as the timeout fired is not terminated.
+  if (settled === 'timeout' && sequenceSettled) settled = await sequence;
   if (settled === 'timeout') {
+    run.cancelled = true;
+    let terminated = true;
     try {
       await inspector.terminateExecution();
     } catch {
-      return { ...notMeasured, error: 'timeout-unrecoverable' };
+      terminated = false;
     }
-    return { ...notMeasured, error: 'timeout' };
+    // Pending timers survive termination: tell the page function to stop
+    // before it dispatches again. Bounded, since the page may still be stuck.
+    await Promise.race([
+      page
+        .evaluate((key) => {
+          (window as unknown as Record<string, unknown>)[key] = {
+            cancelled: true,
+          };
+        }, cancelKey)
+        .catch(() => {}),
+      new Promise((resolve) => setTimeout(resolve, 1_000)),
+    ]);
+    return {
+      ...notMeasured,
+      error: terminated ? 'timeout' : 'timeout-unrecoverable',
+    };
   }
 
   const urlAfter = page.url();
   const navigated = urlAfter !== urlBefore;
-  if ('failure' in settled) {
+  const { step } = settled;
+  if ('failure' in step) {
     const message =
-      settled.failure instanceof Error
-        ? settled.failure.message
-        : String(settled.failure);
+      step.failure instanceof Error
+        ? step.failure.message
+        : String(step.failure);
     if (navigated || NAVIGATION_ERROR_PATTERN.test(message)) {
       return {
         ...notMeasured,
         navigated: true,
         urlAfter,
-        error: null,
+        error:
+          settled.phase === 'baseline' ? 'navigated-before-dispatch' : null,
       };
     }
     return { ...notMeasured, error: message };
   }
-
-  const { outcome } = settled;
-  if ('error' in outcome) {
+  if ('error' in step.outcome) {
     return {
       ...notMeasured,
       navigated,
       urlAfter: navigated ? urlAfter : null,
-      error: outcome.error,
+      error: step.outcome.error,
+    };
+  }
+  if (settled.phase === 'baseline') {
+    // Baseline succeeded but the URL changed during it.
+    return {
+      ...notMeasured,
+      navigated: true,
+      urlAfter,
+      error: 'navigated-before-dispatch',
     };
   }
   return {
     type,
-    eventsDispatched: outcome.eventsDispatched,
-    domMutations: outcome.domMutations,
+    eventsDispatched: MOTION_SIMULATION_EVENT_COUNT,
+    domMutations: step.outcome.domMutations,
+    baselineDomMutations: settled.baseline,
     navigated,
     urlAfter: navigated ? urlAfter : null,
     error: null,
@@ -263,8 +387,10 @@ export async function runMotionActuationCheck(
       );
       if (simulate === false) {
         details.simulation.status = 'disabled';
-      } else if (windowTypes.size === 0) {
+      } else if (details.listeners.length === 0) {
         details.simulation.status = 'skipped-no-listeners';
+      } else if (windowTypes.size === 0) {
+        details.simulation.status = 'skipped-document-only';
       } else {
         details.simulation.status = 'ran';
         for (const type of MOTION_EVENT_TYPES) {
@@ -285,7 +411,7 @@ export async function runMotionActuationCheck(
     source: 'motion-actuation-check',
     url,
     details,
-    buckets: normalizeMotionActuationCheck(details),
+    buckets: normalizeMotionActuationCheck(details, url),
   });
 
   out.header('Motion Actuation Check Results', 'WCAG 2.5.4', result.url);

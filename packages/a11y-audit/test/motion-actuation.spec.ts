@@ -9,7 +9,11 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import { test, expect, runFixtureCheck } from './helpers/fixtures.js';
 import { MOTION_SIMULATION_TIMEOUT_MS } from '../dist/constants.js';
 import { RESULT_SCHEMAS } from '../dist/schemas/index.js';
-import type { MotionActuationCheckResult } from '../dist/index.js';
+import { normalizeMotionActuationCheck } from '../dist/index.js';
+import type {
+  MotionActuationCheckDetails,
+  MotionActuationCheckResult,
+} from '../dist/index.js';
 
 const ajv = new Ajv2020({ strict: false, allowUnionTypes: true });
 const validateEnvelope = ajv.compile(RESULT_SCHEMAS['motion-actuation-check']);
@@ -79,7 +83,7 @@ test('document にだけ付いた devicemotion の listener は送信せず、�
 
   expect(result.incomplete.map((r) => r.id)).toEqual([RULE_ID]);
   expect(result.details.listeners[0]?.target).toBe('document');
-  expect(result.details.simulation.status).toBe('skipped-no-listeners');
+  expect(result.details.simulation.status).toBe('skipped-document-only');
   expect(result.incomplete[0]?.nodes[0]?.failureSummary).toContain(
     'only to window',
   );
@@ -100,6 +104,47 @@ test('isTrusted でない合成イベントを無視するページは DOM の�
   expect(result.details.simulation.results[0]?.domMutations).toBe(0);
   expect(result.incomplete[0]?.nodes[0]?.failureSummary).toContain(
     'no DOM change',
+  );
+});
+
+test('自分で DOM を更新し続けるページで listener が何もしないとき、合成イベントで変わったとは書かない', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runMotion(
+    'busy-no-reaction.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  const simulated = result.details.simulation.results[0];
+  expect(simulated?.baselineDomMutations).toBeGreaterThan(0);
+  expect(result.incomplete.map((r) => r.id)).toEqual([RULE_ID]);
+  expect(result.incomplete[0]?.nodes[0]?.failureSummary).not.toContain(
+    'Synthetic events changed the DOM',
+  );
+});
+
+test('合成イベントでページが再読み込みされると、遷移ではなく再読み込みか置き換えと書く', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runMotion(
+    'reloads.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  const simulated = result.details.simulation.results[0];
+  expect(simulated?.navigated).toBe(true);
+  expect(simulated?.urlAfter).toBe(result.url);
+  expect(result.incomplete[0]?.nodes[0]?.failureSummary).toContain(
+    'reload or be replaced',
+  );
+  expect(result.incomplete[0]?.nodes[0]?.failureSummary).not.toContain(
+    'navigation to',
   );
 });
 
@@ -144,6 +189,8 @@ for (const fixture of [
   'no-reaction.html',
   'none.html',
   'navigates.html',
+  'busy-no-reaction.html',
+  'reloads.html',
 ]) {
   test(`${fixture} の結果は motion-actuation-check の schema に合う`, async ({
     page,
@@ -232,4 +279,77 @@ test('戻らない listener のページでも CLI は有限時間で終了コ�
   });
 
   expect([0, 1]).toContain(code);
+});
+
+function summaryFor(
+  simulation: Partial<
+    MotionActuationCheckDetails['simulation']['results'][number]
+  >,
+): string {
+  const details: MotionActuationCheckDetails = {
+    listenerInspection: 'cdp',
+    listeners: [
+      {
+        target: 'window',
+        type: 'devicemotion',
+        useCapture: false,
+        passive: false,
+        once: false,
+        scriptId: '1',
+        lineNumber: 0,
+        columnNumber: 0,
+        handlerPreview: null,
+      },
+    ],
+    simulation: {
+      status: 'ran',
+      results: [
+        {
+          type: 'devicemotion',
+          eventsDispatched: 10,
+          domMutations: 0,
+          baselineDomMutations: 0,
+          navigated: false,
+          urlAfter: null,
+          error: null,
+          ...simulation,
+        },
+      ],
+    },
+  };
+  return (
+    normalizeMotionActuationCheck(details, 'http://x/p.html').incomplete[0]
+      ?.nodes[0]?.failureSummary ?? ''
+  );
+}
+
+test('ベースラインが 0 件で送信中に変化があれば、合成イベントで DOM が変わったと書く', () => {
+  expect(summaryFor({ domMutations: 1, baselineDomMutations: 0 })).toContain(
+    'Synthetic events changed the DOM',
+  );
+});
+
+test('送信中の変化がベースラインの 2 倍に余裕分 3 を足した数以上なら、合成イベントで DOM が変わったと書く', () => {
+  expect(summaryFor({ domMutations: 23, baselineDomMutations: 10 })).toContain(
+    'Synthetic events changed the DOM',
+  );
+});
+
+test('送信中の変化がベースラインの 2 倍に余裕分を足した数に満たなければ、動きが原因とは限らないと書く', () => {
+  const summary = summaryFor({ domMutations: 22, baselineDomMutations: 10 });
+  expect(summary).not.toContain('Synthetic events changed the DOM');
+  expect(summary).toContain('may not come from motion');
+});
+
+test('ベースラインの途中で遷移したときは、合成イベントが原因とは書かず反応は不明と書く', () => {
+  const summary = summaryFor({
+    eventsDispatched: null,
+    domMutations: null,
+    baselineDomMutations: null,
+    navigated: true,
+    urlAfter: 'http://x/other.html',
+    error: 'navigated-before-dispatch',
+  });
+  expect(summary).toContain('before synthetic events were sent');
+  expect(summary).not.toContain('Synthetic events caused');
 });

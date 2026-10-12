@@ -51,8 +51,10 @@ Claude Code skill から機能本体を切り出したものです。10 個の�
 Chrome DevTools Protocol（CDP）で、主フレームの `window` / `document` に付いた `devicemotion` /
 `deviceorientation` / `deviceorientationabsolute` の listener を取り出し、1 件ごとに `incomplete` の
 候補にします。画面の部品での代替と、動きでの起動を止める手段があるかは人が確かめます。
-`window` に listener がある型には合成イベントを送り、DOM が変わるか（`details.simulation.results[].domMutations`）
-と遷移を証跡にします（`simulate: false` で送らない。送るとページの状態が変わるので、同じ page を使い回す
+`window` に listener がある型には合成イベントを送り、DOM が変わるか（`details.simulation.results[].domMutations`。
+送らずに同じ長さ待ったときの変化数 `baselineDomMutations` と比べ、ページが自分で更新している分は差し引いて判断）
+と遷移を証跡にします。`window` に listener が無く `document` だけにある場合は `simulation.status` が
+`skipped-document-only`（listener が 0 件なら `skipped-no-listeners`）です（`simulate: false` で送らない。送るとページの状態が変わるので、同じ page を使い回す
 ときは `false`）。戻らない handler は CDP で打ち切ります。**CDP は Chromium のみ**で、それ以外では
 `listenerInspection: 'unsupported'` の `incomplete` です。iframe の中と、利用者の操作の後に付く
 listener は見つかりません。

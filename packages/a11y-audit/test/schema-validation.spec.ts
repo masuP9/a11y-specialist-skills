@@ -508,6 +508,7 @@ test('motion-actuation-check envelope with window and document listeners and a s
           type: 'devicemotion',
           eventsDispatched: 10,
           domMutations: 3,
+          baselineDomMutations: 0,
           navigated: false,
           urlAfter: null,
           error: null,

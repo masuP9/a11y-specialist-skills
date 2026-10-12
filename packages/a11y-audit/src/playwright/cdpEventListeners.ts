@@ -62,6 +62,9 @@ export interface EventListenerInspector {
   close(): Promise<void>;
 }
 
+/** Upper bound for each CDP call made while closing. */
+const CLOSE_TIMEOUT_MS = 1_000;
+
 const GROUP = 'a11y-audit-event-listeners';
 
 interface RemoteObject {
@@ -126,8 +129,11 @@ export async function openEventListenerInspector(
   let session: CDPSession;
   try {
     session = await page.context().newCDPSession(page);
-  } catch {
-    return null;
+  } catch (error) {
+    // Only a browser without CDP means "unsupported"; anything else is a real failure.
+    const browserName = page.context().browser()?.browserType().name();
+    if (browserName !== undefined && browserName !== 'chromium') return null;
+    throw error;
   }
 
   let closed = false;
@@ -164,14 +170,19 @@ export async function openEventListenerInspector(
       if (closed) return;
       closed = true;
       try {
-        await session.send('Runtime.releaseObjectGroup', {
-          objectGroup: GROUP,
-        });
+        // A page whose main thread is blocked never answers; do not wait for it.
+        await Promise.race([
+          session.send('Runtime.releaseObjectGroup', { objectGroup: GROUP }),
+          new Promise((resolve) => setTimeout(resolve, CLOSE_TIMEOUT_MS)),
+        ]);
       } catch {
         // The page may already be closed.
       }
       try {
-        await session.detach();
+        await Promise.race([
+          session.detach(),
+          new Promise((resolve) => setTimeout(resolve, CLOSE_TIMEOUT_MS)),
+        ]);
       } catch {
         // Same.
       }

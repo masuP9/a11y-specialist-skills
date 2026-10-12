@@ -742,6 +742,11 @@ export interface MotionSimulationResult {
    * settle. null when not measured; 0 only means "dispatched, nothing changed".
    */
   domMutations: number | null;
+  /**
+   * Same measurement over a window of the same length without dispatching:
+   * the page's own DOM changes. null when not measured.
+   */
+  baselineDomMutations: number | null;
   navigated: boolean;
   urlAfter: string | null;
   error: string | null;
@@ -751,7 +756,12 @@ export interface MotionActuationCheckDetails {
   listenerInspection: 'cdp' | 'unsupported';
   listeners: MotionListener[];
   simulation: {
-    status: 'ran' | 'disabled' | 'skipped-no-listeners' | 'unsupported';
+    status:
+      | 'ran'
+      | 'disabled'
+      | 'skipped-no-listeners'
+      | 'skipped-document-only'
+      | 'unsupported';
     results: MotionSimulationResult[];
   };
 }

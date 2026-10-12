@@ -60,8 +60,11 @@ listeners on the main frame's `window` / `document` and reports each as an
 `incomplete` candidate; whether a UI-component alternative exists and motion
 actuation can be turned off is for a human to verify. For event types with a
 `window` listener, synthetic events are dispatched and whether the DOM changes
-(`details.simulation.results[].domMutations`) and any navigation are recorded
-as evidence (`simulate: false` skips this; the simulation changes the page's
+(`details.simulation.results[].domMutations`, compared with `baselineDomMutations`, the
+changes over an equally long window without events, so self-updating pages are not
+misread) and any navigation are recorded as evidence. When listeners exist only on
+`document`, `simulation.status` is `skipped-document-only` (`skipped-no-listeners` when
+there are none) (`simulate: false` skips this; the simulation changes the page's
 state, so use `false` when reusing the same page). A handler that never returns
 is stopped through CDP. **CDP is Chromium only**; elsewhere the result is
 `incomplete` with `listenerInspection: 'unsupported'`. Listeners inside iframes

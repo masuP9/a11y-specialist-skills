@@ -778,7 +778,9 @@ export const MOTION_EVENT_TYPES = [
 export const MOTION_SIMULATION_EVENT_COUNT = 10;
 export const MOTION_SIMULATION_INTERVAL_MS = 50;
 export const MOTION_SIMULATION_SETTLE_MS = 500;
+/** Extra mutations over twice the baseline before the events are credited with a DOM change. */
+export const MOTION_MUTATION_MARGIN = 3;
 /** Per event type; the page script is terminated via CDP when exceeded. */
-export const MOTION_SIMULATION_TIMEOUT_MS = 5_000;
+export const MOTION_SIMULATION_TIMEOUT_MS = 10_000;
 export const DEFAULT_MOTION_ACTUATION_RESULT_FILE =
   'motion-actuation-result.json';

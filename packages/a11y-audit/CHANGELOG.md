@@ -16,7 +16,10 @@ adheres to [Semantic Versioning](https://semver.org/).
   `document` are listed through CDP (`DOMDebugger.getEventListeners`) in
   `details.listeners`, one node each. For event types with a `window`
   listener, synthetic events are dispatched and `details.simulation.results`
-  records the DOM mutation count and any navigation; a handler that never
+  records the DOM mutation count (plus `baselineDomMutations`, measured over
+  an equally long window without events) and any navigation;
+  `simulation.status` is `skipped-document-only` when listeners exist only on
+  `document`; a handler that never
   returns is stopped with `Runtime.terminateExecution` (`error: 'timeout'`).
   Known limitations: Chromium only (elsewhere `listenerInspection:
   'unsupported'` and `incomplete`); iframes are not inspected; listeners added
