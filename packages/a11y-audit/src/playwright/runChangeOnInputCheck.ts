@@ -161,7 +161,8 @@ function collectControls(args: { snippetMax: number }): CollectedControl[] {
   }
 
   const isVisible = (element: Element): boolean => {
-    if (!element.checkVisibility()) return false;
+    // `visibilityProperty` also rejects `visibility: hidden` / `collapse`.
+    if (!element.checkVisibility({ visibilityProperty: true })) return false;
     const rect = element.getBoundingClientRect();
     return rect.width > 0 && rect.height > 0;
   };
@@ -459,7 +460,12 @@ function pickTextValue(
     maxLength > 0 && type !== 'number'
       ? value.padEnd(maxLength, filler).slice(0, maxLength)
       : value;
-  const candidates = [fit(values[0], '1'), fit(values[1], '2')];
+  const candidates: string[] = [fit(values[0], '1'), fit(values[1], '2')];
+  // Truncation can make both equal to the current value: fall back to
+  // full-length digits.
+  if (maxLength > 0 && type !== 'number') {
+    candidates.push('1'.repeat(maxLength), '2'.repeat(maxLength));
+  }
   return candidates.find((candidate) => candidate !== current) ?? null;
 }
 

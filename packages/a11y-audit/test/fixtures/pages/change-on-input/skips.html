@@ -1,6 +1,7 @@
 <!doctype html>
 <!--
-  Controls the check must not change: disabled, readonly, hidden, invisible,
+  Controls the check must not change: disabled, readonly, hidden, invisible
+  (display:none and visibility:hidden),
   and a select with only one option.
   Expected: controlsTested 0, the rule is inapplicable, and only the
   single-option select is listed in skipped (with a reason).
@@ -18,6 +19,9 @@
     <input type="hidden" name="token" value="x" />
     <label for="gone">Invisible</label>
     <input type="text" id="gone" style="display: none" />
+    <label for="vh">Visibility hidden text</label>
+    <input type="text" id="vh" style="visibility: hidden" />
+    <input type="checkbox" id="vhc" style="visibility: hidden" />
     <label for="only">Only option</label>
     <select id="only">
       <option>One</option>

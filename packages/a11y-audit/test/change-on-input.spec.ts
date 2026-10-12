@@ -172,7 +172,7 @@ test('初期値が試験値と同じ欄でも別の値に変えて、2 欄とも
     baseUrl,
   );
 
-  expect(result.details.controlsTested).toBe(2);
+  expect(result.details.controlsTested).toBe(3);
   expect(result.details.skipped).toEqual([]);
   expect(result.details.findings).toEqual([]);
 });
