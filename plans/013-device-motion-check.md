@@ -126,7 +126,7 @@ motion listener は無いので、本チェックは inapplicable で終わる�
 - 新規: `src/playwright/cdpEventListeners.ts`、`src/playwright/runMotionActuationCheck.ts`、
   `src/test-entries/motion-actuation-check.ts`、
   `test/fixtures/pages/event-listeners/listeners.html`、
-  `test/fixtures/pages/motion-actuation/{finding-shake,finding-tilt,document-only,no-reaction,none,navigates}.html`、
+  `test/fixtures/pages/motion-actuation/{finding-shake,finding-tilt,document-only,no-reaction,none,navigates,hangs}.html`、
   `test/cdp-event-listeners.spec.ts`、`test/motion-actuation.spec.ts`
 - 編集（追加のみ）: `src/constants.ts`、`src/types.ts`、`src/utils/rule-registry.ts`、
   `src/utils/axe-format.ts`、`src/index.ts`、`src/playwright/index.ts`、
@@ -196,6 +196,12 @@ export interface EventListenerInspector {
    * order. For per-element checks (#62, #69).
    */
   forEach(expression: string, types?: readonly string[]): Promise<EventListenerRecord[][]>;
+  /**
+   * Stops the script currently running on the page's main thread
+   * (Runtime.terminateExecution). For checks that dispatch events into the
+   * page and must recover when a handler never returns (#62 also needs this).
+   */
+  terminateExecution(): Promise<void>;
   /** Releases remote objects and detaches the CDP session. Safe to call twice. */
   close(): Promise<void>;
 }
@@ -222,6 +228,8 @@ export async function openEventListenerInspector(page: Page): Promise<EventListe
 - **`Debugger.enable` は呼ばない**（スクリプトの URL は取れるが、ページの
   `debugger;` 文で止まって検査がハングするため）。場所は `scriptId` と行・列だけ。
 - **`DOM.enable` も要らない**（objectId 経由で取るため）。
+- `terminateExecution()` は `Runtime.terminateExecution` を送る。失敗は無視しない
+  （呼び出し側が「打ち切れなかった」と記録できるよう例外を投げる）。
 
 ### B. チェック `runMotionActuationCheck`
 
@@ -243,7 +251,8 @@ export interface RunMotionActuationCheckOptions extends AuditOutputOptions {
 2. `forExpression('window', MOTION_EVENT_TYPES)` と `forExpression('document', MOTION_EVENT_TYPES)`。
    `MOTION_EVENT_TYPES = ['devicemotion', 'deviceorientation', 'deviceorientationabsolute']`。
    各記録に `target: 'window' | 'document'` を付けて `listeners` にする。
-   `finally` で `inspector.close()`。
+   inspector はシミュレーションが終わるまで開いたままにし（打ち切りに使う）、
+   チェック全体の `finally` で `inspector.close()`。
 3. `simulate !== false` で、`window` に listener がある型があれば、その型ごとに
    シミュレーションする（`document` にしか無い型は送らない。ブラウザはこれらの
    イベントを `window` にしか送らないので、`document` の listener は実際には動かない）:
@@ -262,11 +271,23 @@ export interface RunMotionActuationCheckOptions extends AuditOutputOptions {
    - 送る処理は**ページ内の 1 回の `page.evaluate`**（`async` で中の待ちも含める）に
      まとめる。コンストラクタ（`DeviceMotionEvent` / `DeviceOrientationEvent`）が
      無ければ `{ error: 'constructor-unavailable' }` を返す。
+   - **時間の上限**: この `page.evaluate` を Node 側で `MOTION_SIMULATION_TIMEOUT_MS`
+     （5000ms。送信 10 回 × 50ms + 待ち 500ms の約 5 倍）と `Promise.race` する。
+     期限を過ぎたら `inspector.terminateExecution()` でページのスクリプトを打ち切り、
+     `error: 'timeout'` を記録して**残りの型は送らない**。打ち切り後に元の
+     `page.evaluate` の Promise が reject されても外に漏らさない（`.catch(() => {})`
+     を付けておく）。`terminateExecution()` 自体が失敗したら `error: 'timeout-unrecoverable'`
+     を記録して同様に止める。いずれの場合も**借りた page は閉じない**（呼び出し側の
+     もの。CLI はチェックごとに context を閉じる）。listener が同期的に戻らない場合でも
+     期限内に結果を返せるので、`--checks all` は止まらない。
    - `page.evaluate` が「Execution context was destroyed」等で失敗した、または
      `page.url()` が変わったら `navigated: true`・`urlAfter` を記録し、残りの型は
      送らない（`simulation.status: 'ran'` のまま、送らなかった型は結果に載せない）。
      その他の失敗は `error` に文言を入れて次の型へ進む（チェック全体は落とさない）。
    - 結果: `{ type, eventsDispatched, domMutations, navigated, urlAfter, error }`。
+     **遷移・期限切れ・評価失敗で evaluate の戻り値が得られなかったときは
+     `eventsDispatched` と `domMutations` を `null`（未計測）にする**。0 は「送って、
+     変化が無かった」ときだけに使う。
 4. `simulation.status`: CDP 不可 → `'unsupported'`、`simulate: false` → `'disabled'`、
    `window` の listener が 0 → `'skipped-no-listeners'`、それ以外 → `'ran'`。
 5. `buildAuditResult({ source: 'motion-actuation-check', url, details, buckets:
@@ -294,9 +315,13 @@ export interface MotionListener {
 
 export interface MotionSimulationResult {
   type: MotionEventType;
-  eventsDispatched: number;
-  /** childList + attributes + characterData records observed during dispatch and settle. */
-  domMutations: number;
+  /** null when not measured (navigation, timeout or evaluate failure). */
+  eventsDispatched: number | null;
+  /**
+   * childList + attributes + characterData records observed during dispatch and
+   * settle. null when not measured; 0 only means "dispatched, nothing changed".
+   */
+  domMutations: number | null;
   navigated: boolean;
   urlAfter: string | null;
   error: string | null;
@@ -346,8 +371,11 @@ export type MotionActuationCheckResult = AuditCheckResult<MotionActuationCheckDe
   - `sim`: `target === 'document'` なら「Browsers dispatch this event only to window, so this listener may never run.」。
     `window` なら、その型のシミュレーション結果で
     「Synthetic events changed the DOM (${n} mutations).」/「…caused navigation to ${urlAfter}.」/
-    「Synthetic events caused no DOM change (the page may react only to trusted events or draw on canvas).」/
-    結果が無ければ「Not simulated.」
+    「Synthetic events caused no DOM change (the page may react only to trusted events or draw on canvas).」
+    （`domMutations === 0` のときだけ）/
+    `error === 'timeout'` 等で `domMutations === null` なら
+    「Simulation did not finish (${error}); the page's reaction is unknown.」
+    （**未計測を「変化なし」と書かない**）/ 結果が無ければ「Not simulated.」
   - summary が listener ごとに違う（type・場所が違う）ので、`mergeNormalizedResults` の
     重複排除（`target` + `failureSummary`）で潰れない。同じ型・同じ場所の listener が
     2 つある場合は潰れてよい。
@@ -358,7 +386,7 @@ export type MotionActuationCheckResult = AuditCheckResult<MotionActuationCheckDe
 `MOTION_ACTUATION_CHECK_RESULT_SCHEMA` を `buildEnvelopeSchema` で作る。details の
 `required` は型の全フィールド、`type` / `target` / `listenerInspection` /
 `simulation.status` は `enum`、`handlerPreview` / `urlAfter` / `error` は
-`['string', 'null']`。`RESULT_SCHEMAS` に `'motion-actuation-check'` で登録。
+`['string', 'null']`、`eventsDispatched` / `domMutations` は `['integer', 'null']`。`RESULT_SCHEMAS` に `'motion-actuation-check'` で登録。
 
 ### G. 定数（`src/constants.ts`）
 
@@ -368,6 +396,8 @@ export const MOTION_EVENT_TYPES = ['devicemotion', 'deviceorientation', 'deviceo
 export const MOTION_SIMULATION_EVENT_COUNT = 10;
 export const MOTION_SIMULATION_INTERVAL_MS = 50;
 export const MOTION_SIMULATION_SETTLE_MS = 500;
+/** Per event type; the page script is terminated via CDP when exceeded. */
+export const MOTION_SIMULATION_TIMEOUT_MS = 5_000;
 export const EVENT_LISTENER_HANDLER_PREVIEW_MAX = 200;
 export const DEFAULT_MOTION_ACTUATION_RESULT_FILE = 'motion-actuation-result.json';
 ```
@@ -434,7 +464,13 @@ export const DEFAULT_MOTION_ACTUATION_RESULT_FILE = 'motion-actuation-result.jso
 - 全ケースでエンベロープが `RESULT_SCHEMAS['motion-actuation-check']` に valid
 - シミュレーションで遷移するページ（`navigates.html`: `devicemotion` で
   `location.assign('none.html')`）で例外を投げず、`navigated === true`、
-  `result.url` が元のフィクスチャ URL
+  `result.url` が元のフィクスチャ URL、`eventsDispatched === null`・`domMutations === null`、
+  summary に「no DOM change」を含まない
+- 戻らない listener のページ（`hangs.html`: `devicemotion` の handler が `for (;;) {}`）で、
+  チェックが `MOTION_SIMULATION_TIMEOUT_MS` + 5 秒以内に結果を返し、`error === 'timeout'`、
+  `domMutations === null`、incomplete（テストの timeout は 20 秒に設定）。
+  加えて `hangs.html` に対して CLI（`--checks motion-actuation-check`）が exit 0〜1 で
+  有限時間内に終わること（`execFile` に 30 秒の timeout）
 
 ### Step 5: runner・CLI・test-entry・exports
 
@@ -535,6 +571,9 @@ ALL must hold:
   （`dispatchEvent` 方式の限界。CDP の sensor override に切り替えるかは設計判断）
 - Step 6 で `--checks all` が ERROR・ハング・exit 2 になる
 - いずれかのフィクスチャでチェックがハングする
+- `hangs.html` で `Runtime.terminateExecution` を送っても `page.evaluate` が戻らない、
+  またはその後の page 操作（`out` の後処理、CLI の context close）が止まる
+  （打ち切り方式の限界。page を閉じる方式にするかは設計判断）
 - schema 検証・lint・format・既存テストのいずれかが green にできない
 
 ## Maintenance notes
