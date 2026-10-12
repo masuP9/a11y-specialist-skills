@@ -56,6 +56,7 @@ async function buildRunnerRegistry(): Promise<Record<string, RunnerEntry>> {
     runKeyboardTrapCheck,
     runKeyboardReachabilityCheck,
     runRedundantEntryCheck,
+    runMotionActuationCheck,
   } = await import('../../dist/playwright/index.js');
 
   return {
@@ -110,6 +111,10 @@ async function buildRunnerRegistry(): Promise<Record<string, RunnerEntry>> {
     'redundant-entry-check': {
       kind: 'page-current',
       run: (opts) => runRedundantEntryCheck(opts),
+    },
+    'motion-actuation-check': {
+      kind: 'page-current',
+      run: (opts) => runMotionActuationCheck(opts),
     },
   };
 }

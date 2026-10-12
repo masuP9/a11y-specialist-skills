@@ -1,0 +1,18 @@
+<!doctype html>
+<!--
+  No motion listener, only a click listener.
+  Expected: a11y-skills/motion-actuation is inapplicable,
+  simulation.status is "skipped-no-listeners".
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>No motion listener</title>
+  </head>
+  <body>
+    <button id="b" type="button">Go</button>
+    <script>
+      document.getElementById('b').addEventListener('click', function () {});
+    </script>
+  </body>
+</html>

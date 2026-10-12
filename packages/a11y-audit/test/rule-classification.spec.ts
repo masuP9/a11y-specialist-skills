@@ -101,6 +101,9 @@ const FINDING_EXPECTATIONS: Array<{
 
   // redundant-entry-check
   { ruleId: 'a11y-skills/redundant-entry', expectedBucket: 'incomplete' },
+
+  // motion-actuation-check
+  { ruleId: 'a11y-skills/motion-actuation', expectedBucket: 'incomplete' },
 ];
 
 /**
@@ -132,14 +135,14 @@ test('all manifest finding expectations agree with rule-registry classification'
   }
 });
 
-test('all 23 custom finding rules have a manifest entry', () => {
+test('all 24 custom finding rules have a manifest entry', () => {
   const manifestRuleIds = new Set(FINDING_EXPECTATIONS.map((e) => e.ruleId));
 
   const registryRuleIds = Object.values(RULES).map((r) => r.id);
   expect(
     registryRuleIds.length,
-    'rule-registry should have 23 custom rules',
-  ).toBe(23);
+    'rule-registry should have 24 custom rules',
+  ).toBe(24);
 
   for (const ruleId of registryRuleIds) {
     expect(

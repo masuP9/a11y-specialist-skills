@@ -12,6 +12,7 @@ import {
   normalizeFocusCheck,
   normalizeKeyboardReachabilityCheck,
   normalizeKeyboardTrapCheck,
+  normalizeMotionActuationCheck,
   normalizeRedundantEntryCheck,
   normalizeReflowCheck,
   normalizeTargetSizeCheck,
@@ -20,6 +21,7 @@ import type {
   FocusCheckDetails,
   KeyboardReachabilityCheckDetails,
   KeyboardTrapCheckDetails,
+  MotionActuationCheckDetails,
   RedundantEntryCheckDetails,
   RedundantEntryField,
   ReflowCheckDetails,
@@ -470,6 +472,71 @@ test('redundant-entry-check envelope with scoped and repeated groups (with and w
     buckets: normalizeRedundantEntryCheck(details),
   });
   expectValid('redundant-entry-check', result);
+});
+
+test('motion-actuation-check envelope with window and document listeners and a simulation result validates against its schema', () => {
+  const details: MotionActuationCheckDetails = {
+    listenerInspection: 'cdp',
+    listeners: [
+      {
+        target: 'window',
+        type: 'devicemotion',
+        useCapture: false,
+        passive: false,
+        once: false,
+        scriptId: '12',
+        lineNumber: 9,
+        columnNumber: 4,
+        handlerPreview: 'function () {}',
+      },
+      {
+        target: 'document',
+        type: 'deviceorientation',
+        useCapture: true,
+        passive: false,
+        once: false,
+        scriptId: '12',
+        lineNumber: 20,
+        columnNumber: 0,
+        handlerPreview: null,
+      },
+    ],
+    simulation: {
+      status: 'ran',
+      results: [
+        {
+          type: 'devicemotion',
+          eventsDispatched: 10,
+          domMutations: 3,
+          navigated: false,
+          urlAfter: null,
+          error: null,
+        },
+      ],
+    },
+  };
+  const result = buildAuditResult({
+    source: 'motion-actuation-check',
+    url: 'about:blank',
+    details,
+    buckets: normalizeMotionActuationCheck(details),
+  });
+  expectValid('motion-actuation-check', result);
+});
+
+test('motion-actuation-check envelope for an unsupported browser validates against its schema', () => {
+  const details: MotionActuationCheckDetails = {
+    listenerInspection: 'unsupported',
+    listeners: [],
+    simulation: { status: 'unsupported', results: [] },
+  };
+  const result = buildAuditResult({
+    source: 'motion-actuation-check',
+    url: 'about:blank',
+    details,
+    buckets: normalizeMotionActuationCheck(details),
+  });
+  expectValid('motion-actuation-check', result);
 });
 
 test('the pre-0.3.0 flat result shape is rejected', () => {

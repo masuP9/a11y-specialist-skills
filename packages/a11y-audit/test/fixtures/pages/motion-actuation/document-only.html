@@ -1,0 +1,21 @@
+<!doctype html>
+<!--
+  The devicemotion listener is on document, but browsers dispatch the event
+  only to window, so it never runs.
+  Expected: incomplete, listener target is "document",
+  simulation.status is "skipped-no-listeners", summary mentions "only to window".
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Document-only listener</title>
+  </head>
+  <body>
+    <p id="status">Waiting</p>
+    <script>
+      document.addEventListener('devicemotion', function () {
+        document.getElementById('status').textContent = 'Moved';
+      });
+    </script>
+  </body>
+</html>
