@@ -311,6 +311,73 @@ test('別の要素に覆われて click がタイムアウトする欄は、移�
   expect(result.details.skipped[0]?.reason).not.toBe('');
 });
 
+test('select の change が setTimeout でフォーカスを移すページは focus-moved の finding になる', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runChange(
+    'select-async-focus.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  expect(result.details.findings).toHaveLength(1);
+  expect(result.details.findings[0]?.control.selector).toBe('#plan');
+  expect(result.details.findings[0]?.changes).toEqual([
+    { kind: 'focus-moved', toSelector: '#next' },
+  ]);
+});
+
+test('最後の欄で移動したときは、試していない欄が無いので再起動しない', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runChange(
+    'last-navigates.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  expect(result.details.findings).toHaveLength(1);
+  expect(result.details.restarts).toBe(0);
+  expect(result.details.aborted).toBeNull();
+});
+
+test('同じ id の text 欄が 2 つあっても、別々に試して controlsTested が 2 になる', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runChange(
+    'duplicate-id.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  expect(result.details.controlsFound).toBe(2);
+  expect(result.details.controlsTested).toBe(2);
+});
+
+test('onfocus でフォーカスが動く select は値を変えず、focus-moved-on-focus で skipped になる', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runChange(
+    'focus-on-focus.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  expect(result.details.findings).toEqual([]);
+  expect(result.details.skipped).toContainEqual({
+    selector: '#trap',
+    reason: 'focus-moved-on-focus',
+  });
+});
+
 test('settleMs に 0 を渡すと Error になる', async ({
   page,
   browser,

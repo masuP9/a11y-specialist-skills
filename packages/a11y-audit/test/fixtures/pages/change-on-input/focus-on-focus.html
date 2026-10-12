@@ -1,0 +1,21 @@
+<!doctype html>
+<!--
+  Focusing the select moves focus to another field (an on-focus behavior,
+  3.2.1, not an on-input one).
+  Expected: no findings; #trap is skipped with reason "focus-moved-on-focus".
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Focus moves on focus</title>
+  </head>
+  <body>
+    <label for="trap">Trap</label>
+    <select id="trap" onfocus="document.getElementById('other').focus()">
+      <option>A</option>
+      <option>B</option>
+    </select>
+    <label for="other">Other</label>
+    <input type="text" id="other" />
+  </body>
+</html>

@@ -29,6 +29,10 @@
  * - A change that surfaces after `settleMs` (e.g. navigation after a network
  *   round trip) is missed.
  * - Large content changes (swapping a panel) are not recorded.
+ * - Controls of type date / time / range / color / file etc. are not collected.
+ * - On a page whose ids change on every load, a restart finds the controls
+ *   under new selectors and tries the same control again, so the same finding
+ *   can repeat (restarts are capped at CHANGE_ON_INPUT_MAX_RESTARTS).
  * - It really changes values and fires `change`: pages that autosave or
  *   submit on change may send requests.
  */
@@ -94,7 +98,7 @@ const ACTION_TIMEOUT_MS = 5_000;
  * "navigations" even for a plain timeout.
  */
 const NAVIGATION_ERROR =
-  /Execution context was destroyed|Frame was detached|Target page, context or browser has been closed|navigation/i;
+  /Execution context was destroyed|Frame was detached|Target page, context or browser has been closed/i;
 
 /** What the browser reports about one control (see `collectControls`). */
 interface CollectedControl extends ChangeOnInputControl {
@@ -127,8 +131,13 @@ function collectControls(args: { snippetMax: number }): CollectedControl[] {
   const clip = (text: string | null | undefined): string =>
     (text ?? '').replace(/\s+/g, ' ').trim().slice(0, 80);
 
+  // Keep in sync with the function of the same name in probeControl.
   function getUniqueSelector(element: Element): string {
-    if (element.id) return `#${element.id}`;
+    // An id that several elements share does not identify any of them.
+    const idSelector = `[id="${element.id.replace(/["\\]/g, '\\$&')}"]`;
+    if (element.id && document.querySelectorAll(idSelector).length === 1) {
+      return `#${CSS.escape(element.id)}`;
+    }
     const path: string[] = [];
     let current: Element | null = element;
     while (current && current !== document.body) {
@@ -143,10 +152,10 @@ function collectControls(args: { snippetMax: number }): CollectedControl[] {
     return path.join(' > ');
   }
 
-  // `#id` is not valid CSS for every id, so look ids up with an attribute selector.
   function getLocator(element: Element): string {
-    if (element.id) {
-      return `[id="${element.id.replace(/["\\]/g, '\\$&')}"]`;
+    const idSelector = `[id="${element.id.replace(/["\\]/g, '\\$&')}"]`;
+    if (element.id && document.querySelectorAll(idSelector).length === 1) {
+      return idSelector;
     }
     return `body > ${getUniqueSelector(element)}`;
   }
@@ -302,8 +311,12 @@ function probeControl(
         )
       : [input];
 
+  // Keep identical to the function of the same name in collectControls.
   function getUniqueSelector(target: Element): string {
-    if (target.id) return `#${target.id}`;
+    const idSelector = `[id="${target.id.replace(/["\\]/g, '\\$&')}"]`;
+    if (target.id && document.querySelectorAll(idSelector).length === 1) {
+      return `#${CSS.escape(target.id)}`;
+    }
     const path: string[] = [];
     let current: Element | null = target;
     while (current && current !== document.body) {
@@ -528,7 +541,9 @@ export async function runChangeOnInputCheck(
         newWindows.push(record);
         pendingPopups.push(
           popup
-            .waitForLoadState('domcontentloaded')
+            .waitForLoadState('domcontentloaded', {
+              timeout: ACTION_TIMEOUT_MS,
+            })
             .then(() => {
               record.url = popup.url();
             })
@@ -611,6 +626,21 @@ export async function runChangeOnInputCheck(
             }
           }
           await locator.focus();
+          // Focus moving by itself is On Focus (3.2.1), not On Input: leave the
+          // value alone (unless focus already caused something recorded).
+          const onFocus = await probe(locator, { kind, op: 'read' });
+          if (
+            onFocus.movedTo &&
+            navigations.length === 0 &&
+            newWindows.length === 0 &&
+            dialogs.length === 0
+          ) {
+            skipped.push({
+              selector: control.selector,
+              reason: 'focus-moved-on-focus',
+            });
+            continue;
+          }
           if (kind === 'select') {
             await locator.selectOption({ index: control.altIndex });
             action = `selected option ${control.altIndex + 1} "${control.altText}"`;
@@ -632,6 +662,8 @@ export async function runChangeOnInputCheck(
             focusMoved ??= blurred.movedTo;
           }
           await page.waitForTimeout(settleMs);
+          // A handler may move focus a moment later (setTimeout).
+          focusMoved ??= (await probe(locator, { kind, op: 'read' })).movedTo;
         } catch (error) {
           trialError = error;
         }
@@ -699,7 +731,14 @@ export async function runChangeOnInputCheck(
 
       await context.close();
       context = null;
-      if (aborted || !navigated) break;
+      // Nothing left to try: restarting would only reload the page.
+      if (
+        aborted ||
+        !navigated ||
+        controls.every((control) => tried.has(control.selector))
+      ) {
+        break;
+      }
       if (restarts >= CHANGE_ON_INPUT_MAX_RESTARTS) {
         abort('restart-limit');
         break;

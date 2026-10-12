@@ -23,7 +23,9 @@ adheres to [Semantic Versioning](https://semver.org/).
   iframes, shadow roots, ARIA-only widgets); one value per control; changes
   made by handlers are not undone, so an earlier control can affect a later
   one; changes surfacing after `settleMs` and large content changes are not
-  recorded; it really changes values and fires `change`, so pages that
+  recorded; `date` / `time` / `range` / `color` / `file` types are not
+  collected; on pages whose ids change on every load a restart tries the same
+  control again, so a finding can repeat (up to the restart cap); it really changes values and fires `change`, so pages that
   autosave or submit on change may send requests.
 - `motion-actuation-check` (WCAG 2.5.4): new check, `runMotionActuationCheck`
   (takes a `page`; `simulate: false` skips the synthetic events) and the CLI

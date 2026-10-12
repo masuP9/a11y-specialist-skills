@@ -1,0 +1,15 @@
+<!doctype html>
+<!--
+  Two text fields share the same id (invalid but common). No handlers.
+  Expected: both are tested separately (controlsTested 2).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Duplicate id</title>
+  </head>
+  <body>
+    <label>Home email <input type="text" id="email" /></label>
+    <label>Work email <input type="text" id="email" /></label>
+  </body>
+</html>

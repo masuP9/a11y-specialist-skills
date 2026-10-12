@@ -70,7 +70,9 @@ blur して `change` を起こす）、主フレームの移動・新しいウ�
 （`details.restarts`）。値はイベントを起こさずに戻しますが、handler がページに加えた変更は
 戻りません。**実ページで値を変え `change` を起こすので、自動保存・自動送信のあるページでは
 実際に通信が起きえます。** iframe・shadow root の中の欄、ARIA だけの独自部品、1 種類の値でしか
-試さないこと、`settleMs` を過ぎてから起きる変化は見落とします。
+試さないこと、`settleMs` を過ぎてから起きる変化は見落とします。`date` / `time` / `range` /
+`color` / `file` などの type は集めません。id が読み込みごとに変わるページでは、やり直しのたびに
+同じ欄を再び試し、同じ finding が重複しえます（やり直しは `CHANGE_ON_INPUT_MAX_RESTARTS` 回まで）。
 
 `runAutoPlayDetection` の 1.4.2（`a11y-skills/auto-play-audio`）は、ページと iframe（入れ子・
 shadow root の中も含む）の `<audio>`・`<video>` について、「再生中・消音でない・音量が 0 より大きい・

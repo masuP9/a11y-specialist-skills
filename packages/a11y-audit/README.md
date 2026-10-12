@@ -86,7 +86,10 @@ that handlers made to the page are not undone. **It really changes values and
 fires `change` on the live page, so pages that autosave or submit on change may
 send requests.** Controls inside iframes or shadow roots, ARIA-only widgets, a
 single value per control, and changes that surface after `settleMs` are not
-covered.
+covered. Types such as `date` / `time` / `range` / `color` / `file` are not
+collected. On pages whose ids change on every load, each restart tries the same
+control again and the same finding can repeat (restarts are capped at
+`CHANGE_ON_INPUT_MAX_RESTARTS`).
 
 For 1.4.2 (`a11y-skills/auto-play-audio`), `runAutoPlayDetection` records
 whether every `<audio>` / `<video>` in the page and its iframes (nested frames
