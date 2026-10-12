@@ -29,6 +29,8 @@
  * - A change that surfaces after `settleMs` (e.g. navigation after a network
  *   round trip) is missed.
  * - Large content changes (swapping a panel) are not recorded.
+ * - Each control costs `settleMs` twice: after focusing it and after changing
+ *   its value.
  * - Controls of type date / time / range / color / file etc. are not collected.
  * - On a page whose ids change on every load, a restart finds the controls
  *   under new selectors and tries the same control again, so the same finding
@@ -672,6 +674,8 @@ export async function runChangeOnInputCheck(
             }
           }
           await locator.focus();
+          // Let a delayed on-focus handler show itself before the value changes.
+          await page.waitForTimeout(settleMs);
           // Anything focus alone causes is On Focus (3.2.1), not On Input: leave
           // the value alone and keep it out of the findings.
           const onFocus = await probe(locator, { kind, op: 'read' });

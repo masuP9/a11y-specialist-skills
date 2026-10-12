@@ -1,0 +1,27 @@
+<!doctype html>
+<!--
+  Focusing the select opens an alert 50ms later (a delayed On Focus behavior,
+  3.2.1). The change event has no handler.
+  Expected: no findings; #trap is skipped with reason
+  "context-change-on-focus"; the check does not hang.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Delayed dialog on focus</title>
+  </head>
+  <body>
+    <label for="trap">Trap</label>
+    <select
+      id="trap"
+      onfocus="
+        setTimeout(function () {
+          alert('later');
+        }, 50)
+      "
+    >
+      <option>A</option>
+      <option>B</option>
+    </select>
+  </body>
+</html>

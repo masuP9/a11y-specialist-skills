@@ -398,6 +398,24 @@ test('onfocus で alert が出る select は値を変えず、context-change-on-
   });
 });
 
+test('onfocus で少し遅れて alert が出る select は、値の変更の finding にせず context-change-on-focus で skipped になる', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runChange(
+    'focus-delayed.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  expect(result.details.findings).toEqual([]);
+  expect(result.details.skipped).toContainEqual({
+    selector: '#trap',
+    reason: 'context-change-on-focus',
+  });
+});
+
 test('onfocus で移動する text 欄は finding にせず skipped にして、やり直したあと残りの欄を試す', async ({
   page,
   browser,
