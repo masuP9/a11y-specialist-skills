@@ -395,6 +395,41 @@ function probeControl(
   return { state: readState(), movedTo: focusOutside(document.activeElement) };
 }
 
+/**
+ * Selector of the element that holds focus, or null for <body>. Used when the
+ * control itself is gone. Runs in the browser.
+ */
+function activeElementSelector(): string | null {
+  const active = document.activeElement;
+  if (
+    !active ||
+    active === document.body ||
+    active === document.documentElement
+  ) {
+    return null;
+  }
+  // Keep identical to the function of the same name in collectControls.
+  function getUniqueSelector(element: Element): string {
+    const idSelector = `[id="${element.id.replace(/["\\]/g, '\\$&')}"]`;
+    if (element.id && document.querySelectorAll(idSelector).length === 1) {
+      return `#${CSS.escape(element.id)}`;
+    }
+    const path: string[] = [];
+    let current: Element | null = element;
+    while (current && current !== document.body) {
+      let selector = current.tagName.toLowerCase();
+      const parent: Element | null = current.parentElement;
+      if (parent) {
+        selector += `:nth-child(${Array.from(parent.children).indexOf(current) + 1})`;
+      }
+      path.unshift(selector);
+      current = parent;
+    }
+    return path.join(' > ');
+  }
+  return getUniqueSelector(active);
+}
+
 // =============================================================================
 // Node-side helpers
 // =============================================================================
@@ -601,6 +636,10 @@ export async function runChangeOnInputCheck(
         let focusMoved: string | null = null;
         let valueChanged = false;
         let trialError: unknown = null;
+        // Focus alone already caused a context change (before the value changed).
+        let changedOnFocus = false;
+        // True once the value change started, so errors after it are its own.
+        let changing = false;
         // Put the value back through properties: no event, so handlers do not
         // react to the restoring. A control that is gone is not worth failing on.
         const restoreValue = (): Promise<void> =>
@@ -626,33 +665,33 @@ export async function runChangeOnInputCheck(
             }
           }
           await locator.focus();
-          // Focus moving by itself is On Focus (3.2.1), not On Input: leave the
-          // value alone (unless focus already caused something recorded).
+          // Anything focus alone causes is On Focus (3.2.1), not On Input: leave
+          // the value alone and keep it out of the findings.
           const onFocus = await probe(locator, { kind, op: 'read' });
           if (
-            onFocus.movedTo &&
-            navigations.length === 0 &&
-            newWindows.length === 0 &&
-            dialogs.length === 0
+            onFocus.movedTo ||
+            navigations.length > 0 ||
+            newWindows.length > 0 ||
+            dialogs.length > 0
           ) {
-            skipped.push({
-              selector: control.selector,
-              reason: 'focus-moved-on-focus',
-            });
-            continue;
+            changedOnFocus = true;
+            throw new Error('context change on focus');
           }
+          // From here on, whatever is recorded was caused by the value change.
+          resetRecords();
+          changing = true;
           if (kind === 'select') {
-            await locator.selectOption({ index: control.altIndex });
             action = `selected option ${control.altIndex + 1} "${control.altText}"`;
+            await locator.selectOption({ index: control.altIndex });
           } else if (kind === 'radio') {
-            await locator.check();
             action = 'checked';
+            await locator.check();
           } else if (kind === 'checkbox') {
-            await locator.click();
             action = before === true ? 'unchecked' : 'checked';
+            await locator.click();
           } else if (typed !== null) {
-            await locator.fill(typed);
             action = `typed "${typed}" and blurred`;
+            await locator.fill(typed);
           }
           const after = await probe(locator, { kind, op: 'read' });
           valueChanged = !sameState(before, after.state);
@@ -679,16 +718,43 @@ export async function runChangeOnInputCheck(
           ).slice(0, 200);
           if (!navigation && NAVIGATION_ERROR.test(message)) {
             navigation = true;
-          } else if (
-            !navigation &&
-            newWindows.length === 0 &&
-            dialogs.length === 0
-          ) {
+          }
+        }
+
+        if (!changing && (changedOnFocus || navigation)) {
+          skipped.push({
+            selector: control.selector,
+            reason: 'context-change-on-focus',
+          });
+          // The page was replaced: carry on in a fresh context.
+          if (navigation) {
+            navigated = true;
+            break;
+          }
+          continue;
+        }
+
+        if (
+          trialError &&
+          !navigation &&
+          newWindows.length === 0 &&
+          dialogs.length === 0
+        ) {
+          // The control may have been removed while a handler moved focus.
+          if (changing && (await locator.count().catch(() => 1)) === 0) {
+            focusMoved ??= await page
+              .evaluate(activeElementSelector)
+              .catch(() => null);
+          }
+          if (!focusMoved) {
             // The control vanished, was hidden or could not be operated.
             await restoreValue();
             skipped.push({
               selector: control.selector,
-              reason: message,
+              reason: (trialError instanceof Error
+                ? (trialError.message.split('\n')[0] ?? '')
+                : String(trialError)
+              ).slice(0, 200),
             });
             continue;
           }

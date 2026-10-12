@@ -360,7 +360,7 @@ test('同じ id の text 欄が 2 つあっても、別々に試して controlsT
   expect(result.details.controlsTested).toBe(2);
 });
 
-test('onfocus でフォーカスが動く select は値を変えず、focus-moved-on-focus で skipped になる', async ({
+test('onfocus でフォーカスが動く select は値を変えず、context-change-on-focus で skipped になる', async ({
   page,
   browser,
   baseUrl,
@@ -374,8 +374,60 @@ test('onfocus でフォーカスが動く select は値を変えず、focus-move
   expect(result.details.findings).toEqual([]);
   expect(result.details.skipped).toContainEqual({
     selector: '#trap',
-    reason: 'focus-moved-on-focus',
+    reason: 'context-change-on-focus',
   });
+});
+
+test('onfocus で alert が出る select は値を変えず、context-change-on-focus で skipped になる', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runChange(
+    'focus-dialog.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  expect(result.details.findings).toEqual([]);
+  expect(result.details.skipped).toContainEqual({
+    selector: '#trap',
+    reason: 'context-change-on-focus',
+  });
+});
+
+test('onfocus で移動する text 欄は finding にせず skipped にして、やり直したあと残りの欄を試す', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runChange(
+    'focus-navigates.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  expect(result.details.findings).toEqual([]);
+  expect(result.details.skipped.map((s) => s.selector)).toContain('#jump');
+  expect(result.details.controlsTested).toBe(1);
+});
+
+test('change で自分を DOM から消して別の欄へ focus するページは、元の欄が無くても focus-moved の finding になる', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runChange(
+    'replace-and-focus.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  expect(result.details.findings).toHaveLength(1);
+  expect(result.details.findings[0]?.control.selector).toBe('#old');
+  expect(result.details.findings[0]?.changes).toEqual([
+    { kind: 'focus-moved', toSelector: '#next' },
+  ]);
 });
 
 test('settleMs に 0 を渡すと Error になる', async ({

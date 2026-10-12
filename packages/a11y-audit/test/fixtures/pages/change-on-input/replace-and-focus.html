@@ -1,0 +1,27 @@
+<!doctype html>
+<!--
+  The text field's input handler removes the field itself from the DOM and
+  focuses another input.
+  Expected: one finding for #old with a focus-moved change to #next, even
+  though the original control is gone.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Replace and focus</title>
+  </head>
+  <body>
+    <label for="old">Old</label>
+    <input
+      type="text"
+      id="old"
+      oninput="
+        var n = document.getElementById('next');
+        this.remove();
+        n.focus();
+      "
+    />
+    <label for="next">Next</label>
+    <input type="text" id="next" />
+  </body>
+</html>
