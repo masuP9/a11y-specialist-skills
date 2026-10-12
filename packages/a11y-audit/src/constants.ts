@@ -757,3 +757,10 @@ export const DEFAULT_KEYBOARD_REACHABILITY_RESULT_FILE =
   'keyboard-reachability-result.json';
 export const DEFAULT_KEYBOARD_REACHABILITY_SCREENSHOT_FILE =
   'keyboard-reachability.png';
+
+// =============================================================================
+// CDP Event Listener Inspector
+// =============================================================================
+
+/** Handler source text kept as `handlerPreview` (characters). */
+export const EVENT_LISTENER_HANDLER_PREVIEW_MAX = 200;
