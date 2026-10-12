@@ -157,6 +157,29 @@
 
 ---
 
+### 3.3.8 Accessible Authentication (Minimum) - **部分実装** ✅
+**概要**: 認証で、記憶・書き写し・パズルの解決などの認知機能テストを、別の手段や支援の仕組みなしに要求しない
+
+**実装**: `accessible-authentication-check`（`runAccessibleAuthenticationCheck.ts`）
+- メイン文書のパスワード欄・確認コード欄・ユーザー名欄と、CAPTCHA らしき要素を集める
+- パスワード・確認コード欄に短いテキストをキーボードで貼り付け、入らなければ
+  `a11y-skills/auth-paste-blocked`（`incomplete`）。値そのものは記録せず、貼ったテキストとの比較だけを残す
+- 認証の欄の `autocomplete="off"`・欄の種類に合わない値を `a11y-skills/auth-autocomplete`
+  （`incomplete`）。属性が無い欄と `on` だけの欄は報告しない（名前が 1.3.5 のパターンに当たる欄は `autocomplete-audit` が報告しうる）
+- CAPTCHA らしき要素（名前の一致。入れ子は外側の 1 件）を `a11y-skills/auth-captcha`（`incomplete`）
+- 貼り付けの実測は呼び出し側の context にクリップボードの権限を付け、クリップボードを上書きし、
+  補助ページを一時的に開く（`paste: false` で止める）。戻らない handler は CDP で打ち切る
+
+**残る制限**:
+- iframe・shadow root の中の欄は見ない。ログインボタンを押してから出るフォームは、開いた状態の page を渡す必要がある
+- 貼り付けの実測は Chromium で確かめた方式。見えない・編集できない欄は実測しない
+- 確認コード欄の見つけ方は名前の推定を含み、1 桁ずつに分かれた欄は 1 つ目だけが当たることが多い
+- CAPTCHA は名前の一致で探すため、名前に `captcha` を含まない独自実装は見つからない
+- 別の手段（パスキー・SSO・メールのリンク）の有無、自動入力などの支援の仕組みが使えるか、
+  CAPTCHA が物の認識・本人が用意した内容の識別にとどまるかは人手で確認する
+
+---
+
 ### 2.1.2 No Keyboard Trap
 **概要**: フォーカスがキーボードトラップに陥らない
 
@@ -213,6 +236,7 @@
 | 3.1.1 Language of Page | axe-core + `automated-checks.md` |
 | 3.2.1 On Focus | `focus-indicator-check.ts` ✅ |
 | 3.3.7 Redundant Entry | `redundant-entry-check`（部分） ✅ |
+| 3.3.8 Accessible Authentication (Minimum) | `accessible-authentication-check`（部分） ✅ |
 
 ---
 

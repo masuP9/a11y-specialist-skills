@@ -29,6 +29,7 @@ test entries.
 | `runKeyboardReachabilityCheck` | 2.1.1 Keyboard (Tab, arrow keys in composite widgets, activedescendant) |
 | `runRedundantEntryCheck` | 3.3.7 Redundant Entry (fields in the same form asking for the same information, reported as candidates) |
 | `runMotionActuationCheck` | 2.5.4 Motion Actuation (`devicemotion` / `deviceorientation` listeners, reported as candidates) |
+| `runAccessibleAuthenticationCheck` | 3.3.8 Accessible Authentication (paste blocking, autocomplete="off", CAPTCHA-like elements, reported as candidates) |
 
 Most checks take an already-navigated `page`. A few own navigation and take a
 `targetUrl` instead (or `TEST_PAGE`): `runOrientationCheck` and
@@ -69,6 +70,46 @@ state, so use `false` when reusing the same page). A handler that never returns
 is stopped through CDP. **CDP is Chromium only**; elsewhere the result is
 `incomplete` with `listenerInspection: 'unsupported'`. Listeners inside iframes
 and listeners added after a user action are not found.
+
+`runAccessibleAuthenticationCheck` (3.3.8) takes an already-navigated `page`.
+From the `input` elements of the main document it collects password fields,
+verification code fields (`autocomplete="one-time-code"`, or a name / id /
+label / placeholder that looks like an OTP) and username fields
+(`autocomplete="username"`, or the text field just before the first password
+field of the same form). Together with CAPTCHA-like elements (elements with
+`captcha` in their name, `.g-recaptcha`, `.h-captcha`, `.cf-turnstile`,
+`[data-sitekey]`, CAPTCHA iframes; only the outermost of nested matches) it
+reports `incomplete` candidates under three rules:
+`a11y-skills/auth-paste-blocked` (a field where pasting does not work),
+`a11y-skills/auth-autocomplete` (an authentication field with
+`autocomplete="off"` or a value that does not suit it) and
+`a11y-skills/auth-captcha`. None is a `violation`, because 3.3.8 is met when
+another method without a cognitive function test (passkey, SSO, ...) or an
+assistive mechanism such as autofill is available, and that needs a human. A
+field with no attribute (`autocompleteStatus: 'missing'`) stays in `details` but
+is not reported: password managers usually infer the purpose from the control
+type, so it does not stop them the way "off" does; a field with only "on" is
+treated the same way. If the field's name matches the 1.3.5 patterns,
+`autocomplete-audit`'s `autocomplete-missing` may report it; a field that
+matches neither is reported by neither check. Pasting is measured by pasting a
+short text (`details.pasteTest.probe`) with the keyboard into each visible,
+editable password / verification code field. The field's value is never
+recorded (a page may put a real password back); only whether the value after
+pasting matched the pasted text (`valueAfterPaste`) is kept. **The measurement
+grants clipboard permissions to the caller's context, overwrites the clipboard
+and briefly opens a helper page** (field values are put back, except for a field
+whose paste timed out; state the page changed in response to `input` events is not; use `paste: false` when reusing
+the same page. The CLI uses a fresh context per check, so it is not affected).
+The method was verified on Chromium; where the permission or the paste does not
+work, `pasteTest.status` is `unavailable` and the fields are reported as
+untested (`incomplete`). A field with no autocomplete of its own inherits
+`autocomplete="off"` from its form (`details.fields[].formAutocomplete`; the
+field's own value wins). If a script moves focus away so that the target field
+is not focused, nothing is pasted and the field is reported as untested
+(`error: 'focus-moved'`, `incomplete`). A handler that never returns is stopped
+through CDP. Invisible or non-editable fields are not measured (`incomplete`). Fields inside
+iframes and shadow roots, forms that appear only after clicking a sign-in
+button, and custom CAPTCHAs without `captcha` in their markup are not found.
 
 For 1.4.2 (`a11y-skills/auto-play-audio`), `runAutoPlayDetection` records
 whether every `<audio>` / `<video>` in the page and its iframes (nested frames
@@ -180,6 +221,7 @@ target-size-check
 keyboard-reachability-check
 redundant-entry-check
 motion-actuation-check
+accessible-authentication-check
 ```
 
 ### Exit codes
@@ -465,7 +507,7 @@ import "@a11y-skills/audit/test-entries/reflow-check";
 import "@a11y-skills/audit/test-entries/target-size-check";
 // ...also: text-spacing-check, zoom-200-check, orientation-check,
 // autocomplete-audit, time-limit-detector, auto-play-detection,
-// redundant-entry-check, motion-actuation-check
+// redundant-entry-check, motion-actuation-check, accessible-authentication-check
 import "@a11y-skills/audit/test-entries/text-spacing-check";
 ```
 

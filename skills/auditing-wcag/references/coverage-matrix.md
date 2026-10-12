@@ -70,7 +70,7 @@ Methods are labeled as Automated/Interactive/Manual/Content and can be combined.
 | 3.3.3 | Interactive | screenshots | Fail if no correction suggestions |
 | 3.3.4 | Interactive | logs | Fail if no confirm/reversal for critical actions |
 | 3.3.7 | Manual + automated candidates | `redundant-entry-check` **[CLI]** + logs | Fail if redundant entry required |
-| 3.3.8 | Interactive | captures | Fail if authentication relies on cognitive test only |
+| 3.3.8 | Interactive + automated candidates | `accessible-authentication-check` **[CLI]** + captures | Fail if pasting is blocked and no other method exists; CAPTCHAs and alternatives need review |
 
 ## 4. Robust
 | Criterion | Test Method | Evidence | Judgment Rule |
@@ -99,3 +99,4 @@ The following criteria can be automatically checked via the `a11y-audit` CLI (se
 | 2.5.4 | `motion-actuation-check` | `motion-actuation-result.json` |
 | 2.5.5, 2.5.8 | `target-size-check` | `target-size-result.json`, `target-size-screenshot.png` |
 | 3.3.7 | `redundant-entry-check` | `redundant-entry-result.json` |
+| 3.3.8 | `accessible-authentication-check` | `accessible-authentication-result.json` |

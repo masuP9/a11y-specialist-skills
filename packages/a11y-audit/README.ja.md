@@ -28,6 +28,7 @@ Claude Code skill から機能本体を切り出したものです。10 個の�
 | `runKeyboardReachabilityCheck` | 2.1.1 キーボード（Tab・複合部品内の矢印キー・activedescendant） |
 | `runRedundantEntryCheck` | 3.3.7 冗長な入力（同じ form の中で同じ情報を求める欄の重なり。候補として報告） |
 | `runMotionActuationCheck` | 2.5.4 動きによる起動（`devicemotion` / `deviceorientation` の listener。候補として報告） |
+| `runAccessibleAuthenticationCheck` | 3.3.8 アクセシブルな認証（貼り付けの禁止・autocomplete の off・CAPTCHA らしき要素。候補として報告） |
 
 多くの検査は遷移済みの `page` を受けます。一部は navigation を所有し `targetUrl`
 （または `TEST_PAGE`）を受けます: `runOrientationCheck` と `runTimeLimitDetector`
@@ -58,6 +59,32 @@ Chrome DevTools Protocol（CDP）で、主フレームの `window` / `document` 
 ときは `false`）。戻らない handler は CDP で打ち切ります。**CDP は Chromium のみ**で、それ以外では
 `listenerInspection: 'unsupported'` の `incomplete` です。iframe の中と、利用者の操作の後に付く
 listener は見つかりません。
+
+`runAccessibleAuthenticationCheck`（3.3.8）は遷移済みの `page` を受けます。メイン文書の
+`input` のうち、パスワード欄、確認コード欄（`autocomplete="one-time-code"`、または名前・id・
+ラベル・placeholder が OTP らしいもの）、ユーザー名欄（`autocomplete="username"`、または同じ
+form で最初のパスワード欄の直前にある文字入力欄）を集め、CAPTCHA らしき要素（名前に
+`captcha` を含む要素、`.g-recaptcha`・`.h-captcha`・`.cf-turnstile`・`[data-sitekey]`、
+CAPTCHA の iframe。入れ子は外側の 1 件だけ）と合わせて、3 つのルールで `incomplete` の候補にします:
+`a11y-skills/auth-paste-blocked`（貼り付けが効かない欄）、`a11y-skills/auth-autocomplete`
+（認証の欄が `autocomplete="off"`、または欄の種類に合わない値）、`a11y-skills/auth-captcha`。
+どれも、認知機能テストを使わない別の手段（パスキー・SSO など）や自動入力の支援があれば満たせるため、
+`violation` にはせず人が確かめます。属性が無い欄（`autocompleteStatus: 'missing'`）は `details` に
+残しますが報告しません（パスワード管理ソフトは欄の種類から推定して動くことが多く、`off` のように
+明示的に止めてはいないため。`on` だけの欄も同じ扱いです。名前が 1.3.5 のパターンに当たる欄なら
+`autocomplete-audit` の `autocomplete-missing` が報告しうるので、当たらない欄はどちらも報告しません）。貼り付けは、
+パスワード・確認コードの見える編集できる欄に短いテキスト（`details.pasteTest.probe`）をキーボードで
+貼って実測します。欄の値は結果に残さず（ページが本物のパスワードを戻すことがあるため）、貼った後の値が
+貼ったテキストと一致したか（`valueAfterPaste`）だけを記録します。**実測は呼び出し側の context に
+クリップボードの権限を付け、クリップボードを上書きし、補助ページを一時的に開きます**（欄の値は元に戻し
+ますが、期限切れ（timeout）の欄は戻しません。`input` などでページが変えた状態も戻りません。同じ page を使い回すなら `paste: false` で、
+CLI はチェックごとに新しい context を使うので影響しません）。実測は Chromium で確かめた方式で、
+権限や貼り付けが効かない環境では `pasteTest.status` が `unavailable` になり、対象欄は未計測として
+`incomplete` です。欄に autocomplete が無いときは所属する form の `autocomplete="off"` を引き継ぎ
+ます（`details.fields[].formAutocomplete`。欄自身の値が優先）。フォーカスを移す処理があって対象の
+欄にフォーカスが残らないときは貼り付けず、未計測（`error: 'focus-moved'`）として `incomplete` にします。戻らない handler は CDP で打ち切ります。見えない・編集できない欄は実測せず
+`incomplete` です。iframe と shadow root の中の欄、ログインボタンを押してから出るフォーム、名前に
+`captcha` を含まない独自の CAPTCHA は見つかりません。
 
 `runAutoPlayDetection` の 1.4.2（`a11y-skills/auto-play-audio`）は、ページと iframe（入れ子・
 shadow root の中も含む）の `<audio>`・`<video>` について、「再生中・消音でない・音量が 0 より大きい・
@@ -155,6 +182,7 @@ target-size-check
 keyboard-reachability-check
 redundant-entry-check
 motion-actuation-check
+accessible-authentication-check
 ```
 
 ### 終了コード
@@ -405,7 +433,7 @@ import "@a11y-skills/audit/test-entries/reflow-check";
 import "@a11y-skills/audit/test-entries/target-size-check";
 // 他にも: text-spacing-check, zoom-200-check, orientation-check,
 // autocomplete-audit, time-limit-detector, auto-play-detection,
-// redundant-entry-check, motion-actuation-check
+// redundant-entry-check, motion-actuation-check, accessible-authentication-check
 import "@a11y-skills/audit/test-entries/text-spacing-check";
 ```
 
