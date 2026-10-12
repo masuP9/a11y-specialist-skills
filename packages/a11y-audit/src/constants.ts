@@ -112,6 +112,13 @@ export const FOCUS_OBSCURED_FULL_RATIO = 0.99;
 export const FOCUS_OBSCURED_MIN_OVERLAP_PX = 8;
 
 /**
+ * How far (CSS px) around an element's rect the `screenshotDiff` option
+ * compares. Focus indicators often sit outside the element (outline-offset,
+ * pseudo-element underlines, box-shadow rings).
+ */
+export const FOCUS_VISUAL_DIFF_MARGIN_PX = 8;
+
+/**
  * Selectors to exclude from obscurer detection
  * These elements should not be considered as obscurers
  */

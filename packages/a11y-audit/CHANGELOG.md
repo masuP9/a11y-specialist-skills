@@ -11,6 +11,16 @@ the old rule, check both.
 
 ### Added
 
+- focus-indicator: `screenshotDiff: true` compares screenshots of the area
+  around each element before and after focus and adds
+  `visualDiff: { diffRatio, rect } | null` to `allElements` and `issues`
+  (absent when the option is off; `null` when the comparison could not be made,
+  e.g. without the optional `pixelmatch` / `pngjs`, which only prints a
+  warning). An element with no computed-style change but a screenshot
+  difference stays in `focus-visible` `incomplete`, with a message that says a
+  cue may exist. Off by default because it takes screenshots on every Tab press
+  (counted toward `timeBudgetMs`). Fixed / sticky content and animations can
+  cause differences that are not focus indicators.
 - `a11y-skills/focus-not-obscured-enhanced` (WCAG 2.4.12, AAA; tags `wcag22aaa`,
   `wcag2412`; `incomplete`): reports every focused element that fixed/sticky
   content hides in part or in full.

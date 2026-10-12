@@ -145,6 +145,27 @@ export interface FocusElementLocation {
   shadowHosts: string[];
 }
 
+/**
+ * Result of comparing screenshots of the area around an element before and
+ * after it got focus (`screenshotDiff` option).
+ *
+ * `diffRatio` is the share (0-1) of pixels in the compared area that changed;
+ * `rect` is the bounding box of the changed pixels in page coordinates (`null`
+ * when nothing changed).
+ *
+ * Limits: the baseline is one full-page capture taken before the Tab walk, so
+ * fixed / sticky content, animations, video, carets and anything that changes
+ * with scroll position or time can show up as a difference that is not a focus
+ * indicator, and a cue on an element already focused at load (autofocus) has no
+ * baseline to differ from. Treat a non-zero ratio as "a cue may exist".
+ * Elements inside an iframe are not compared (their `rect` is relative to the
+ * iframe document), so their `visualDiff` is `null`.
+ */
+export interface FocusVisualDiff {
+  diffRatio: number;
+  rect: PageRect | null;
+}
+
 export interface FocusRecord extends FocusElementLocation {
   /**
    * Order in which focusin events were received (0-based). Not the Tab order:
@@ -173,10 +194,21 @@ export interface FocusRecord extends FocusElementLocation {
   hasFocusStyle: boolean;
   diff: Record<string, string>;
   /**
+   * Screenshot comparison around the element. Absent when the `screenshotDiff`
+   * option was not passed; `null` when it was passed but no comparison could be
+   * made (optional `pixelmatch` / `pngjs` missing, or the capture failed).
+   */
+  visualDiff?: FocusVisualDiff | null;
+  /**
    * Value of the attribute named by the `echoAttribute` option (`null` when
    * the element lacks it). Absent when the option was not passed.
    */
   echo?: string | null;
+}
+
+/** A WCAG 2.4.7 finding: the element plus its screenshot comparison, if any. */
+export interface FocusIssue extends FocusElementRef {
+  visualDiff?: FocusVisualDiff | null;
 }
 
 /** Reference to an element captured in the browser context. */
@@ -213,7 +245,7 @@ export interface FocusCheckDetails {
   elementsWithFocusStyle: number;
   elementsWithoutFocusStyle: number;
   /** WCAG 2.4.7 findings (no computed-style change on focus) */
-  issues: FocusElementRef[];
+  issues: FocusIssue[];
   /** WCAG 3.2.1 violations - focus triggered context change */
   onFocusViolations: OnFocusViolation[];
   /**

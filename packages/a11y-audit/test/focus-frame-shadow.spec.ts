@@ -171,3 +171,22 @@ test('Tab 停止点になる iframe 要素は、中の要素と二重には記�
 
   expect(result.details.allElements.map((r) => r.selector)).toEqual(['#inner']);
 });
+
+test('screenshotDiff を有効にしても、iframe の中の要素は位置の基準が違うので画像を比べず visualDiff が null になる', async ({
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const childUrl = `${baseUrl.replace('127.0.0.1', 'localhost')}/focus-indicator/frame-child.html`;
+  const result = await runFocusIndicatorCheck({
+    browser,
+    targetUrl: `${baseUrl}/${PAGE}?child=${encodeURIComponent(childUrl)}`,
+    outputDir: testInfo.outputDir,
+    quiet: true,
+    screenshotDiff: true,
+  });
+
+  const inside = result.details.allElements.find(
+    (r) => r.name === 'Inside same-origin',
+  );
+  expect(inside?.visualDiff).toBeNull();
+});

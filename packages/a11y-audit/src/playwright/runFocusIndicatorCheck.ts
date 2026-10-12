@@ -24,6 +24,8 @@ import type {
   FocusCheckResult,
   FocusCheckDetails,
   FocusObscuredIssue,
+  FocusVisualDiff,
+  PageRect,
 } from '../types.js';
 import {
   FOCUSABLE_SELECTOR,
@@ -35,6 +37,7 @@ import {
   FOCUS_OBSCURED_FULL_RATIO,
   FOCUS_OBSCURED_MIN_OVERLAP_PX,
   FOCUS_OBSCURED_EXCLUDE_SELECTORS,
+  FOCUS_VISUAL_DIFF_MARGIN_PX,
   HTML_SNIPPET_MAX_LENGTH,
 } from '../constants.js';
 import { buildAuditResult, normalizeFocusCheck } from '../utils/axe-format.js';
@@ -108,6 +111,71 @@ const WARNING_STYLES = `
 // Maximum retry attempts to avoid infinite loops
 const MAX_RETRIES = 5;
 
+// Hide our own annotation boxes while capturing, or they would differ every time.
+const CAPTURE_STYLE = '#focus-audit-overlay { visibility: hidden !important; }';
+
+type ImageCompare = typeof import('../utils/image-compare.js');
+
+/**
+ * Full-page PNG (or one clip of it) without the annotations and without the
+ * styles kept from earlier elements, so only the current focus can differ.
+ */
+async function capturePage(page: Page, clip?: PageRect): Promise<Buffer> {
+  const setCaptureMode = (on: boolean) =>
+    page.evaluate(
+      (on) =>
+        (
+          window as unknown as { setFocusCaptureMode: (on: boolean) => void }
+        ).setFocusCaptureMode(on),
+      on,
+    );
+  await setCaptureMode(true);
+  try {
+    return await page.screenshot({
+      fullPage: true,
+      clip,
+      scale: 'css',
+      animations: 'disabled',
+      style: CAPTURE_STYLE,
+    });
+  } finally {
+    await setCaptureMode(false);
+  }
+}
+
+/** Compare the area around `rect` with the same area of `baseline`. */
+async function measureVisualDiff(
+  page: Page,
+  imageCompare: ImageCompare,
+  baseline: Buffer,
+  rect: PageRect,
+): Promise<FocusVisualDiff | null> {
+  // PNG header: width and height are big-endian uint32 at bytes 16 and 20.
+  const pageWidth = baseline.readUInt32BE(16);
+  const pageHeight = baseline.readUInt32BE(20);
+  const x0 = Math.max(0, Math.floor(rect.x - FOCUS_VISUAL_DIFF_MARGIN_PX));
+  const y0 = Math.max(0, Math.floor(rect.y - FOCUS_VISUAL_DIFF_MARGIN_PX));
+  const x1 = Math.min(
+    pageWidth,
+    Math.ceil(rect.x + rect.width + FOCUS_VISUAL_DIFF_MARGIN_PX),
+  );
+  const y1 = Math.min(
+    pageHeight,
+    Math.ceil(rect.y + rect.height + FOCUS_VISUAL_DIFF_MARGIN_PX),
+  );
+  if (x1 <= x0 || y1 <= y0) return null;
+  const clip = { x: x0, y: y0, width: x1 - x0, height: y1 - y0 };
+  try {
+    return imageCompare.compareRegionToBaseline(
+      baseline,
+      await capturePage(page, clip),
+      clip,
+    );
+  } catch {
+    return null;
+  }
+}
+
 export interface RunFocusIndicatorCheckOptions
   extends AuditOutputOptions, ContextSourceOptions {
   /** Target URL. Falls back to the `TEST_PAGE` env var; required. */
@@ -147,6 +215,19 @@ export interface RunFocusIndicatorCheckOptions
    * markup, or an init script added to the context `createContext` returns).
    */
   echoAttribute?: string;
+  /**
+   * Compare screenshots of the area around each element before and after it
+   * gets focus, and record the result as `visualDiff` (default: false). Catches
+   * cues that computed styles cannot show (`::before` / `::after`, a parent's
+   * `:focus-within`, another element). It takes screenshots on every Tab press,
+   * so the walk is slower, and that time counts toward `timeBudgetMs`.
+   *
+   * Needs the optional `pixelmatch` and `pngjs`; without them a warning is
+   * printed and every `visualDiff` is `null`. Limits are described on
+   * `FocusVisualDiff`: fixed / sticky content and animations can produce a
+   * difference that is not a focus indicator.
+   */
+  screenshotDiff?: boolean;
 }
 
 // HTML attribute names exclude whitespace, controls, and `" ' > / =`.
@@ -169,6 +250,7 @@ export async function runFocusIndicatorCheck(
     timeBudgetMs,
     maxTabPresses,
     echoAttribute,
+    screenshotDiff = false,
     ...location
   } = options;
 
@@ -196,6 +278,20 @@ export async function runFocusIndicatorCheck(
     out.resultPath,
     DEFAULT_FOCUS_SCREENSHOT_FILE,
   );
+
+  // pixelmatch / pngjs are optional deps, so load the comparison lazily and
+  // degrade to `visualDiff: null` instead of failing when they are absent.
+  let imageCompare: ImageCompare | null = null;
+  if (screenshotDiff) {
+    try {
+      imageCompare = await import('../utils/image-compare.js');
+    } catch {
+      out.warn(
+        '\n⚠️  screenshotDiff skipped: install the optional dependencies ' +
+          '`pixelmatch` and `pngjs` to compare screenshots (`npm install pixelmatch pngjs`).',
+      );
+    }
+  }
 
   const onFocusViolations: OnFocusViolation[] = [];
   const focusObscuredIssues: FocusObscuredIssue[] = [];
@@ -261,6 +357,8 @@ export async function runFocusIndicatorCheck(
 
       // Expose function to receive focus reports from browser context
       await page.exposeFunction('reportFocus', (data: FocusRecord) => {
+        // Filled in after the screenshots; stays null when none could be made.
+        if (screenshotDiff) data.visualDiff = null;
         focusHistory.push(data);
         lastFocusedElement = {
           tag: data.tag,
@@ -356,6 +454,16 @@ export async function runFocusIndicatorCheck(
       // setup above don't produce false positives in the Tab loop.
       lateNavigationUrl = null;
 
+      // Baseline for screenshotDiff: the whole page before anything is focused.
+      let baseline: Buffer | null = null;
+      if (imageCompare) {
+        try {
+          baseline = await capturePage(page);
+        } catch {
+          baseline = null;
+        }
+      }
+
       // Tab through all elements with navigation detection
       for (let i = 0; i < count + EXTRA_TAB_ITERATIONS; i++) {
         const reason = limitReached();
@@ -365,6 +473,7 @@ export async function runFocusIndicatorCheck(
         }
 
         const urlBeforeTab = page.url();
+        const recordedBeforeTab = focusHistory.length;
 
         tabPresses++;
         await page.keyboard.press('Tab');
@@ -432,6 +541,24 @@ export async function runFocusIndicatorCheck(
           lateNavigationUrl = null;
           break;
         }
+
+        const focusedRecord = focusHistory[focusHistory.length - 1];
+        if (
+          imageCompare &&
+          baseline &&
+          focusedRecord &&
+          focusHistory.length > recordedBeforeTab &&
+          // An iframe element's rect is relative to its own document, so it
+          // cannot be cut out of the main-page baseline; leave visualDiff null.
+          focusedRecord.frame === null
+        ) {
+          focusedRecord.visualDiff = await measureVisualDiff(
+            page,
+            imageCompare,
+            baseline,
+            focusedRecord.rect,
+          );
+        }
       }
 
       if (!navigationDetected) {
@@ -498,6 +625,7 @@ export async function runFocusIndicatorCheck(
         frame: el.frame,
         shadowHosts: el.shadowHosts,
         ...(el.echo !== undefined && { echo: el.echo }),
+        ...(el.visualDiff !== undefined && { visualDiff: el.visualDiff }),
       })),
       onFocusViolations,
       focusObscuredIssues,
@@ -695,6 +823,19 @@ function createFocusTrackerScript(args: {
         // Ignore invalid rules
       }
     });
+
+  // Styles kept on elements after they lose focus (for the final screenshot).
+  // Kept apart so screenshotDiff can switch them off while capturing.
+  const preservedSheet = new CSSStyleSheet();
+  document.adoptedStyleSheets = [
+    ...document.adoptedStyleSheets,
+    preservedSheet,
+  ];
+  (
+    window as unknown as { setFocusCaptureMode: (on: boolean) => void }
+  ).setFocusCaptureMode = (on) => {
+    preservedSheet.disabled = on;
+  };
 
   const baseStyles = new Map<Element, Record<string, string>>();
   const elementSelectors = new Map<Element, string>();
@@ -1282,9 +1423,9 @@ function createFocusTrackerScript(args: {
       const cssText = Object.entries(diff)
         .map(([p, v]) => `${toKebab(p)}: ${v}`)
         .join('; ');
-      styleSheet.insertRule(
+      preservedSheet.insertRule(
         `[data-focus-visited="${id}"] { ${cssText} }`,
-        styleSheet.cssRules.length,
+        preservedSheet.cssRules.length,
       );
       // Add green annotation box for elements with focus style
       addAnnotationBox(el, '✓ Focus Style', 'has-focus-style');

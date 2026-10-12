@@ -238,6 +238,27 @@ const FOCUS_ELEMENT_REF_SCHEMA: JsonSchema = {
   },
 };
 
+const PAGE_RECT_SCHEMA: JsonSchema = {
+  type: 'object',
+  required: ['x', 'y', 'width', 'height'],
+  properties: {
+    x: { type: 'number' },
+    y: { type: 'number' },
+    width: { type: 'number' },
+    height: { type: 'number' },
+  },
+};
+
+/** Present only with `screenshotDiff`; null when no comparison could be made. */
+const FOCUS_VISUAL_DIFF_SCHEMA: JsonSchema = {
+  type: ['object', 'null'],
+  required: ['diffRatio', 'rect'],
+  properties: {
+    diffRatio: { type: 'number' },
+    rect: { oneOf: [PAGE_RECT_SCHEMA, { type: 'null' }] },
+  },
+};
+
 // =============================================================================
 // Check schemas
 // =============================================================================
@@ -289,7 +310,19 @@ export const FOCUS_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
       totalFocusableElements: { type: 'number' },
       elementsWithFocusStyle: { type: 'number' },
       elementsWithoutFocusStyle: { type: 'number' },
-      issues: { type: 'array', items: FOCUS_ELEMENT_REF_SCHEMA },
+      issues: {
+        type: 'array',
+        items: {
+          ...FOCUS_ELEMENT_REF_SCHEMA,
+          properties: {
+            ...(FOCUS_ELEMENT_REF_SCHEMA['properties'] as Record<
+              string,
+              JsonSchema
+            >),
+            visualDiff: FOCUS_VISUAL_DIFF_SCHEMA,
+          },
+        },
+      },
       onFocusViolations: {
         type: 'array',
         items: {
@@ -336,16 +369,8 @@ export const FOCUS_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
             id: { type: 'number' },
             ...FOCUS_LOCATION_PROPS,
             tabStep: { type: ['number', 'null'] },
-            rect: {
-              type: 'object',
-              required: ['x', 'y', 'width', 'height'],
-              properties: {
-                x: { type: 'number' },
-                y: { type: 'number' },
-                width: { type: 'number' },
-                height: { type: 'number' },
-              },
-            },
+            rect: PAGE_RECT_SCHEMA,
+            visualDiff: FOCUS_VISUAL_DIFF_SCHEMA,
           },
         },
       },

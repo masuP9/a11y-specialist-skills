@@ -116,6 +116,60 @@ test('focus-indicator-check envelope validates against its schema', () => {
   expectValid('focus-indicator-check', result);
 });
 
+test('focus-indicator-check envelope with a visualDiff validates, and a non-numeric diffRatio is rejected', () => {
+  const element = {
+    tag: 'BUTTON',
+    role: null,
+    name: 'x',
+    selector: '#x',
+    html: '<button id="x">x</button>',
+    htmlTruncated: false,
+    frame: null,
+    shadowHosts: [],
+    visualDiff: {
+      diffRatio: 0.25,
+      rect: { x: 1, y: 2, width: 3, height: 4 },
+    },
+  };
+  const details: FocusCheckDetails = {
+    totalFocusableElements: 1,
+    elementsWithFocusStyle: 0,
+    elementsWithoutFocusStyle: 1,
+    issues: [element],
+    onFocusViolations: [],
+    focusObscuredIssues: [],
+    elementsWithObscuredFocus: 0,
+    allElements: [
+      {
+        id: 0,
+        tabStep: 1,
+        rect: { x: 0, y: 0, width: 10, height: 10 },
+        ...element,
+        hasFocusStyle: false,
+        diff: {},
+      },
+    ],
+    interrupted: false,
+    screenshotPath: '',
+  };
+  const result = buildAuditResult({
+    source: 'focus-indicator-check',
+    url: 'about:blank',
+    details,
+    buckets: normalizeFocusCheck(details),
+  });
+  expectValid('focus-indicator-check', result);
+
+  const broken = structuredClone(result);
+  (
+    broken.details.allElements[0] as unknown as {
+      visualDiff: { diffRatio: unknown };
+    }
+  ).visualDiff.diffRatio = 'a lot';
+  const validate = ajv.compile(RESULT_SCHEMAS['focus-indicator-check']);
+  expect(validate(broken)).toBe(false);
+});
+
 test('reflow-check envelope validates against its schema', () => {
   const details: ReflowCheckDetails = {
     viewport: { width: 320, height: 256 },
