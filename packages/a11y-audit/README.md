@@ -44,17 +44,23 @@ it is added (the document and open shadow roots are observed). Each recorded
 state lasts until the next record, and the time with sound is added up as
 `audibleSeconds`, so stopping or muting between screenshots does not erase
 the time before it. Media removed from the DOM during the check stays in the
-result with `removed: true` (its `target` is its document's `html`). Media
-without visible `controls` goes to `incomplete` when it was heard for more
+result with `removed: true` (its `target` is its document's `html`). When its
+iframe is removed or its frame's content is replaced, the last record taken
+before that stays with `documentRemoved: true`; its `target` is the nearest
+remaining parent document's `html`, and the message names the original
+frame's URL (sound after that last record is not counted). Media without
+visible `controls` goes to `incomplete` when it was heard for more
 than 3 seconds, or when it is playing with sound at the last check and will
 keep playing for more than 3 seconds (`loop`, an endless stream, or more than
 3 seconds of real time left at the current playback rate). Visibility uses
 the size, `display`, `visibility` and `opacity` of the element and the iframe
 elements above it, and its rendered ancestors (an assigned slot before the
-DOM parent). An ancestor with overflow `hidden` / `clip` that does not
-overlap the element makes it invisible; `clip-path` (not `none`) or `clip`
-(not `auto`), a non-overlapping scroll container, or a fixed / absolute box
-that may escape the ancestor makes visibility undetermined (`incomplete`).
+DOM parent). An ancestor with overflow `hidden` / `clip` whose padding box
+(inside its border) does not overlap the element makes it invisible;
+`clip-path` (not `none`) or `clip` (not `auto`), a non-overlapping scroll
+container, a fixed / absolute box that may escape the ancestor, or a
+transform that keeps the padding box from being placed makes visibility
+undetermined (`incomplete`).
 Partial clipping and off-screen position are not checked. Recording starts
 when the check starts (after the page is opened), so sound before that is not
 counted, and each check on the same page starts a fresh record.

@@ -87,6 +87,7 @@ const playingAudio = (
   volume: 1,
   playbackRate: 1,
   removed: false,
+  documentRemoved: false,
   duration: 10,
   endless: false,
   currentTime: 6,
@@ -928,6 +929,45 @@ test('auto-play-audio: 主フレームで DOM から消えた要素の target �
     }),
   );
   expect(nodes[0]?.target).toEqual(['html']);
+});
+
+test('auto-play-audio: frame ごと消えた要素は、説明に frame が消えたか置き換えられたことと元の URL が入る', () => {
+  const nodes = audioIncompleteNodes(
+    autoPlayDetails({
+      mediaElements: [
+        playingAudio({
+          removed: true,
+          documentRemoved: true,
+          frame: { url: 'https://player.example/embed', selector: '#player' },
+          framePath: [],
+        }),
+      ],
+    }),
+  );
+  expect(nodes[0]?.target).toEqual(['html']);
+  expect(nodes[0]?.failureSummary).toContain(
+    'its frame was removed or replaced',
+  );
+  expect(nodes[0]?.failureSummary).toContain('https://player.example/embed');
+});
+
+test('auto-play-audio: 消えた要素は最後の記録が再生中でも、この先も鳴り続けるとはみなさず、鳴った秒数が 3 秒以下なら passes になる', () => {
+  expect(
+    audioBucket(
+      autoPlayDetails({
+        mediaElements: [
+          playingAudio({
+            removed: true,
+            documentRemoved: true,
+            paused: false,
+            duration: 30,
+            currentTime: 2,
+            audibleSeconds: 2,
+          }),
+        ],
+      }),
+    ),
+  ).toBe('passes');
 });
 
 test('auto-play-audio: 読めなかった frame があるとページ単位の incomplete になる', () => {

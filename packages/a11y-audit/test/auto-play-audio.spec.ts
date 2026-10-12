@@ -556,3 +556,91 @@ test(
   },
   { timeout: 60_000 },
 );
+
+test(
+  '高さ 0・枠線 1px・overflow:hidden の折り畳みの中の audio は、枠線と重なっても中身の領域とは重ならないので controls は見えないとして auto-play-audio が incomplete になる',
+  async ({ baseUrl, page, browser }, testInfo) => {
+    const result = await runFixtureCheck(
+      'auto-play-detection',
+      'auto-play-audio/finding-collapsed-border.html',
+      baseUrl,
+      { page, browser, testInfo },
+      { quiet: true },
+    );
+
+    assertRuleBuckets(result, { 'a11y-skills/auto-play-audio': 'incomplete' });
+    const media = (result.details as AutoPlayDetectionDetails).mediaElements;
+    expect(media[0]).toMatchObject({ controls: true, visible: false });
+  },
+  { timeout: 60_000 },
+);
+
+test(
+  '3 秒超鳴ったあと iframe ごと消されたプレイヤーは結果に残り、target は親の文書の html、説明に元の frame の URL が入って auto-play-audio が incomplete になる',
+  async ({ baseUrl, page }, testInfo) => {
+    await page.goto(`${baseUrl}/auto-play-audio/finding-iframe.html`, {
+      waitUntil: 'networkidle',
+    });
+
+    const [result] = await Promise.all([
+      runAutoPlayDetection({
+        page,
+        outputDir: testInfo.outputDir,
+        quiet: true,
+      }),
+      page
+        .waitForTimeout(5000)
+        .then(() =>
+          page.evaluate(() => document.getElementById('player')?.remove()),
+        ),
+    ]);
+
+    assertRuleBuckets(result, { 'a11y-skills/auto-play-audio': 'incomplete' });
+    const media = result.details.mediaElements;
+    expect(media).toHaveLength(1);
+    expect(media[0]).toMatchObject({ removed: true, documentRemoved: true });
+    expect(media[0]?.audibleSeconds).toBeGreaterThan(3);
+    const node = result.incomplete.find(
+      (r) => r.id === 'a11y-skills/auto-play-audio',
+    )?.nodes[0];
+    expect(node?.target).toEqual(['html']);
+    expect(node?.failureSummary).toContain(
+      `${baseUrl}/auto-play-audio/frame-child.html`,
+    );
+  },
+  { timeout: 60_000 },
+);
+
+test(
+  '3 秒超鳴ったあと iframe の中身を消音のページに置き換えても、元のプレイヤーは結果に残り auto-play-audio が incomplete になる',
+  async ({ baseUrl, page }, testInfo) => {
+    await page.goto(`${baseUrl}/auto-play-audio/finding-iframe.html`, {
+      waitUntil: 'networkidle',
+    });
+
+    const [result] = await Promise.all([
+      runAutoPlayDetection({
+        page,
+        outputDir: testInfo.outputDir,
+        quiet: true,
+      }),
+      page.waitForTimeout(5000).then(() =>
+        page.evaluate(() => {
+          const frame = document.getElementById('player') as HTMLIFrameElement;
+          frame.src = 'frame-child-muted.html';
+        }),
+      ),
+    ]);
+
+    assertRuleBuckets(result, { 'a11y-skills/auto-play-audio': 'incomplete' });
+    const media = result.details.mediaElements;
+    const gone = media.find((m) => m.documentRemoved);
+    expect(gone).toMatchObject({ selector: '#bgm', removed: true });
+    expect(gone?.audibleSeconds).toBeGreaterThan(3);
+    const node = result.incomplete.find(
+      (r) => r.id === 'a11y-skills/auto-play-audio',
+    )?.nodes[0];
+    expect(node?.target).toEqual(['html']);
+  },
+  { timeout: 60_000 },
+);

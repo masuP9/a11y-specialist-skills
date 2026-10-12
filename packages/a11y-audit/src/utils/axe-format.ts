@@ -685,7 +685,10 @@ function describeAutoPlayingAudio(media: MediaPlaybackRecord): string | null {
     );
   }
 
+  // A removed element (or one whose document went away) plays no more, even
+  // if its last record was taken while it was playing.
   const audibleNow =
+    !media.removed &&
     !media.paused &&
     !media.ended &&
     !media.muted &&
@@ -721,23 +724,30 @@ function describeAutoPlayingAudio(media: MediaPlaybackRecord): string | null {
           .join(', ')}.`
       : 'No pause/stop/mute control was found in the same frame by name.';
   // Visibility covers size, display, visibility and opacity of the element
-  // and its iframes; clip-path / clip makes it undetermined; overflow
-  // clipping and off-screen position are not checked.
+  // and its iframes, and non-overlapping overflow hidden / clip ancestors;
+  // clip-path / clip, scroll containers, escaping boxes and transforms make
+  // it undetermined; partial clipping and off-screen position are not
+  // checked.
   const nativeControls = !media.controls
     ? ''
     : media.visible === false
       ? ' It has the controls attribute but they are not visible (size, ' +
-        'display, visibility and opacity of the element and its iframes ' +
-        'are checked; overflow clipping and off-screen position are not).'
+        'display, visibility, opacity and overflow of the element, its ' +
+        'ancestors and its iframes are checked; partial clipping and ' +
+        'off-screen position are not).'
       : ' It has the controls attribute, but it could not be determined ' +
         'whether its controls are visible (e.g. clip-path or clip is ' +
-        'applied to it, an ancestor or an iframe element).';
-  const path = media.removed
-    ? ' It was removed from the page during the check, so the target points ' +
-      'at its document.'
-    : media.frame && media.framePath === null
-      ? ' The iframe path is unknown, so the target is relative to the frame.'
-      : '';
+        'applied, or an overflow ancestor scrolls or is transformed).';
+  const path = media.documentRemoved
+    ? ' It is gone because its frame was removed or replaced during the ' +
+      'check, so this is its last record before that, and the target points ' +
+      'at the nearest remaining parent document.'
+    : media.removed
+      ? ' It was removed from the page during the check, so the target ' +
+        'points at its document.'
+      : media.frame && media.framePath === null
+        ? ' The iframe path is unknown, so the target is relative to the frame.'
+        : '';
   return (
     `Unmuted <${media.tag}>${location} played automatically for ` +
     `${media.audibleSeconds.toFixed(1)}s with sound ${state} (volume ` +

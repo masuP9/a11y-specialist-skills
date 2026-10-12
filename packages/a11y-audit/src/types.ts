@@ -809,6 +809,14 @@ export interface MediaPlaybackRecord {
    * document. Its selector then no longer resolves.
    */
   removed: boolean;
+  /**
+   * The element's whole document went away during the check: its iframe was
+   * removed, or the frame navigated / was replaced. The record is the last
+   * one taken while the document existed (`removed` is true too), and
+   * `framePath` then points at the nearest ancestor document that remains,
+   * while `frame.url` keeps the original frame's URL.
+   */
+  documentRemoved: boolean;
   /** Seconds; null when unknown (no metadata) or endless (see `endless`). */
   duration: number | null;
   /** `duration` is Infinity (a live stream). */

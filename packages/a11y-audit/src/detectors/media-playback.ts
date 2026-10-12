@@ -22,14 +22,18 @@
  * - Frames are observed from their first sample; media in a frame created
  *   during the check is recorded from the next sample. A shadow root
  *   attached to an element already in the page is not observed. Media in a
- *   frame removed during the check is lost.
+ *   frame (document) removed or replaced during the check is reported from
+ *   its last record, so sound after that record is not counted, and media
+ *   that appears and goes away between two samples is not seen.
  * - Controls are matched by name only and are not clicked; controls in a
  *   parent frame or elsewhere on the page are not searched.
  * - Visibility follows rendered ancestors (assigned slots first). It is
  *   false when an ancestor with overflow hidden / clip does not overlap the
- *   element, and undetermined (null) under clip-path / clip, or when the
- *   non-overlapping ancestor scrolls or a fixed / absolute box may escape it.
- *   Partial clipping and off-screen position are not considered.
+ *   element within its padding box, and undetermined (null) under
+ *   clip-path / clip, or when the non-overlapping ancestor scrolls, a fixed /
+ *   absolute box may escape it, or a transform makes the padding box
+ *   unplaceable. Partial clipping and off-screen position are not
+ *   considered.
  */
 
 import { randomUUID } from 'node:crypto';
@@ -62,7 +66,10 @@ function recordSamples(elements: Element[], args: HistoryArgs): void {
   type Point = { time: number; audible: boolean };
   type History = {
     runId: string;
+    /** Identifies this document, so Node can tell records of a replaced one. */
+    docId: string;
     points: WeakMap<Element, Point[]>;
+    ids: WeakMap<Element, number>;
     tracked: Set<HTMLMediaElement>;
     cleanups: Array<() => void>;
   };
@@ -83,7 +90,9 @@ function recordSamples(elements: Element[], args: HistoryArgs): void {
     previous?.cleanups.forEach((cleanup) => cleanup());
     history = {
       runId: args.runId,
+      docId: `${performance.timeOrigin}-${Math.random()}`,
       points: new WeakMap(),
+      ids: new WeakMap(),
       tracked: new Set(),
       cleanups: [],
     };
@@ -95,6 +104,7 @@ function recordSamples(elements: Element[], args: HistoryArgs): void {
     if (current.points.has(el)) return;
     const list: Point[] = [{ time, audible: isAudible(el) }];
     current.points.set(el, list);
+    current.ids.set(el, current.tracked.size);
     current.tracked.add(el);
     const onChange = () =>
       list.push({ time: performance.now(), audible: isAudible(el) });
@@ -212,13 +222,27 @@ function inspectElement(
   // checkVisibility. How much is cut is not measured, so any clip on the
   // element or a rendered ancestor leaves it undetermined.
   let clipped = false;
-  // An ancestor whose overflow is not visible hides the element when their
-  // boxes do not overlap: certainly for hidden / clip, but a scroll
-  // container can be scrolled to it, and a fixed / absolute box may escape
-  // the ancestor, so those cases stay undetermined.
+  // An ancestor whose overflow is not visible hides the element when the
+  // element does not overlap the ancestor's padding box (overflow clips
+  // there, inside the border): certainly for hidden / clip, but a scroll
+  // container can be scrolled to it, a fixed / absolute box may escape the
+  // ancestor, and under a transform the padding box cannot be placed from
+  // clientLeft / clientWidth (they ignore transforms), so those cases stay
+  // undetermined.
   let overflowHidden = false;
   let overflowUnknown = false;
   let escapes = false;
+  let transformed = false;
+  for (let node: Element | null = el; node; node = renderedParent(node)) {
+    const style = getComputedStyle(node);
+    if (
+      [style.transform, style.scale, style.rotate, style.translate].some(
+        (v) => v && v !== 'none',
+      )
+    ) {
+      transformed = true;
+    }
+  }
   for (let node: Element | null = el; node; node = renderedParent(node)) {
     const style = getComputedStyle(node);
     if (style.clipPath !== 'none' || style.clip !== 'auto') clipped = true;
@@ -227,14 +251,18 @@ function inspectElement(
       [style.overflowX, style.overflowY].some((v) => v !== 'visible')
     ) {
       const box = node.getBoundingClientRect();
+      const left = box.left + node.clientLeft;
+      const top = box.top + node.clientTop;
       const overlaps =
-        Math.min(rect.right, box.right) > Math.max(rect.left, box.left) &&
-        Math.min(rect.bottom, box.bottom) > Math.max(rect.top, box.top);
+        Math.min(rect.right, left + node.clientWidth) >
+          Math.max(rect.left, left) &&
+        Math.min(rect.bottom, top + node.clientHeight) >
+          Math.max(rect.top, top);
       if (!overlaps) {
         const scrolls = [style.overflowX, style.overflowY].some(
           (v) => v === 'auto' || v === 'scroll',
         );
-        if (scrolls || escapes) overflowUnknown = true;
+        if (scrolls || escapes || transformed) overflowUnknown = true;
         else overflowHidden = true;
       }
     }
@@ -263,7 +291,9 @@ function inspectElement(
     html: outerHtml.slice(0, args.htmlMaxLength),
     htmlTruncated: outerHtml.length > args.htmlMaxLength,
   };
-  if (!(el instanceof HTMLMediaElement)) return { ...location, media: null };
+  if (!(el instanceof HTMLMediaElement)) {
+    return { ...location, key: null, media: null };
+  }
 
   // Each recorded state lasts until the next record (a sample or a state
   // change event), so sound stopped or muted between samples still counts.
@@ -272,13 +302,18 @@ function inspectElement(
       string,
       | {
           runId: string;
+          docId: string;
           points: WeakMap<Element, Array<{ time: number; audible: boolean }>>;
+          ids: WeakMap<Element, number>;
         }
       | undefined
     >
   )[args.history.key];
-  const points =
-    history?.runId === args.history.runId ? (history.points.get(el) ?? []) : [];
+  const current = history?.runId === args.history.runId ? history : undefined;
+  const points = current?.points.get(el) ?? [];
+  const id = current?.ids.get(el);
+  // Stable across samples within one document; null if never recorded.
+  const key = current && id !== undefined ? `${current.docId}:${id}` : null;
   let audibleSeconds = 0;
   for (let i = 1; i < points.length; i++) {
     const before = points[i - 1];
@@ -296,6 +331,7 @@ function inspectElement(
     .webkitAudioDecodedByteCount;
   return {
     ...location,
+    key,
     media: {
       tag: el.tagName.toLowerCase() as 'audio' | 'video',
       audibleSeconds,
@@ -308,6 +344,7 @@ function inspectElement(
       volume: el.volume,
       playbackRate: el.playbackRate,
       removed: !el.isConnected,
+      documentRemoved: false,
       duration: Number.isFinite(el.duration) ? el.duration : null,
       endless: el.duration === Infinity,
       currentTime: el.currentTime,
@@ -371,11 +408,17 @@ async function sampleAll(page: Page, history: HistoryArgs): Promise<void> {
   );
 }
 
+interface KeyedRecord {
+  /** `<document id>:<element id>`, null for media never recorded. */
+  key: string | null;
+  record: MediaPlaybackRecord;
+}
+
 async function measureFrame(
   page: Page,
   frame: Frame,
   history: HistoryArgs,
-): Promise<MediaPlaybackRecord[]> {
+): Promise<KeyedRecord[]> {
   const connected = await frame.locator('audio, video').elementHandles();
   // Media recorded during the check but removed since is reported too.
   const removedList = await frame.evaluateHandle(removedMedia, history);
@@ -395,23 +438,39 @@ async function measureFrame(
   // Controls in a parent frame or elsewhere in the page are not searched.
   const { controls } = await detectPauseControls(frame, AUDIO_CONTROL_KEYWORDS);
 
-  const records: MediaPlaybackRecord[] = [];
+  const records: KeyedRecord[] = [];
   for (const handle of handles) {
-    const { media, visible, ...element } = await handle.evaluate(
+    const { media, visible, key, ...element } = await handle.evaluate(
       inspectElement,
       { htmlMaxLength: HTML_SNIPPET_MAX_LENGTH, history },
     );
     if (!media) continue;
     records.push({
-      ...element,
-      ...media,
-      visible: allVisible([visible, chain ? chain.visible : null]),
-      frame: location,
-      framePath: chain?.path ?? null,
-      controlsInFrame: controls,
+      key,
+      record: {
+        ...element,
+        ...media,
+        visible: allVisible([visible, chain ? chain.visible : null]),
+        frame: location,
+        framePath: chain?.path ?? null,
+        controlsInFrame: controls,
+      },
     });
   }
   return records;
+}
+
+/** The frames above `frame`, nearest first. */
+function ancestorsOf(frame: Frame): Frame[] {
+  const ancestors: Frame[] = [];
+  for (
+    let parent = frame.parentFrame();
+    parent;
+    parent = parent.parentFrame()
+  ) {
+    ancestors.push(parent);
+  }
+  return ancestors;
 }
 
 export interface MediaTracker {
@@ -429,22 +488,80 @@ export interface MediaTracker {
   }>;
 }
 
-/** Start one check's playback recording, separate from any earlier check. */
+/**
+ * Start one check's playback recording, separate from any earlier check.
+ *
+ * Each sample also keeps, on the Node side, the latest record of every media
+ * element with the frames above it. A document that goes away during the
+ * check (its iframe removed, or the frame navigated / replaced) takes its
+ * in-page history with it, so `measure()` reports those elements from their
+ * last record, marked `documentRemoved`, targeted at the nearest ancestor
+ * document that remains. Sound between that last record and the document's
+ * removal is not counted.
+ */
 export function createMediaTracker(page: Page): MediaTracker {
   const history: HistoryArgs = { key: HISTORY_KEY, runId: randomUUID() };
+  const lastSeen = new Map<
+    string,
+    { record: MediaPlaybackRecord; ancestors: Frame[] }
+  >();
+
+  const remember = async (): Promise<void> => {
+    for (const frame of page.frames()) {
+      try {
+        for (const { key, record } of await measureFrame(
+          page,
+          frame,
+          history,
+        )) {
+          if (key) lastSeen.set(key, { record, ancestors: ancestorsOf(frame) });
+        }
+      } catch {
+        // Reported by measure() if it still cannot be read then.
+      }
+    }
+  };
+
   return {
-    sample: () => sampleAll(page, history),
+    async sample() {
+      await sampleAll(page, history);
+      await remember();
+    },
     async measure() {
       await sampleAll(page, history);
       const mediaElements: MediaPlaybackRecord[] = [];
+      const measuredKeys = new Set<string>();
       let unmeasuredFrames = 0;
       for (const frame of page.frames()) {
         try {
-          mediaElements.push(...(await measureFrame(page, frame, history)));
+          for (const { key, record } of await measureFrame(
+            page,
+            frame,
+            history,
+          )) {
+            mediaElements.push(record);
+            if (key) measuredKeys.add(key);
+          }
         } catch (err) {
           if (frame === page.mainFrame()) throw err;
           unmeasuredFrames++;
         }
+      }
+
+      for (const [key, { record, ancestors }] of lastSeen) {
+        if (measuredKeys.has(key)) continue;
+        const parent =
+          ancestors.find((frame) => !frame.isDetached()) ?? page.mainFrame();
+        const framePath =
+          parent === page.mainFrame()
+            ? []
+            : ((await framePathOf(parent, history))?.path ?? null);
+        mediaElements.push({
+          ...record,
+          removed: true,
+          documentRemoved: true,
+          framePath,
+        });
       }
       return { mediaElements, unmeasuredFrames };
     },

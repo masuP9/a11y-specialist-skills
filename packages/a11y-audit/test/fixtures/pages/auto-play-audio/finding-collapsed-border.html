@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      auto-play-audio finding: controls inside a collapsed bordered panel
+    </title>
+    <script src="tone.js"></script>
+  </head>
+  <body>
+    <h1>Collapsed bordered panel</h1>
+    <!--
+      The panel's content box is 0px high, but its 1px border makes its border
+      box 2px high and overlap the audio's top edge. Overflow clips to the
+      padding box, so the controls are fully hidden.
+      Expected: auto-play-audio (incomplete).
+    -->
+    <div style="height: 0; border: 1px solid; overflow: hidden">
+      <audio id="bgm" autoplay controls style="display: block"></audio>
+    </div>
+    <script>
+      document.getElementById('bgm').src = toneUrl();
+    </script>
+  </body>
+</html>
