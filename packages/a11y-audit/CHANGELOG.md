@@ -3,11 +3,14 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 0.11.0 — 2026-10-13
 
 **Heads-up** — `a11y-skills/focus-not-obscured` now reports only elements that
 are fully hidden, and a new rule covers partly hidden ones. If you filtered on
-the old rule, check both.
+the old rule, check both. focus-indicator records gain new required schema
+fields (`frame`, `shadowHosts`, `fullyObscured`), and
+`a11y-skills/no-context-change-on-focus` can now be `incomplete` when the
+element that navigated the page could not be identified (see Fixed).
 
 ### Added
 
