@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>focus-indicator: focus-not-obscured across a 3.2.1 retry</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      #sticky-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 80px;
+        background: #333;
+        color: white;
+        display: flex;
+        align-items: center;
+        padding: 0 1rem;
+        z-index: 100;
+      }
+      #content {
+        padding-top: 90px;
+        padding-left: 1rem;
+      }
+      #obscured-btn {
+        position: fixed;
+        top: 20px;
+        left: 200px;
+        z-index: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <header id="sticky-header">
+      <span>Sticky Header (covers button below)</span>
+    </header>
+    <div id="content">
+      <!-- Obscured by the header; comes before #trigger in Tab order so it is
+           focused again on every retry -->
+      <button id="obscured-btn">Obscured Button</button>
+      <!-- Navigates on focus (SC 3.2.1), forcing the check to retry -->
+      <a id="trigger" href="#" onfocus="window.location.href = '/navigated'"
+        >Click or focus me</a
+      >
+      <button id="safe-btn">Visible Button</button>
+    </div>
+  </body>
+</html>

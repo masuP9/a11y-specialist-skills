@@ -3,6 +3,14 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixed
+
+- `focus-indicator-check`: an element whose focus is obscured is no longer
+  reported once per retry when a 3.2.1 violation later in the Tab order
+  restarts the check; only the last attempt's records are kept.
+
 ## 0.9.0 — 2026-10-11
 
 **Breaking** — `AutocompleteIssue.expectedToken` and `matchedBy` can now be
