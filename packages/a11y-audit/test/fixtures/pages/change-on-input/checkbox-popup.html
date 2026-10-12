@@ -1,0 +1,21 @@
+<!doctype html>
+<!--
+  Checking the box opens a new window.
+  Expected: one finding with a new-window change.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Checkbox popup</title>
+  </head>
+  <body>
+    <label>
+      <input
+        type="checkbox"
+        id="terms"
+        onchange="window.open('landing.html')"
+      />
+      Show terms
+    </label>
+  </body>
+</html>

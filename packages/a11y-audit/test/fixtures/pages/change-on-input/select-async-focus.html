@@ -1,0 +1,28 @@
+<!doctype html>
+<!--
+  The select's change handler moves focus to another input asynchronously
+  (setTimeout 100ms), after the immediate focus check has already run.
+  Expected: one finding for #plan with a focus-moved change to #next.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Select moves focus asynchronously</title>
+  </head>
+  <body>
+    <label for="plan">Plan</label>
+    <select
+      id="plan"
+      onchange="
+        setTimeout(function () {
+          document.getElementById('next').focus();
+        }, 100)
+      "
+    >
+      <option>Free</option>
+      <option>Pro</option>
+    </select>
+    <label for="next">Next</label>
+    <input type="text" id="next" />
+  </body>
+</html>

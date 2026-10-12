@@ -1,0 +1,26 @@
+<!doctype html>
+<!--
+  A postal-code field moves focus to the next field as soon as it holds
+  3 characters (auto-advance).
+  Expected: one finding for #zip1 with a focus-moved change whose toSelector
+  is #zip2.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Text auto-advance</title>
+  </head>
+  <body>
+    <label for="zip1">Postal code (first part)</label>
+    <input type="text" id="zip1" maxlength="3" />
+    <label for="zip2">Postal code (second part)</label>
+    <input type="text" id="zip2" maxlength="4" />
+    <script>
+      document.getElementById('zip1').addEventListener('input', function () {
+        if (this.value.length >= 3) {
+          document.getElementById('zip2').focus();
+        }
+      });
+    </script>
+  </body>
+</html>

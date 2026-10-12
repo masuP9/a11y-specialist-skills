@@ -105,6 +105,11 @@ const FINDING_EXPECTATIONS: Array<{
   // motion-actuation-check
   { ruleId: 'a11y-skills/motion-actuation', expectedBucket: 'incomplete' },
 
+  // change-on-input-check
+  {
+    ruleId: 'a11y-skills/no-context-change-on-input',
+    expectedBucket: 'incomplete',
+  },
   // accessible-authentication-check
   { ruleId: 'a11y-skills/auth-paste-blocked', expectedBucket: 'incomplete' },
   { ruleId: 'a11y-skills/auth-autocomplete', expectedBucket: 'incomplete' },
@@ -140,14 +145,14 @@ test('all manifest finding expectations agree with rule-registry classification'
   }
 });
 
-test('all 27 custom finding rules have a manifest entry', () => {
+test('all 28 custom finding rules have a manifest entry', () => {
   const manifestRuleIds = new Set(FINDING_EXPECTATIONS.map((e) => e.ruleId));
 
   const registryRuleIds = Object.values(RULES).map((r) => r.id);
   expect(
     registryRuleIds.length,
-    'rule-registry should have 27 custom rules',
-  ).toBe(27);
+    'rule-registry should have 28 custom rules',
+  ).toBe(28);
 
   for (const ruleId of registryRuleIds) {
     expect(

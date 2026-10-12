@@ -10,6 +10,7 @@ import {
   buildAuditResult,
   normalizeAccessibleAuthenticationCheck,
   normalizeAxeResults,
+  normalizeChangeOnInputCheck,
   normalizeFocusCheck,
   normalizeKeyboardReachabilityCheck,
   normalizeKeyboardTrapCheck,
@@ -20,6 +21,7 @@ import {
 } from '../dist/index.js';
 import type {
   AccessibleAuthenticationCheckDetails,
+  ChangeOnInputCheckDetails,
   FocusCheckDetails,
   KeyboardReachabilityCheckDetails,
   KeyboardTrapCheckDetails,
@@ -540,6 +542,70 @@ test('motion-actuation-check envelope for an unsupported browser validates again
     buckets: normalizeMotionActuationCheck(details),
   });
   expectValid('motion-actuation-check', result);
+});
+
+const CHANGE_ON_INPUT_CONTROL = {
+  selector: '#city',
+  controlKind: 'select' as const,
+  type: 'select',
+  name: 'city',
+  label: 'City',
+  html: '<select id="city"></select>',
+  htmlTruncated: false,
+};
+
+test('change-on-input-check envelope with every kind of context change validates against its schema', () => {
+  const details: ChangeOnInputCheckDetails = {
+    controlsFound: 3,
+    controlsTested: 2,
+    skipped: [{ selector: '#only', reason: 'no-alternative-option' }],
+    untested: [
+      {
+        control: { ...CHANGE_ON_INPUT_CONTROL, selector: '#covered' },
+        reason: 'locator.click: Timeout 5000ms exceeded.',
+      },
+    ],
+    findings: [
+      {
+        control: CHANGE_ON_INPUT_CONTROL,
+        action: 'selected option 2 "Tokyo"',
+        changes: [
+          { kind: 'navigation', toUrl: 'https://example.com/landing' },
+          { kind: 'new-window', url: 'https://example.com/help' },
+          { kind: 'focus-moved', toSelector: '#next' },
+          { kind: 'dialog', dialogType: 'alert', message: 'saved' },
+        ],
+      },
+    ],
+    restarts: 1,
+    aborted: null,
+  };
+  const result = buildAuditResult({
+    source: 'change-on-input-check',
+    url: 'about:blank',
+    details,
+    buckets: normalizeChangeOnInputCheck(details),
+  });
+  expectValid('change-on-input-check', result);
+});
+
+test('change-on-input-check envelope that stopped early validates against its schema', () => {
+  const details: ChangeOnInputCheckDetails = {
+    controlsFound: 5,
+    controlsTested: 1,
+    skipped: [],
+    untested: [],
+    findings: [],
+    restarts: 0,
+    aborted: { reason: 'control-limit', testedCount: 1, foundCount: 5 },
+  };
+  const result = buildAuditResult({
+    source: 'change-on-input-check',
+    url: 'about:blank',
+    details,
+    buckets: normalizeChangeOnInputCheck(details),
+  });
+  expectValid('change-on-input-check', result);
 });
 
 test('accessible-authentication-check envelope with three kinds of fields, a CAPTCHA and a ran paste test validates against its schema', () => {

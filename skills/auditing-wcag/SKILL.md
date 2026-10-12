@@ -123,6 +123,7 @@ npx -y @a11y-skills/audit --url "https://example.com" --output-dir ./results
 | `keyboard-reachability-check` | 2.1.1 | Keyboard reachability (Tab, arrow keys, activedescendant) |
 | `redundant-entry-check` | 3.3.7 | Overlapping fields asking for the same information (candidates; needs review) |
 | `motion-actuation-check` | 2.5.4 | Listeners reacting to device motion / orientation (candidates; needs review) |
+| `change-on-input-check` | 3.2.2 | Navigation, new windows, focus moves or dialogs caused by just changing a form control (candidates; needs review) |
 | `accessible-authentication-check` | 3.3.8 | Paste blocking and autocomplete="off" on password / code fields, CAPTCHA-like elements (candidates; needs review) |
 
 See the [`@a11y-skills/audit` README](https://www.npmjs.com/package/@a11y-skills/audit) for detailed documentation.

@@ -1,0 +1,34 @@
+<!doctype html>
+<!--
+  A select, a radio group, a checkbox and a text field whose handlers only
+  update a status text.
+  Expected: no findings; the rule passes with controlsTested 4.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Clear</title>
+  </head>
+  <body>
+    <label for="size">Size</label>
+    <select id="size">
+      <option>Small</option>
+      <option>Large</option>
+    </select>
+    <fieldset>
+      <legend>Color</legend>
+      <label><input type="radio" name="color" value="red" checked /> Red</label>
+      <label><input type="radio" name="color" value="blue" /> Blue</label>
+    </fieldset>
+    <label><input type="checkbox" id="gift" /> Gift wrap</label>
+    <label for="note">Note</label>
+    <input type="text" id="note" />
+    <p id="status" aria-live="polite"></p>
+    <script>
+      document.addEventListener('change', function (event) {
+        document.getElementById('status').textContent =
+          'Changed ' + (event.target.id || event.target.name);
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,17 @@
+<!doctype html>
+<!--
+  The text field clears itself as soon as it is typed into, so its value can
+  never be changed.
+  Expected: no findings; the field is skipped with reason "value-unchanged",
+  controlsTested 0, and the rule is inapplicable.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Value reverted</title>
+  </head>
+  <body>
+    <label for="locked">Locked</label>
+    <input type="text" id="locked" oninput="this.value = ''" />
+  </body>
+</html>

@@ -1,0 +1,21 @@
+<!doctype html>
+<!--
+  A text field without a handler, then a select (the LAST control) whose
+  change navigates. Nothing is left to try after the navigation.
+  Expected: one navigation finding, restarts 0, aborted null.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Last control navigates</title>
+  </head>
+  <body>
+    <label for="memo">Memo</label>
+    <input type="text" id="memo" />
+    <label for="city">City</label>
+    <select id="city" onchange="location.assign('landing.html')">
+      <option>Tokyo</option>
+      <option>Osaka</option>
+    </select>
+  </body>
+</html>

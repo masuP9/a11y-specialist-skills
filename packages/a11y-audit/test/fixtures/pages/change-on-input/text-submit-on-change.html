@@ -1,0 +1,18 @@
+<!doctype html>
+<!--
+  The form is submitted as soon as the text field's value is committed
+  (change event, fired on blur).
+  Expected: one finding with a navigation change to landing.html.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Text submits on change</title>
+  </head>
+  <body>
+    <form action="landing.html" method="get">
+      <label for="q">Search</label>
+      <input type="text" id="q" name="q" onchange="this.form.submit()" />
+    </form>
+  </body>
+</html>

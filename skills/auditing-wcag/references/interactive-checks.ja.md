@@ -78,6 +78,16 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks focus-indicator-c
 3. 元のページでスクリーンショットを撮影
 4. テストは中断としてマークされる
 
+### `change-on-input-check` CLIチェック
+
+`change-on-input-check` で、欄の値を 1 つずつ変えて、変えただけで文脈が変わるか（3.2.2）を記録します。
+
+- 変える欄は主フレームの `select` / radio（グループごと）/ checkbox / テキスト系の `input` と `textarea`。disabled・readonly・見えない欄は触らない。テキスト系は固定の値を入れて blur し、`change` を起こす。
+- 記録するのは、主フレームの移動、新しいウィンドウ、フォーカスの移動、ダイアログ。移動したら新しい context でやり直し、試した欄は飛ばして残りを続ける。
+- 見つかったものは `incomplete` の候補。前もって「選ぶとすぐ移動します」等の説明があれば適合なので、説明の有無は候補ごとに人が確かめる。
+- 実ページで値を変え、`change` を起こす。値はイベントなしで戻すが、ページの内部状態は戻らない。自動保存・送信のあるページでは通信が起きうる。
+- 実行: `npx -y @a11y-skills/audit --url "<url>" --checks change-on-input-check`
+
 ## ポインター
 | 基準 | 操作 | 証跡 | Fail条件 |
 |---|---|---|---|

@@ -64,6 +64,10 @@ export {
   type RunMotionActuationCheckOptions,
 } from './runMotionActuationCheck.js';
 export {
+  runChangeOnInputCheck,
+  type RunChangeOnInputCheckOptions,
+} from './runChangeOnInputCheck.js';
+export {
   runAccessibleAuthenticationCheck,
   type RunAccessibleAuthenticationCheckOptions,
 } from './runAccessibleAuthenticationCheck.js';

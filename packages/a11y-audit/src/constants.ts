@@ -786,6 +786,29 @@ export const DEFAULT_MOTION_ACTUATION_RESULT_FILE =
   'motion-actuation-result.json';
 
 // =============================================================================
+// Change on Input Check Constants (WCAG 3.2.2)
+// =============================================================================
+
+/** Wait after each value change for a context change to surface. */
+export const CHANGE_ON_INPUT_SETTLE_MS = 500;
+export const CHANGE_ON_INPUT_TIMEOUT_MS = 60_000;
+export const CHANGE_ON_INPUT_MAX_CONTROLS = 100;
+/** Fresh-context restarts after a value change navigated the page. */
+export const CHANGE_ON_INPUT_MAX_RESTARTS = 20;
+/** Two test values per input type, so one differs from any current value. */
+export const CHANGE_ON_INPUT_TEXT_VALUES = {
+  email: ['a11y@example.com', 'a11y2@example.com'],
+  tel: ['0123456789', '0987654321'],
+  url: ['https://example.com/', 'https://example.org/'],
+  number: ['1', '2'],
+  default: ['a11y-test', 'a11y-test2'],
+} as const;
+/** Dialog message characters kept in a finding. */
+export const DIALOG_MESSAGE_MAX = 200;
+export const DEFAULT_CHANGE_ON_INPUT_RESULT_FILE =
+  'change-on-input-result.json';
+
+// =============================================================================
 // Accessible Authentication Check Constants (WCAG 3.3.8)
 // =============================================================================
 

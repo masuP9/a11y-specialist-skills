@@ -1,0 +1,30 @@
+<!doctype html>
+<!--
+  Fields that already hold the first test value ("1" for number, a 3-character
+  filled maxlength text, and a maxlength text that already holds what the
+  candidates truncate to). The check must pick a different value so the value
+  really changes.
+  Expected: no findings; all three fields are counted in controlsTested (3)
+  and none is skipped.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Initial value</title>
+  </head>
+  <body>
+    <label for="qty">Quantity</label>
+    <input type="number" id="qty" value="1" />
+    <label for="code">Code</label>
+    <input type="text" id="code" value="111" maxlength="3" />
+    <label for="short">Short</label>
+    <input type="text" id="short" value="a11" maxlength="3" />
+    <p id="status"></p>
+    <script>
+      document.addEventListener('change', function (event) {
+        document.getElementById('status').textContent =
+          'Changed ' + event.target.id;
+      });
+    </script>
+  </body>
+</html>
