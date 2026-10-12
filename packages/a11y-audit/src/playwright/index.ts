@@ -63,6 +63,10 @@ export {
   runMotionActuationCheck,
   type RunMotionActuationCheckOptions,
 } from './runMotionActuationCheck.js';
+export {
+  runAccessibleAuthenticationCheck,
+  type RunAccessibleAuthenticationCheckOptions,
+} from './runAccessibleAuthenticationCheck.js';
 
 export {
   resolveOutputPath,

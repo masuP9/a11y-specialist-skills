@@ -230,6 +230,18 @@ const CHECK_REGISTRY: CheckEntry[] = [
       })) as AuditResultEnvelope;
     },
   },
+  {
+    name: 'accessible-authentication-check',
+    kind: 'page',
+    async run({ page, outputDir }) {
+      const { runAccessibleAuthenticationCheck } =
+        await import('./playwright/runAccessibleAuthenticationCheck.js');
+      return (await runAccessibleAuthenticationCheck({
+        page,
+        outputDir,
+      })) as AuditResultEnvelope;
+    },
+  },
 ];
 
 // ---------------------------------------------------------------------------
