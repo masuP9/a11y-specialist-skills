@@ -678,6 +678,8 @@ export interface RedundantEntryField {
   purposeSource: 'autocomplete' | 'name' | 'id' | 'label' | 'placeholder';
   scope: 'shipping' | 'billing' | null;
   section: string | null;
+  /** Contact type token (home, work, mobile, fax, pager); null when absent. */
+  contactType: string | null;
   formSelector: string | null;
 }
 

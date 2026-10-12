@@ -899,7 +899,13 @@ export const REDUNDANT_ENTRY_CHECK_RESULT_SCHEMA: JsonSchema =
                 type: 'array',
                 items: {
                   type: 'object',
-                  required: ['selector', 'purpose', 'purposeSource', 'scope'],
+                  required: [
+                    'selector',
+                    'purpose',
+                    'purposeSource',
+                    'scope',
+                    'contactType',
+                  ],
                   properties: {
                     selector: { type: 'string' },
                     purpose: { type: 'string' },
@@ -915,6 +921,7 @@ export const REDUNDANT_ENTRY_CHECK_RESULT_SCHEMA: JsonSchema =
                     },
                     scope: { enum: ['shipping', 'billing', null] },
                     section: { type: ['string', 'null'] },
+                    contactType: { type: ['string', 'null'] },
                     formSelector: { type: ['string', 'null'] },
                     name: { type: ['string', 'null'] },
                     id: { type: ['string', 'null'] },

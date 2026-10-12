@@ -35,6 +35,7 @@ import type {
   RedundantEntryGroup,
 } from '../types.js';
 import {
+  AUTOCOMPLETE_CONTACT_TYPES,
   AUTOCOMPLETE_FIELD_PATTERNS,
   DEFAULT_REDUNDANT_ENTRY_RESULT_FILE,
   HTML_SNIPPET_MAX_LENGTH,
@@ -117,6 +118,8 @@ interface Classified {
   purposeSource: PurposeSource;
   scope: Scope | null;
   section: string | null;
+  /** home / work / mobile / fax / pager from the autocomplete value. */
+  contactType: string | null;
 }
 
 /** Decide purpose, scope and section of a field, or null when unknown. */
@@ -137,6 +140,10 @@ function classifyField(field: FieldInfo & BasicFieldInfo): Classified | null {
             ? 'billing'
             : null,
         section: tokens.find((token) => token.startsWith('section-')) ?? null,
+        contactType:
+          tokens.find((token) =>
+            (AUTOCOMPLETE_CONTACT_TYPES as readonly string[]).includes(token),
+          ) ?? null,
       };
     }
   }
@@ -165,6 +172,7 @@ function classifyField(field: FieldInfo & BasicFieldInfo): Classified | null {
     purposeSource: match.matchedBy,
     scope,
     section: null,
+    contactType: null,
   };
 }
 
@@ -320,12 +328,13 @@ export async function runRedundantEntryCheck(
     });
   }
 
-  // Group by (form, section, purpose); fields stay in DOM order.
+  // Group by (form, section, contact type, purpose); fields stay in DOM order.
   const byKey = new Map<string, RedundantEntryField[]>();
   for (const field of classified) {
     const key = JSON.stringify([
       field.formSelector,
       field.section,
+      field.contactType,
       field.purpose,
     ]);
     byKey.set(key, [...(byKey.get(key) ?? []), field]);

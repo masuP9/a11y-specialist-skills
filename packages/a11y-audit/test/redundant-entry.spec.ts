@@ -299,6 +299,48 @@ test('form の外にあり form 属性で関連付けられた「お届け先と
   );
 });
 
+test('autocomplete が home tel と work tel の欄はグループにならない', async ({
+  page,
+}, testInfo) => {
+  await page.setContent(
+    html(`<form id="f">
+      <input id="a" autocomplete="home tel" aria-label="Home phone">
+      <input id="b" autocomplete="work tel" aria-label="Work phone">
+    </form>`),
+  );
+
+  const result = await runRedundantEntryCheck({
+    page,
+    outputDir: testInfo.outputDir,
+  });
+
+  expect(result.details.groups).toEqual([]);
+  expect(result.incomplete).toEqual([]);
+});
+
+test('autocomplete が home tel の欄が 2 つあるとグループになる', async ({
+  page,
+}, testInfo) => {
+  await page.setContent(
+    html(`<form id="f">
+      <input id="a" autocomplete="home tel" aria-label="Phone">
+      <input id="b" autocomplete="home tel" aria-label="Phone again">
+    </form>`),
+  );
+
+  const result = await runRedundantEntryCheck({
+    page,
+    outputDir: testInfo.outputDir,
+  });
+
+  expect(result.details.groups).toHaveLength(1);
+  expect(result.details.groups[0]?.purpose).toBe('tel');
+  expect(result.details.groups[0]?.fields.map((f) => f.contactType)).toEqual([
+    'home',
+    'home',
+  ]);
+});
+
 test('form なしの欄のグループでは、別の form の中にある「同じ」チェックボックスを copyControls に入れない', async ({
   page,
 }, testInfo) => {

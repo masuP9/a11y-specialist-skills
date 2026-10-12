@@ -420,6 +420,7 @@ test('redundant-entry-check envelope with scoped and repeated groups (with and w
     purposeSource: 'name',
     scope: null,
     section: null,
+    contactType: null,
     formSelector: '#checkout',
     ...overrides,
   });
