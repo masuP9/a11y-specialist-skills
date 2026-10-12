@@ -39,7 +39,7 @@ import {
   type AuditOutputOptions,
 } from '../utils/test-harness.js';
 
-interface FieldInfo {
+export interface FieldInfo {
   selector: string;
   tagName: string;
   html: string;
@@ -53,7 +53,7 @@ interface FieldInfo {
 }
 
 /** Basic field info collected from DOM (without accessible name). */
-interface BasicFieldInfo {
+export interface BasicFieldInfo {
   selector: string;
   tagName: string;
   html: string;
@@ -63,13 +63,17 @@ interface BasicFieldInfo {
   id: string | null;
   placeholder: string | null;
   autocomplete: string | null;
+  /** Selector of the owning form, or null when the field has none. */
+  formSelector: string | null;
+  /** Nearest group heading (fieldset legend or labelled group), max 80 chars. */
+  groupLabel: string | null;
 }
 
 /**
  * Collect basic form field information in browser context.
  * Accessible names are retrieved separately via ariaSnapshot().
  */
-function collectBasicFieldInfo(args: {
+export function collectBasicFieldInfo(args: {
   htmlSnippetMaxLength: number;
 }): BasicFieldInfo[] {
   const { htmlSnippetMaxLength } = args;
@@ -117,6 +121,39 @@ function collectBasicFieldInfo(args: {
       : `[data-index="${elementIndex}"]`;
   }
 
+  function getGroupLabel(element: Element): string | null {
+    const clip = (text: string | null | undefined) => {
+      const trimmed = (text ?? '').replace(/\s+/g, ' ').trim();
+      return trimmed ? trimmed.slice(0, 80) : null;
+    };
+    let current = element.parentElement;
+    while (current) {
+      if (current.tagName === 'FIELDSET') {
+        const legend = Array.from(current.children).find(
+          (child) => child.tagName === 'LEGEND',
+        );
+        const text = clip(legend?.textContent);
+        if (text) return text;
+      }
+      const role = current.getAttribute('role');
+      if (role === 'group' || role === 'region') {
+        const labelledBy = current.getAttribute('aria-labelledby');
+        const fromRefs = labelledBy
+          ? clip(
+              labelledBy
+                .split(/\s+/)
+                .map((ref) => document.getElementById(ref)?.textContent ?? '')
+                .join(' '),
+            )
+          : null;
+        const text = clip(current.getAttribute('aria-label')) ?? fromRefs;
+        if (text) return text;
+      }
+      current = current.parentElement;
+    }
+    return null;
+  }
+
   const skipTypes = ['hidden', 'submit', 'reset', 'button', 'image', 'file'];
   const fields: BasicFieldInfo[] = [];
   const elements = document.querySelectorAll('input, select, textarea');
@@ -155,6 +192,8 @@ function collectBasicFieldInfo(args: {
           ? el.placeholder || null
           : null,
       autocomplete: autocompleteAttr,
+      formSelector: el.form ? getUniqueSelector(el.form, 0) : null,
+      groupLabel: getGroupLabel(el),
     });
   });
 
@@ -165,7 +204,7 @@ function collectBasicFieldInfo(args: {
  * Extract accessible name from ariaSnapshot output.
  * ariaSnapshot returns YAML-like format: "- role \"accessible name\"".
  */
-function parseAccessibleName(snapshot: string): string | null {
+export function parseAccessibleName(snapshot: string): string | null {
   // ariaSnapshot format: "- textbox \"Email address\"" or "- textbox \"Email address\" [focused]"
   const match = snapshot.match(/^- \w+(?:\s+"([^"]*)")?/);
   if (match && match[1]) {
@@ -175,7 +214,7 @@ function parseAccessibleName(snapshot: string): string | null {
 }
 
 /** Find pattern match for a field across name, id, label, and placeholder. */
-function findPatternMatch(
+export function findPatternMatch(
   field: FieldInfo,
   patterns: [string, RegExp][],
 ): {
@@ -204,7 +243,7 @@ function findPatternMatch(
  * whitespace only (a non-breaking space stays inside a token) and compares
  * tokens ASCII case-insensitively.
  */
-function autocompleteTokens(value: string): string[] {
+export function autocompleteTokens(value: string): string[] {
   return value
     .replace(/[A-Z]/g, (c) => c.toLowerCase())
     .split(/[\t\n\f\r ]+/)
@@ -224,7 +263,7 @@ const includes = (list: readonly string[], token: string | undefined) =>
  * (e.g. "email" on <input type="checkbox">) or that webauthn is used only on
  * input/textarea.
  */
-function isValidAutocompleteTokens(tokens: string[]): boolean {
+export function isValidAutocompleteTokens(tokens: string[]): boolean {
   if (tokens.length === 1 && (tokens[0] === 'on' || tokens[0] === 'off')) {
     return true;
   }
