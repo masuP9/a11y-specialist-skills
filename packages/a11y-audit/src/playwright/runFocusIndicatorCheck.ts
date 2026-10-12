@@ -374,14 +374,27 @@ export async function runFocusIndicatorCheck(
       const focusReports: { ref: FocusElementRef; documentToken: string }[] =
         [];
       let navigationDetected = false;
+      // True from a Tab press until its report window ends, so only a focusin
+      // caused by that press gets a tabStep (autofocus and scripted focus get
+      // null). Counted here, not per document, so it holds across iframes.
+      let tabPending = false;
+      // Restarts with each attempt (a fresh page load), unlike tabPresses,
+      // which counts every press against maxTabPresses.
+      let attemptTabPresses = 0;
 
       // Expose function to receive focus reports from browser context
       await page.exposeFunction(
         'reportFocus',
         ({
           documentToken,
-          ...data
-        }: FocusRecord & { documentToken: string }) => {
+          ...reported
+        }: Omit<FocusRecord, 'id' | 'tabStep'> & { documentToken: string }) => {
+          const data: FocusRecord = {
+            id: focusHistory.length,
+            tabStep: tabPending ? attemptTabPresses : null,
+            ...reported,
+          };
+          tabPending = false;
           // Filled in after the screenshots; stays null when none could be made.
           if (screenshotDiff) data.visualDiff = null;
           focusHistory.push(data);
@@ -512,6 +525,8 @@ export async function runFocusIndicatorCheck(
         const documentTokens = await readDocumentTokens();
 
         tabPresses++;
+        attemptTabPresses++;
+        tabPending = true;
         await page.keyboard.press('Tab');
 
         // Get currently focused element IMMEDIATELY after Tab. An answer from
@@ -555,6 +570,7 @@ export async function runFocusIndicatorCheck(
 
         // Small wait to allow any navigation to start
         await page.waitForTimeout(navigationSettleMs);
+        tabPending = false;
 
         // Check if navigation occurred (either within the settle window or late)
         const urlAfterTab = page.url();
@@ -915,28 +931,6 @@ function createFocusTrackerScript(args: {
   (
     window as unknown as { focusAuditDocumentToken: string }
   ).focusAuditDocumentToken = documentToken;
-
-  // Tab presses seen on this page load. `tabPending` is true between a Tab
-  // keydown and its keyup, so only a focusin caused by that press gets a tabStep.
-  let tabPresses = 0;
-  let tabPending = false;
-  document.addEventListener(
-    'keydown',
-    (e) => {
-      if (e.key === 'Tab') {
-        tabPresses++;
-        tabPending = true;
-      }
-    },
-    true,
-  );
-  document.addEventListener(
-    'keyup',
-    (e) => {
-      if (e.key === 'Tab') tabPending = false;
-    },
-    true,
-  );
 
   /**
    * Generate a CSS selector for an element, relative to the document or the
@@ -1484,9 +1478,9 @@ function createFocusTrackerScript(args: {
       }
     }
 
+    // Local to this document: names the preserved-style rule only. The id in
+    // the record is numbered on the Node side (see reportFocus).
     const id = focusId++;
-    const tabStep = tabPending ? tabPresses : null;
-    tabPending = false;
     const box = el.getBoundingClientRect();
     el.setAttribute('data-focus-visited', String(id));
 
@@ -1514,8 +1508,6 @@ function createFocusTrackerScript(args: {
     // Report to test
     (window as unknown as { reportFocus: (data: unknown) => void }).reportFocus(
       {
-        id,
-        tabStep,
         rect: {
           x: box.left + window.scrollX,
           y: box.top + window.scrollY,

@@ -48,6 +48,15 @@ adheres to [Semantic Versioning](https://semver.org/).
 - `a11y-skills/auto-play`: the message no longer asks to verify audio manually;
   audio is covered by `a11y-skills/auto-play-audio`.
 
+### Fixed
+
+- focus-indicator: `tabStep` is no longer `null` for an element in an iframe
+  reached by Tab (or the main-page element reached from it), and `id` no
+  longer repeats between the main page and its iframes. Both are now numbered
+  on the Node side (the side that presses Tab), across all documents; `id` is
+  the order in which records arrived (0-based), as before for single-document
+  pages.
+
 ## 0.11.0 — 2026-10-13
 
 **Heads-up** — `a11y-skills/focus-not-obscured` now reports only elements that

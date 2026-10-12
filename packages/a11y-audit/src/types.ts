@@ -168,7 +168,8 @@ export interface FocusVisualDiff {
 
 export interface FocusRecord extends FocusElementLocation {
   /**
-   * Order in which focusin events were received (0-based). Not the Tab order:
+   * Order in which focusin events were received (0-based), across the main
+   * page and its iframes, so it never repeats within a record list. Not the Tab order:
    * autofocus and scripted focus also advance it, already-visited elements and
    * elements skipped after a 3.2.1 violation get none, and a retry restarts it.
    * Use `tabStep` for the Tab order.
@@ -176,7 +177,8 @@ export interface FocusRecord extends FocusElementLocation {
   id: number;
   /**
    * Which Tab key press (1-based, counted per page load) moved focus to this
-   * element. null when focus arrived another way (autofocus, script).
+   * element, including an element inside an iframe. null when focus arrived
+   * another way (autofocus, script).
    */
   tabStep: number | null;
   /**
