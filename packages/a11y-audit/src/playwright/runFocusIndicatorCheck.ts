@@ -500,8 +500,7 @@ export async function runFocusIndicatorCheck(
             childRefs.find((ref) => ref !== null) ??
             (await page.mainFrame().evaluate(describeActive));
         } catch {
-          // Page might have navigated, use lastFocusedElement as fallback
-          currentFocusedElement = lastFocusedElement;
+          // Page might have navigated; fall back to the focus report below.
         }
 
         // Small wait to allow any navigation to start
@@ -515,8 +514,20 @@ export async function runFocusIndicatorCheck(
           // 3.2.1 violation detected!
           navigationDetected = true;
 
-          const culprit = currentFocusedElement || lastFocusedElement;
-          if (culprit && !skipSelectors.includes(culprit.selector)) {
+          // The focus report can be lost in the navigation, leaving
+          // lastFocusedElement on the element before. Trust it only when this
+          // Tab's report arrived; otherwise the culprit is unknown and the
+          // attempt restarts without recording or skipping anything.
+          const culprit =
+            currentFocusedElement ??
+            (focusHistory.length > recordedBeforeTab
+              ? lastFocusedElement
+              : null);
+          if (!culprit) {
+            out.warn(
+              `\n⚠️  Focus caused navigation from ${urlBeforeTab}, but the element could not be identified. Restarting test...`,
+            );
+          } else if (!skipSelectors.includes(culprit.selector)) {
             const toUrl =
               urlAfterTab !== urlBeforeTab
                 ? urlAfterTab

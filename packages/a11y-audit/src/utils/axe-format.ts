@@ -224,17 +224,30 @@ export function normalizeFocusCheck(
     applicable,
   );
 
+  // Retries ran out on a navigation whose element was never identified: focus
+  // did change the page, so 3.2.1 can neither pass nor be inapplicable.
+  const unattributedNavigation =
+    details.interrupted && details.onFocusViolations.length === 0;
   bucketize(
     buckets,
     'no-context-change-on-focus',
-    details.onFocusViolations.map((v) =>
-      toNode(
-        v.element,
-        `Focusing ${describeElement(v.element)} triggered a ${v.changeType} ` +
-          `from ${v.fromUrl} to ${v.toUrl}.`,
-      ),
-    ),
-    applicable,
+    unattributedNavigation
+      ? [
+          pageNode(
+            'Focus triggered a navigation, but the element that caused it ' +
+              'could not be identified before retries ran out. Verify manually ' +
+              'which element changes the context on focus.',
+          ),
+        ]
+      : details.onFocusViolations.map((v) =>
+          toNode(
+            v.element,
+            `Focusing ${describeElement(v.element)} triggered a ${v.changeType} ` +
+              `from ${v.fromUrl} to ${v.toUrl}.`,
+          ),
+        ),
+    applicable || unattributedNavigation,
+    unattributedNavigation ? 'incomplete' : undefined,
   );
 
   // `checkDismiss`: only 2.4.11 exempts content the user can dismiss

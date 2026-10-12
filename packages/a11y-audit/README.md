@@ -325,7 +325,9 @@ are kept in the result JSON:
 - keyboard-trap: `details.tabWalkCapped: true` when the Tab walk hit the press
   limit.
 - focus-indicator: `details.interrupted: true` when navigation on focus
-  exhausted the retries and some elements were not tested.
+  exhausted the retries and some elements were not tested. If no element that
+  caused the navigation was identified, `a11y-skills/no-context-change-on-focus`
+  is then `incomplete` instead of `passes`.
 - focus-indicator / keyboard-reachability: see "Time and Tab-press limits"
   below for what happens when a limit is hit.
 
