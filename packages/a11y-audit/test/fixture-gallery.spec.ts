@@ -1,5 +1,5 @@
 /**
- * Fixture Gallery: manifest-driven integration tests for all 12 checks.
+ * Fixture Gallery: manifest-driven integration tests for all 13 checks.
  *
  * Each manifest entry:
  * - Serves an HTML fixture from test/fixtures/pages/ via a worker-scoped
@@ -10,7 +10,7 @@
  * - For 'passes' expectations: also guards against silent inapplicable pass.
  * - Validates the result envelope against RESULT_SCHEMAS[check] via Ajv.
  *
- * Coverage: all 22 custom finding-capable rules from rule-registry.ts
+ * Coverage: all 23 custom finding-capable rules from rule-registry.ts
  * (auto-play and auto-play-audio live in their own specs).
  * axe-audit: representative rule (image-alt); full rule coverage is out of
  * scope for axe (hundreds of external rules).
@@ -273,6 +273,44 @@ const MANIFEST: ManifestEntry[] = [
       'a11y-skills/autocomplete-invalid': 'passes',
       'a11y-skills/autocomplete-invalid-unverified': 'passes',
       'a11y-skills/autocomplete-missing': 'passes',
+    },
+  },
+
+  // =========================================================================
+  // redundant-entry-check
+  // Rule: a11y-skills/redundant-entry (incomplete)
+  // =========================================================================
+  {
+    check: 'redundant-entry-check',
+    scenario: 'finding: redundant-entry (shipping/billing via autocomplete)',
+    fixture: 'redundant-entry/finding-scoped.html',
+    expectRules: {
+      'a11y-skills/redundant-entry': 'incomplete',
+    },
+  },
+  {
+    check: 'redundant-entry-check',
+    scenario: 'finding: redundant-entry (scope from legend and name prefix)',
+    fixture: 'redundant-entry/finding-names.html',
+    expectRules: {
+      'a11y-skills/redundant-entry': 'incomplete',
+    },
+  },
+  {
+    check: 'redundant-entry-check',
+    scenario: 'finding: redundant-entry (email and confirmation email)',
+    fixture: 'redundant-entry/finding-repeated.html',
+    expectRules: {
+      'a11y-skills/redundant-entry': 'incomplete',
+    },
+  },
+  {
+    check: 'redundant-entry-check',
+    scenario:
+      'clear: passwords, other sections and other forms are not redundant',
+    fixture: 'redundant-entry/clear.html',
+    expectRules: {
+      'a11y-skills/redundant-entry': 'passes',
     },
   },
 

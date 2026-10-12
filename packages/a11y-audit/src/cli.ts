@@ -206,6 +206,18 @@ const CHECK_REGISTRY: CheckEntry[] = [
       })) as AuditResultEnvelope;
     },
   },
+  {
+    name: 'redundant-entry-check',
+    kind: 'page',
+    async run({ page, outputDir }) {
+      const { runRedundantEntryCheck } =
+        await import('./playwright/runRedundantEntryCheck.js');
+      return (await runRedundantEntryCheck({
+        page,
+        outputDir,
+      })) as AuditResultEnvelope;
+    },
+  },
 ];
 
 // ---------------------------------------------------------------------------

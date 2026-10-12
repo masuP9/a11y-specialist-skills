@@ -69,7 +69,7 @@ Methods are labeled as Automated/Interactive/Manual/Content and can be combined.
 | 3.3.2 | Automated + Content | a11y tree/excerpts | Fail if labels/instructions missing |
 | 3.3.3 | Interactive | screenshots | Fail if no correction suggestions |
 | 3.3.4 | Interactive | logs | Fail if no confirm/reversal for critical actions |
-| 3.3.7 | Manual | logs | Fail if redundant entry required |
+| 3.3.7 | Manual + automated candidates | `redundant-entry-check` **[CLI]** + logs | Fail if redundant entry required |
 | 3.3.8 | Interactive | captures | Fail if authentication relies on cognitive test only |
 
 ## 4. Robust
@@ -97,3 +97,4 @@ The following criteria can be automatically checked via the `a11y-audit` CLI (se
 | 2.2.1 | `time-limit-detector` | `time-limit-result.json` |
 | 2.4.7, 2.4.11, 2.4.12 (AAA), 3.2.1 | `focus-indicator-check` | `focus-indicator-result.json`, `focus-indicators.png` |
 | 2.5.5, 2.5.8 | `target-size-check` | `target-size-result.json`, `target-size-screenshot.png` |
+| 3.3.7 | `redundant-entry-check` | `redundant-entry-result.json` |

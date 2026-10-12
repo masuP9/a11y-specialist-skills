@@ -26,6 +26,7 @@ import type {
   NormalizedNode,
   NormalizedRuleResult,
   OrientationCheckDetails,
+  RedundantEntryCheckDetails,
   ReflowCheckDetails,
   TargetSizeCheckDetails,
   TargetSizeIssue,
@@ -558,6 +559,41 @@ export function normalizeAutocompleteAudit(
     ),
     applicable,
   );
+
+  return buckets;
+}
+
+export function normalizeRedundantEntryCheck(
+  details: RedundantEntryCheckDetails,
+): NormalizedBuckets {
+  const buckets = emptyBuckets();
+  const applicable = details.totalFieldsChecked > 0;
+  buckets.checkedNodes = details.totalFieldsChecked;
+
+  const nodes = details.groups.flatMap((group) => {
+    const [first, ...rest] = group.fields;
+    if (!first) return [];
+    const copyControl = group.copyControls[0];
+    // Disabled/readonly fields stay in `fields` as evidence but are not re-entry.
+    return rest
+      .filter((field) => field.editable)
+      .map((field) => {
+        const scopes =
+          group.kind === 'scoped'
+            ? ` (${first.scope ?? 'no scope'} / ${field.scope ?? 'no scope'})`
+            : '';
+        const guidance = copyControl
+          ? `A control that may copy or select the earlier value was found: ${copyControl.selector} ("${copyControl.text}"). ` +
+            'Verify it fills this field, or whether an exception to 3.3.7 applies.'
+          : 'No control that copies or selects the earlier value was found nearby. ' +
+            'Verify whether the user must re-enter it, or whether an exception to 3.3.7 applies (essential, security, no longer valid).';
+        return toNode(
+          field,
+          `Field asks for "${group.purpose}" again${scopes}; the first is ${first.selector}. ${guidance}`,
+        );
+      });
+  });
+  bucketize(buckets, 'redundant-entry', nodes, applicable);
 
   return buckets;
 }

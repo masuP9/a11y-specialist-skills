@@ -64,3 +64,14 @@ Each file should include a link to its counterpart at the top:
 # Japanese file
 [English](./FILENAME.md)
 ```
+
+## ship-plan の設定
+
+- **プラン**: `plans/<NNN>-*.md`
+- **Issue**: 既存の issue があればその URL をプラン冒頭に `- **Issue**: <url>` で書く。新しく立てない。PR 本文に `Closes #<issue>`
+- **着手前に読む**: `AGENTS.md`、`packages/a11y-audit/README.ja.md`
+- **検証**: `npm run lint && npm run format:check && npm run typecheck && npm test && npm run validate:skills`
+- **整形**: `npx prettier --write <path>`
+- **worktree でのコマンド**: `npm --prefix <worktree> run <script>`
+- **再レビューが要るパス**: `packages/` `skills/`
+- **CI の注意**: CI は `.github/workflows/ci.yml`。`--checks all` の CLI スモークが新しいチェックも通すので、fixture でハングやエラーを起こさないこと

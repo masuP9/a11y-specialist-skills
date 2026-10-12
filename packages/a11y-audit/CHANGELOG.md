@@ -7,6 +7,27 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- `redundant-entry-check` (WCAG 3.3.7): new check, `runRedundantEntryCheck`
+  (takes a `page`) and the CLI check name `redundant-entry-check`. Rule
+  `a11y-skills/redundant-entry` (tags `wcag22a`, `wcag337`; always
+  `incomplete`, because the 3.3.7 exceptions cannot be judged). Within the
+  same form (the whole page for fields outside any form) and `section-*`, two
+  or more fields with the same purpose (the `autocomplete` field name, or a
+  purpose inferred from name / id / label / placeholder after removing scope
+  words such as "shipping" / "billing" and confirmation words) form a group in
+  `details.groups`; the second and later fields are the nodes. `kind` is
+  `scoped` when the shipping / billing scope differs and `repeated`
+  otherwise. Controls whose text suggests copying or selecting the earlier
+  entry ("same as ...") are listed in the group's `copyControls`. Known
+  limitations: multi-page flows (steps split across several pages) are out of
+  scope; only fields in the same form are compared; the purpose is inferred by
+  word matching and checkboxes / radios are not candidate fields;
+  `copyControls` are matched by text and whether the value is actually copied
+  is not verified; disabled / readonly fields count as earlier information
+  (`fields[].editable` is `false`) but only editable fields after the first
+  one are reported as re-entry; fields hidden at load time are counted; the exceptions
+  (essential, security, no longer valid) cannot be judged, only password and
+  one-time-code fields are excluded; shadow DOM and iframes are not inspected.
 - `a11y-skills/auto-play-audio` (WCAG 1.4.2; tags `wcag2a`, `wcag142`;
   `incomplete`): `auto-play-detection` now records every `<audio>` /
   `<video>` in the page and its iframes (nested frames and open shadow roots

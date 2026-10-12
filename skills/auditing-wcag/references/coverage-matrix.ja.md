@@ -69,7 +69,7 @@
 | 3.3.2 | 自動+コンテンツ | a11y tree/文面 | ラベル/説明不足でFail |
 | 3.3.3 | インタラクティブ | スクショ | 修正提案なしでFail |
 | 3.3.4 | インタラクティブ | 操作ログ | 取消/確認不可でFail |
-| 3.3.7 | 手動 | 操作ログ | 冗長入力要求でFail |
+| 3.3.7 | 手動+自動の候補 | `redundant-entry-check` **[CLI]** + 操作ログ | 同一情報の再入力を要求でFail |
 | 3.3.8 | インタラクティブ | 画面キャプチャ | 認知テストのみでFail |
 
 ## 4. 堅牢
@@ -97,3 +97,4 @@
 | 2.2.1 | `time-limit-detector` | `time-limit-result.json` |
 | 2.4.7, 2.4.11, 2.4.12 (AAA), 3.2.1 | `focus-indicator-check` | `focus-indicator-result.json`, `focus-indicators.png` |
 | 2.5.5, 2.5.8 | `target-size-check` | `target-size-result.json`, `target-size-screenshot.png` |
+| 3.3.7 | `redundant-entry-check` | `redundant-entry-result.json` |

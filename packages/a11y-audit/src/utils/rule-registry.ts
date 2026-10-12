@@ -240,6 +240,22 @@ export const RULES = {
     classification: 'incomplete',
   },
 
+  // --- redundant-entry-check ---
+  'redundant-entry': {
+    id: 'a11y-skills/redundant-entry',
+    sc: ['3.3.7'],
+    tags: ['a11y-skills', 'wcag22a', 'wcag337'],
+    impact: 'moderate',
+    scope: 'node',
+    description:
+      'Ensure information already entered in the same page is not requested again',
+    help: 'Provide a way to copy or select earlier entries, or confirm an exception applies',
+    helpUrl: `${UNDERSTANDING}/redundant-entry.html`,
+    // Whether re-entry is required, and whether an exception applies (essential,
+    // security, no longer valid), needs a human; multi-page flows are out of scope.
+    classification: 'incomplete',
+  },
+
   // --- time-limit-detector ---
   'meta-refresh': {
     id: 'a11y-skills/meta-refresh',

@@ -483,6 +483,35 @@ export const AUTOCOMPLETE_NORMAL_FIELD_NAMES = [
 export const DEFAULT_AUTOCOMPLETE_RESULT_FILE = 'autocomplete-result.json';
 
 // =============================================================================
+// Redundant Entry Check Constants (WCAG 3.3.7)
+// =============================================================================
+
+/**
+ * Words marking a field as shipping- or billing-specific (stripped before
+ * purpose matching). The `g` flag is for `replace`; do not use these with
+ * `.test()` (it keeps `lastIndex`).
+ */
+export const REDUNDANT_ENTRY_SCOPE_PATTERNS = {
+  shipping:
+    /(shipping|ship[-_ ]?to|deliver(?:y|[-_ ]?to)|お届け先?|配送先?|送付先?|お送り先)/gi,
+  billing: /(billing|bill[-_ ]?to|invoice|ご?請求先?)/gi,
+} as const;
+/** Words marking a confirmation field (stripped before purpose matching). `g` flag: `replace` only. */
+export const REDUNDANT_ENTRY_CONFIRM_PATTERN =
+  /(confirm(?:ation)?|re-?(?:enter|type)|verify|again|確認用?|再入力|もう一度)/gi;
+/** Visible text of a control that probably copies or selects an earlier entry. */
+export const REDUNDANT_ENTRY_COPY_CONTROL_PATTERN =
+  /(same as|same address|use (the )?(shipping|billing)|copy|identical|autofill|saved address|同じ|同一|同上|コピー|転記|自動入力|保存済み)/i;
+/** Purposes whose repeated entry is allowed (security exception). */
+export const REDUNDANT_ENTRY_EXEMPT_PURPOSES = [
+  'new-password',
+  'current-password',
+  'one-time-code',
+] as const;
+export const DEFAULT_REDUNDANT_ENTRY_RESULT_FILE =
+  'redundant-entry-result.json';
+
+// =============================================================================
 // Time Limit Detector Constants (WCAG 2.2.1)
 // =============================================================================
 

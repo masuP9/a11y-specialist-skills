@@ -53,3 +53,7 @@ Items requiring human judgment. Use screenshots/video/notes as evidence for visu
 | Criterion | Check | Evidence | Fail rule |
 |---|---|---|---|
 | 3.3.7 | No required re-entry of known information | logs | Re-entry required without valid reason |
+
+> **CLI Check:** `redundant-entry-check` - Reports fields in the same form that ask for the same information (the `autocomplete` purpose, or a purpose inferred from the name/label), plus controls that probably copy or select the earlier entry ("same as ..."), as candidates (incomplete). It only finds overlaps **within a single page**. Forms whose steps span several pages are out of scope and must be checked manually. It does not verify that the value is actually copied.
+>
+> Run via: `npx -y @a11y-skills/audit --url "<url>" --checks redundant-entry-check`

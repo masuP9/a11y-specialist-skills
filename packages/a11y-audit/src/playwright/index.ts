@@ -55,6 +55,10 @@ export {
   runKeyboardReachabilityCheck,
   type RunKeyboardReachabilityCheckOptions,
 } from './runKeyboardReachabilityCheck.js';
+export {
+  runRedundantEntryCheck,
+  type RunRedundantEntryCheckOptions,
+} from './runRedundantEntryCheck.js';
 
 export {
   resolveOutputPath,

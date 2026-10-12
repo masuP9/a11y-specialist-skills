@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>redundant-entry clear fixture</title>
+  </head>
+  <body>
+    <!--
+      Intent: no field asks for the same information twice in the same form.
+      Expected: a11y-skills/redundant-entry is `passes` (not `inapplicable`).
+      - one name, email and phone field
+      - new-password twice (re-entry of a password is a security exception)
+      - the same purpose (name) in different section-* groups (different people)
+      - the same purpose (email) in two different forms
+    -->
+    <h1>Registration</h1>
+    <form id="register">
+      <label for="full-name">Full name</label>
+      <input type="text" id="full-name" autocomplete="name" />
+
+      <label for="contact-email">Email address</label>
+      <input type="email" id="contact-email" autocomplete="email" />
+
+      <label for="contact-phone">Phone</label>
+      <input type="tel" id="contact-phone" autocomplete="tel" />
+
+      <label for="new-pass">New password</label>
+      <input type="password" id="new-pass" autocomplete="new-password" />
+
+      <label for="new-pass-again">New password (confirm)</label>
+      <input type="password" id="new-pass-again" autocomplete="new-password" />
+
+      <label for="guest1-name">Guest 1 name</label>
+      <input type="text" id="guest1-name" autocomplete="section-guest1 name" />
+
+      <label for="guest2-name">Guest 2 name</label>
+      <input type="text" id="guest2-name" autocomplete="section-guest2 name" />
+
+      <button type="submit">Register</button>
+    </form>
+
+    <form id="login">
+      <label for="login-email">Email address</label>
+      <input type="email" id="login-email" autocomplete="email" />
+      <button type="submit">Log in</button>
+    </form>
+
+    <form id="newsletter">
+      <label for="news-email">Email address</label>
+      <input type="email" id="news-email" autocomplete="email" />
+      <button type="submit">Subscribe</button>
+    </form>
+  </body>
+</html>

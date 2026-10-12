@@ -68,6 +68,11 @@ export type {
   KeyboardTrapEvidence,
   KeyboardTrapCheckDetails,
   KeyboardTrapCheckResult,
+  RedundantEntryField,
+  RedundantEntryCopyControl,
+  RedundantEntryGroup,
+  RedundantEntryCheckDetails,
+  RedundantEntryCheckResult,
 } from '../types.js';
 
 /** Minimal JSON Schema object shape (Draft 2020-12 compatible subset). */
@@ -870,6 +875,82 @@ export const KEYBOARD_REACHABILITY_CHECK_RESULT_SCHEMA: JsonSchema =
     },
   });
 
+export const REDUNDANT_ENTRY_CHECK_RESULT_SCHEMA: JsonSchema =
+  buildEnvelopeSchema({
+    id: 'redundant-entry-check-result',
+    title: 'RedundantEntryCheckResult',
+    source: 'redundant-entry-check',
+    details: {
+      type: 'object',
+      required: ['totalFieldsChecked', 'fieldsWithPurpose', 'groups'],
+      properties: {
+        totalFieldsChecked: { type: 'number' },
+        fieldsWithPurpose: { type: 'number' },
+        groups: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['purpose', 'kind', 'fields', 'copyControls'],
+            properties: {
+              purpose: { type: 'string' },
+              formSelector: { type: ['string', 'null'] },
+              kind: { type: 'string', enum: ['scoped', 'repeated'] },
+              fields: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  required: [
+                    'selector',
+                    'purpose',
+                    'purposeSource',
+                    'scope',
+                    'contactType',
+                    'editable',
+                  ],
+                  properties: {
+                    selector: { type: 'string' },
+                    purpose: { type: 'string' },
+                    purposeSource: {
+                      type: 'string',
+                      enum: [
+                        'autocomplete',
+                        'name',
+                        'id',
+                        'label',
+                        'placeholder',
+                      ],
+                    },
+                    scope: { enum: ['shipping', 'billing', null] },
+                    section: { type: ['string', 'null'] },
+                    contactType: { type: ['string', 'null'] },
+                    editable: { type: 'boolean' },
+                    formSelector: { type: ['string', 'null'] },
+                    name: { type: ['string', 'null'] },
+                    id: { type: ['string', 'null'] },
+                    labelText: { type: ['string', 'null'] },
+                    autocomplete: { type: ['string', 'null'] },
+                  },
+                },
+              },
+              copyControls: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  required: ['selector', 'tagName', 'text'],
+                  properties: {
+                    selector: { type: 'string' },
+                    tagName: { type: 'string' },
+                    text: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
 /** All result schemas keyed by check id. */
 export const RESULT_SCHEMAS = {
   'axe-audit': AXE_AUDIT_RESULT_SCHEMA,
@@ -884,4 +965,5 @@ export const RESULT_SCHEMAS = {
   'auto-play-detection': AUTO_PLAY_DETECTION_RESULT_SCHEMA,
   'keyboard-trap-check': KEYBOARD_TRAP_CHECK_RESULT_SCHEMA,
   'keyboard-reachability-check': KEYBOARD_REACHABILITY_CHECK_RESULT_SCHEMA,
+  'redundant-entry-check': REDUNDANT_ENTRY_CHECK_RESULT_SCHEMA,
 } as const;

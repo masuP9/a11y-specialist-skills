@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>redundant-entry finding-names fixture</title>
+  </head>
+  <body>
+    <!--
+      Intent: no autocomplete attributes. The scope comes from the fieldset
+      legend (address) or from the name prefix (shipping_zip / billing_zip).
+      Expected: a11y-skills/redundant-entry is `incomplete` with 2 nodes
+      (address, postal-code: the second field of each pair). Both groups have
+      kind 'scoped' and no copyControls.
+    -->
+    <h1>注文</h1>
+    <form id="order">
+      <fieldset>
+        <legend>お届け先</legend>
+        <label for="addr1">住所</label>
+        <input type="text" id="addr1" name="address" />
+      </fieldset>
+
+      <fieldset>
+        <legend>ご請求先</legend>
+        <label for="addr2">住所</label>
+        <input type="text" id="addr2" name="address" />
+      </fieldset>
+
+      <label for="zip1">Zip</label>
+      <input type="text" id="zip1" name="shipping_zip" />
+      <label for="zip2">Zip</label>
+      <input type="text" id="zip2" name="billing_zip" />
+
+      <button type="submit">注文する</button>
+    </form>
+  </body>
+</html>

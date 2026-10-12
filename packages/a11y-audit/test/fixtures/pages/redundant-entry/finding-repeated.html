@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>redundant-entry finding-repeated fixture</title>
+  </head>
+  <body>
+    <!--
+      Intent: an email field followed by a confirmation email field.
+      Expected: a11y-skills/redundant-entry is `incomplete` with 1 node (the
+      confirmation field). The group has kind 'repeated'.
+    -->
+    <h1>会員登録</h1>
+    <form id="signup">
+      <label for="mail">メールアドレス</label>
+      <input type="email" id="mail" name="email" autocomplete="email" />
+
+      <label for="mail2">メールアドレス（確認）</label>
+      <input type="email" id="mail2" name="email_confirm" />
+
+      <button type="submit">登録</button>
+    </form>
+  </body>
+</html>
