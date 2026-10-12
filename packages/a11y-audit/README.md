@@ -38,8 +38,10 @@ For 1.4.2 (`a11y-skills/auto-play-audio`), `runAutoPlayDetection` checks, with
 each screenshot (about every 2 seconds), whether every `<audio>` / `<video>` in
 the page and its iframes (nested frames and shadow roots included) is playing,
 unmuted and with volume above 0. The time between consecutive checks that both
-found it so is added up as `audibleSeconds`. Media heard for more than 3
-seconds without visible `controls` goes to `incomplete`. Visibility uses the
+found it so is added up as `audibleSeconds`. Media without visible `controls`
+goes to `incomplete` when it was heard for more than 3 seconds, or when it is
+playing with sound at the last check and will keep playing for more than 3
+seconds (`loop`, an endless stream, or more than 3 seconds left). Visibility uses the
 size, `display`, `visibility` and `opacity` of the element and the iframe
 elements above it, not clipping or off-screen position; when it cannot be
 determined, the result is also `incomplete`. Checking starts when the check

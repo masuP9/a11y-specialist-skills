@@ -662,8 +662,9 @@ const AUDIO_CONTROL_THRESHOLD_SECONDS = 3;
 
 /**
  * Why this media element needs review under 1.4.2, or null when it does not:
- * it was heard for 3 seconds or less between samples, or it carries native
- * controls that are visible.
+ * it carries visible native controls, or it was heard for 3 seconds or less
+ * between samples and will not keep playing with sound for more than 3
+ * seconds after the last sample.
  */
 function describeAutoPlayingAudio(media: MediaPlaybackRecord): string | null {
   if (media.controls && media.visible === true) return null;
@@ -684,12 +685,25 @@ function describeAutoPlayingAudio(media: MediaPlaybackRecord): string | null {
     );
   }
 
-  if (media.audibleSeconds <= AUDIO_CONTROL_THRESHOLD_SECONDS) return null;
+  const audibleNow =
+    !media.paused && !media.ended && !media.muted && media.volume > 0;
+  // Sound that starts just before the last sample is heard for too short a
+  // time between samples, so also count what is left to play.
+  const keepsPlaying =
+    audibleNow &&
+    (media.loop ||
+      media.endless ||
+      (media.duration !== null &&
+        media.duration - media.currentTime > AUDIO_CONTROL_THRESHOLD_SECONDS));
+  const heardLongEnough =
+    media.audibleSeconds > AUDIO_CONTROL_THRESHOLD_SECONDS;
+  if (!heardLongEnough && !keepsPlaying) return null;
 
-  const state =
-    !media.paused && !media.ended && !media.muted && media.volume > 0
-      ? 'and is still playing'
-      : 'and has since been muted or stopped';
+  const state = !audibleNow
+    ? 'and has since been muted or stopped'
+    : keepsPlaying
+      ? 'and will keep playing with sound for more than 3s'
+      : 'and is still playing';
   const decoded =
     media.audioDecodedBytes === 0
       ? ' No audio data was decoded, so the track may be silent.'

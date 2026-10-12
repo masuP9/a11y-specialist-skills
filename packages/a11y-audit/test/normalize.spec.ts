@@ -587,14 +587,87 @@ test('auto-play-audio: played の合計が 2 秒（ループ）で止まって�
   ).toBe('incomplete');
 });
 
-test('auto-play-audio: 最後に消音を解いて鳴っていても、音ありで鳴った秒数が 3 秒以下なら passes になる', () => {
+test('auto-play-audio: 音ありで鳴った秒数が 0 でも、最後の測定で音ありで再生中で残りが 3 秒を超えれば incomplete になる', () => {
   expect(
     audioBucket(
       autoPlayDetails({
-        mediaElements: [playingAudio({ playedSeconds: 6, audibleSeconds: 0 })],
+        mediaElements: [
+          playingAudio({ duration: 30, currentTime: 6.5, audibleSeconds: 0 }),
+        ],
+      }),
+    ),
+  ).toBe('incomplete');
+});
+
+test('auto-play-audio: 最後の測定で音ありで再生中でも、残りがちょうど 3 秒なら passes になる', () => {
+  expect(
+    audioBucket(
+      autoPlayDetails({
+        mediaElements: [
+          playingAudio({ duration: 10, currentTime: 7, audibleSeconds: 0 }),
+        ],
       }),
     ),
   ).toBe('passes');
+});
+
+test('auto-play-audio: 最後の測定で音ありで再生中の loop なら、残りが短くても incomplete になる', () => {
+  expect(
+    audioBucket(
+      autoPlayDetails({
+        mediaElements: [
+          playingAudio({
+            loop: true,
+            duration: 2,
+            currentTime: 1.5,
+            audibleSeconds: 0,
+          }),
+        ],
+      }),
+    ),
+  ).toBe('incomplete');
+});
+
+test('auto-play-audio: 最後の測定で音ありで再生中の終わりのない配信なら incomplete になる', () => {
+  expect(
+    audioBucket(
+      autoPlayDetails({
+        mediaElements: [
+          playingAudio({ duration: null, endless: true, audibleSeconds: 0 }),
+        ],
+      }),
+    ),
+  ).toBe('incomplete');
+});
+
+test('auto-play-audio: 残りが 3 秒を超えていても、最後の測定で消音されていれば鳴った秒数で判断し passes になる', () => {
+  expect(
+    audioBucket(
+      autoPlayDetails({
+        mediaElements: [
+          playingAudio({
+            muted: true,
+            duration: 30,
+            currentTime: 6.5,
+            audibleSeconds: 0,
+          }),
+        ],
+      }),
+    ),
+  ).toBe('passes');
+});
+
+test('auto-play-audio: これから鳴り続けることで候補になったときは、説明にそう書く', () => {
+  const nodes = audioIncompleteNodes(
+    autoPlayDetails({
+      mediaElements: [
+        playingAudio({ duration: 30, currentTime: 6.5, audibleSeconds: 0 }),
+      ],
+    }),
+  );
+  expect(nodes[0]?.failureSummary).toContain(
+    'will keep playing with sound for more than 3s',
+  );
 });
 
 test('auto-play-audio: 説明文に音ありで鳴った秒数と、記録は検査の開始からであることが入る', () => {

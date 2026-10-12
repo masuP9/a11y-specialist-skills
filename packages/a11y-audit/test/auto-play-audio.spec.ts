@@ -252,17 +252,17 @@ test(
 );
 
 test(
-  '消音で 6 秒鳴らしてから最後に消音を解くと、音ありで鳴った秒数は 3 秒以下で auto-play-audio は passes になる',
+  '消音で 6 秒鳴らしてから最後に消音を解くと、音ありで鳴った秒数は 3 秒以下でも、この先も鳴り続けるので auto-play-audio は incomplete になる',
   async ({ baseUrl, page, browser }, testInfo) => {
     const result = await runFixtureCheck(
       'auto-play-detection',
-      'auto-play-audio/clear-unmute-at-end.html',
+      'auto-play-audio/finding-unmute-at-end.html',
       baseUrl,
       { page, browser, testInfo },
       { quiet: true },
     );
 
-    assertRuleBuckets(result, { 'a11y-skills/auto-play-audio': 'passes' });
+    assertRuleBuckets(result, { 'a11y-skills/auto-play-audio': 'incomplete' });
     const media = (result.details as AutoPlayDetectionDetails).mediaElements;
     expect(media[0]?.muted).toBe(false);
     expect(media[0]?.playedSeconds).toBeGreaterThan(3);

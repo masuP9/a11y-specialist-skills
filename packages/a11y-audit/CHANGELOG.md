@@ -47,7 +47,9 @@ element that navigated the page could not be identified (see Fixed).
   `audibleSeconds` adds up the time between consecutive samples that both
   found the media playing, unmuted and with volume above 0, so sound that is
   muted or stopped before the last sample, or a short loop, still counts.
-  Media heard for more than 3 seconds whose `controls` are not visible (size,
+  Media heard for more than 3 seconds, or playing with sound at the last
+  sample with more than 3 seconds left (or `loop` / endless), whose
+  `controls` are not visible (size,
   display, visibility and opacity of the element and its iframe elements; not
   clipping or off-screen position), or that requests autoplay but did not
   start, is a finding; pause/mute controls found by name in the same frame are

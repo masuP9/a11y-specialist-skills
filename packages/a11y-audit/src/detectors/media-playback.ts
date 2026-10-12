@@ -9,8 +9,10 @@
  *
  * Limits:
  * - Sampling starts when the check starts. The caller navigates the page
- *   before that, so sound heard before the first sample is not counted, and
- *   sound that starts near the last sample is heard for less than 3 seconds.
+ *   before that, so sound heard before the first sample is not counted.
+ *   Sound that starts near the last sample is heard for less than 3 seconds;
+ *   the normalizer also flags media still audible at the last sample with
+ *   more than 3 seconds left (or loop / endless) to cover it.
  * - Controls are matched by name only and are not clicked; controls in a
  *   parent frame or elsewhere on the page are not searched.
  * - Visibility does not consider clipping, overflow or off-screen position.
