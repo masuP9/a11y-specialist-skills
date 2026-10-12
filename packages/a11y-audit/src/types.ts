@@ -32,7 +32,8 @@ export type CheckSource =
   | 'keyboard-trap-check'
   | 'keyboard-reachability-check'
   | 'redundant-entry-check'
-  | 'motion-actuation-check';
+  | 'motion-actuation-check'
+  | 'change-on-input-check';
 
 export type NormalizedImpact = 'critical' | 'serious' | 'moderate' | 'minor';
 
@@ -1114,3 +1115,50 @@ export interface KeyboardReachabilityCheckDetails {
 
 export type KeyboardReachabilityCheckResult =
   AuditCheckResult<KeyboardReachabilityCheckDetails>;
+
+// =============================================================================
+// Change on Input Check (WCAG 3.2.2)
+// =============================================================================
+
+export type ChangeOnInputControlKind = 'select' | 'radio' | 'checkbox' | 'text';
+
+export type InputContextChange =
+  | { kind: 'navigation'; toUrl: string }
+  | { kind: 'new-window'; url: string }
+  | { kind: 'focus-moved'; toSelector: string }
+  | { kind: 'dialog'; dialogType: string; message: string };
+
+export interface ChangeOnInputControl {
+  selector: string;
+  controlKind: ChangeOnInputControlKind;
+  /** <input> type attribute, 'select' or 'textarea'. */
+  type: string;
+  name: string | null;
+  /** Visible label text (label[for], wrapping label, aria-label), trimmed; null if none. */
+  label: string | null;
+  html: string;
+  htmlTruncated: boolean;
+}
+
+export interface ChangeOnInputFinding {
+  control: ChangeOnInputControl;
+  /** What was done, e.g. 'selected option 2 "Tokyo"', 'checked', 'typed "a11y-test" and blurred'. */
+  action: string;
+  changes: InputContextChange[];
+}
+
+export interface ChangeOnInputCheckDetails {
+  controlsFound: number;
+  controlsTested: number;
+  skipped: { selector: string; reason: string }[];
+  findings: ChangeOnInputFinding[];
+  restarts: number;
+  aborted: {
+    reason: 'timeout' | 'control-limit' | 'restart-limit';
+    testedCount: number;
+    foundCount: number;
+  } | null;
+}
+
+export type ChangeOnInputCheckResult =
+  AuditCheckResult<ChangeOnInputCheckDetails>;
