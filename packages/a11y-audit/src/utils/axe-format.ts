@@ -18,6 +18,7 @@ import type {
   FocusCheckDetails,
   FocusElementRef,
   FocusObscuredIssue,
+  FocusVisualDiff,
   KeyboardReachabilityCheckDetails,
   KeyboardTrapCheckDetails,
   NormalizedImpact,
@@ -172,6 +173,41 @@ export function buildAuditResult<TDetails>(args: {
 // Per-check normalizers
 // =============================================================================
 
+/**
+ * Message for an element with no computed-style change on focus. `visualDiff`
+ * is undefined without `screenshotDiff`, and null when it could not be taken.
+ */
+function describeMissingFocusStyle(
+  el: FocusElementRef,
+  visualDiff: FocusVisualDiff | null | undefined,
+): string {
+  const base = `${describeElement(el)} shows no computed-style change on focus `;
+  if (visualDiff && visualDiff.diffRatio > 0) {
+    return (
+      base +
+      `(outline, box-shadow, background-color), but the screenshot differs ` +
+      `around it (${(visualDiff.diffRatio * 100).toFixed(2)}% of the compared ` +
+      'area changed). A focus indicator may exist (pseudo-element, parent or ' +
+      'another element); verify manually that the change is a visible focus ' +
+      'indicator and not fixed/sticky content or an animation.'
+    );
+  }
+  if (visualDiff) {
+    return (
+      base +
+      '(outline, box-shadow, background-color) and the screenshot shows no ' +
+      'visual change around it. No focus indicator was found; verify manually ' +
+      '(canvas or content outside the compared area is not detected).'
+    );
+  }
+  return (
+    base +
+    '(outline, box-shadow, background-color). Verify manually whether a ' +
+    'visual focus indicator exists (pseudo-elements, canvas, or parent ' +
+    'changes are not detected).'
+  );
+}
+
 export function normalizeFocusCheck(
   details: FocusCheckDetails,
 ): NormalizedBuckets {
@@ -183,13 +219,7 @@ export function normalizeFocusCheck(
     buckets,
     'focus-visible',
     details.issues.map((el) =>
-      toNode(
-        el,
-        `${describeElement(el)} shows no computed-style change on focus ` +
-          '(outline, box-shadow, background-color). Verify manually whether a ' +
-          'visual focus indicator exists (pseudo-elements, canvas, or parent ' +
-          'changes are not detected).',
-      ),
+      toNode(el, describeMissingFocusStyle(el, el.visualDiff)),
     ),
     applicable,
   );

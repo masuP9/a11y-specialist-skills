@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>focus-indicator: cues invisible to computed styles</title>
+    <style>
+      body {
+        margin: 24px;
+      }
+      a,
+      button {
+        outline: none;
+        box-shadow: none;
+        border: 0;
+        background-color: #fff;
+        text-decoration: none;
+        color: #000;
+        font: 16px sans-serif;
+        padding: 6px 10px;
+      }
+      /* Cue 1: an underline drawn by ::after, invisible to getComputedStyle(el) */
+      #pseudo-cue {
+        position: relative;
+        display: inline-block;
+      }
+      #pseudo-cue::after {
+        content: '';
+        display: none;
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -4px;
+        height: 3px;
+        background: #000;
+      }
+      #pseudo-cue:focus::after {
+        display: block;
+      }
+      /* Cue 2: the parent changes, the focused button itself does not */
+      .card {
+        display: inline-block;
+        margin: 40px 0;
+        padding: 12px;
+        background: #eee;
+      }
+      .card:focus-within {
+        background: #ffd400;
+      }
+    </style>
+  </head>
+  <body>
+    <div><a href="#end" id="pseudo-cue">Pseudo-element underline</a></div>
+    <div>
+      <div class="card"><button id="parent-cue">Parent highlight</button></div>
+    </div>
+    <div><button id="no-cue">No cue at all</button></div>
+    <p id="end">End</p>
+  </body>
+</html>

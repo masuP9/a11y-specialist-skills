@@ -246,6 +246,23 @@ contexts, so the attribute must already be on the element when the page loads
 The name is passed to `getAttribute` as a plain string; an invalid name throws
 an `Error`.
 
+**Before/after focus screenshot comparison (`screenshotDiff`):**
+
+Pass `screenshotDiff: true` to `runFocusIndicatorCheck` to compare screenshots
+of the area around each element (its rect plus an 8px margin) taken before and
+after it gets focus. Every record in `allElements` and `issues` then carries
+`visualDiff: { diffRatio, rect }`: `diffRatio` is the share (0-1) of pixels in
+the compared area that changed, and `rect` is the bounding box of the changed
+pixels in page coordinates (`null` when nothing changed). Use it to catch cues
+that computed styles cannot show (`::before` / `::after`, a parent's
+`:focus-within`, another element).
+
+- Default `false`: without the option no `visualDiff` is added and behavior is unchanged. Screenshots are taken on every Tab press, so the walk is slower, and that time counts toward `timeBudgetMs`.
+- The baseline is one full-page capture taken before the Tab walk starts, with nothing focused. Annotation boxes and the styles kept on earlier elements are hidden while capturing.
+- Classification does not change. An element with no computed-style change stays `incomplete` under `focus-visible`; the message says the screenshot differs around it (a cue may exist) or that it shows no visual change either.
+- Without the optional `pixelmatch` and `pngjs`, a warning is printed instead of an error, the comparison is skipped and `visualDiff` is `null`. It is also `null` for an element that could not be captured.
+- **Limits:** fixed / sticky content, animations, video, and anything that changes with scroll position or time can show up as a difference that is not a focus indicator. An element already focused at load (autofocus) has no baseline to differ from. A difference means "a cue may exist"; verify it by eye.
+
 ### Output location resolution
 
 For every check:
