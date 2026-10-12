@@ -16,6 +16,7 @@ import {
 import Ajv2020 from 'ajv/dist/2020.js';
 import { RESULT_SCHEMAS } from '../dist/schemas/index.js';
 import type { AutoPlayDetectionDetails } from '../dist/index.js';
+import { runAutoPlayDetection } from '../dist/playwright/index.js';
 
 const ajv = new Ajv2020({ strict: false, allowUnionTypes: true });
 const validateAutoPlay = ajv.compile(RESULT_SCHEMAS['auto-play-detection']);
@@ -342,4 +343,108 @@ test(
     );
   },
   { timeout: 60_000 },
+);
+
+test(
+  '祖先の clip-path で controls が切り取られた audio は、見えているか決めきれず auto-play-audio が incomplete になる',
+  async ({ baseUrl, page, browser }, testInfo) => {
+    const result = await runFixtureCheck(
+      'auto-play-detection',
+      'auto-play-audio/finding-clipped-controls.html',
+      baseUrl,
+      { page, browser, testInfo },
+      { quiet: true },
+    );
+
+    assertRuleBuckets(result, { 'a11y-skills/auto-play-audio': 'incomplete' });
+    const media = (result.details as AutoPlayDetectionDetails).mediaElements;
+    expect(media[0]).toMatchObject({ controls: true, visible: null });
+  },
+  { timeout: 60_000 },
+);
+
+test(
+  '検査を始めて 3.5 秒後に停止すると、測定の間に止めても音ありで鳴った 3.5 秒が数えられ auto-play-audio は incomplete になる',
+  async ({ baseUrl, page }, testInfo) => {
+    await page.goto(`${baseUrl}/auto-play-audio/finding.html`, {
+      waitUntil: 'networkidle',
+    });
+
+    const [result] = await Promise.all([
+      runAutoPlayDetection({
+        page,
+        outputDir: testInfo.outputDir,
+        quiet: true,
+      }),
+      page
+        .waitForTimeout(3500)
+        .then(() =>
+          page.evaluate(() => document.querySelector('audio')?.pause()),
+        ),
+    ]);
+
+    assertRuleBuckets(result, { 'a11y-skills/auto-play-audio': 'incomplete' });
+    const media = result.details.mediaElements;
+    expect(media[0]?.paused).toBe(true);
+    expect(media[0]?.audibleSeconds).toBeGreaterThan(3);
+  },
+  { timeout: 60_000 },
+);
+
+test(
+  '検査を始めて 3.5 秒後に消音すると、測定の間に消音しても音ありで鳴った 3.5 秒が数えられ auto-play-audio は incomplete になる',
+  async ({ baseUrl, page }, testInfo) => {
+    await page.goto(`${baseUrl}/auto-play-audio/finding.html`, {
+      waitUntil: 'networkidle',
+    });
+
+    const [result] = await Promise.all([
+      runAutoPlayDetection({
+        page,
+        outputDir: testInfo.outputDir,
+        quiet: true,
+      }),
+      page.waitForTimeout(3500).then(() =>
+        page.evaluate(() => {
+          const audio = document.querySelector('audio');
+          if (audio) audio.muted = true;
+        }),
+      ),
+    ]);
+
+    assertRuleBuckets(result, { 'a11y-skills/auto-play-audio': 'incomplete' });
+    const media = result.details.mediaElements;
+    expect(media[0]?.muted).toBe(true);
+    expect(media[0]?.audibleSeconds).toBeGreaterThan(3);
+  },
+  { timeout: 60_000 },
+);
+
+test(
+  '同じ page で 2 回検査すると、2 回目は前回の再生履歴を含まず、その間ずっと消音なら auto-play-audio は passes になる',
+  async ({ baseUrl, page }, testInfo) => {
+    await page.goto(`${baseUrl}/auto-play-audio/finding.html`, {
+      waitUntil: 'networkidle',
+    });
+    const first = await runAutoPlayDetection({
+      page,
+      outputDir: testInfo.outputDir,
+      quiet: true,
+    });
+    await page.evaluate(() => {
+      const audio = document.querySelector('audio');
+      if (audio) audio.muted = true;
+    });
+
+    const second = await runAutoPlayDetection({
+      page,
+      outputDir: testInfo.outputDir,
+      quiet: true,
+    });
+
+    expect(first.details.mediaElements[0]?.audibleSeconds).toBeGreaterThan(3);
+    assertRuleBuckets(second, { 'a11y-skills/auto-play-audio': 'passes' });
+    expect(second.details.mediaElements[0]?.audibleSeconds).toBe(0);
+  },
+  { timeout: 90_000 },
 );

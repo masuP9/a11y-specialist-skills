@@ -686,15 +686,21 @@ function describeAutoPlayingAudio(media: MediaPlaybackRecord): string | null {
   }
 
   const audibleNow =
-    !media.paused && !media.ended && !media.muted && media.volume > 0;
+    !media.paused &&
+    !media.ended &&
+    !media.muted &&
+    media.volume > 0 &&
+    media.playbackRate > 0;
   // Sound that starts just before the last sample is heard for too short a
-  // time between samples, so also count what is left to play.
+  // time between samples, so also count what is left to play, in real time
+  // at the current playback rate.
   const keepsPlaying =
     audibleNow &&
     (media.loop ||
       media.endless ||
       (media.duration !== null &&
-        media.duration - media.currentTime > AUDIO_CONTROL_THRESHOLD_SECONDS));
+        (media.duration - media.currentTime) / media.playbackRate >
+          AUDIO_CONTROL_THRESHOLD_SECONDS));
   const heardLongEnough =
     media.audibleSeconds > AUDIO_CONTROL_THRESHOLD_SECONDS;
   if (!heardLongEnough && !keepsPlaying) return null;
@@ -715,16 +721,17 @@ function describeAutoPlayingAudio(media: MediaPlaybackRecord): string | null {
           .join(', ')}.`
       : 'No pause/stop/mute control was found in the same frame by name.';
   // Visibility covers size, display, visibility and opacity of the element
-  // and its iframes; clipping, overflow and off-screen position are not
-  // checked.
+  // and its iframes; clip-path / clip makes it undetermined; overflow
+  // clipping and off-screen position are not checked.
   const nativeControls = !media.controls
     ? ''
     : media.visible === false
       ? ' It has the controls attribute but they are not visible (size, ' +
         'display, visibility and opacity of the element and its iframes ' +
-        'are checked; clipping, overflow and off-screen position are not).'
+        'are checked; overflow clipping and off-screen position are not).'
       : ' It has the controls attribute, but it could not be determined ' +
-        'whether its controls are visible.';
+        'whether its controls are visible (e.g. clip-path or clip is ' +
+        'applied to it, an ancestor or an iframe element).';
   const path =
     media.frame && media.framePath === null
       ? ' The iframe path is unknown, so the target is relative to the frame.'

@@ -146,8 +146,7 @@ export async function runAutoPlayDetection(
     detectPauseControls,
     verifyPauseControl,
     createSkippedVerification,
-    measureMediaPlayback,
-    sampleMediaPlayback,
+    createMediaTracker,
   } = detectors;
 
   const out = createAuditOutput({
@@ -158,16 +157,18 @@ export async function runAutoPlayDetection(
   });
   ensureOutputDir(outputDir);
 
-  // Take screenshots at intervals.
-  // Sample media playback (1.4.2) with each screenshot, so sound heard
-  // between samples is counted even if it is muted or stopped later.
+  // Take screenshots at intervals. Media playback (1.4.2) is recorded from
+  // here on: with each screenshot, and on every state change through
+  // listeners attached at the first sample. A new tracker per check keeps an
+  // earlier check's history on the same page out.
+  const media = createMediaTracker(page);
   const screenshots = await captureScreenshots(page, outputDir, () =>
-    sampleMediaPlayback(page),
+    media.sample(),
   );
 
   // Read media playback state once the ~6s screenshot window ends, before
   // the pause-control verification below clicks anything.
-  const { mediaElements, unmeasuredFrames } = await measureMediaPlayback(page);
+  const { mediaElements, unmeasuredFrames } = await media.measure();
 
   // Compare consecutive screenshots.
   const comparisons: ComparisonResult[] = [];

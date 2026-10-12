@@ -785,21 +785,25 @@ export interface MediaPlaybackRecord {
   /**
    * The element has a non-zero box and `checkVisibility()` (opacity and
    * visibility included) passes for it and for every iframe element above
-   * it. null when it could not be determined. Clipping, overflow and
-   * off-screen position are not considered.
+   * it. null when it could not be determined, including when the element,
+   * an ancestor or an iframe element above it has `clip-path` (not `none`) or
+   * `clip` (not `auto`). Overflow clipping and off-screen position are not
+   * considered.
    */
   visible: boolean | null;
   /**
-   * Seconds with sound: the sum of intervals between consecutive samples
-   * (taken with each screenshot, every ~2s, and once more at the end) where
-   * both samples were playing, unmuted and with volume > 0. Sampling starts
-   * when the check starts, not at page load.
+   * Seconds with sound (playing, unmuted, volume > 0, playbackRate > 0).
+   * State is recorded when the check starts, on every play / pause / ended /
+   * volumechange / ratechange event, with each screenshot (every ~2s) and
+   * once more at the end; each state lasts until the next record. Recording
+   * starts when the check starts, not at page load.
    */
   audibleSeconds: number;
   paused: boolean;
   ended: boolean;
   muted: boolean;
   volume: number;
+  playbackRate: number;
   /** Seconds; null when unknown (no metadata) or endless (see `endless`). */
   duration: number | null;
   /** `duration` is Infinity (a live stream). */

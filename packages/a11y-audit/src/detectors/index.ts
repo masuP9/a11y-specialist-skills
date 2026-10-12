@@ -3,4 +3,4 @@ export {
   verifyPauseControl,
   createSkippedVerification,
 } from './pause-control.js';
-export { measureMediaPlayback, sampleMediaPlayback } from './media-playback.js';
+export { createMediaTracker } from './media-playback.js';

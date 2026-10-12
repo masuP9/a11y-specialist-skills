@@ -85,6 +85,7 @@ const playingAudio = (
   ended: false,
   muted: false,
   volume: 1,
+  playbackRate: 1,
   duration: 10,
   endless: false,
   currentTime: 6,
@@ -649,6 +650,74 @@ test('auto-play-audio: 残りが 3 秒を超えていても、最後の測定で
             muted: true,
             duration: 30,
             currentTime: 6.5,
+            audibleSeconds: 0,
+          }),
+        ],
+      }),
+    ),
+  ).toBe('passes');
+});
+
+test('auto-play-audio: 2 倍速で残り 7 秒（実時間 3.5 秒）なら、この先も鳴り続けるとして incomplete になる', () => {
+  expect(
+    audioBucket(
+      autoPlayDetails({
+        mediaElements: [
+          playingAudio({
+            playbackRate: 2,
+            duration: 10,
+            currentTime: 3,
+            audibleSeconds: 0,
+          }),
+        ],
+      }),
+    ),
+  ).toBe('incomplete');
+});
+
+test('auto-play-audio: 2 倍速で残り 6 秒（実時間ちょうど 3 秒）なら passes になる', () => {
+  expect(
+    audioBucket(
+      autoPlayDetails({
+        mediaElements: [
+          playingAudio({
+            playbackRate: 2,
+            duration: 10,
+            currentTime: 4,
+            audibleSeconds: 0,
+          }),
+        ],
+      }),
+    ),
+  ).toBe('passes');
+});
+
+test('auto-play-audio: 0.5 倍速で残り 2 秒（実時間 4 秒）なら、この先も鳴り続けるとして incomplete になる', () => {
+  expect(
+    audioBucket(
+      autoPlayDetails({
+        mediaElements: [
+          playingAudio({
+            playbackRate: 0.5,
+            duration: 10,
+            currentTime: 8,
+            audibleSeconds: 0,
+          }),
+        ],
+      }),
+    ),
+  ).toBe('incomplete');
+});
+
+test('auto-play-audio: 0.5 倍速で残り 1.5 秒（実時間ちょうど 3 秒）なら passes になる', () => {
+  expect(
+    audioBucket(
+      autoPlayDetails({
+        mediaElements: [
+          playingAudio({
+            playbackRate: 0.5,
+            duration: 10,
+            currentTime: 8.5,
             audibleSeconds: 0,
           }),
         ],
