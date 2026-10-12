@@ -172,10 +172,19 @@ handler が無いので、本チェックは 1 欄を試して何も起きず `p
 - 除外: `disabled`、`readonly`、見えない（`checkVisibility()` が false、または幅・高さ 0）、
   `type` が上記以外の `<input>`（`hidden` / `submit` / `date` 等）。select で選べる別の
   option が無いもの、radio で未選択が無いグループも除外（`skippedCount` に数える）。
-- `text` の値: `type` ごとに固定（`email` → `a11y@example.com`、`tel` → `0123456789`、
-  `url` → `https://example.com/`、`number` → `1`、その他 → `a11y-test`）。`maxlength` が
-  あれば、その長さちょうどになるよう `1` で埋めるか切り詰める（上限に達すると次の欄へ
-  移る実装を拾うため）。定数 `CHANGE_ON_INPUT_TEXT_VALUES`。
+- `text` の値: `type` ごとに 2 候補を持つ（`email` → `a11y@example.com` / `a11y2@example.com`、
+  `tel` → `0123456789` / `0987654321`、`url` → `https://example.com/` / `https://example.org/`、
+  `number` → `1` / `2`、その他 → `a11y-test` / `a11y-test2`）。`maxlength` があれば、その長さ
+  ちょうどになるよう埋めるか切り詰める（1 候補目は `1`、2 候補目は `2` で埋める。上限に
+  達すると次の欄へ移る実装を拾うため）。**現在値と違う最初の候補**を使う。どちらも
+  現在値と同じなら（あり得ないが）その欄は `skipped`（`reason: 'value-unchanged'`）。
+  定数 `CHANGE_ON_INPUT_TEXT_VALUES`。
+- **値が実際に変わったかを確かめる**: 操作の後（`text` は `blur()` の前）に、`value` /
+  `checked` / `selectedIndex` が控えた元の値と違うかを見る。同じなら（handler が即座に
+  戻した・`number` の `min` などで弾かれた等）その欄は `controlsTested` に数えず
+  `skipped`（`reason: 'value-unchanged'`）にする。変更が成立しなかった欄を `passes` に
+  吸収しないため。ただしその時点で文脈の変化が記録されていれば、finding を優先する
+  （下の B の手順 3 の 5）。
 - 欄の識別は `selector`（`runRedundantEntryCheck.ts:197` の `getUniqueSelector(element)` と
   同じ作りのものを runner のページ内関数に書く）。radio グループはグループ内で最初の
   radio の selector を代表にし、`name` も記録する。
@@ -215,17 +224,33 @@ export interface RunChangeOnInputCheckOptions extends AuditOutputOptions {
    最初の欄**から続ける（ページが移動して戻ってきても、試した欄は `tested` の集合で飛ばす）。
 3. 欄ごとに（時間切れなら `aborted: { reason: 'timeout' }` で止める）:
    1. 記録をリセット。元の値（`value` / `checked` / `selectedIndex`）を控える。
-   2. `locator.focus()` → A の操作 → `text` は `blur()`。
-      **select / radio / checkbox は操作の直後**、`text` は `blur()` の**前**に、
-      `document.activeElement` が操作した欄（radio はそのグループのどれか）かを見る。
-      違えば `focus-moved`（移った先の `selector`、`<body>` / null なら記録しない）。
-      操作が例外（要素が消えた・見えない等）になったら、その欄は `skipped`（理由付き）にして次へ。
-   3. `settleMs` 待つ。
+      この欄の selector を**この時点で** `tested` 集合に入れる（操作中に移動・例外が
+      起きても、やり直しで同じ欄を再び試さないため。無限ループ防止）。
+   2. **試行**（操作と観測をまとめて 1 つの `try` で包む）:
+      - `locator.focus()` → A の操作。
+      - **focus 確認 1**（select / radio / checkbox は操作の直後、`text` は `fill` の後・`blur()` の前）:
+        `document.activeElement` が操作した欄（radio はそのグループのどれか）かを見る。
+        違えば `focus-moved`（移った先の `selector`。`<body>` / null なら記録しない）。
+      - 値が変わったかを確かめる（A の「値が実際に変わったか」）。
+      - `text` のみ: ページ内で `focusin` の見張り（`document` に capture で付け、移った先の
+        要素を記録）を付けてから `el.blur()` を呼ぶ。blur 自体は focus を `<body>` に移すだけで
+        `focusin` を起こさないので、**`blur()` の後に `focusin` が記録されていれば change handler が
+        focus を動かした**とみなし `focus-moved`（focus 確認 2）。見張りは確認後に外す。
+      - `settleMs` 待つ。
+   3. **試行が例外になったとき**の判定順（keyboard-reachability の `inPage`
+      `runKeyboardReachabilityCheck.ts:889-900` と同じく、記録済みの移動を先に見る）:
+      1. `framenavigated` の記録がある、または例外の文言が
+         `Execution context was destroyed|Frame was detached|Target page, context or browser has been closed|navigat`
+         に当たる → `navigation`（`toUrl` は記録の URL、無ければ `page.url()`）として下の 4 へ。
+      2. 新しいページかダイアログの記録がある → それを finding にして下の 4 へ（操作の例外は
+         記録しない）。
+      3. それ以外（要素が消えた・見えない・操作できない）→ その欄は `skipped`（`reason` は
+         例外の 1 行目、200 字まで）にして次の欄へ。
    4. 記録を見る: 主フレームの移動 → `navigation`（`toUrl`）、新しいページ → `new-window`、
-      ダイアログ → `dialog`。`page.evaluate` が `Execution context was destroyed|Frame was detached`
-      で失敗した場合も `navigation`（`runKeyboardReachabilityCheck.ts:893-899` と同じ判定。
-      それ以外の例外は外に投げる）。
-   5. 1 つでもあれば `findings` に積む。
+      ダイアログ → `dialog`、focus 確認 1・2 → `focus-moved`。確認のための `page.evaluate` が
+      上の例外判定 1 の文言で失敗した場合も `navigation`（それ以外の例外は外に投げる）。
+   5. 1 つでもあれば `findings` に積み、`controlsTested` に数える。無ければ、値が変わって
+      いれば `controlsTested` に数え、変わっていなければ `skipped`（`value-unchanged`）。
    6. **`navigation` があったら**: context を閉じ、新しい context で 1. からやり直す
       （3.2.1 と同じ。やり直しは `CHANGE_ON_INPUT_MAX_RESTARTS = 20` 回まで。超えたら
       `aborted: { reason: 'restart-limit' }`）。
@@ -367,6 +392,13 @@ export const DEFAULT_CHANGE_ON_INPUT_RESULT_FILE = 'change-on-input-result.json'
 - `select-alert.html`: `<select>` の `change` で `alert('saved')`。
 - `clear.html`: select / radio / checkbox / text があり、handler は表示テキストを変えるだけ。
 - `none.html`: 欄なし（ボタンとリンクだけ）。
+- `text-navigates-on-input.html`: text 欄の `input` イベントで同期的に
+  `location.assign('landing.html')`（`fill` の最中に文書が置き換わり、操作が例外になる場合）。
+  ほかに handler の無い checkbox 1 つ。
+- `text-change-focus.html`: text 欄の `change` で別の `<input>` に `focus()`（blur の後の移動）。
+- `initial-value.html`: `value="1"` の `type="number"` と、`value="111" maxlength="3"` の text 欄。
+  どちらも `change` で表示テキストを変えるだけ（現在値と同じ試験値を避けて、値を変えられること）。
+- `value-reverted.html`: text 欄の `input` で即座に `this.value = ''` に戻す（値を変えられない欄）。
 - `restore-silent.html`: checkbox の `change` handler が呼ばれた回数を数え、2 回目で
   `location.assign('landing.html')`（値の戻しがイベントを起こさないことを見る）。
 - `skips.html`: `disabled` / `readonly` / `type="hidden"` / 見えない欄 / option が 1 つだけの select のみ。
@@ -381,6 +413,11 @@ export const DEFAULT_CHANGE_ON_INPUT_RESULT_FILE = 'change-on-input-result.json'
 - radio でフォーカスが移る → `focus-moved`、`toSelector` が移った先
 - maxlength で自動送り → `focus-moved`
 - text の change で submit → `navigation`
+- text の input で入力の最中に移動（操作が例外になる）→ 例外にならず `navigation` の finding、
+  `restarts === 1`、checkbox も試されている（`controlsTested === 2`）、text 欄は 2 回試されない
+- text の change で別の欄へ focus → `focus-moved`、`toSelector` が移った先
+- 初期値が試験値と同じ欄 → 2 欄とも `controlsTested` に数えられ、`skipped` に入らない
+- 値を即座に戻される欄 → `skipped` に `value-unchanged`、`controlsTested === 0`、inapplicable
 - select で alert → `dialog`、`message === 'saved'`、チェックがハングしない
 - clear → `a11y-skills/no-context-change-on-input` が `passes`、`controlsTested === 4`
 - none / skips → inapplicable、skips は `skipped` に option 1 つの select が理由付きで入る
@@ -489,6 +526,9 @@ ALL must hold:
 - `locator.selectOption` / `check` / `fill` + `blur()` でフィクスチャの handler が動かない
   （値の変え方を設計し直す判断が要る）
 - `page.on('dialog')` を付けても alert でチェックが止まる
+- 入力の最中の移動で、Playwright の操作が例外にならず戻らない（ハングする）、または
+  例外判定 1 の文言に当たらない文言の例外を投げる（判定の文言を足すか、設計判断が要る）
+- `blur()` の後の `focusin` の見張りで、change handler による focus 移動を拾えない
 - Step 6 で `--checks all` が ERROR・ハング・exit 2 になる
 - いずれかのフィクスチャでチェックがハングする
 - schema 検証・lint・format・既存テストのいずれかが green にできない
