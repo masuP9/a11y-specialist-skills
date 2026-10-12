@@ -21,6 +21,7 @@ import type {
   FocusVisualDiff,
   KeyboardReachabilityCheckDetails,
   KeyboardTrapCheckDetails,
+  MediaPlaybackRecord,
   NormalizedImpact,
   NormalizedNode,
   NormalizedRuleResult,
@@ -626,13 +627,105 @@ export function normalizeAutoPlayDetection(
       pageNode(
         `Moving content continues past 5 seconds (pixel-diff detection). ` +
           `${controlsPart} ${details.recommendation} Verify the content type ` +
-          'and audio manually.',
+          'manually.',
       ),
     );
   }
   bucketize(buckets, 'auto-play', nodes, true);
 
+  const audioNodes: NormalizedNode[] = details.mediaElements.flatMap(
+    (media) => {
+      const summary = describeAutoPlayingAudio(media);
+      return summary ? [mediaNode(media, summary)] : [];
+    },
+  );
+  if (details.unmeasuredFrames > 0) {
+    audioNodes.push(
+      pageNode(
+        `${details.unmeasuredFrames} frame(s) could not be inspected for ` +
+          'auto-playing audio. Verify their media manually.',
+      ),
+    );
+  }
+  bucketize(
+    buckets,
+    'auto-play-audio',
+    audioNodes,
+    details.mediaElements.length > 0 || details.unmeasuredFrames > 0,
+  );
+
   return buckets;
+}
+
+/** WCAG 1.4.2 applies to audio that plays automatically for more than 3s. */
+const AUDIO_CONTROL_THRESHOLD_SECONDS = 3;
+
+/**
+ * Why this media element needs review under 1.4.2, or null when it does not:
+ * it is silent (muted / volume 0), stopped within 3 seconds, or carries native
+ * controls that are actually rendered.
+ */
+function describeAutoPlayingAudio(media: MediaPlaybackRecord): string | null {
+  if (media.controls && media.visible) return null;
+  if (media.muted || media.volume === 0) return null;
+
+  const location = media.frame ? ` in frame ${media.frame.url}` : '';
+  const blocked =
+    media.autoplay &&
+    media.paused &&
+    media.playedSeconds === 0 &&
+    !media.hasError;
+  if (blocked) {
+    return (
+      `<${media.tag}>${location} requests autoplay but playback did not start ` +
+      '(the browser may have blocked unmuted autoplay), so its audio could ' +
+      'not be measured. Verify manually whether it plays audio automatically.'
+    );
+  }
+
+  const stillPlaying = !media.paused && !media.ended;
+  const longEnough =
+    media.playedSeconds > AUDIO_CONTROL_THRESHOLD_SECONDS ||
+    (stillPlaying &&
+      (media.loop ||
+        media.endless ||
+        (media.duration ?? 0) > AUDIO_CONTROL_THRESHOLD_SECONDS));
+  if (!longEnough) return null;
+
+  const state = stillPlaying ? 'is still playing' : 'has played';
+  const decoded =
+    media.audioDecodedBytes === 0
+      ? ' No audio data was decoded, so the track may be silent.'
+      : '';
+  const controls =
+    media.controlsInFrame.length > 0
+      ? `Possible controls found in the same frame: ${media.controlsInFrame
+          .map((c) => `"${c.name}" (${c.selector})`)
+          .join(', ')}.`
+      : 'No pause/stop/mute control was found in the same frame by name.';
+  const nativeControls = media.controls
+    ? ' It has the controls attribute but is not rendered.'
+    : '';
+  return (
+    `Unmuted <${media.tag}>${location} ${state} automatically for ` +
+    `${media.playedSeconds.toFixed(1)}s (volume ${media.volume}).` +
+    `${decoded}${nativeControls} ${controls} Controls are matched by name ` +
+    'only and were not clicked, and controls elsewhere on the page or in a ' +
+    'parent frame are not searched: verify that the audio can be paused, ' +
+    'stopped, or its volume controlled independently.'
+  );
+}
+
+/** A node for a media element; frame elements are targeted axe-style. */
+function mediaNode(
+  media: MediaPlaybackRecord,
+  failureSummary: string,
+): NormalizedNode {
+  const node = toNode(media, failureSummary);
+  if (media.frame?.selector) {
+    node.target = [media.frame.selector, ...node.target];
+  }
+  return node;
 }
 
 // =============================================================================

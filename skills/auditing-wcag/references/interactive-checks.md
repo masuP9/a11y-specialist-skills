@@ -229,7 +229,7 @@ Supports criteria:
 
 ### `auto-play-detection` CLI Check
 
-Use the `auto-play-detection` check to detect auto-playing content via pixel-level screenshot comparison.
+Use the `auto-play-detection` check to detect auto-playing content via pixel-level screenshot comparison (2.2.2) and to measure media playback state (1.4.2).
 
 **Features:**
 - Takes screenshots at 2-second intervals (0s, 2s, 4s, 6s)
@@ -239,6 +239,7 @@ Use the `auto-play-detection` check to detect auto-playing content via pixel-lev
 - Verifies if pause controls actually work by clicking and re-comparing
 - Generates visual diff images highlighting changed areas
 - Reports findings with accessibility recommendations
+- Records the playback state (`paused`, `muted`, `volume`, seconds played) of every `<audio>` / `<video>` in the page and its iframes, and reports unmuted media that plays for more than 3 seconds without visible `controls` as `a11y-skills/auto-play-audio` (incomplete) (1.4.2)
 
 **Usage:**
 ```bash
@@ -254,6 +255,7 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks auto-play-detecti
     - Whether content stops within 5 seconds
     - Detected pause controls with accessibility info
     - Pause control verification results
+    - `mediaElements` - Playback state of each media element and the pause/mute controls found in the same frame
 
 **Pause Control Detection:**
 The script automatically searches for pause/stop controls by:
@@ -269,8 +271,9 @@ When auto-play is detected and continues beyond 5 seconds:
 4. Reports whether the control works
 
 **Limitations:**
-- Detects visual changes only (carousels, animations, video playback)
-- Audio auto-play requires manual verification (listening)
+- Screenshot comparison (2.2.2) detects visual changes only (carousels, animations, video playback)
+- Audio (1.4.2) is measured by playback state only; whether sound is actually heard requires manual verification (listening). Audio controls are found by name only, never clicked, and controls in a parent frame or elsewhere on the page are not searched
+- Sound that does not use `<audio>` / `<video>` (e.g. the Web Audio API) is not measured
 - Small animations below 0.1% threshold may not be detected
 
 **Manual Verification Required:**

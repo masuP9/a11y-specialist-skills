@@ -24,7 +24,7 @@ Claude Code skill から機能本体を切り出したものです。10 個の�
 | `runOrientationCheck` | 1.3.4 表示の向き |
 | `runAutocompleteAudit` | 1.3.5 入力目的の特定 |
 | `runTimeLimitDetector` | 2.2.1 タイミング調整可能 |
-| `runAutoPlayDetection` | 2.2.2 一時停止、停止、非表示（音は見ない。1.4.2 は axe の `no-autoplay-audio` と手動確認で扱う） |
+| `runAutoPlayDetection` | 2.2.2 一時停止、停止、非表示（画面の変化）／ 1.4.2 音声の制御（`<audio>`・`<video>` の再生状態。実際に音が聞こえるかは手で確かめる） |
 | `runKeyboardReachabilityCheck` | 2.1.1 キーボード（Tab・複合部品内の矢印キー・activedescendant） |
 
 多くの検査は遷移済みの `page` を受けます。一部は navigation を所有し `targetUrl`
@@ -32,6 +32,22 @@ Claude Code skill から機能本体を切り出したものです。10 個の�
 （`runZoomCheck` は URL 指定時）。`runFocusIndicatorCheck` と
 `runKeyboardReachabilityCheck` は `browser` を受けます。
 `runAutoPlayDetection` は optional 依存 `pixelmatch` + `pngjs` が必要です（インストール参照）。
+
+`runAutoPlayDetection` の 1.4.2（`a11y-skills/auto-play-audio`）は、ページと iframe の中の
+`<audio>`・`<video>` について、読み込みから約 6 秒後の再生状態（`paused`・`muted`・`volume`・
+`duration`・再生済みの秒数）を `details.mediaElements` に記録します。消音でなく 3 秒を超えて
+鳴るもので、見えている `controls` が無いものを `incomplete` にします。同じ frame で名前から
+見つけた止める・消音の部品は記録しますが、クリックして確かめはしません。
+
+Chromium は利用者の操作が無いと音ありの自動再生を止めるので、自分でブラウザを起動する
+場合は次の引数を付けてください。付けないと音ありのメディアは再生が始まらず、
+「再生が始まらなかった」という `incomplete` になります（CLI は付けて起動します）。
+
+```ts
+const browser = await chromium.launch({
+  args: ["--autoplay-policy=no-user-gesture-required"],
+});
+```
 
 ## インストール
 

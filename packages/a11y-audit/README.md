@@ -25,7 +25,7 @@ test entries.
 | `runOrientationCheck` | 1.3.4 Orientation |
 | `runAutocompleteAudit` | 1.3.5 Identify Input Purpose |
 | `runTimeLimitDetector` | 2.2.1 Timing Adjustable |
-| `runAutoPlayDetection` | 2.2.2 Pause, Stop, Hide (audio is not inspected; 1.4.2 is left to axe's `no-autoplay-audio` and manual review) |
+| `runAutoPlayDetection` | 2.2.2 Pause, Stop, Hide (visual changes) / 1.4.2 Audio Control (playback state of `<audio>` / `<video>`; whether sound is actually heard needs manual review) |
 | `runKeyboardReachabilityCheck` | 2.1.1 Keyboard (Tab, arrow keys in composite widgets, activedescendant) |
 
 Most checks take an already-navigated `page`. A few own navigation and take a
@@ -33,6 +33,24 @@ Most checks take an already-navigated `page`. A few own navigation and take a
 `runTimeLimitDetector` (and `runZoomCheck` when a URL is given).
 `runFocusIndicatorCheck` and `runKeyboardReachabilityCheck` take a `browser`. `runAutoPlayDetection` needs the
 optional `pixelmatch` + `pngjs` deps (see Install).
+
+For 1.4.2 (`a11y-skills/auto-play-audio`), `runAutoPlayDetection` records the
+playback state (`paused`, `muted`, `volume`, `duration`, seconds played) of
+every `<audio>` / `<video>` in the page and its iframes about 6 seconds after
+load in `details.mediaElements`. Unmuted media that plays for more than 3
+seconds without visible `controls` goes to `incomplete`. Pause/mute controls
+found by name in the same frame are recorded but not clicked to verify.
+
+Chromium blocks unmuted autoplay until the user interacts with the page, so
+when you launch the browser yourself, pass the flag below. Without it, unmuted
+media never starts and is reported as `incomplete` ("playback did not start").
+The CLI launches with it.
+
+```ts
+const browser = await chromium.launch({
+  args: ["--autoplay-policy=no-user-gesture-required"],
+});
+```
 
 ## Install
 

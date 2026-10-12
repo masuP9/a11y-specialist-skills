@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>auto-play-audio: frame child</title>
+    <script src="tone.js"></script>
+  </head>
+  <body>
+    <audio id="bgm" autoplay></audio>
+    <script>
+      document.getElementById('bgm').src = toneUrl();
+    </script>
+  </body>
+</html>

@@ -38,8 +38,26 @@ element that navigated the page could not be identified (see Fixed).
   cross-origin). `shadowHosts` lists the shadow hosts' selectors, outermost
   first (`[]` outside shadow DOM). `rect` of an element in an iframe is
   relative to that iframe's document.
+- `a11y-skills/auto-play-audio` (WCAG 1.4.2; tags `wcag2a`, `wcag142`;
+  `incomplete`): `auto-play-detection` now reads the playback state of every
+  `<audio>` / `<video>` in the page and its iframes (open shadow roots
+  included) after the screenshot window, into the new required
+  `details.mediaElements` (with `frame` / `shadowHosts` like focus-indicator)
+  and `details.unmeasuredFrames`. Unmuted media that plays for more than 3
+  seconds without rendered `controls`, or that requests autoplay but did not
+  start, is a finding; pause/mute controls found by name in the same frame are
+  listed in its message but are not clicked. Inapplicable when the page has no
+  media.
 
 ### Changed
+
+- The CLI launches Chromium with `--autoplay-policy=no-user-gesture-required`
+  so unmuted autoplay starts and can be measured. Pages that autoplay video
+  with sound now play it during every check (before, Chromium kept it paused).
+  Library users who launch their own browser need the same flag for
+  `auto-play-audio` to measure audio (see README).
+- `a11y-skills/auto-play`: the message no longer asks to verify audio manually;
+  audio is covered by `a11y-skills/auto-play-audio`.
 
 - focus-indicator now records the element inside an open shadow root instead of
   its shadow host, and `selector` is relative to that shadow root. Results for

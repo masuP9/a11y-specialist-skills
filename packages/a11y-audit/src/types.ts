@@ -748,6 +748,51 @@ export interface PauseVerificationResult {
   error: string | null;
 }
 
+/**
+ * Playback state of one `<audio>` / `<video>` (WCAG 1.4.2), read in its own
+ * frame once the screenshot window (~6s after the caller's navigation) ends.
+ */
+export interface MediaPlaybackRecord {
+  tag: 'audio' | 'video';
+  selector: string;
+  html: string;
+  htmlTruncated: boolean;
+  /**
+   * The iframe document holding the element (null for the main frame).
+   * `selector` is the iframe element's selector in its parent, null when the
+   * parent is cross-origin.
+   */
+  frame: { url: string; selector: string | null } | null;
+  /** Shadow hosts between the element and its document, outermost first. */
+  shadowHosts: string[];
+  autoplay: boolean;
+  loop: boolean;
+  /** Whether the `controls` attribute is present. */
+  controls: boolean;
+  /** Rendered with a non-zero box and not `visibility: hidden`. */
+  visible: boolean;
+  paused: boolean;
+  ended: boolean;
+  muted: boolean;
+  volume: number;
+  /** Seconds; null when unknown (no metadata) or endless (see `endless`). */
+  duration: number | null;
+  /** `duration` is Infinity (a live stream). */
+  endless: boolean;
+  currentTime: number;
+  /** Sum of the `played` time ranges, in seconds. */
+  playedSeconds: number;
+  /** The element failed to load (`error` is set). */
+  hasError: boolean;
+  /**
+   * Chromium's `webkitAudioDecodedByteCount`: 0 suggests no audio track was
+   * decoded. null in browsers without it.
+   */
+  audioDecodedBytes: number | null;
+  /** Pause/stop/mute/volume controls found by keyword in the same frame. */
+  controlsInFrame: PauseControl[];
+}
+
 export interface AutoPlayDetectionDetails {
   screenshotRecords: ScreenshotRecord[];
   comparisons: ComparisonResult[];
@@ -756,6 +801,10 @@ export interface AutoPlayDetectionDetails {
   pauseControls: PauseControlInfo;
   pauseVerification: PauseVerificationResult;
   recommendation: string;
+  /** Every `<audio>` / `<video>` found in the page and its frames (1.4.2). */
+  mediaElements: MediaPlaybackRecord[];
+  /** Frames whose media could not be read (detached or navigating). */
+  unmeasuredFrames: number;
 }
 
 export type AutoPlayDetectionResult =

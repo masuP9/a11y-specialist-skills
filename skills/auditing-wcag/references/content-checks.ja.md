@@ -30,7 +30,7 @@
 |---|---|---|---|
 | 1.4.2 | 自動再生音声の停止/調整 | 操作ログ | 停止/調整不可 |
 
-> **Tip:** `auto-play-detection` チェックでスクリーンショット比較による自動再生コンテンツの検出が可能です。音声の自動再生は聴覚確認が必要です。詳細は [interactive-checks.ja.md](./interactive-checks.ja.md#自動再生検出) を参照。
+> **Tip:** `auto-play-detection` チェックは、スクリーンショット比較による自動再生コンテンツの検出に加え、`<audio>`・`<video>` の再生状態（消音か、3秒を超えて鳴るか、見える `controls` があるか）を測ります（`a11y-skills/auto-play-audio`）。実際に音が聞こえるか、見つかった停止・消音部品が働くかは手で確かめてください。詳細は [interactive-checks.ja.md](./interactive-checks.ja.md#自動再生検出) を参照。
 > 実行: `npx -y @a11y-skills/audit --url "<url>" --checks auto-play-detection`
 
 ## ナビゲーション

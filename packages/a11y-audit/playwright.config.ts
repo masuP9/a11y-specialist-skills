@@ -14,5 +14,10 @@ export default defineConfig({
   reporter: 'list',
   use: {
     ...devices['Desktop Chrome'],
+    // Same as the CLI: let unmuted autoplay start so auto-play-audio can
+    // measure it.
+    launchOptions: {
+      args: ['--autoplay-policy=no-user-gesture-required'],
+    },
   },
 });

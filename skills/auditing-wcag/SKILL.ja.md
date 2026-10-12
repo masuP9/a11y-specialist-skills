@@ -116,7 +116,7 @@ npx -y @a11y-skills/audit --url "https://example.com" --output-dir ./results
 | `orientation-check` | 1.3.4 | 画面の向き制限の検出 |
 | `autocomplete-audit` | 1.3.5 | autocomplete属性の欠落・不正値 |
 | `time-limit-detector` | 2.2.1 | タイマー・meta refresh検出 |
-| `auto-play-detection` | 2.2.2 | 自動再生コンテンツの検出（画面の変化のみ。音は見ない） |
+| `auto-play-detection` | 1.4.2, 2.2.2 | 自動再生コンテンツの検出（画面の変化と、`<audio>`・`<video>` の再生状態。実際に音が聞こえるかは手で確かめる） |
 | `focus-indicator-check` | 2.4.7 | フォーカスインジケーターの視認性 |
 | `target-size-check` | 2.5.5, 2.5.8 | ターゲットサイズの測定 |
 | `keyboard-trap-check` | 2.1.2 | キーボードトラップ検出 |

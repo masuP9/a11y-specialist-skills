@@ -21,7 +21,7 @@
 | 1.3.4 | 自動+手動 | `orientation-check` **[CLI]** + 画面キャプチャ | 特定方向で機能不可ならFail |
 | 1.3.5 | 自動 | `autocomplete-audit` **[CLI]** | autocomplete不備でFail |
 | 1.4.1 | 自動+手動 | a11y treeテキスト + スクショ | 色のみで識別ならFail |
-| 1.4.2 | 手動 | 操作ログ | 停止/調整不可でFail |
+| 1.4.2 | 自動+手動 | `auto-play-detection` **[CLI]**（`a11y-skills/auto-play-audio`）+ 操作ログ | 3秒超の音声を停止/調整不可でFail |
 | 1.4.3 | 自動 | axe color-contrast | AA未満でFail |
 | 1.4.4 | 自動+手動 | `zoom-200-check` **[CLI]** + スクショ | 200%で欠落/重なりならFail |
 | 1.4.5 | 手動+コンテンツ | スクショ | テキストが画像化ならFail |
@@ -88,7 +88,7 @@
 | 複数 | `axe-audit` | `axe-result.json` |
 | 1.3.4 | `orientation-check` | `orientation-result.json` |
 | 1.3.5 | `autocomplete-audit` | `autocomplete-result.json` |
-| 2.2.2 | `auto-play-detection` | `auto-play-screenshots/` |
+| 1.4.2, 2.2.2 | `auto-play-detection` | `auto-play-screenshots/` |
 | 1.4.4 | `zoom-200-check` | `zoom-200-result.json` |
 | 1.4.10 | `reflow-check` | `reflow-result.json` |
 | 1.4.12 | `text-spacing-check` | `text-spacing-result.json` |

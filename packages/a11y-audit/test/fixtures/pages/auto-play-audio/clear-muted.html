@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>auto-play-audio clear: muted autoplay video</title>
+    <script src="tone.js"></script>
+  </head>
+  <body>
+    <h1>Muted video</h1>
+    <!--
+      Plays automatically but muted, so no audio is heard.
+      Expected: auto-play-audio (passes).
+    -->
+    <video id="muted-video" autoplay muted width="320" height="180"></video>
+    <script>
+      document.getElementById('muted-video').src = toneUrl();
+    </script>
+  </body>
+</html>

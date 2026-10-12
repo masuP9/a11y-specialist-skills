@@ -9,13 +9,16 @@ import {
   buildAuditResult,
   mergeNormalizedResults,
   normalizeAutocompleteAudit,
+  normalizeAutoPlayDetection,
   normalizeFocusCheck,
   normalizeTargetSizeCheck,
   normalizeTextSpacingCheck,
   normalizeTimeLimitDetector,
 } from '../dist/index.js';
 import type {
+  AutoPlayDetectionDetails,
   FocusCheckDetails,
+  MediaPlaybackRecord,
   TargetSizeCheckDetails,
   TargetSizeIssue,
   TextSpacingCheckDetails,
@@ -58,6 +61,78 @@ const emptyFocusDetails = (
   screenshotPath: '',
   ...overrides,
 });
+
+/** An unmuted <audio> that has played 6 seconds and is still playing. */
+const playingAudio = (
+  overrides: Partial<MediaPlaybackRecord> = {},
+): MediaPlaybackRecord => ({
+  tag: 'audio',
+  selector: '#bgm',
+  html: '<audio id="bgm" autoplay="">',
+  htmlTruncated: false,
+  frame: null,
+  shadowHosts: [],
+  autoplay: true,
+  loop: false,
+  controls: false,
+  visible: false,
+  paused: false,
+  ended: false,
+  muted: false,
+  volume: 1,
+  duration: 10,
+  endless: false,
+  currentTime: 6,
+  playedSeconds: 6,
+  hasError: false,
+  audioDecodedBytes: 96000,
+  controlsInFrame: [],
+  ...overrides,
+});
+
+/** auto-play-detection details with no moving content and no media. */
+const autoPlayDetails = (
+  overrides: Partial<AutoPlayDetectionDetails> = {},
+): AutoPlayDetectionDetails => ({
+  screenshotRecords: [],
+  comparisons: [],
+  hasAutoPlayContent: false,
+  stopsWithin5Seconds: false,
+  pauseControls: {
+    found: false,
+    controls: [],
+    carouselIndicators: [],
+    hasAccessibleName: false,
+  },
+  pauseVerification: {
+    attempted: false,
+    controlClicked: null,
+    beforeClickDiffPercent: null,
+    afterClickDiffPercent: null,
+    pauseWorked: null,
+    error: 'No auto-play detected',
+  },
+  recommendation: '',
+  mediaElements: [],
+  unmeasuredFrames: 0,
+  ...overrides,
+});
+
+const AUDIO_RULE = 'a11y-skills/auto-play-audio';
+
+/** Which bucket the auto-play-audio rule landed in. */
+const audioBucket = (details: AutoPlayDetectionDetails) => {
+  const buckets = normalizeAutoPlayDetection(details);
+  return (['violations', 'incomplete', 'passes', 'inapplicable'] as const).find(
+    (bucket) => buckets[bucket].some((r) => r.id === AUDIO_RULE),
+  );
+};
+
+/** The auto-play-audio nodes in the incomplete bucket. */
+const audioIncompleteNodes = (details: AutoPlayDetectionDetails) =>
+  normalizeAutoPlayDetection(details).incomplete.find(
+    (r) => r.id === AUDIO_RULE,
+  )?.nodes ?? [];
 
 // =============================================================================
 // Classification boundaries
@@ -424,6 +499,189 @@ test('time-limit: meta refresh and timers are incomplete; timers are page-level'
   );
   expect(timerRule?.nodes[0].target).toEqual(['html']);
   expect(timerRule?.nodes[0].html.length).toBeGreaterThan(0);
+});
+
+test('auto-play-audio: audio/video が無く読めない frame も無ければ inapplicable になる', () => {
+  expect(audioBucket(autoPlayDetails())).toBe('inapplicable');
+});
+
+test('auto-play-audio: 消音でない音が 3 秒を超えて鳴り、見える controls が無ければその要素が incomplete になる', () => {
+  const nodes = audioIncompleteNodes(
+    autoPlayDetails({ mediaElements: [playingAudio()] }),
+  );
+  expect(nodes).toHaveLength(1);
+  expect(nodes[0]?.target).toEqual(['#bgm']);
+  expect(nodes[0]?.html).toBe('<audio id="bgm" autoplay="">');
+});
+
+test('auto-play-audio: muted で再生中なら passes になる', () => {
+  expect(
+    audioBucket(
+      autoPlayDetails({ mediaElements: [playingAudio({ muted: true })] }),
+    ),
+  ).toBe('passes');
+});
+
+test('auto-play-audio: volume が 0 で再生中なら passes になる', () => {
+  expect(
+    audioBucket(
+      autoPlayDetails({ mediaElements: [playingAudio({ volume: 0 })] }),
+    ),
+  ).toBe('passes');
+});
+
+test('auto-play-audio: 3 秒以内で鳴り終わっていれば passes になる', () => {
+  expect(
+    audioBucket(
+      autoPlayDetails({
+        mediaElements: [
+          playingAudio({
+            paused: true,
+            ended: true,
+            duration: 2.5,
+            currentTime: 2.5,
+            playedSeconds: 2.5,
+          }),
+        ],
+      }),
+    ),
+  ).toBe('passes');
+});
+
+test('auto-play-audio: 再生済みが 3 秒以下でも loop で鳴り続けていれば incomplete になる', () => {
+  expect(
+    audioBucket(
+      autoPlayDetails({
+        mediaElements: [
+          playingAudio({
+            loop: true,
+            duration: 2,
+            currentTime: 0.5,
+            playedSeconds: 2,
+          }),
+        ],
+      }),
+    ),
+  ).toBe('incomplete');
+});
+
+test('auto-play-audio: 見えている controls 付きの要素なら鳴っていても passes になる', () => {
+  expect(
+    audioBucket(
+      autoPlayDetails({
+        mediaElements: [playingAudio({ controls: true, visible: true })],
+      }),
+    ),
+  ).toBe('passes');
+});
+
+test('auto-play-audio: controls 属性があっても見えていなければ incomplete になる', () => {
+  expect(
+    audioBucket(
+      autoPlayDetails({
+        mediaElements: [playingAudio({ controls: true, visible: false })],
+      }),
+    ),
+  ).toBe('incomplete');
+});
+
+test('auto-play-audio: iframe の中の要素は target が iframe の selector と要素の selector の順になり、説明に frame の URL が入る', () => {
+  const nodes = audioIncompleteNodes(
+    autoPlayDetails({
+      mediaElements: [
+        playingAudio({
+          frame: { url: 'https://player.example/embed', selector: '#player' },
+        }),
+      ],
+    }),
+  );
+  expect(nodes[0]?.target).toEqual(['#player', '#bgm']);
+  expect(nodes[0]?.failureSummary).toContain('https://player.example/embed');
+});
+
+test('auto-play-audio: 親が別オリジンで iframe の selector が分からなければ target は要素の selector だけになる', () => {
+  const nodes = audioIncompleteNodes(
+    autoPlayDetails({
+      mediaElements: [
+        playingAudio({
+          frame: { url: 'https://player.example/embed', selector: null },
+        }),
+      ],
+    }),
+  );
+  expect(nodes[0]?.target).toEqual(['#bgm']);
+});
+
+test('auto-play-audio: 同じ frame に止める部品が見つかれば incomplete のまま説明にその名前が入る', () => {
+  const nodes = audioIncompleteNodes(
+    autoPlayDetails({
+      mediaElements: [
+        playingAudio({
+          controlsInFrame: [
+            {
+              element: 'button',
+              name: 'ミュート',
+              matchedBy: 'accessible-name',
+              selector: '#mute',
+            },
+          ],
+        }),
+      ],
+    }),
+  );
+  expect(nodes).toHaveLength(1);
+  expect(nodes[0]?.failureSummary).toContain('"ミュート"');
+});
+
+test('auto-play-audio: 止める部品が見つからなければ説明にそう書き、クリックでは確かめていないことも書く', () => {
+  const nodes = audioIncompleteNodes(
+    autoPlayDetails({ mediaElements: [playingAudio()] }),
+  );
+  expect(nodes[0]?.failureSummary).toContain('No pause/stop/mute control');
+  expect(nodes[0]?.failureSummary).toContain('not clicked');
+});
+
+test('auto-play-audio: autoplay 属性があるのに再生が始まっていなければ、ブラウザに止められたとして incomplete になる', () => {
+  const nodes = audioIncompleteNodes(
+    autoPlayDetails({
+      mediaElements: [
+        playingAudio({ paused: true, currentTime: 0, playedSeconds: 0 }),
+      ],
+    }),
+  );
+  expect(nodes).toHaveLength(1);
+  expect(nodes[0]?.failureSummary).toContain('did not start');
+});
+
+test('auto-play-audio: autoplay 属性があっても読み込みに失敗した要素は passes になる', () => {
+  expect(
+    audioBucket(
+      autoPlayDetails({
+        mediaElements: [
+          playingAudio({
+            paused: true,
+            currentTime: 0,
+            playedSeconds: 0,
+            hasError: true,
+          }),
+        ],
+      }),
+    ),
+  ).toBe('passes');
+});
+
+test('auto-play-audio: 読めなかった frame があるとページ単位の incomplete になる', () => {
+  const nodes = audioIncompleteNodes(autoPlayDetails({ unmeasuredFrames: 2 }));
+  expect(nodes).toHaveLength(1);
+  expect(nodes[0]?.target).toEqual(['html']);
+  expect(nodes[0]?.failureSummary).toContain('2 frame(s)');
+});
+
+test('auto-play: 画面の変化の説明には音を手で確かめる文言を入れない', () => {
+  const nodes = normalizeAutoPlayDetection(
+    autoPlayDetails({ hasAutoPlayContent: true }),
+  ).incomplete.find((r) => r.id === 'a11y-skills/auto-play')?.nodes;
+  expect(nodes?.[0]?.failureSummary).not.toContain('audio');
 });
 
 test('autocomplete: invalid tokens are violations, missing ones incomplete', () => {

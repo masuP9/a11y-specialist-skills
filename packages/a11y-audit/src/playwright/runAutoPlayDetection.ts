@@ -137,8 +137,12 @@ export async function runAutoPlayDetection(
     hasSignificantChange,
     ensureOutputDir,
   } = imageCompare;
-  const { detectPauseControls, verifyPauseControl, createSkippedVerification } =
-    detectors;
+  const {
+    detectPauseControls,
+    verifyPauseControl,
+    createSkippedVerification,
+    measureMediaPlayback,
+  } = detectors;
 
   const out = createAuditOutput({
     outputDir,
@@ -150,6 +154,10 @@ export async function runAutoPlayDetection(
 
   // Take screenshots at intervals.
   const screenshots = await captureScreenshots(page, outputDir);
+
+  // Read media playback state (1.4.2) once the ~6s screenshot window ends,
+  // before the pause-control verification below clicks anything.
+  const { mediaElements, unmeasuredFrames } = await measureMediaPlayback(page);
 
   // Compare consecutive screenshots.
   const comparisons: ComparisonResult[] = [];
@@ -226,6 +234,8 @@ export async function runAutoPlayDetection(
       pauseControls,
       pauseVerification,
     }),
+    mediaElements,
+    unmeasuredFrames,
   };
 
   const result: AutoPlayDetectionResult = buildAuditResult({

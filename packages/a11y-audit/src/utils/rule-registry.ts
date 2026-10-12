@@ -290,7 +290,22 @@ export const RULES = {
       'Detect auto-playing/moving content lasting longer than 5 seconds without a working pause control',
     help: 'Moving content over 5 seconds needs a pause, stop, or hide mechanism',
     helpUrl: `${UNDERSTANDING}/pause-stop-hide.html`,
-    // pixel diffing cannot identify the content type or audio.
+    // pixel diffing cannot identify the content type.
+    classification: 'incomplete',
+  },
+  'auto-play-audio': {
+    id: 'a11y-skills/auto-play-audio',
+    sc: ['1.4.2'],
+    tags: ['a11y-skills', 'wcag2a', 'wcag142'],
+    impact: 'serious',
+    scope: 'node',
+    description:
+      'Detect unmuted <audio>/<video> that plays automatically for more than 3 seconds without a visible way to pause it or control its volume',
+    help: 'Audio playing over 3 seconds needs a pause/stop mechanism or an independent volume control',
+    helpUrl: `${UNDERSTANDING}/audio-control.html`,
+    // playback state is measured, but the audio track may be silent, the
+    // control may live elsewhere on the page (or in a parent frame), and
+    // control detection is keyword-based and never clicked to verify.
     classification: 'incomplete',
   },
 

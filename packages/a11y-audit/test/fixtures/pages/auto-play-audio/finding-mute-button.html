@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>auto-play-audio finding: custom mute button</title>
+    <script src="tone.js"></script>
+  </head>
+  <body>
+    <h1>BGM</h1>
+    <!--
+      Unmuted autoplay with a custom mute button. The button is found by name
+      but not clicked, so the result stays a review item.
+      Expected: auto-play-audio (incomplete), with the button in controlsInFrame.
+    -->
+    <button id="mute" type="button">ミュート</button>
+    <audio id="bgm" autoplay></audio>
+    <script>
+      const bgm = document.getElementById('bgm');
+      bgm.src = toneUrl();
+      document.getElementById('mute').addEventListener('click', () => {
+        bgm.muted = true;
+      });
+    </script>
+  </body>
+</html>

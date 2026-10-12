@@ -559,6 +559,22 @@ export const PAUSE_KEYWORDS = [
   '再生',
 ] as const;
 
+/**
+ * Keywords for controls that stop audio or change its volume (WCAG 1.4.2):
+ * the pause keywords plus mute/volume wording. 'mute' also matches 'unmute'.
+ */
+export const AUDIO_CONTROL_KEYWORDS = [
+  ...PAUSE_KEYWORDS,
+  // English
+  'mute',
+  'volume',
+  'sound',
+  // Japanese
+  'ミュート',
+  '消音',
+  '音量',
+] as const;
+
 /** Class name patterns indicating pause/play controls */
 export const CONTROL_CLASS_PATTERNS = [
   'pause',
