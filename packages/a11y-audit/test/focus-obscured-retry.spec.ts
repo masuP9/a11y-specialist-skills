@@ -1,7 +1,7 @@
 /**
  * A 3.2.1 violation makes runFocusIndicatorCheck retry in a fresh context.
  * Elements before the violating one are focused again on every attempt, so
- * their 2.4.12 (focus not obscured) records must not pile up across attempts.
+ * their 2.4.11 / 2.4.12 (focus not obscured) records must not pile up across attempts.
  */
 
 import { test, expect } from './helpers/fixtures.js';

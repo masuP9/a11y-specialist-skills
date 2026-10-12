@@ -69,14 +69,32 @@ export const RULES = {
   },
   'focus-not-obscured': {
     id: 'a11y-skills/focus-not-obscured',
-    sc: ['2.4.11', '2.4.12'],
+    sc: ['2.4.11'],
     tags: ['a11y-skills', 'wcag22aa', 'wcag2411'],
     impact: 'moderate',
     scope: 'node',
     description:
-      'Ensure the focused element is not hidden by fixed or sticky content',
-    help: 'Focused elements should not be obscured by author-created content',
+      'Ensure the focused element is not entirely hidden by fixed or sticky content',
+    help: 'Focused elements should not be entirely obscured by author-created content',
     helpUrl: `${UNDERSTANDING}/focus-not-obscured-minimum.html`,
+    // only the element's box is compared, not the focus indicator itself, and
+    // 2.4.11 does not apply when the user can dismiss the covering content
+    // without moving focus.
+    classification: 'incomplete',
+  },
+  'focus-not-obscured-enhanced': {
+    id: 'a11y-skills/focus-not-obscured-enhanced',
+    sc: ['2.4.12'],
+    // axe-core has no WCAG 2.2 AAA tag; follow its `wcag21aaa` naming.
+    tags: ['a11y-skills', 'wcag22aaa', 'wcag2412'],
+    impact: 'moderate',
+    scope: 'node',
+    description:
+      'Ensure no part of the focused element is hidden by fixed or sticky content',
+    help: 'Focused elements should not be obscured at all by author-created content',
+    helpUrl: `${UNDERSTANDING}/focus-not-obscured-enhanced.html`,
+    // same limits as focus-not-obscured: box overlap only, and dismissable
+    // covering content is out of scope.
     classification: 'incomplete',
   },
 

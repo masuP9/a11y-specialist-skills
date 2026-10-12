@@ -34,8 +34,8 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks keyboard-reachabi
 |---|---|---|---|
 | 2.4.3 | Focus order matches visual order | focus order log | Order deviates materially |
 | 2.4.7 | Focus indicator visible | screenshots/video | Focus not visible |
-| 2.4.11 | Focus appearance meets minimum requirements | screenshots/measurement | Contrast or thickness insufficient |
-| 2.4.12 | Focus not obscured by other content | screenshots | Focus indicator hidden by sticky headers/footers/modals |
+| 2.4.11 | Focus not entirely obscured by other content | screenshots/measurement | Focused element entirely hidden by sticky headers/footers/modals |
+| 2.4.12 (AAA) | Focus not obscured at all by other content | screenshots/measurement | Any part of the focused element hidden by sticky headers/footers/modals |
 
 ### `focus-indicator-check` CLI Check
 
@@ -43,7 +43,8 @@ Use the `focus-indicator-check` check to automatically detect focus indicator pr
 
 **WCAG Coverage:**
 - **2.4.7 Focus Visible** - Detects elements without visible focus indicators
-- **2.4.12 Focus Not Obscured (Minimum)** - Detects focus indicators hidden by fixed/sticky elements
+- **2.4.11 Focus Not Obscured (Minimum)** - Detects elements fully hidden by fixed/sticky elements when focused (`a11y-skills/focus-not-obscured`)
+- **2.4.12 Focus Not Obscured (Enhanced, AAA)** - Detects every element partly hidden, including fully hidden ones (`a11y-skills/focus-not-obscured-enhanced`)
 - **3.2.1 On Focus** - Detects navigation/context changes triggered by focus
 
 **Features:**
@@ -51,7 +52,7 @@ Use the `focus-indicator-check` check to automatically detect focus indicator pr
 - Tabs through each element and captures style changes on focus
 - Checks for outline, box-shadow, background-color changes
 - Reports elements without visible focus indicators with warning labels
-- **Detects focus obscured by fixed/sticky elements (2.4.12)** using `elementFromPoint()` with z-index fallback
+- **Detects focus obscured by fixed/sticky elements (2.4.11 / 2.4.12)** using `elementFromPoint()` with z-index fallback
 - **Detects navigation caused by focus (3.2.1 violation)**
 - If navigation occurs, goes back and takes screenshot on original page
 - Takes a full-page screenshot highlighting problematic elements
@@ -64,7 +65,7 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks focus-indicator-c
 **Output:**
 - `focus-indicator-result.json` - Full results including:
   - `issues` - Elements without focus styles (2.4.7)
-  - `focusObscuredIssues` - Focus obscured by fixed/sticky elements (2.4.12)
+  - `focusObscuredIssues` - Focus obscured by fixed/sticky elements (every partly obscured element = 2.4.12; those with `fullyObscured: true` = 2.4.11)
   - `onFocusViolations` - Focus-triggered context changes (3.2.1)
   - `interrupted` - Whether test was interrupted by navigation
   - `allElements` - All tested elements with their focus style diffs. Each has `tabStep` (which Tab press focused it; null when focus arrived another way) and `rect` (page coordinates at focus time). `id` is the order focusin events arrived, not necessarily the Tab order

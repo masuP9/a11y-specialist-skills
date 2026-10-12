@@ -3,6 +3,31 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+**Heads-up** — `a11y-skills/focus-not-obscured` now reports only elements that
+are fully hidden, and a new rule covers partly hidden ones. If you filtered on
+the old rule, check both.
+
+### Added
+
+- `a11y-skills/focus-not-obscured-enhanced` (WCAG 2.4.12, AAA; tags `wcag22aaa`,
+  `wcag2412`; `incomplete`): reports every focused element that fixed/sticky
+  content hides in part or in full.
+- focus-indicator: each `details.focusObscuredIssues` record has
+  `fullyObscured: boolean` (true when 99% or more of the element is covered).
+  The JSON schema now requires it.
+
+### Changed
+
+- `a11y-skills/focus-not-obscured` is now WCAG 2.4.11 only (`sc: ['2.4.11']`) and
+  reports only records with `fullyObscured: true`.
+- focus-indicator now records an element hidden by less than 20% too, so such
+  elements appear in `focusObscuredIssues`, in `elementsWithObscuredFocus` and
+  as 2.4.12 findings. Only overlaps under 8px² are still ignored.
+- `obscuredRatio` counts the area covered by overlapping fixed/sticky elements
+  once, instead of adding each element's overlap.
+
 ## 0.10.0 — 2026-10-12
 
 **Heads-up** — `a11y-skills/auto-play` no longer carries `wcag142`, and its

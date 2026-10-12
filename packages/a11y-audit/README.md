@@ -17,7 +17,7 @@ test entries.
 | Function | WCAG |
 | --- | --- |
 | `runAxeAudit` | axe-core broad coverage (2.0/2.1/2.2 A & AA) |
-| `runFocusIndicatorCheck` | 2.4.7 Focus Visible / 2.4.12 Focus Not Obscured / 3.2.1 On Focus |
+| `runFocusIndicatorCheck` | 2.4.7 Focus Visible / 2.4.11 Focus Not Obscured (Minimum) / 2.4.12 Focus Not Obscured (Enhanced) / 3.2.1 On Focus |
 | `runReflowCheck` | 1.4.10 Reflow |
 | `runTargetSizeCheck` | 2.5.5 / 2.5.8 Target Size |
 | `runTextSpacingCheck` | 1.4.12 Text Spacing |

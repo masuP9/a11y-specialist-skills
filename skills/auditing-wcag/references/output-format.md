@@ -87,7 +87,7 @@ When writing the report, treat `violations` as Fail candidates and
 
 ## Screenshots / Evidence
 
-### Focus Indicator Check (2.4.7 / 2.4.11)
+### Focus Indicator Check (2.4.7 / 2.4.11 / 2.4.12)
 
 Elements without focus styles are highlighted with a red outline and "⚠ No Focus Style" label.
 

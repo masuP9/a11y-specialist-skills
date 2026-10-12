@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>focus-indicator: how much of a focused element is obscured</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        height: 600px;
+      }
+      /* Fixed header covering y = 0..80 */
+      #header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 80px;
+        background: #333;
+        color: white;
+        z-index: 100;
+      }
+      /* Every button is 120x40 so the covered fraction is exact. Each sits in
+         its own column: fixed buttons would otherwise count as obscurers of
+         one another. */
+      button {
+        position: fixed;
+        width: 120px;
+        height: 40px;
+        z-index: 1;
+      }
+      /* y = 20..60: entirely behind the header */
+      #fully-obscured {
+        top: 20px;
+        left: 20px;
+      }
+      /* y = 60..100: half behind the header */
+      #half-obscured {
+        top: 60px;
+        left: 160px;
+      }
+      /* y = 76..116: 4px of 40px (10%) behind the header */
+      #slightly-obscured {
+        top: 76px;
+        left: 300px;
+      }
+      /* y = 200..240: clear of the header */
+      #not-obscured {
+        top: 200px;
+        left: 20px;
+      }
+      /* y = 300..340, x = 200..320: two bars that overlap each other cover
+         x = 200..300 together, so 100 of 120px (83%) is hidden. Adding the
+         bars' individual overlaps (65 + 65) would wrongly reach 100%. */
+      #double-covered {
+        top: 300px;
+        left: 200px;
+      }
+      .bar {
+        position: fixed;
+        top: 290px;
+        height: 60px;
+        width: 65px;
+        background: #555;
+      }
+      #bar-a {
+        left: 200px;
+        z-index: 101;
+      }
+      #bar-b {
+        left: 235px;
+        z-index: 102;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="header">Fixed header</div>
+    <button id="fully-obscured">Fully</button>
+    <button id="half-obscured">Half</button>
+    <button id="slightly-obscured">Slightly</button>
+    <button id="not-obscured">None</button>
+    <button id="double-covered">Double</button>
+    <div class="bar" id="bar-a"></div>
+    <div class="bar" id="bar-b"></div>
+  </body>
+</html>

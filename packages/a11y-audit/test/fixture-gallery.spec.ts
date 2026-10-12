@@ -10,7 +10,7 @@
  * - For 'passes' expectations: also guards against silent inapplicable pass.
  * - Validates the result envelope against RESULT_SCHEMAS[check] via Ajv.
  *
- * Coverage: all 20 custom finding-capable rules from rule-registry.ts.
+ * Coverage: all 21 custom finding-capable rules from rule-registry.ts.
  * axe-audit: representative rule (image-alt); full rule coverage is out of
  * scope for axe (hundreds of external rules).
  */
@@ -94,13 +94,15 @@ const MANIFEST: ManifestEntry[] = [
       'a11y-skills/no-context-change-on-focus': 'violations',
     },
   },
-  // Rule 3: a11y-skills/focus-not-obscured (incomplete)
+  // Rule 3: a11y-skills/focus-not-obscured (incomplete, 2.4.11: fully hidden)
+  // Rule 3b: a11y-skills/focus-not-obscured-enhanced (incomplete, 2.4.12: any part hidden)
   {
     check: 'focus-indicator-check',
-    scenario: 'finding: focus-not-obscured (sticky header overlap)',
+    scenario: 'finding: focus-not-obscured (sticky header fully covers button)',
     fixture: 'focus-indicator/finding-focus-obscured.html',
     expectRules: {
       'a11y-skills/focus-not-obscured': 'incomplete',
+      'a11y-skills/focus-not-obscured-enhanced': 'incomplete',
     },
   },
   {
@@ -111,6 +113,7 @@ const MANIFEST: ManifestEntry[] = [
       'a11y-skills/focus-visible': 'passes',
       'a11y-skills/no-context-change-on-focus': 'passes',
       'a11y-skills/focus-not-obscured': 'passes',
+      'a11y-skills/focus-not-obscured-enhanced': 'passes',
     },
   },
 

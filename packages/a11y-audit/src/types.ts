@@ -115,7 +115,7 @@ export interface AxeAuditDetails {
 export type AxeAuditResult = AuditCheckResult<AxeAuditDetails>;
 
 // =============================================================================
-// Focus Indicator (WCAG 2.4.7 / 2.4.11 / 3.2.1)
+// Focus Indicator (WCAG 2.4.7 / 2.4.11 / 2.4.12 / 3.2.1)
 // =============================================================================
 
 /** Element rectangle in page coordinates (viewport rect + scroll offset). */
@@ -193,8 +193,16 @@ export interface FocusCheckDetails {
   issues: FocusElementRef[];
   /** WCAG 3.2.1 violations - focus triggered context change */
   onFocusViolations: OnFocusViolation[];
-  /** WCAG 2.4.11/2.4.12 findings - focus obscured by fixed/sticky elements */
+  /**
+   * WCAG 2.4.12 findings (any part obscured); those with `fullyObscured` are
+   * also 2.4.11 findings - focus obscured by fixed/sticky elements
+   */
   focusObscuredIssues: FocusObscuredIssue[];
+  /**
+   * Number of elements in `focusObscuredIssues`, i.e. partly or fully
+   * obscured (2.4.12). Count `fullyObscured` entries for 2.4.11. Before the
+   * 2.4.11 / 2.4.12 split, only elements with 20% or more obscured counted.
+   */
   elementsWithObscuredFocus: number;
   allElements: FocusRecord[];
   /** Whether test was interrupted by navigation */
@@ -255,7 +263,8 @@ export interface FocusObscuredOverlap {
 }
 
 /**
- * WCAG 2.4.11/2.4.12 finding - focus indicator hidden by fixed/sticky content
+ * WCAG 2.4.12 finding (any part hidden) - focused element obscured by
+ * fixed/sticky content; also a 2.4.11 finding when `fullyObscured`
  */
 export interface FocusObscuredIssue {
   /** The focused element that is obscured */
@@ -264,8 +273,10 @@ export interface FocusObscuredIssue {
   elementRect: BoundingRect;
   /** List of overlapping fixed/sticky elements */
   overlaps: FocusObscuredOverlap[];
-  /** Ratio of element area that is obscured (0-1) */
+  /** Ratio of element area that is obscured (0-1); overlapping obscurers are counted once */
   obscuredRatio: number;
+  /** True when (almost) the whole element is obscured - the 2.4.11 condition */
+  fullyObscured: boolean;
 }
 
 // =============================================================================

@@ -1,7 +1,8 @@
 /**
  * Focus Indicator Visibility Check
  *
- * WCAG 2.4.7 (Focus Visible) / 2.4.12 (Focus Not Obscured) / 3.2.1 (On Focus)
+ * WCAG 2.4.7 (Focus Visible) / 2.4.11 (Focus Not Obscured (Minimum)) /
+ * 2.4.12 (Focus Not Obscured (Enhanced)) / 3.2.1 (On Focus)
  *
  * Unlike the other checks, this one owns its `BrowserContext`: it tabs through
  * every focusable element and, when focus triggers a navigation (3.2.1), it
@@ -31,7 +32,7 @@ import {
   DEFAULT_NAVIGATION_SETTLE_MS,
   DEFAULT_FOCUS_RESULT_FILE,
   DEFAULT_FOCUS_SCREENSHOT_FILE,
-  FOCUS_OBSCURED_MIN_OVERLAP_RATIO,
+  FOCUS_OBSCURED_FULL_RATIO,
   FOCUS_OBSCURED_MIN_OVERLAP_PX,
   FOCUS_OBSCURED_EXCLUDE_SELECTORS,
   HTML_SNIPPET_MAX_LENGTH,
@@ -274,7 +275,7 @@ export async function runFocusIndicatorCheck(
         };
       });
 
-      // Expose function to receive focus obscured reports (WCAG 2.4.12)
+      // Expose function to receive focus obscured reports (WCAG 2.4.11 / 2.4.12)
       await page.exposeFunction(
         'reportFocusObscured',
         (data: FocusObscuredIssue) => {
@@ -291,7 +292,7 @@ export async function runFocusIndicatorCheck(
         htmlSnippetMaxLength: HTML_SNIPPET_MAX_LENGTH,
         echoAttribute: echoAttribute ?? null,
         obscuredConfig: {
-          minOverlapRatio: FOCUS_OBSCURED_MIN_OVERLAP_RATIO,
+          fullRatio: FOCUS_OBSCURED_FULL_RATIO,
           minOverlapPx: FOCUS_OBSCURED_MIN_OVERLAP_PX,
           excludeSelectors: [...FOCUS_OBSCURED_EXCLUDE_SELECTORS],
         },
@@ -538,7 +539,7 @@ export async function runFocusIndicatorCheck(
     // Output results
     out.header(
       'Focus Indicator Check Results',
-      'WCAG 2.4.7 / 2.4.11 / 3.2.1',
+      'WCAG 2.4.7 / 2.4.11 / 2.4.12 / 3.2.1',
       result.url,
     );
 
@@ -567,14 +568,19 @@ export async function runFocusIndicatorCheck(
       });
     }
 
-    // WCAG 2.4.12 summary
+    // WCAG 2.4.11 / 2.4.12 summary
     if (focusObscuredIssues.length > 0) {
-      out.log('\n--- WCAG 2.4.12: Focus Obscured by Fixed/Sticky Elements ---');
+      out.log(
+        '\n--- WCAG 2.4.11 / 2.4.12: Focus Obscured by Fixed/Sticky Elements ---',
+      );
       focusObscuredIssues.forEach((issue, i) => {
         out.log(`  ${i + 1}. <${issue.element.tag}> "${issue.element.name}"`);
         out.log(`     Selector: ${issue.element.selector}`);
         out.log(
-          `     Obscured ratio: ${(issue.obscuredRatio * 100).toFixed(1)}%`,
+          `     Obscured ratio: ${(issue.obscuredRatio * 100).toFixed(1)}%` +
+            (issue.fullyObscured
+              ? ' (fully obscured: fails 2.4.11 and 2.4.12)'
+              : ' (partly obscured: fails 2.4.12 only)'),
         );
         issue.overlaps.forEach((overlap) => {
           out.log(
@@ -626,7 +632,7 @@ function createFocusTrackerScript(args: {
   htmlSnippetMaxLength: number;
   echoAttribute: string | null;
   obscuredConfig: {
-    minOverlapRatio: number;
+    fullRatio: number;
     minOverlapPx: number;
     excludeSelectors: string[];
   };
@@ -1014,7 +1020,8 @@ function createFocusTrackerScript(args: {
   };
 
   /**
-   * Check if focused element is obscured by fixed/sticky elements (WCAG 2.4.12)
+   * Check if focused element is obscured by fixed/sticky elements
+   * (WCAG 2.4.11 when fully, 2.4.12 when partly)
    */
   const checkFocusObscured = (focusedEl: Element): void => {
     const focusedRect = focusedEl.getBoundingClientRect();
@@ -1034,8 +1041,6 @@ function createFocusTrackerScript(args: {
       overlapRect: { left: number; top: number; width: number; height: number };
       overlapArea: number;
     }> = [];
-
-    let totalOverlapArea = 0;
 
     obscurers.forEach((obscurer) => {
       // Don't check against self or ancestors/descendants
@@ -1062,8 +1067,6 @@ function createFocusTrackerScript(args: {
         return;
       }
 
-      totalOverlapArea += overlapArea;
-
       overlaps.push({
         obscuredBy: {
           tag: obscurer.tagName,
@@ -1080,18 +1083,50 @@ function createFocusTrackerScript(args: {
       });
     });
 
-    // Clamp ratio to max 1.0 to handle overlapping obscurers covering same region
-    const obscuredRatio = Math.min(totalOverlapArea / focusedArea, 1.0);
+    // Obscurers can overlap each other, so measure the area of their union
+    // (summing per-obscurer areas would count shared regions twice and could
+    // report a partly covered element as fully covered).
+    const toSegments = (edges: number[]): Array<[number, number]> => {
+      const sorted = [...new Set(edges)].sort((a, b) => a - b);
+      return sorted.slice(1).map((end, i) => [sorted[i] ?? end, end]);
+    };
+    const xSegments = toSegments(
+      overlaps.flatMap((o) => [
+        o.overlapRect.left,
+        o.overlapRect.left + o.overlapRect.width,
+      ]),
+    );
+    const ySegments = toSegments(
+      overlaps.flatMap((o) => [
+        o.overlapRect.top,
+        o.overlapRect.top + o.overlapRect.height,
+      ]),
+    );
+    let coveredArea = 0;
+    for (const [x0, x1] of xSegments) {
+      for (const [y0, y1] of ySegments) {
+        const covered = overlaps.some(
+          (o) =>
+            o.overlapRect.left <= x0 &&
+            x1 <= o.overlapRect.left + o.overlapRect.width &&
+            o.overlapRect.top <= y0 &&
+            y1 <= o.overlapRect.top + o.overlapRect.height,
+        );
+        if (covered) {
+          coveredArea += (x1 - x0) * (y1 - y0);
+        }
+      }
+    }
+    const obscuredRatio = Math.min(coveredArea / focusedArea, 1.0);
+    const fullyObscured = obscuredRatio >= obscuredConfig.fullRatio;
 
-    // Only report if obscured ratio exceeds threshold
-    if (
-      obscuredRatio >= obscuredConfig.minOverlapRatio &&
-      overlaps.length > 0
-    ) {
+    // Any visible overlap is reported (2.4.12); `fullyObscured` marks the
+    // subset that also fails 2.4.11.
+    if (overlaps.length > 0) {
       // Add visual annotation
       addAnnotationBox(
         focusedEl,
-        `⚠ 2.4.12 Obscured (${(obscuredRatio * 100).toFixed(0)}%)`,
+        `⚠ ${fullyObscured ? '2.4.11' : '2.4.12'} Obscured (${(obscuredRatio * 100).toFixed(0)}%)`,
         'focus-obscured',
       );
 
@@ -1120,6 +1155,7 @@ function createFocusTrackerScript(args: {
         },
         overlaps,
         obscuredRatio,
+        fullyObscured,
       });
     }
   };
@@ -1213,7 +1249,7 @@ function createFocusTrackerScript(args: {
       },
     );
 
-    // Check for WCAG 2.4.12 - focus obscured by fixed/sticky elements
+    // Check for WCAG 2.4.11 / 2.4.12 - focus obscured by fixed/sticky elements
     checkFocusObscured(el);
   });
 }
