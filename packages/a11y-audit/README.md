@@ -28,6 +28,7 @@ test entries.
 | `runAutoPlayDetection` | 2.2.2 Pause, Stop, Hide (visual changes) / 1.4.2 Audio Control (playback state of `<audio>` / `<video>`; whether sound is actually heard needs manual review) |
 | `runKeyboardReachabilityCheck` | 2.1.1 Keyboard (Tab, arrow keys in composite widgets, activedescendant) |
 | `runRedundantEntryCheck` | 3.3.7 Redundant Entry (fields in the same form asking for the same information, reported as candidates) |
+| `runMotionActuationCheck` | 2.5.4 Motion Actuation (`devicemotion` / `deviceorientation` listeners, reported as candidates) |
 
 Most checks take an already-navigated `page`. A few own navigation and take a
 `targetUrl` instead (or `TEST_PAGE`): `runOrientationCheck` and
@@ -51,6 +52,20 @@ node) as a re-entry (`fields[].editable`). Password and one-time-code fields, di
 `section-*` tokens and different forms are not compared. **Multi-page flows
 (steps split across several pages) are out of scope**, because a single-page
 check cannot know what an earlier page asked for.
+
+`runMotionActuationCheck` (2.5.4, `a11y-skills/motion-actuation`) takes an
+already-navigated `page`. Through the Chrome DevTools Protocol (CDP) it lists
+the `devicemotion` / `deviceorientation` / `deviceorientationabsolute`
+listeners on the main frame's `window` / `document` and reports each as an
+`incomplete` candidate; whether a UI-component alternative exists and motion
+actuation can be turned off is for a human to verify. For event types with a
+`window` listener, synthetic events are dispatched and whether the DOM changes
+(`details.simulation.results[].domMutations`) and any navigation are recorded
+as evidence (`simulate: false` skips this; the simulation changes the page's
+state, so use `false` when reusing the same page). A handler that never returns
+is stopped through CDP. **CDP is Chromium only**; elsewhere the result is
+`incomplete` with `listenerInspection: 'unsupported'`. Listeners inside iframes
+and listeners added after a user action are not found.
 
 For 1.4.2 (`a11y-skills/auto-play-audio`), `runAutoPlayDetection` records
 whether every `<audio>` / `<video>` in the page and its iframes (nested frames
@@ -161,6 +176,7 @@ auto-play-detection
 target-size-check
 keyboard-reachability-check
 redundant-entry-check
+motion-actuation-check
 ```
 
 ### Exit codes
@@ -446,7 +462,7 @@ import "@a11y-skills/audit/test-entries/reflow-check";
 import "@a11y-skills/audit/test-entries/target-size-check";
 // ...also: text-spacing-check, zoom-200-check, orientation-check,
 // autocomplete-audit, time-limit-detector, auto-play-detection,
-// redundant-entry-check
+// redundant-entry-check, motion-actuation-check
 import "@a11y-skills/audit/test-entries/text-spacing-check";
 ```
 

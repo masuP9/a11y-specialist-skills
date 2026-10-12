@@ -51,7 +51,7 @@
 | 2.5.1 | インタラクティブ | 操作ログ | 複雑ジェスチャ必須でFail |
 | 2.5.2 | インタラクティブ | 操作ログ | 誤作動/キャンセル不可でFail |
 | 2.5.3 | 自動+手動 | a11y name比較（axe `label-content-name-mismatch` は実験的ルールのため既定では未実行） | ラベル文字列不一致でFail |
-| 2.5.4 | インタラクティブ | 操作ログ | 動作検知のみでFail |
+| 2.5.4 | インタラクティブ+自動の候補 | `motion-actuation-check` **[CLI]** + 操作ログ | 動作検知のみでFail |
 | 2.5.7 | インタラクティブ | 操作ログ | ドラッグ必須でFail |
 | 2.5.8 | 自動 | `target-size-check` **[CLI]** | 最低サイズ未満でFail |
 
@@ -96,5 +96,6 @@
 | 2.1.2 | `keyboard-trap-check` | `keyboard-trap-result.json` |
 | 2.2.1 | `time-limit-detector` | `time-limit-result.json` |
 | 2.4.7, 2.4.11, 2.4.12 (AAA), 3.2.1 | `focus-indicator-check` | `focus-indicator-result.json`, `focus-indicators.png` |
+| 2.5.4 | `motion-actuation-check` | `motion-actuation-result.json` |
 | 2.5.5, 2.5.8 | `target-size-check` | `target-size-result.json`, `target-size-screenshot.png` |
 | 3.3.7 | `redundant-entry-check` | `redundant-entry-result.json` |

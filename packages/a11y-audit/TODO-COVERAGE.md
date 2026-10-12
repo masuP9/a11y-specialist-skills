@@ -134,6 +134,29 @@
 
 ---
 
+### 2.5.4 Motion Actuation - **部分実装** ✅
+**概要**: 端末を振る・傾ける操作で動く機能に、画面の部品での代替があり、動きでの起動を止められる
+
+**実装**: `motion-actuation-check`（`runMotionActuationCheck.ts`、`cdpEventListeners.ts`）
+- CDP の `DOMDebugger.getEventListeners` で、主フレームの `window` / `document` に付いた
+  `devicemotion` / `deviceorientation` / `deviceorientationabsolute` の listener を取り出し、
+  1 件ごとに `incomplete` の候補として報告
+- `window` に listener がある型には合成イベントを 10 回送り、DOM の変化数
+  （`MutationObserver`）と遷移を証跡に添える。戻らない handler は
+  `Runtime.terminateExecution` で打ち切る（`simulate: false` で送信しない）
+- `document` にだけ付いた listener は、ブラウザが `window` にしか送らないため動かない可能性を注記
+
+**残る制限**:
+- CDP は Chromium のみ。ほかのブラウザでは取り出せず `incomplete`
+- iframe の中の listener は見ない。利用者の操作の後に付く listener
+  （iOS の許可ダイアログの後など）は見つからない
+- Generic Sensor API（`Accelerometer` など）、カメラ・マイクでの動き検知は見ない
+- 合成イベントは `isTrusted: false`。信頼されたイベントだけ受ける処理や canvas だけに描く
+  処理では「変化なし」になる（listener がある限り候補には出る）
+- 画面の部品による代替・動きでの起動を止める手段・例外の判断は人手で確認する
+
+---
+
 ### 2.1.2 No Keyboard Trap
 **概要**: フォーカスがキーボードトラップに陥らない
 
@@ -185,6 +208,7 @@
 | 2.4.1 Bypass Blocks | `automated-checks.md` |
 | 2.4.11 Focus Not Obscured (Minimum) / 2.4.12 (Enhanced) | `focus-indicator-check.ts` ✅ |
 | 2.5.3 Label in Name | `automated-checks.md` |
+| 2.5.4 Motion Actuation | `motion-actuation-check`（部分） ✅ |
 | 2.5.8 Target Size (Minimum) | `target-size-check.ts` ✅ |
 | 3.1.1 Language of Page | axe-core + `automated-checks.md` |
 | 3.2.1 On Focus | `focus-indicator-check.ts` ✅ |

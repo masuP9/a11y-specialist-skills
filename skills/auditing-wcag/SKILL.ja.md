@@ -122,5 +122,6 @@ npx -y @a11y-skills/audit --url "https://example.com" --output-dir ./results
 | `keyboard-trap-check` | 2.1.2 | キーボードトラップ検出 |
 | `keyboard-reachability-check` | 2.1.1 | キーボード到達可能性（Tab・矢印キー・activedescendant） |
 | `redundant-entry-check` | 3.3.7 | 同じ目的の入力欄の重なり（候補。要確認） |
+| `motion-actuation-check` | 2.5.4 | 端末の動き・傾きに反応する処理（候補。要確認） |
 
 詳細は [`@a11y-skills/audit` README](https://www.npmjs.com/package/@a11y-skills/audit) を参照してください。

@@ -81,8 +81,18 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks focus-indicator-c
 ## ポインター
 | 基準 | 操作 | 証跡 | Fail条件 |
 |---|---|---|---|
+| 2.5.4 | 振る・傾ける操作に画面の部品の代わりがあり、動きでの起動を止められるか | 操作ログ | 動きでしか操作できない、または止められない |
 | 2.5.7 | ドラッグ以外の操作手段を提供 | 操作ログ | ドラッグ必須で代替なし |
 | 2.5.8 | ターゲットサイズを測定 | スクショ/計測 | 最低サイズを満たさない |
+
+### `motion-actuation-check` CLIチェック
+
+`motion-actuation-check` で、端末の動き・傾きに反応する処理（`window` / `document` の `devicemotion` / `deviceorientation` / `deviceorientationabsolute` の listener）を CDP で取り出し、`incomplete` の候補として報告します（Chromium のみ。それ以外では取り出せないため `incomplete`）。
+
+- 自動で見るのは「動きに反応する処理があるか」まで。画面の部品による代替と、動きでの起動を止める手段があるか（必須・支援技術対応の例外を含む）は、候補ごとに人が確かめる。
+- `window` に listener がある型には合成イベントを送り、DOM が変わるか（`domMutations`）を証跡にする。合成イベントは `isTrusted: false` なので、信頼されたイベントしか受けない処理や canvas に描くだけの処理は「変化なし」になる。それでも listener がある限り候補には出る。
+- `document` にだけ付いた listener は、ブラウザが `window` にしか送らないので動かない可能性がある（送信しない）。
+- 実行: `npx -y @a11y-skills/audit --url "<url>" --checks motion-actuation-check`
 
 ### `target-size-check` CLIチェック
 
