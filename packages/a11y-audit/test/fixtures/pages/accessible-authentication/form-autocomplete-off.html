@@ -1,0 +1,17 @@
+<!doctype html>
+<!--
+  The form has autocomplete="off" and the password field has no value of its own.
+  Expected: the field inherits "off" (autocompleteStatus "off", formAutocomplete
+  "off"); auth-autocomplete has a node whose summary mentions the form.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Form autocomplete off</title>
+  </head>
+  <body>
+    <form autocomplete="off">
+      <label>Password <input type="password" /></label>
+    </form>
+  </body>
+</html>

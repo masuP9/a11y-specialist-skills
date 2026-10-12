@@ -1,5 +1,5 @@
 /**
- * Fixture Gallery: manifest-driven integration tests for all 14 checks.
+ * Fixture Gallery: manifest-driven integration tests for all 15 checks.
  *
  * Each manifest entry:
  * - Serves an HTML fixture from test/fixtures/pages/ via a worker-scoped
@@ -10,7 +10,7 @@
  * - For 'passes' expectations: also guards against silent inapplicable pass.
  * - Validates the result envelope against RESULT_SCHEMAS[check] via Ajv.
  *
- * Coverage: all 24 custom finding-capable rules from rule-registry.ts
+ * Coverage: all 27 custom finding-capable rules from rule-registry.ts
  * (auto-play and auto-play-audio live in their own specs).
  * axe-audit: representative rule (image-alt); full rule coverage is out of
  * scope for axe (hundreds of external rules).
@@ -332,6 +332,46 @@ const MANIFEST: ManifestEntry[] = [
     fixture: 'motion-actuation/none.html',
     expectRules: {
       'a11y-skills/motion-actuation': 'inapplicable',
+    },
+  },
+
+  // =========================================================================
+  // accessible-authentication-check
+  // Rules: a11y-skills/auth-paste-blocked, auth-autocomplete, auth-captcha (all incomplete)
+  // =========================================================================
+  {
+    check: 'accessible-authentication-check',
+    scenario: 'finding: auth-paste-blocked (onpaste returns false)',
+    fixture: 'accessible-authentication/paste-blocked.html',
+    expectRules: {
+      'a11y-skills/auth-paste-blocked': 'incomplete',
+    },
+  },
+  {
+    check: 'accessible-authentication-check',
+    scenario:
+      'finding: auth-autocomplete (password field has autocomplete off)',
+    fixture: 'accessible-authentication/autocomplete-off.html',
+    expectRules: {
+      'a11y-skills/auth-autocomplete': 'incomplete',
+    },
+  },
+  {
+    check: 'accessible-authentication-check',
+    scenario: 'finding: auth-captcha (reCAPTCHA container)',
+    fixture: 'accessible-authentication/captcha.html',
+    expectRules: {
+      'a11y-skills/auth-captcha': 'incomplete',
+    },
+  },
+  {
+    check: 'accessible-authentication-check',
+    scenario: 'clear: no authentication field or CAPTCHA',
+    fixture: 'accessible-authentication/none.html',
+    expectRules: {
+      'a11y-skills/auth-paste-blocked': 'inapplicable',
+      'a11y-skills/auth-autocomplete': 'inapplicable',
+      'a11y-skills/auth-captcha': 'inapplicable',
     },
   },
 

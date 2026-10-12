@@ -1,0 +1,25 @@
+<!doctype html>
+<!--
+  Verification code fields. The first is found by its name ("otp"); the second
+  by autocomplete="one-time-code" and it cancels pastes. The card security code
+  must not be treated as an authentication field.
+  Expected: two fields with kind "one-time-code" (first "inserted", second
+  "blocked"); the cc-csc field is not in details.fields.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>OTP</title>
+  </head>
+  <body>
+    <form>
+      <input inputmode="numeric" name="otp" maxlength="6" />
+    </form>
+    <form>
+      <input autocomplete="one-time-code" onpaste="event.preventDefault()" />
+    </form>
+    <form>
+      <input name="cc-csc" aria-label="セキュリティコード" />
+    </form>
+  </body>
+</html>

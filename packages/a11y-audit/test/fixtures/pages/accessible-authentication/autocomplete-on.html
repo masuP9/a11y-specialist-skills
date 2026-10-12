@@ -1,0 +1,16 @@
+<!doctype html>
+<!--
+  The password field has autocomplete="on": autofill is not turned off.
+  Expected: autocompleteStatus "missing"; auth-autocomplete has no node (passes).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Autocomplete on</title>
+  </head>
+  <body>
+    <form>
+      <label>Password <input type="password" autocomplete="on" /></label>
+    </form>
+  </body>
+</html>

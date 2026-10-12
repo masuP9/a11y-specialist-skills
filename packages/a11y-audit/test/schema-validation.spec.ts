@@ -8,6 +8,7 @@ import { test, expect } from '@playwright/test';
 import Ajv2020 from 'ajv/dist/2020.js';
 import {
   buildAuditResult,
+  normalizeAccessibleAuthenticationCheck,
   normalizeAxeResults,
   normalizeFocusCheck,
   normalizeKeyboardReachabilityCheck,
@@ -18,6 +19,7 @@ import {
   normalizeTargetSizeCheck,
 } from '../dist/index.js';
 import type {
+  AccessibleAuthenticationCheckDetails,
   FocusCheckDetails,
   KeyboardReachabilityCheckDetails,
   KeyboardTrapCheckDetails,
@@ -538,6 +540,115 @@ test('motion-actuation-check envelope for an unsupported browser validates again
     buckets: normalizeMotionActuationCheck(details),
   });
   expectValid('motion-actuation-check', result);
+});
+
+test('accessible-authentication-check envelope with three kinds of fields, a CAPTCHA and a ran paste test validates against its schema', () => {
+  const details: AccessibleAuthenticationCheckDetails = {
+    fields: [
+      {
+        selector: '#user',
+        html: '<input id="user" type="text">',
+        htmlTruncated: false,
+        kind: 'username',
+        inputType: 'text',
+        name: 'user',
+        id: 'user',
+        labelText: 'User',
+        autocomplete: null,
+        formAutocomplete: null,
+        autocompleteStatus: 'missing',
+        editable: true,
+        visible: true,
+        formSelector: '#login',
+        paste: null,
+        pasteListenerCount: null,
+      },
+      {
+        selector: '#pw',
+        html: '<input id="pw" type="password" autocomplete="off">',
+        htmlTruncated: false,
+        kind: 'password',
+        inputType: 'password',
+        name: null,
+        id: 'pw',
+        labelText: 'Password',
+        autocomplete: 'off',
+        formAutocomplete: 'off',
+        autocompleteStatus: 'off',
+        editable: true,
+        visible: true,
+        formSelector: '#login',
+        paste: {
+          result: 'blocked',
+          valueAfterPaste: 'empty',
+          pasteEventPrevented: true,
+          navigated: false,
+          error: null,
+        },
+        pasteListenerCount: 1,
+      },
+      {
+        selector: '#code',
+        html: '<input id="code" name="otp">',
+        htmlTruncated: false,
+        kind: 'one-time-code',
+        inputType: 'text',
+        name: 'otp',
+        id: 'code',
+        labelText: null,
+        autocomplete: null,
+        formAutocomplete: null,
+        autocompleteStatus: 'missing',
+        editable: true,
+        visible: true,
+        formSelector: null,
+        paste: {
+          result: null,
+          valueAfterPaste: null,
+          pasteEventPrevented: null,
+          navigated: true,
+          error: null,
+        },
+        pasteListenerCount: null,
+      },
+    ],
+    captchas: [
+      {
+        selector: '.g-recaptcha',
+        html: '<div class="g-recaptcha"></div>',
+        htmlTruncated: false,
+        matchedBy: '.g-recaptcha',
+        visible: true,
+      },
+    ],
+    pasteTest: { status: 'ran', reason: null, probe: '1234' },
+  };
+  const result = buildAuditResult({
+    source: 'accessible-authentication-check',
+    url: 'about:blank',
+    details,
+    buckets: normalizeAccessibleAuthenticationCheck(details),
+  });
+  expectValid('accessible-authentication-check', result);
+});
+
+test('accessible-authentication-check envelope for an unavailable paste test validates against its schema', () => {
+  const details: AccessibleAuthenticationCheckDetails = {
+    fields: [],
+    captchas: [],
+    pasteTest: {
+      status: 'unavailable',
+      reason: 'clipboard-permission',
+      probe: null,
+    },
+  };
+  const result = buildAuditResult({
+    source: 'accessible-authentication-check',
+    url: 'about:blank',
+    details,
+    buckets: normalizeAccessibleAuthenticationCheck(details),
+  });
+  expectValid('accessible-authentication-check', result);
 });
 
 test('the pre-0.3.0 flat result shape is rejected', () => {

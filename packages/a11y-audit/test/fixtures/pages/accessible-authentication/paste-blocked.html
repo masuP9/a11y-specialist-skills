@@ -1,0 +1,23 @@
+<!doctype html>
+<!--
+  The password field cancels the paste event.
+  Expected: auth-paste-blocked is incomplete; paste.result "blocked",
+  pasteEventPrevented true.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Paste blocked</title>
+  </head>
+  <body>
+    <form>
+      <label
+        >Password
+        <input
+          type="password"
+          autocomplete="current-password"
+          onpaste="return false;"
+      /></label>
+    </form>
+  </body>
+</html>

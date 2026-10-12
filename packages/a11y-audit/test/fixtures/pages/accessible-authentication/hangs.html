@@ -1,0 +1,22 @@
+<!doctype html>
+<!--
+  The paste handler never returns.
+  Expected: the check returns within AUTH_PASTE_FIELD_TIMEOUT_MS + 5s;
+  paste.error "timeout"; auth-paste-blocked is incomplete.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Paste hangs</title>
+  </head>
+  <body>
+    <form>
+      <input type="password" id="pw" autocomplete="current-password" />
+    </form>
+    <script>
+      document.getElementById('pw').addEventListener('paste', function () {
+        for (;;) {}
+      });
+    </script>
+  </body>
+</html>

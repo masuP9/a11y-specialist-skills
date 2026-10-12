@@ -1,0 +1,25 @@
+<!doctype html>
+<!--
+  A reCAPTCHA container with a nested iframe next to a login form.
+  Expected: auth-captcha is incomplete with exactly 1 node (the outer div only).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>CAPTCHA</title>
+  </head>
+  <body>
+    <form>
+      <label
+        >User <input type="text" name="user" autocomplete="username"
+      /></label>
+      <label
+        >Password
+        <input type="password" name="pw" autocomplete="current-password"
+      /></label>
+      <div class="g-recaptcha" data-sitekey="x">
+        <iframe src="about:blank#recaptcha" title="reCAPTCHA"></iframe>
+      </div>
+    </form>
+  </body>
+</html>

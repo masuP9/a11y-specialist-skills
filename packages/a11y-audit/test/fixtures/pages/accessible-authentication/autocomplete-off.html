@@ -1,0 +1,21 @@
+<!doctype html>
+<!--
+  The username field has no autocomplete (status "missing", not reported);
+  the password field turns autofill off.
+  Expected: auth-autocomplete is incomplete with exactly 1 node (the password
+  field); the username field has kind "username".
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Autocomplete off</title>
+  </head>
+  <body>
+    <form>
+      <label>User <input type="text" name="user" /></label>
+      <label
+        >Password <input type="password" name="pw" autocomplete="off"
+      /></label>
+    </form>
+  </body>
+</html>
