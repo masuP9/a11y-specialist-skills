@@ -30,7 +30,8 @@ export type CheckSource =
   | 'time-limit-detector'
   | 'auto-play-detection'
   | 'keyboard-trap-check'
-  | 'keyboard-reachability-check';
+  | 'keyboard-reachability-check'
+  | 'redundant-entry-check';
 
 export type NormalizedImpact = 'critical' | 'serious' | 'moderate' | 'minor';
 
@@ -657,6 +658,52 @@ export interface AutocompleteAuditDetails {
 
 export type AutocompleteAuditResult =
   AuditCheckResult<AutocompleteAuditDetails>;
+
+// =============================================================================
+// Redundant Entry Check (WCAG 3.3.7)
+// =============================================================================
+
+export interface RedundantEntryField {
+  selector: string;
+  tagName: string;
+  html: string;
+  htmlTruncated: boolean;
+  inputType: string;
+  name: string | null;
+  id: string | null;
+  labelText: string | null;
+  autocomplete: string | null;
+  /** Autofill field name (e.g. 'street-address'). */
+  purpose: string;
+  purposeSource: 'autocomplete' | 'name' | 'id' | 'label' | 'placeholder';
+  scope: 'shipping' | 'billing' | null;
+  section: string | null;
+  formSelector: string | null;
+}
+
+export interface RedundantEntryCopyControl {
+  selector: string;
+  tagName: string;
+  text: string;
+}
+
+export interface RedundantEntryGroup {
+  purpose: string;
+  formSelector: string | null;
+  kind: 'scoped' | 'repeated';
+  /** DOM order; always 2 or more. */
+  fields: RedundantEntryField[];
+  copyControls: RedundantEntryCopyControl[];
+}
+
+export interface RedundantEntryCheckDetails {
+  totalFieldsChecked: number;
+  fieldsWithPurpose: number;
+  groups: RedundantEntryGroup[];
+}
+
+export type RedundantEntryCheckResult =
+  AuditCheckResult<RedundantEntryCheckDetails>;
 
 // =============================================================================
 // Time Limit Detector (WCAG 2.2.1)
