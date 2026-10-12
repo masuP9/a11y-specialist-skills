@@ -157,6 +157,33 @@
 
 ---
 
+### 3.2.2 On Input - **部分実装** ✅
+**概要**: 欄の値を変えただけで、利用者が前もって知らされないまま文脈が変わらない
+
+**実装**: `change-on-input-check`（`runChangeOnInputCheck.ts`）
+- 主フレームの `select` / radio（グループごと）/ checkbox / テキスト系の `input` と
+  `textarea` の値を 1 つずつ変え（テキスト系は固定の値を入れて blur して `change` を起こす）、
+  主フレームの移動・新しいウィンドウ・フォーカスの移動・ダイアログを記録して
+  `incomplete` の候補として報告
+- 移動したら新しい context でやり直し、試した欄を飛ばして残りを続ける
+- 値はイベントを起こさずにプロパティで戻す
+
+**残る制限**:
+- iframe・shadow root の中の欄、`contenteditable`、`type="range" / "color" / "file"`、
+  ARIA だけの独自部品は見ない
+- 値は 1 種類（select は別の option 1 つ、テキストは固定値 1 つ）だけ試す。特定の値でだけ
+  起きる変化は見落とす
+- 戻すのは欄の値だけで、handler がページに加えた変更は戻らない。前の欄の変更が後の欄の
+  結果に影響しうる
+- `settleMs` を過ぎてから起きる変化（通信の後の移動など）と、内容の大きな変化は記録しない
+- 実ページで値を変え `change` を起こすため、自動保存・自動送信のあるページでは通信が起きうる
+- `date` / `time` / `range` / `color` / `file` などの type は集めない
+- id が読み込みごとに変わるページでは、やり直しのたびに同じ欄を再び試し、同じ finding が
+  重複しうる（やり直しは `CHANGE_ON_INPUT_MAX_RESTARTS` 回まで）
+- 前もっての説明があるかは判断できず、人手で確認する
+
+---
+
 ### 2.1.2 No Keyboard Trap
 **概要**: フォーカスがキーボードトラップに陥らない
 
@@ -212,6 +239,7 @@
 | 2.5.8 Target Size (Minimum) | `target-size-check.ts` ✅ |
 | 3.1.1 Language of Page | axe-core + `automated-checks.md` |
 | 3.2.1 On Focus | `focus-indicator-check.ts` ✅ |
+| 3.2.2 On Input | `change-on-input-check`（部分） ✅ |
 | 3.3.7 Redundant Entry | `redundant-entry-check`（部分） ✅ |
 
 ---

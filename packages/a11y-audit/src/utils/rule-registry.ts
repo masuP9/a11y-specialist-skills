@@ -67,6 +67,21 @@ export const RULES = {
     // the navigation is directly observed, no exception applies.
     classification: 'violation',
   },
+  // --- change-on-input-check ---
+  'no-context-change-on-input': {
+    id: 'a11y-skills/no-context-change-on-input',
+    sc: ['3.2.2'],
+    tags: ['a11y-skills', 'wcag2a', 'wcag322'],
+    impact: 'serious',
+    scope: 'node',
+    description:
+      'Ensure changing the setting of a form control does not automatically cause a change of context',
+    help: 'Changing a form control value must not trigger a context change unless users are advised beforehand',
+    helpUrl: `${UNDERSTANDING}/on-input.html`,
+    // The change is observed, but advising users beforehand makes it conform,
+    // and that advice can only be judged by a human.
+    classification: 'incomplete',
+  },
   'focus-not-obscured': {
     id: 'a11y-skills/focus-not-obscured',
     sc: ['2.4.11'],

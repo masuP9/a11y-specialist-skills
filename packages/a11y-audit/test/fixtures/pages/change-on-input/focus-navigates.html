@@ -1,0 +1,18 @@
+<!doctype html>
+<!--
+  Focusing the text field navigates (an On Focus behavior, 3.2.1). A checkbox
+  without a handler follows it.
+  Expected: no findings; #jump is skipped; the page is restarted and the
+  checkbox is still tested (controlsTested 1).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Navigates on focus</title>
+  </head>
+  <body>
+    <label for="jump">Jump</label>
+    <input type="text" id="jump" onfocus="location.assign('landing.html')" />
+    <label><input type="checkbox" id="plain" /> Plain</label>
+  </body>
+</html>

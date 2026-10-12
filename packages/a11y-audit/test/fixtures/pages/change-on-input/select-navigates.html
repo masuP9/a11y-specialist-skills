@@ -1,0 +1,24 @@
+<!doctype html>
+<!--
+  Choosing an option navigates immediately. A text field without a handler
+  follows it.
+  Expected: one finding for the select (navigation to landing.html), one
+  restart, and the text field is still tested after the restart
+  (controlsTested 2).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Select navigates</title>
+  </head>
+  <body>
+    <label for="city">City</label>
+    <select id="city" onchange="location.assign('landing.html')">
+      <option value="">Choose</option>
+      <option value="tokyo">Tokyo</option>
+      <option value="osaka">Osaka</option>
+    </select>
+    <label for="memo">Memo</label>
+    <input type="text" id="memo" />
+  </body>
+</html>

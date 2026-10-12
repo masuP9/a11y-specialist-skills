@@ -7,6 +7,27 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- `change-on-input-check` (WCAG 3.2.2): new check, `runChangeOnInputCheck`
+  (takes a `browser` or `createContext`, owns its contexts) and the CLI check
+  name `change-on-input-check`. Rule `a11y-skills/no-context-change-on-input`
+  (tags `wcag2a`, `wcag322`; always `incomplete`, because advice given
+  beforehand makes the behavior conform and only a human can judge it). Changes
+  each `select`, radio group, checkbox and text-like `input` / `textarea` in the
+  main frame one at a time and records main-frame navigation, a new window,
+  focus moving elsewhere (including auto-advance and a `change` handler moving
+  focus) and dialogs in `details.findings`, one node each. After a navigation
+  it restarts in a fresh context and skips the controls already tried
+  (`details.restarts`); `settleMs`, `timeBudgetMs` and `maxControls` bound the
+  walk (`details.aborted`). Controls that could not be operated are listed in
+  `details.untested` and reported as `incomplete` nodes. Values are put back through properties without
+  events. Known limitations: only controls in the main frame's light DOM (no
+  iframes, shadow roots, ARIA-only widgets); one value per control; changes
+  made by handlers are not undone, so an earlier control can affect a later
+  one; changes surfacing after `settleMs` and large content changes are not
+  recorded; `date` / `time` / `range` / `color` / `file` types are not
+  collected; on pages whose ids change on every load a restart tries the same
+  control again, so a finding can repeat (up to the restart cap); it really changes values and fires `change`, so pages that
+  autosave or submit on change may send requests.
 - `motion-actuation-check` (WCAG 2.5.4): new check, `runMotionActuationCheck`
   (takes a `page`; `simulate: false` skips the synthetic events) and the CLI
   check name `motion-actuation-check`. Rule `a11y-skills/motion-actuation`

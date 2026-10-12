@@ -78,6 +78,16 @@ When an element's focus event triggers navigation:
 3. Screenshot is taken on the original page
 4. Test is marked as interrupted
 
+### `change-on-input-check` CLI Check
+
+`change-on-input-check` changes the value of each form control, one at a time, and records whether that alone changes the context (3.2.2).
+
+- Controls changed: `select`, radio (per group), checkbox, text-like `input` and `textarea` in the main frame. Disabled, readonly and invisible controls are left alone. Text-like controls get a fixed value and are blurred so that `change` fires.
+- Recorded: main-frame navigation, a new window, focus moving elsewhere, a dialog. After a navigation it restarts in a fresh context, skips the controls already tried, and continues with the rest.
+- Findings are `incomplete` candidates. Advice given beforehand ("choosing an option goes to the page right away") makes the page conform, so a human checks for such advice on each candidate.
+- It really changes values on the live page and fires `change`. Values are put back without events, but the page's internal state is not restored. Pages that autosave or submit on change may send requests.
+- Run: `npx -y @a11y-skills/audit --url "<url>" --checks change-on-input-check`
+
 ## Pointer
 | Criterion | Action | Evidence | Fail rule |
 |---|---|---|---|

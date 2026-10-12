@@ -1,0 +1,30 @@
+<!doctype html>
+<!--
+  Choosing the "Other" radio moves focus to a text field.
+  Expected: one finding with a focus-moved change whose toSelector is #other-text.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Radio moves focus</title>
+  </head>
+  <body>
+    <fieldset>
+      <legend>Contact</legend>
+      <label
+        ><input type="radio" name="contact" value="email" checked />
+        Email</label
+      >
+      <label
+        ><input
+          type="radio"
+          name="contact"
+          value="other"
+          onchange="document.getElementById('other-text').focus()"
+        />
+        Other</label
+      >
+    </fieldset>
+    <input type="text" id="other-text" aria-label="Other contact" />
+  </body>
+</html>

@@ -1,0 +1,25 @@
+<!doctype html>
+<!--
+  The checkbox's change handler navigates on its SECOND call. The check
+  changes the box once and restores it by setting the property, which must not
+  fire a change event.
+  Expected: no findings; the rule passes with controlsTested 1.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Restore is silent</title>
+  </head>
+  <body>
+    <label><input type="checkbox" id="once" /> Once</label>
+    <script>
+      var calls = 0;
+      document.getElementById('once').addEventListener('change', function () {
+        calls += 1;
+        if (calls === 2) {
+          location.assign('landing.html');
+        }
+      });
+    </script>
+  </body>
+</html>

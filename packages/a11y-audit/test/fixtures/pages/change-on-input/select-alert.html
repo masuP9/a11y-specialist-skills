@@ -1,0 +1,19 @@
+<!doctype html>
+<!--
+  Choosing an option opens an alert dialog.
+  Expected: one finding with a dialog change (dialogType alert, message
+  "saved"); the check does not hang on the dialog.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Select alerts</title>
+  </head>
+  <body>
+    <label for="plan">Plan</label>
+    <select id="plan" onchange="alert('saved')">
+      <option>Free</option>
+      <option>Pro</option>
+    </select>
+  </body>
+</html>

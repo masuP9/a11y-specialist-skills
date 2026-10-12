@@ -63,6 +63,10 @@ export {
   runMotionActuationCheck,
   type RunMotionActuationCheckOptions,
 } from './runMotionActuationCheck.js';
+export {
+  runChangeOnInputCheck,
+  type RunChangeOnInputCheckOptions,
+} from './runChangeOnInputCheck.js';
 
 export {
   resolveOutputPath,

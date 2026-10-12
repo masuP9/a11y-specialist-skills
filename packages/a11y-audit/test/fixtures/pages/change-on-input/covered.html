@@ -1,0 +1,17 @@
+<!doctype html>
+<!--
+  A checkbox covered by an opaque fixed overlay. It counts as visible, but a
+  click on it times out ("intercepts pointer events"). No handlers.
+  Expected: no findings, restarts 0, the checkbox is listed in skipped with a
+  non-empty reason (not misread as a navigation).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Covered control</title>
+  </head>
+  <body>
+    <label><input type="checkbox" id="covered" /> Covered</label>
+    <div style="position: fixed; inset: 0; background: #fff; z-index: 10"></div>
+  </body>
+</html>

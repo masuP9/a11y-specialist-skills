@@ -61,7 +61,7 @@
 | 3.1.1 | 自動 | DOM属性 | lang未設定でFail |
 | 3.1.2 | 自動+コンテンツ | axe valid-lang + テキスト分析 | 部分言語未指定でFail |
 | 3.2.1 | 自動+インタラクティブ | `focus-indicator-check` **[CLI]** + DOM差分 | フォーカスで遷移/大更新でFail |
-| 3.2.2 | インタラクティブ | DOM差分 | 入力のみで送信/遷移でFail |
+| 3.2.2 | インタラクティブ+自動の候補 | `change-on-input-check` **[CLI]** + DOM差分 | 入力のみで送信/遷移（事前の説明なし）でFail |
 | 3.2.3 | 自動 | 全ページa11y tree比較 | 一貫性欠如でFail |
 | 3.2.4 | 自動 | 全ページa11y tree比較 | 同一機能の識別が不一致でFail |
 | 3.2.6 | 自動 | 全ページa11y tree比較 | ヘルプ手段が不一致でFail |
@@ -97,5 +97,6 @@
 | 2.2.1 | `time-limit-detector` | `time-limit-result.json` |
 | 2.4.7, 2.4.11, 2.4.12 (AAA), 3.2.1 | `focus-indicator-check` | `focus-indicator-result.json`, `focus-indicators.png` |
 | 2.5.4 | `motion-actuation-check` | `motion-actuation-result.json` |
+| 3.2.2 | `change-on-input-check` | `change-on-input-result.json` |
 | 2.5.5, 2.5.8 | `target-size-check` | `target-size-result.json`, `target-size-screenshot.png` |
 | 3.3.7 | `redundant-entry-check` | `redundant-entry-result.json` |
