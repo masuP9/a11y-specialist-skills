@@ -256,6 +256,23 @@ export const RULES = {
     classification: 'incomplete',
   },
 
+  // --- motion-actuation-check ---
+  'motion-actuation': {
+    id: 'a11y-skills/motion-actuation',
+    sc: ['2.5.4'],
+    tags: ['a11y-skills', 'wcag21a', 'wcag254'],
+    impact: 'serious',
+    scope: 'page',
+    description:
+      'Ensure functions operated by device motion can also be operated by UI components and motion actuation can be disabled',
+    help: 'Provide a UI alternative to device motion and a way to turn motion actuation off',
+    helpUrl: `${UNDERSTANDING}/motion-actuation.html`,
+    // A listener only shows the page reacts to motion; whether a UI alternative and
+    // an off switch exist (or the essential / accessibility-supported-interface
+    // exceptions apply) needs a human.
+    classification: 'incomplete',
+  },
+
   // --- time-limit-detector ---
   'meta-refresh': {
     id: 'a11y-skills/meta-refresh',
