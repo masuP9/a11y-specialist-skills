@@ -252,3 +252,27 @@ test('欄が 1 つもないページは inapplicable になる', async ({
     JSON.stringify(validateEnvelope.errors),
   ).toBe(true);
 });
+
+for (const formId of ['checkout.form', '1-step']) {
+  test(`id が ${formId} の form の中で同じ目的の欄が重なっても、例外にならず form 内のコピー手段を拾う`, async ({
+    page,
+  }, testInfo) => {
+    await page.setContent(
+      html(`<form id="${formId}">
+        <input id="a" autocomplete="shipping email" aria-label="Shipping email">
+        <label><input type="checkbox" id="same"> Same as shipping</label>
+        <input id="b" autocomplete="billing email" aria-label="Billing email">
+      </form>`),
+    );
+
+    const result = await runRedundantEntryCheck({
+      page,
+      outputDir: testInfo.outputDir,
+    });
+
+    expect(result.details.groups).toHaveLength(1);
+    expect(
+      result.details.groups[0]?.copyControls.map((c) => c.selector),
+    ).toEqual(['#same']);
+  });
+}

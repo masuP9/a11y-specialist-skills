@@ -220,7 +220,13 @@ function collectCopyControls(args: {
 
   const result: Record<string, RedundantEntryCopyControl[]> = {};
   for (const formSelector of args.formSelectors) {
-    const root = formSelector ? document.querySelector(formSelector) : document;
+    // A form selector of the form "#id" is not escaped, so ids such as
+    // "checkout.form" or "1-step" are not valid CSS; look those up by id.
+    const root = !formSelector
+      ? document
+      : formSelector.startsWith('#')
+        ? document.getElementById(formSelector.slice(1))
+        : document.querySelector(formSelector);
     const controls: RedundantEntryCopyControl[] = [];
     root
       ?.querySelectorAll(
