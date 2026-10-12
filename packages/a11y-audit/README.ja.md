@@ -28,11 +28,12 @@ Claude Code skill から機能本体を切り出したものです。10 個の�
 | `runKeyboardReachabilityCheck` | 2.1.1 キーボード（Tab・複合部品内の矢印キー・activedescendant） |
 | `runRedundantEntryCheck` | 3.3.7 冗長な入力（同じ form の中で同じ情報を求める欄の重なり。候補として報告） |
 | `runMotionActuationCheck` | 2.5.4 動きによる起動（`devicemotion` / `deviceorientation` の listener。候補として報告） |
+| `runChangeOnInputCheck` | 3.2.2 入力時（値を変えただけで起きる移動・新しいウィンドウ・フォーカス移動・ダイアログ。候補として報告） |
 
 多くの検査は遷移済みの `page` を受けます。一部は navigation を所有し `targetUrl`
 （または `TEST_PAGE`）を受けます: `runOrientationCheck` と `runTimeLimitDetector`
-（`runZoomCheck` は URL 指定時）。`runFocusIndicatorCheck` と
-`runKeyboardReachabilityCheck` は `browser` を受けます。
+（`runZoomCheck` は URL 指定時）。`runFocusIndicatorCheck`・
+`runKeyboardReachabilityCheck`・`runChangeOnInputCheck` は `browser` を受けます。
 `runAutoPlayDetection` は optional 依存 `pixelmatch` + `pngjs` が必要です（インストール参照）。
 
 `runRedundantEntryCheck`（3.3.7、`a11y-skills/redundant-entry`）は遷移済みの `page` を受けます。
@@ -58,6 +59,18 @@ Chrome DevTools Protocol（CDP）で、主フレームの `window` / `document` 
 ときは `false`）。戻らない handler は CDP で打ち切ります。**CDP は Chromium のみ**で、それ以外では
 `listenerInspection: 'unsupported'` の `incomplete` です。iframe の中と、利用者の操作の後に付く
 listener は見つかりません。
+
+`runChangeOnInputCheck`（3.2.2、`a11y-skills/no-context-change-on-input`）は `browser` を受け、
+自分で context を作って開きます。主フレームの欄（`select` / radio のグループ / checkbox /
+テキスト系の `input` と `textarea`。disabled・readonly・見えない欄は除く）を 1 つずつ変え
+（select は別の option、radio は未選択の 1 つ、checkbox は反転、テキスト系は固定の値を入れて
+blur して `change` を起こす）、主フレームの移動・新しいウィンドウ・フォーカスの移動・ダイアログが
+起きたかを記録して `incomplete` の候補にします。前もって説明があれば適合なので、説明の有無は
+人が確かめます。移動したら新しい context でやり直し、試した欄は飛ばして残りを続けます
+（`details.restarts`）。値はイベントを起こさずに戻しますが、handler がページに加えた変更は
+戻りません。**実ページで値を変え `change` を起こすので、自動保存・自動送信のあるページでは
+実際に通信が起きえます。** iframe・shadow root の中の欄、ARIA だけの独自部品、1 種類の値でしか
+試さないこと、`settleMs` を過ぎてから起きる変化は見落とします。
 
 `runAutoPlayDetection` の 1.4.2（`a11y-skills/auto-play-audio`）は、ページと iframe（入れ子・
 shadow root の中も含む）の `<audio>`・`<video>` について、「再生中・消音でない・音量が 0 より大きい・
@@ -155,6 +168,7 @@ target-size-check
 keyboard-reachability-check
 redundant-entry-check
 motion-actuation-check
+change-on-input-check
 ```
 
 ### 終了コード
@@ -270,7 +284,7 @@ test("focus indicators", async ({ browser }, testInfo) => {
 });
 ```
 
-`runFocusIndicatorCheck` / `runKeyboardReachabilityCheck` / `runKeyboardTrapCheck` は、
+`runFocusIndicatorCheck` / `runKeyboardReachabilityCheck` / `runKeyboardTrapCheck` / `runChangeOnInputCheck` は、
 `browser` の代わりに `createContext` を渡せます。`context.route` による URL 検査のような
 呼び出し側の守りを、検査が使うすべての context に付けたいときに使います。
 
@@ -405,7 +419,7 @@ import "@a11y-skills/audit/test-entries/reflow-check";
 import "@a11y-skills/audit/test-entries/target-size-check";
 // 他にも: text-spacing-check, zoom-200-check, orientation-check,
 // autocomplete-audit, time-limit-detector, auto-play-detection,
-// redundant-entry-check, motion-actuation-check
+// redundant-entry-check, motion-actuation-check, change-on-input-check
 import "@a11y-skills/audit/test-entries/text-spacing-check";
 ```
 

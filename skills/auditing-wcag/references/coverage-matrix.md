@@ -61,7 +61,7 @@ Methods are labeled as Automated/Interactive/Manual/Content and can be combined.
 | 3.1.1 | Automated | DOM attribute | Fail if lang missing |
 | 3.1.2 | Automated + Content | axe valid-lang + text analysis | Fail if language of parts not identified |
 | 3.2.1 | Automated + Interactive | `focus-indicator-check` **[CLI]** + DOM diff | Fail if focus triggers navigation/major update |
-| 3.2.2 | Interactive | DOM diff | Fail if input triggers submit/navigation |
+| 3.2.2 | Interactive + automated candidates | `change-on-input-check` **[CLI]** + DOM diff | Fail if input triggers submit/navigation without prior advice |
 | 3.2.3 | Automated | a11y tree comparison across pages | Fail if navigation inconsistent |
 | 3.2.4 | Automated | a11y tree comparison across pages | Fail if same function identified differently |
 | 3.2.6 | Automated | a11y tree comparison across pages | Fail if help mechanism inconsistent |
@@ -97,5 +97,6 @@ The following criteria can be automatically checked via the `a11y-audit` CLI (se
 | 2.2.1 | `time-limit-detector` | `time-limit-result.json` |
 | 2.4.7, 2.4.11, 2.4.12 (AAA), 3.2.1 | `focus-indicator-check` | `focus-indicator-result.json`, `focus-indicators.png` |
 | 2.5.4 | `motion-actuation-check` | `motion-actuation-result.json` |
+| 3.2.2 | `change-on-input-check` | `change-on-input-result.json` |
 | 2.5.5, 2.5.8 | `target-size-check` | `target-size-result.json`, `target-size-screenshot.png` |
 | 3.3.7 | `redundant-entry-check` | `redundant-entry-result.json` |

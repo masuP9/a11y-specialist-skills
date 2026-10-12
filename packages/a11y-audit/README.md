@@ -29,11 +29,12 @@ test entries.
 | `runKeyboardReachabilityCheck` | 2.1.1 Keyboard (Tab, arrow keys in composite widgets, activedescendant) |
 | `runRedundantEntryCheck` | 3.3.7 Redundant Entry (fields in the same form asking for the same information, reported as candidates) |
 | `runMotionActuationCheck` | 2.5.4 Motion Actuation (`devicemotion` / `deviceorientation` listeners, reported as candidates) |
+| `runChangeOnInputCheck` | 3.2.2 On Input (navigation, new windows, focus moves or dialogs caused by just changing a control's value, reported as candidates) |
 
 Most checks take an already-navigated `page`. A few own navigation and take a
 `targetUrl` instead (or `TEST_PAGE`): `runOrientationCheck` and
 `runTimeLimitDetector` (and `runZoomCheck` when a URL is given).
-`runFocusIndicatorCheck` and `runKeyboardReachabilityCheck` take a `browser`. `runAutoPlayDetection` needs the
+`runFocusIndicatorCheck`, `runKeyboardReachabilityCheck` and `runChangeOnInputCheck` take a `browser`. `runAutoPlayDetection` needs the
 optional `pixelmatch` + `pngjs` deps (see Install).
 
 `runRedundantEntryCheck` (3.3.7, `a11y-skills/redundant-entry`) takes an
@@ -69,6 +70,23 @@ state, so use `false` when reusing the same page). A handler that never returns
 is stopped through CDP. **CDP is Chromium only**; elsewhere the result is
 `incomplete` with `listenerInspection: 'unsupported'`. Listeners inside iframes
 and listeners added after a user action are not found.
+
+`runChangeOnInputCheck` (3.2.2, `a11y-skills/no-context-change-on-input`) takes
+a `browser` and creates and opens its own contexts. It changes each control in
+the main frame one at a time (`select`, radio groups, checkboxes, text-like
+`input` and `textarea`; disabled, readonly and invisible controls are left out):
+a select gets another option, a radio group its first unchecked radio, a
+checkbox is toggled, and text-like controls get a fixed value and are blurred so
+that `change` fires. Main-frame navigation, a new window, focus moving elsewhere
+and dialogs are recorded and reported as `incomplete` candidates; advice given
+beforehand makes the page conform, so a human checks for it. After a navigation
+it restarts in a fresh context and continues with the controls not yet tried
+(`details.restarts`). Values are put back without firing events, but changes
+that handlers made to the page are not undone. **It really changes values and
+fires `change` on the live page, so pages that autosave or submit on change may
+send requests.** Controls inside iframes or shadow roots, ARIA-only widgets, a
+single value per control, and changes that surface after `settleMs` are not
+covered.
 
 For 1.4.2 (`a11y-skills/auto-play-audio`), `runAutoPlayDetection` records
 whether every `<audio>` / `<video>` in the page and its iframes (nested frames
@@ -180,6 +198,7 @@ target-size-check
 keyboard-reachability-check
 redundant-entry-check
 motion-actuation-check
+change-on-input-check
 ```
 
 ### Exit codes
@@ -301,8 +320,8 @@ test("focus indicators", async ({ browser }, testInfo) => {
 });
 ```
 
-`runFocusIndicatorCheck`, `runKeyboardReachabilityCheck` and
-`runKeyboardTrapCheck` accept `createContext` instead of `browser`. Use it to
+`runFocusIndicatorCheck`, `runKeyboardReachabilityCheck`,
+`runKeyboardTrapCheck` and `runChangeOnInputCheck` accept `createContext` instead of `browser`. Use it to
 attach your own guards (such as a `context.route` URL check) to every context
 the check uses:
 
@@ -465,7 +484,7 @@ import "@a11y-skills/audit/test-entries/reflow-check";
 import "@a11y-skills/audit/test-entries/target-size-check";
 // ...also: text-spacing-check, zoom-200-check, orientation-check,
 // autocomplete-audit, time-limit-detector, auto-play-detection,
-// redundant-entry-check, motion-actuation-check
+// redundant-entry-check, motion-actuation-check, change-on-input-check
 import "@a11y-skills/audit/test-entries/text-spacing-check";
 ```
 
