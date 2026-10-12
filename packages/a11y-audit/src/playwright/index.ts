@@ -59,6 +59,10 @@ export {
   runRedundantEntryCheck,
   type RunRedundantEntryCheckOptions,
 } from './runRedundantEntryCheck.js';
+export {
+  runMotionActuationCheck,
+  type RunMotionActuationCheckOptions,
+} from './runMotionActuationCheck.js';
 
 export {
   resolveOutputPath,
