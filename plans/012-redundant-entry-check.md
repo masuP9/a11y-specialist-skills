@@ -23,6 +23,7 @@
 - **Depends on**: なし
 - **Category**: feature
 - **Planned at**: commit `69b4049`, 2026-10-13
+- **Codex plan review**: 通過(1 巡目、2026-10-13、medium 1 件を反映、low 0 件)
 
 ## Why this matters
 
@@ -219,7 +220,13 @@ strict TypeScript、`tsc` ビルド、import 指定子は `.js` 付き、シン�
 - 上で目的が決まらないとき: 名前・id・ラベル・placeholder から推定する。**先に範囲の
   語を取り除いてから** `AUTOCOMPLETE_FIELD_PATTERNS` を当てる（`shipping_address` →
   `address`、`お届け先住所` → `住所`）。取り除く語は新定数
-  `REDUNDANT_ENTRY_SCOPE_PATTERNS`（下記）。取り除いたあとの前後の `-_ .:：` を trim する。
+  `REDUNDANT_ENTRY_SCOPE_PATTERNS`（下記）。**続けて確認用の語も取り除く**（新定数
+  `REDUNDANT_ENTRY_CONFIRM_PATTERN`: `confirm(ation)?|re-?(enter|type)|verify|again|確認(用)?|再入力|もう一度`）。
+  `email_confirm` → `email`、`メールアドレス（確認）` → `メールアドレス` となり、
+  共有の `AUTOCOMPLETE_FIELD_PATTERNS`（変更しない）に当たる。確認語の前後にある
+  括弧（`()（）[]【】`）も取り除く。取り除いたあとの前後の `-_ .:：` を trim する。
+  `purposeSource` は、取り除いた後の文字列が当たった側（`name` / `id` / `label` /
+  `placeholder`）とする。確認語だけを含み範囲の語を含まない欄でも同じ処理を通す。
   範囲は、取り除いた語から決める。名前・id・ラベルに無ければ `groupLabel` から決める。
 - 目的が決まらない欄はグループ化の対象外。
 - **目的が `new-password` / `current-password` / `one-time-code` の欄は対象外**
@@ -283,6 +290,8 @@ export const REDUNDANT_ENTRY_SCOPE_PATTERNS = {
   billing: /(billing|bill[-_ ]?to|invoice|ご?請求先?)/gi,
 } as const;
 /** Visible text of a control that probably copies or selects an earlier entry. */
+export const REDUNDANT_ENTRY_CONFIRM_PATTERN =
+  /(confirm(?:ation)?|re-?(?:enter|type)|verify|again|確認用?|再入力|もう一度)/gi;
 export const REDUNDANT_ENTRY_COPY_CONTROL_PATTERN =
   /(same as|same address|use (the )?(shipping|billing)|copy|identical|autofill|saved address|同じ|同一|同上|コピー|転記|自動入力|保存済み)/i;
 /** Purposes whose repeated entry is allowed (security exception). */
@@ -468,6 +477,7 @@ node packages/a11y-audit/dist/cli.js \
   - `「お届け先と同じ」チェックボックスがあると copyControls に入る`
   - `fieldset の見出しだけで範囲が分かる欄（autocomplete なし）も scoped のグループになる`
   - `メールアドレスと確認用メールアドレスは repeated のグループになる`
+    （`name="email_confirm"` の欄と、ラベル「メールアドレス（確認）」の欄の両方を別ケースで確かめる）
   - `new-password が 2 つあってもグループにならない`
   - `別の section-* の同じ目的の欄はグループにならない`
   - `別の form の同じ目的の欄はグループにならない`
