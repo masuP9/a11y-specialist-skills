@@ -1,7 +1,7 @@
 {
   "name": "@a11y-skills/audit",
   "version": "0.11.0",
-  "description": "Playwright + axe-core based WCAG 2.2 accessibility audit functions (axe, focus indicator, keyboard trap, keyboard reachability, reflow, target size, text spacing, zoom, orientation, autocomplete, time limit, auto-play, redundant entry).",
+  "description": "Playwright + axe-core based WCAG 2.2 accessibility audit functions (axe, focus indicator, keyboard trap, keyboard reachability, reflow, target size, text spacing, zoom, orientation, autocomplete, time limit, auto-play, redundant entry, motion actuation).",
   "type": "module",
   "license": "MIT",
   "author": {
@@ -96,6 +96,10 @@
     "./test-entries/redundant-entry-check": {
       "types": "./dist/test-entries/redundant-entry-check.d.ts",
       "import": "./dist/test-entries/redundant-entry-check.js"
+    },
+    "./test-entries/motion-actuation-check": {
+      "types": "./dist/test-entries/motion-actuation-check.d.ts",
+      "import": "./dist/test-entries/motion-actuation-check.js"
     }
   },
   "files": [

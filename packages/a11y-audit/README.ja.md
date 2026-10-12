@@ -27,6 +27,7 @@ Claude Code skill から機能本体を切り出したものです。10 個の�
 | `runAutoPlayDetection` | 2.2.2 一時停止、停止、非表示（画面の変化）／ 1.4.2 音声の制御（`<audio>`・`<video>` の再生状態。実際に音が聞こえるかは手で確かめる） |
 | `runKeyboardReachabilityCheck` | 2.1.1 キーボード（Tab・複合部品内の矢印キー・activedescendant） |
 | `runRedundantEntryCheck` | 3.3.7 冗長な入力（同じ form の中で同じ情報を求める欄の重なり。候補として報告） |
+| `runMotionActuationCheck` | 2.5.4 動きによる起動（`devicemotion` / `deviceorientation` の listener。候補として報告） |
 
 多くの検査は遷移済みの `page` を受けます。一部は navigation を所有し `targetUrl`
 （または `TEST_PAGE`）を受けます: `runOrientationCheck` と `runTimeLimitDetector`
@@ -45,6 +46,18 @@ Claude Code skill から機能本体を切り出したものです。10 個の�
 （node にする）のは 1 つ目より後ろにある編集できる欄だけです（`fields[].editable`）。
 パスワード・ワンタイムコードの欄、別の `section-*`、別の form は対象外です。
 **手順が複数ページに分かれるフォームは範囲外**です（前のページの入力を知り得ないため）。
+
+`runMotionActuationCheck`（2.5.4、`a11y-skills/motion-actuation`）は遷移済みの `page` を受けます。
+Chrome DevTools Protocol（CDP）で、主フレームの `window` / `document` に付いた `devicemotion` /
+`deviceorientation` / `deviceorientationabsolute` の listener を取り出し、1 件ごとに `incomplete` の
+候補にします。画面の部品での代替と、動きでの起動を止める手段があるかは人が確かめます。
+`window` に listener がある型には合成イベントを送り、DOM が変わるか（`details.simulation.results[].domMutations`。
+送らずに同じ長さ待ったときの変化数 `baselineDomMutations` と比べ、ページが自分で更新している分は差し引いて判断）
+と遷移を証跡にします。`window` に listener が無く `document` だけにある場合は `simulation.status` が
+`skipped-document-only`（listener が 0 件なら `skipped-no-listeners`）です（`simulate: false` で送らない。送るとページの状態が変わるので、同じ page を使い回す
+ときは `false`）。戻らない handler は CDP で打ち切ります。**CDP は Chromium のみ**で、それ以外では
+`listenerInspection: 'unsupported'` の `incomplete` です。iframe の中と、利用者の操作の後に付く
+listener は見つかりません。
 
 `runAutoPlayDetection` の 1.4.2（`a11y-skills/auto-play-audio`）は、ページと iframe（入れ子・
 shadow root の中も含む）の `<audio>`・`<video>` について、「再生中・消音でない・音量が 0 より大きい・
@@ -141,6 +154,7 @@ auto-play-detection
 target-size-check
 keyboard-reachability-check
 redundant-entry-check
+motion-actuation-check
 ```
 
 ### 終了コード
@@ -391,7 +405,7 @@ import "@a11y-skills/audit/test-entries/reflow-check";
 import "@a11y-skills/audit/test-entries/target-size-check";
 // 他にも: text-spacing-check, zoom-200-check, orientation-check,
 // autocomplete-audit, time-limit-detector, auto-play-detection,
-// redundant-entry-check
+// redundant-entry-check, motion-actuation-check
 import "@a11y-skills/audit/test-entries/text-spacing-check";
 ```
 

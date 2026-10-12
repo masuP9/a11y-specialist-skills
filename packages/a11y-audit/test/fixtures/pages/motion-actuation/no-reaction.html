@@ -1,0 +1,20 @@
+<!doctype html>
+<!--
+  A devicemotion listener that ignores untrusted (synthetic) events.
+  Expected: incomplete, domMutations is 0, summary mentions "no DOM change".
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Trusted events only</title>
+  </head>
+  <body>
+    <p id="status">Waiting</p>
+    <script>
+      window.addEventListener('devicemotion', function (event) {
+        if (!event.isTrusted) return;
+        document.getElementById('status').textContent = 'Moved';
+      });
+    </script>
+  </body>
+</html>

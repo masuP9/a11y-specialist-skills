@@ -7,6 +7,26 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- `motion-actuation-check` (WCAG 2.5.4): new check, `runMotionActuationCheck`
+  (takes a `page`; `simulate: false` skips the synthetic events) and the CLI
+  check name `motion-actuation-check`. Rule `a11y-skills/motion-actuation`
+  (tags `wcag21a`, `wcag254`; always `incomplete`, because a UI alternative and
+  an off switch cannot be judged). `devicemotion` / `deviceorientation` /
+  `deviceorientationabsolute` listeners on the main frame's `window` and
+  `document` are listed through CDP (`DOMDebugger.getEventListeners`) in
+  `details.listeners`, one node each. For event types with a `window`
+  listener, synthetic events are dispatched and `details.simulation.results`
+  records the DOM mutation count (plus `baselineDomMutations`, measured over
+  an equally long window without events) and any navigation;
+  `simulation.status` is `skipped-document-only` when listeners exist only on
+  `document`; a handler that never
+  returns is stopped with `Runtime.terminateExecution` (`error: 'timeout'`).
+  Known limitations: Chromium only (elsewhere `listenerInspection:
+  'unsupported'` and `incomplete`); iframes are not inspected; listeners added
+  after a user action are not found; Generic Sensor API and camera / microphone
+  motion detection are not inspected; synthetic events are `isTrusted: false`,
+  so the page may show "no DOM change"; the simulation changes the state of the
+  given page.
 - `redundant-entry-check` (WCAG 3.3.7): new check, `runRedundantEntryCheck`
   (takes a `page`) and the CLI check name `redundant-entry-check`. Rule
   `a11y-skills/redundant-entry` (tags `wcag22a`, `wcag337`; always

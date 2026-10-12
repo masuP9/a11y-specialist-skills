@@ -22,6 +22,9 @@ import type {
   KeyboardReachabilityCheckDetails,
   KeyboardTrapCheckDetails,
   MediaPlaybackRecord,
+  MotionActuationCheckDetails,
+  MotionListener,
+  MotionSimulationResult,
   NormalizedImpact,
   NormalizedNode,
   NormalizedRuleResult,
@@ -34,7 +37,11 @@ import type {
   TimeLimitDetectorDetails,
   ZoomCheckDetails,
 } from '../types.js';
-import { AUDIT_DISCLAIMER, HTML_SNIPPET_MAX_LENGTH } from '../constants.js';
+import {
+  AUDIT_DISCLAIMER,
+  HTML_SNIPPET_MAX_LENGTH,
+  MOTION_MUTATION_MARGIN,
+} from '../constants.js';
 import { getRule, type RuleKey } from './rule-registry.js';
 import { describeTargetSpacing } from './target-spacing.js';
 
@@ -596,6 +603,83 @@ export function normalizeRedundantEntryCheck(
   bucketize(buckets, 'redundant-entry', nodes, applicable);
 
   return buckets;
+}
+
+/**
+ * `inspectedUrl` (the envelope url) lets the wording tell a reload or page
+ * replacement from a navigation elsewhere.
+ */
+export function normalizeMotionActuationCheck(
+  details: MotionActuationCheckDetails,
+  inspectedUrl?: string,
+): NormalizedBuckets {
+  const buckets = emptyBuckets();
+
+  if (details.listenerInspection === 'unsupported') {
+    bucketize(
+      buckets,
+      'motion-actuation',
+      [
+        pageNode(
+          'Event listeners could not be inspected (CDP is only available in Chromium). Check manually whether the page reacts to device motion or orientation.',
+        ),
+      ],
+      true,
+    );
+    return buckets;
+  }
+
+  const nodes = details.listeners.map((listener) => {
+    const preview = listener.handlerPreview
+      ? `: ${listener.handlerPreview}`
+      : '';
+    return pageNode(
+      `${listener.target} has a "${listener.type}" listener (script ${listener.scriptId}, line ${listener.lineNumber + 1}:${listener.columnNumber + 1})${preview}. ` +
+        `${describeMotionSimulation(listener, details.simulation.results, inspectedUrl)} ` +
+        'Verify that the same function is available through UI components and that motion actuation can be turned off.',
+    );
+  });
+  bucketize(buckets, 'motion-actuation', nodes, nodes.length > 0);
+
+  return buckets;
+}
+
+function describeMotionSimulation(
+  listener: MotionListener,
+  results: MotionSimulationResult[],
+  inspectedUrl: string | undefined,
+): string {
+  if (listener.target === 'document') {
+    return 'Browsers dispatch this event only to window, so this listener may never run.';
+  }
+  const result = results.find((r) => r.type === listener.type);
+  if (!result) return 'Not simulated.';
+  if (result.error === 'navigated-before-dispatch') {
+    return "The page navigated or reloaded before synthetic events were sent; the page's reaction is unknown.";
+  }
+  if (result.navigated) {
+    if (inspectedUrl !== undefined && result.urlAfter === inspectedUrl) {
+      return 'Synthetic events caused the page to reload or be replaced.';
+    }
+    return `Synthetic events caused navigation to ${result.urlAfter}.`;
+  }
+  if (result.domMutations === null) {
+    return `Simulation did not finish (${result.error ?? 'unknown'}); the page's reaction is unknown.`;
+  }
+  const baseline = result.baselineDomMutations ?? 0;
+  // Counts are timing dependent, so credit the events only when the DOM
+  // changed clearly more than it does by itself.
+  if (
+    result.domMutations > 0 &&
+    (baseline === 0 ||
+      result.domMutations >= 2 * baseline + MOTION_MUTATION_MARGIN)
+  ) {
+    return `Synthetic events changed the DOM (${result.domMutations} mutations during dispatch, ${baseline} without events).`;
+  }
+  if (result.domMutations > 0) {
+    return `The DOM changed ${result.domMutations} times during dispatch and ${baseline} times without events; the change may not come from motion.`;
+  }
+  return 'Synthetic events caused no DOM change (the page may react only to trusted events or draw on canvas).';
 }
 
 export function normalizeTimeLimitDetector(

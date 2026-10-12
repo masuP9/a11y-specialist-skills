@@ -1,0 +1,23 @@
+<!doctype html>
+<!--
+  The devicemotion handler never returns.
+  Expected: the check still returns within the simulation timeout plus a margin,
+  with error "timeout", domMutations null, and an incomplete result.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Hangs on motion</title>
+  </head>
+  <body>
+    <p>Handler never returns</p>
+    <script>
+      window.addEventListener('devicemotion', function (event) {
+        // Desktop Chromium fires one devicemotion with null values when the
+        // listener is added; only react to events that carry data.
+        if (event.accelerationIncludingGravity?.x == null) return;
+        for (;;) {}
+      });
+    </script>
+  </body>
+</html>

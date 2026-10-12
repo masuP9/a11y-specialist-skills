@@ -1,0 +1,24 @@
+<!doctype html>
+<!--
+  A devicemotion listener that does nothing, on a page that updates a clock
+  every 100ms by itself.
+  Expected: incomplete; the DOM changes during dispatch but just as much without
+  events, so the summary must not say "Synthetic events changed the DOM".
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Busy page, listener does nothing</title>
+  </head>
+  <body>
+    <p id="clock">0</p>
+    <script>
+      let ticks = 0;
+      setInterval(function () {
+        ticks += 1;
+        document.getElementById('clock').textContent = String(ticks);
+      }, 100);
+      window.addEventListener('devicemotion', function () {});
+    </script>
+  </body>
+</html>

@@ -1,0 +1,25 @@
+<!doctype html>
+<!--
+  Tilt to advance: a deviceorientation listener on window moves to the next
+  slide when gamma exceeds 30.
+  Expected: a11y-skills/motion-actuation is incomplete, one window listener,
+  simulation.results[0].domMutations > 0.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Tilt to advance</title>
+  </head>
+  <body>
+    <div id="slide1">Slide 1</div>
+    <div id="slide2" hidden>Slide 2</div>
+    <script>
+      window.addEventListener('deviceorientation', function (event) {
+        if (event.gamma > 30) {
+          document.getElementById('slide1').hidden = true;
+          document.getElementById('slide2').hidden = false;
+        }
+      });
+    </script>
+  </body>
+</html>

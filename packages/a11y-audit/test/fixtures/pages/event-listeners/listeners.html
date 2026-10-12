@@ -1,0 +1,31 @@
+<!doctype html>
+<!--
+  Fixture for the CDP event listener inspector.
+  Listeners:
+  - window: devicemotion (capture), keydown via the onkeydown property
+  - document: keydown (passive, once)
+  - #b1: pointerdown + click, #b2: click only, #b3: none
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Event listeners</title>
+  </head>
+  <body>
+    <button id="b1">One</button>
+    <button id="b2">Two</button>
+    <button id="b3">Three</button>
+    <script>
+      function fnA() {}
+      function fnB() {}
+      window.addEventListener('devicemotion', fnA, { capture: true });
+      window.onkeydown = function onKey() {};
+      document.addEventListener('keydown', fnB, { passive: true, once: true });
+      const noop = () => {};
+      const b1 = document.getElementById('b1');
+      b1.addEventListener('pointerdown', noop);
+      b1.addEventListener('click', noop);
+      document.getElementById('b2').addEventListener('click', noop);
+    </script>
+  </body>
+</html>

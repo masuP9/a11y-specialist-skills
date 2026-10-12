@@ -1,0 +1,23 @@
+<!doctype html>
+<!--
+  The devicemotion listener navigates away.
+  Expected: no exception; simulation result has navigated true,
+  eventsDispatched and domMutations null; result.url stays this page's URL.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Navigates on motion</title>
+  </head>
+  <body>
+    <p>Shake to leave</p>
+    <script>
+      window.addEventListener('devicemotion', function (event) {
+        // Desktop Chromium fires one devicemotion with null values when the
+        // listener is added; only react to events that carry data.
+        if (event.accelerationIncludingGravity?.x == null) return;
+        location.assign('none.html');
+      });
+    </script>
+  </body>
+</html>

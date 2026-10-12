@@ -81,8 +81,18 @@ When an element's focus event triggers navigation:
 ## Pointer
 | Criterion | Action | Evidence | Fail rule |
 |---|---|---|---|
+| 2.5.4 | Shaking / tilting has a UI-component alternative and motion actuation can be turned off | logs | Operable only by motion, or cannot be turned off |
 | 2.5.7 | Provide alternative to dragging | logs | Dragging is required with no alternative |
 | 2.5.8 | Measure target size | screenshots/measurement | Minimum target size not met |
+
+### `motion-actuation-check` CLI Check
+
+`motion-actuation-check` lists, through CDP, the listeners that react to device motion or tilt (`devicemotion` / `deviceorientation` / `deviceorientationabsolute` on `window` / `document`) and reports them as `incomplete` candidates (Chromium only; elsewhere the listeners cannot be inspected, so the result is `incomplete`).
+
+- The automation stops at "does the page react to motion". Whether a UI-component alternative exists and motion actuation can be turned off (including the essential / accessibility-supported-interface exceptions) is verified by a human for each candidate.
+- For event types that have a `window` listener, synthetic events are dispatched and whether the DOM changes (`domMutations`) is recorded as evidence. Synthetic events are `isTrusted: false`, so handlers that accept only trusted events, or that only draw on a canvas, show "no change". The listener is still reported.
+- A listener on `document` only may never run, because browsers dispatch these events to `window` only (nothing is dispatched for it).
+- Run: `npx -y @a11y-skills/audit --url "<url>" --checks motion-actuation-check`
 
 ### `target-size-check` CLI Check
 

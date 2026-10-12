@@ -31,7 +31,8 @@ export type CheckSource =
   | 'auto-play-detection'
   | 'keyboard-trap-check'
   | 'keyboard-reachability-check'
-  | 'redundant-entry-check';
+  | 'redundant-entry-check'
+  | 'motion-actuation-check';
 
 export type NormalizedImpact = 'critical' | 'serious' | 'moderate' | 'minor';
 
@@ -710,6 +711,63 @@ export interface RedundantEntryCheckDetails {
 
 export type RedundantEntryCheckResult =
   AuditCheckResult<RedundantEntryCheckDetails>;
+
+// =============================================================================
+// Motion Actuation Check (WCAG 2.5.4)
+// =============================================================================
+
+export type MotionEventType =
+  | 'devicemotion'
+  | 'deviceorientation'
+  | 'deviceorientationabsolute';
+
+export interface MotionListener {
+  target: 'window' | 'document';
+  type: MotionEventType;
+  useCapture: boolean;
+  passive: boolean;
+  once: boolean;
+  scriptId: string;
+  lineNumber: number;
+  columnNumber: number;
+  handlerPreview: string | null;
+}
+
+export interface MotionSimulationResult {
+  type: MotionEventType;
+  /** null when not measured (navigation, timeout or evaluate failure). */
+  eventsDispatched: number | null;
+  /**
+   * childList + attributes + characterData records observed during dispatch and
+   * settle. null when not measured; 0 only means "dispatched, nothing changed".
+   */
+  domMutations: number | null;
+  /**
+   * Same measurement over a window of the same length without dispatching:
+   * the page's own DOM changes. null when not measured.
+   */
+  baselineDomMutations: number | null;
+  navigated: boolean;
+  urlAfter: string | null;
+  error: string | null;
+}
+
+export interface MotionActuationCheckDetails {
+  listenerInspection: 'cdp' | 'unsupported';
+  listeners: MotionListener[];
+  simulation: {
+    status:
+      | 'ran'
+      | 'disabled'
+      | 'skipped-no-listeners'
+      | 'skipped-document-only'
+      | 'unsupported';
+    results: MotionSimulationResult[];
+  };
+}
+
+export type MotionActuationCheckResult =
+  AuditCheckResult<MotionActuationCheckDetails>;
 
 // =============================================================================
 // Time Limit Detector (WCAG 2.2.1)

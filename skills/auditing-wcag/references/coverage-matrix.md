@@ -51,7 +51,7 @@ Methods are labeled as Automated/Interactive/Manual/Content and can be combined.
 | 2.5.1 | Interactive | logs | Fail if complex gestures required |
 | 2.5.2 | Interactive | logs | Fail if cancellation unavailable |
 | 2.5.3 | Automated + Manual | a11y name diff (axe `label-content-name-mismatch` is experimental and not run by default) | Fail if label text not in accessible name |
-| 2.5.4 | Interactive | logs | Fail if motion-only activation |
+| 2.5.4 | Interactive + automated candidates | `motion-actuation-check` **[CLI]** + logs | Fail if motion-only activation |
 | 2.5.7 | Interactive | logs | Fail if dragging required |
 | 2.5.8 | Automated | `target-size-check` **[CLI]** | Fail below minimum target size |
 
@@ -96,5 +96,6 @@ The following criteria can be automatically checked via the `a11y-audit` CLI (se
 | 2.1.2 | `keyboard-trap-check` | `keyboard-trap-result.json` |
 | 2.2.1 | `time-limit-detector` | `time-limit-result.json` |
 | 2.4.7, 2.4.11, 2.4.12 (AAA), 3.2.1 | `focus-indicator-check` | `focus-indicator-result.json`, `focus-indicators.png` |
+| 2.5.4 | `motion-actuation-check` | `motion-actuation-result.json` |
 | 2.5.5, 2.5.8 | `target-size-check` | `target-size-result.json`, `target-size-screenshot.png` |
 | 3.3.7 | `redundant-entry-check` | `redundant-entry-result.json` |
