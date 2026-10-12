@@ -1,0 +1,23 @@
+<!doctype html>
+<!--
+  Focusing the password field moves focus to another text field.
+  Expected: paste.result null, paste.error "focus-moved" (nothing is pasted);
+  auth-paste-blocked is incomplete with a "could not be tested" summary.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Focus moves</title>
+  </head>
+  <body>
+    <form>
+      <input type="password" id="pw" autocomplete="current-password" />
+      <input type="text" id="other" aria-label="Other" />
+    </form>
+    <script>
+      document.getElementById('pw').addEventListener('focus', function () {
+        document.getElementById('other').focus();
+      });
+    </script>
+  </body>
+</html>

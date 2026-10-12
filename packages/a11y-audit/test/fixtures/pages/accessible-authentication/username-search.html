@@ -1,0 +1,22 @@
+<!doctype html>
+<!--
+  A login outside any form, after a search field in the header.
+  Expected: the search field is not in fields; the "user" field is "username".
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Search then login</title>
+  </head>
+  <body>
+    <header>
+      <input type="text" autocomplete="off" placeholder="Search" />
+    </header>
+    <main>
+      <div>
+        <input type="text" name="user" aria-label="User" />
+        <input type="password" aria-label="Password" />
+      </div>
+    </main>
+  </body>
+</html>

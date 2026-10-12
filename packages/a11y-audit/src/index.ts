@@ -41,6 +41,7 @@ export {
 export {
   buildAuditResult,
   mergeNormalizedResults,
+  normalizeAccessibleAuthenticationCheck,
   normalizeAxeResults,
   normalizeAutocompleteAudit,
   normalizeAutoPlayDetection,

@@ -1,0 +1,25 @@
+<!doctype html>
+<!--
+  Plain login form: pasting works and autocomplete is correct.
+  Expected: auth-paste-blocked, auth-autocomplete and auth-captcha all pass
+  (auth-captcha is applicable because the page has authentication fields);
+  the password field has paste.result "inserted" and valueAfterPaste "probe".
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Login (paste ok)</title>
+  </head>
+  <body>
+    <form>
+      <label
+        >User <input type="text" name="user" autocomplete="username"
+      /></label>
+      <label
+        >Password
+        <input type="password" name="pw" autocomplete="current-password"
+      /></label>
+      <button type="submit">Sign in</button>
+    </form>
+  </body>
+</html>

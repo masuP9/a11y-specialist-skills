@@ -77,6 +77,12 @@ export type {
   MotionSimulationResult,
   MotionActuationCheckDetails,
   MotionActuationCheckResult,
+  AuthFieldKind,
+  AuthPasteResult,
+  AuthField,
+  CaptchaCandidate,
+  AccessibleAuthenticationCheckDetails,
+  AccessibleAuthenticationCheckResult,
 } from '../types.js';
 
 /** Minimal JSON Schema object shape (Draft 2020-12 compatible subset). */
@@ -1174,6 +1180,128 @@ export const CHANGE_ON_INPUT_CHECK_RESULT_SCHEMA: JsonSchema =
     },
   });
 
+const AUTH_PASTE_RESULT_SCHEMA: JsonSchema = {
+  type: 'object',
+  required: [
+    'result',
+    'valueAfterPaste',
+    'pasteEventPrevented',
+    'navigated',
+    'error',
+  ],
+  properties: {
+    result: { type: ['string', 'null'], enum: ['inserted', 'blocked', null] },
+    valueAfterPaste: {
+      type: ['string', 'null'],
+      enum: ['probe', 'probe-prefix', 'empty', 'other', null],
+    },
+    pasteEventPrevented: { type: ['boolean', 'null'] },
+    navigated: { type: 'boolean' },
+    error: { type: ['string', 'null'] },
+  },
+};
+
+export const ACCESSIBLE_AUTHENTICATION_CHECK_RESULT_SCHEMA: JsonSchema =
+  buildEnvelopeSchema({
+    id: 'accessible-authentication-check-result',
+    title: 'AccessibleAuthenticationCheckResult',
+    source: 'accessible-authentication-check',
+    details: {
+      type: 'object',
+      required: ['fields', 'captchas', 'pasteTest'],
+      properties: {
+        fields: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: [
+              'selector',
+              'html',
+              'htmlTruncated',
+              'kind',
+              'inputType',
+              'name',
+              'id',
+              'labelText',
+              'autocomplete',
+              'formAutocomplete',
+              'autocompleteStatus',
+              'editable',
+              'visible',
+              'formSelector',
+              'paste',
+              'pasteListenerCount',
+            ],
+            properties: {
+              selector: { type: 'string' },
+              html: { type: 'string' },
+              htmlTruncated: { type: 'boolean' },
+              kind: {
+                type: 'string',
+                enum: ['password', 'one-time-code', 'username'],
+              },
+              inputType: { type: 'string' },
+              name: { type: ['string', 'null'] },
+              id: { type: ['string', 'null'] },
+              labelText: { type: ['string', 'null'] },
+              autocomplete: { type: ['string', 'null'] },
+              formAutocomplete: { type: ['string', 'null'] },
+              autocompleteStatus: {
+                type: 'string',
+                enum: ['ok', 'off', 'mismatch', 'missing'],
+              },
+              editable: { type: 'boolean' },
+              visible: { type: 'boolean' },
+              formSelector: { type: ['string', 'null'] },
+              paste: { oneOf: [AUTH_PASTE_RESULT_SCHEMA, { type: 'null' }] },
+              pasteListenerCount: { type: ['integer', 'null'] },
+            },
+          },
+        },
+        captchas: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: [
+              'selector',
+              'html',
+              'htmlTruncated',
+              'matchedBy',
+              'visible',
+            ],
+            properties: {
+              selector: { type: 'string' },
+              html: { type: 'string' },
+              htmlTruncated: { type: 'boolean' },
+              matchedBy: { type: 'string' },
+              visible: { type: 'boolean' },
+            },
+          },
+        },
+        pasteTest: {
+          type: 'object',
+          required: ['status', 'reason', 'probe'],
+          properties: {
+            status: {
+              type: 'string',
+              enum: ['ran', 'disabled', 'unavailable', 'skipped-no-targets'],
+            },
+            reason: {
+              type: ['string', 'null'],
+              enum: [
+                'clipboard-permission',
+                'paste-shortcut',
+                'helper-page',
+                null,
+              ],
+            },
+            probe: { type: ['string', 'null'] },
+          },
+        },
+      },
+    },
+  });
+
 /** All result schemas keyed by check id. */
 export const RESULT_SCHEMAS = {
   'axe-audit': AXE_AUDIT_RESULT_SCHEMA,
@@ -1191,4 +1319,6 @@ export const RESULT_SCHEMAS = {
   'redundant-entry-check': REDUNDANT_ENTRY_CHECK_RESULT_SCHEMA,
   'motion-actuation-check': MOTION_ACTUATION_CHECK_RESULT_SCHEMA,
   'change-on-input-check': CHANGE_ON_INPUT_CHECK_RESULT_SCHEMA,
+  'accessible-authentication-check':
+    ACCESSIBLE_AUTHENTICATION_CHECK_RESULT_SCHEMA,
 } as const;

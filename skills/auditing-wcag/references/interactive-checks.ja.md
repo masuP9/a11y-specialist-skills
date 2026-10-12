@@ -241,6 +241,20 @@ const a11ySnapshot = await page.accessibility.snapshot();
 |---|---|---|---|
 | 3.3.8 | 認証で認知負荷のみを要求しない | 画面キャプチャ | 認知テストのみで代替なし |
 
+### `accessible-authentication-check` CLIチェック
+
+`accessible-authentication-check` で、メイン文書のパスワード・確認コード・ユーザー名の欄と CAPTCHA らしき要素を調べ、次の 3 点を `incomplete` の候補として報告します。
+
+- **貼り付けの禁止**（`a11y-skills/auth-paste-blocked`）: パスワード・確認コード欄に短いテキストをキーボードで貼り付け、入るかを実測する。入らなければ候補。実測できなかった欄（見えない・操作できない・遷移・時間切れ）も要確認として出る。
+- **autocomplete の off**（`a11y-skills/auth-autocomplete`）: 認証の欄が `autocomplete="off"`、または欄の種類に合わない値のとき候補。属性が無い欄と `on` だけの欄は報告しない（パスワード管理ソフトは欄の種類から推定して動くことが多い。名前が 1.3.5 のパターンに当たる欄なら `autocomplete-audit` の `autocomplete-missing` が報告しうるが、当たらない欄はどちらも報告しない）。
+- **CAPTCHA らしき要素**（`a11y-skills/auth-captcha`）: 名前（`captcha`・`g-recaptcha`・`cf-turnstile` など）で探す。見えない（スコア型の）ものも候補に出る。
+
+貼り付けの実測には副作用がある: 呼び出し側の context にクリップボードの権限を付け、クリップボードを上書きし、短時間だけ補助ページを開く。欄の値は元に戻すが、期限切れ（timeout）の欄は戻さない。`input` などのイベントでページが変えた状態は戻らない。同じ page を使い回すときは `paste: false`（関数 API）にする。CLI はチェックごとに新しい context を使うので影響しない。
+
+- 自動で見るのは上の 3 点まで。パスキー・SSO・メールのリンクなど認知機能テストを使わない別の手段があるか、自動入力などの支援の仕組みが使えるか、CAPTCHA が物の認識・本人が用意した内容の識別にとどまるかは、候補ごとに人が確かめる。
+- 見落とし: iframe と shadow root の中の欄、ログインボタンを押してから出るフォーム（開いた状態の page を渡す必要がある）、`captcha` を名前に含まない独自の CAPTCHA。
+- 実行: `npx -y @a11y-skills/audit --url "<url>" --checks accessible-authentication-check`
+
 ## 自動再生検出
 
 対象基準:

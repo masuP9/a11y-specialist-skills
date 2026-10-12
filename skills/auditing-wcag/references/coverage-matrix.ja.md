@@ -70,7 +70,7 @@
 | 3.3.3 | インタラクティブ | スクショ | 修正提案なしでFail |
 | 3.3.4 | インタラクティブ | 操作ログ | 取消/確認不可でFail |
 | 3.3.7 | 手動+自動の候補 | `redundant-entry-check` **[CLI]** + 操作ログ | 同一情報の再入力を要求でFail |
-| 3.3.8 | インタラクティブ | 画面キャプチャ | 認知テストのみでFail |
+| 3.3.8 | インタラクティブ+自動の候補 | `accessible-authentication-check` **[CLI]** + 画面キャプチャ | 貼り付けの禁止は別の手段が無ければFail、CAPTCHA・別の手段は要確認 |
 
 ## 4. 堅牢
 | 基準 | テスト方法 | 証跡 | 判定ルール |
@@ -100,3 +100,4 @@
 | 3.2.2 | `change-on-input-check` | `change-on-input-result.json` |
 | 2.5.5, 2.5.8 | `target-size-check` | `target-size-result.json`, `target-size-screenshot.png` |
 | 3.3.7 | `redundant-entry-check` | `redundant-entry-result.json` |
+| 3.3.8 | `accessible-authentication-check` | `accessible-authentication-result.json` |

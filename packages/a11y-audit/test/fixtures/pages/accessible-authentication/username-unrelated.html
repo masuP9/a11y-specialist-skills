@@ -1,0 +1,26 @@
+<!doctype html>
+<!--
+  A password field outside any form, and the only earlier text fields are a
+  search field and a field in another block (their closest common ancestor
+  with the password field is body).
+  Expected: neither text field is in fields (only the password field is).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Unrelated text fields</title>
+  </head>
+  <body>
+    <header>
+      <input type="text" name="query" aria-label="Site search" />
+    </header>
+    <section>
+      <input type="text" name="nickname" aria-label="Nickname" />
+    </section>
+    <main>
+      <div>
+        <input type="password" aria-label="Password" />
+      </div>
+    </main>
+  </body>
+</html>

@@ -28,6 +28,34 @@ adheres to [Semantic Versioning](https://semver.org/).
   collected; on pages whose ids change on every load a restart tries the same
   control again, so a finding can repeat (up to the restart cap); it really changes values and fires `change`, so pages that
   autosave or submit on change may send requests.
+- `accessible-authentication-check` (WCAG 3.3.8): new check,
+  `runAccessibleAuthenticationCheck` (takes a `page`; `paste: false` skips the
+  paste measurement) and the CLI check name `accessible-authentication-check`.
+  Rules `a11y-skills/auth-paste-blocked`, `a11y-skills/auth-autocomplete` and
+  `a11y-skills/auth-captcha` (tags `wcag22aa`, `wcag338`; always `incomplete`,
+  because another method without a cognitive function test, or an assistive
+  mechanism, cannot be judged). Password, verification code and username
+  fields of the main document are listed in `details.fields`; a short probe
+  text is pasted with the keyboard into the visible, editable password /
+  verification code fields (`paste.result` `inserted` / `blocked`, with
+  `valueAfterPaste` as a comparison with the probe only: the field's own value is
+  never recorded). `autocomplete="off"` or a value that does not suit the field
+  is reported; a field without its own value inherits `autocomplete="off"` from
+  its form (`formAutocomplete`); a field whose focus is moved away by a script
+  is not pasted into and is reported as untested (`error: 'focus-moved'`); a missing attribute (or only `on`) stays in `details` only (a
+  field whose name matches the 1.3.5 patterns may be reported by
+  `autocomplete-audit`; one that matches neither is reported by neither). CAPTCHA-like
+  elements are listed in `details.captchas` (outermost match only). Pasting
+  grants clipboard permissions to the page's context, overwrites the
+  clipboard and briefly opens a helper page in that context (the CLI uses a
+  fresh context per check); field values are put back, except for a field
+  whose paste timed out; a handler that never returns is stopped with
+  `Runtime.terminateExecution` (`error: 'timeout'`). Known limitations: only
+  `input` elements of the main document (no iframes or shadow roots); the
+  paste method is verified on Chromium (elsewhere `pasteTest.status:
+  'unavailable'` and `incomplete`); invisible or non-editable fields are not
+  measured; one-time-code fields are partly found by name; CAPTCHAs are found by
+  name only; whether an alternative exists is not judged.
 - `motion-actuation-check` (WCAG 2.5.4): new check, `runMotionActuationCheck`
   (takes a `page`; `simulate: false` skips the synthetic events) and the CLI
   check name `motion-actuation-check`. Rule `a11y-skills/motion-actuation`

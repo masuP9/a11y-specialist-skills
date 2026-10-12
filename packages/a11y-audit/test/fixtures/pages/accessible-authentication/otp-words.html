@@ -1,0 +1,20 @@
+<!doctype html>
+<!--
+  Short OTP words match whole words only: "otpCode" is a verification code
+  field, "footprint" is not.
+  Expected: fields has only the otpCode field, with kind "one-time-code".
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>OTP words</title>
+  </head>
+  <body>
+    <form>
+      <input type="text" name="footprint" aria-label="Footprint" />
+    </form>
+    <form>
+      <input type="text" name="otpCode" aria-label="Code" />
+    </form>
+  </body>
+</html>

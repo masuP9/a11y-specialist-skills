@@ -3,7 +3,7 @@
  * @a11y-skills/audit CLI
  *
  * Runs WCAG 2.2 accessibility checks against a URL without needing a
- * Playwright test runner. All 15 checks are available via --checks.
+ * Playwright test runner. All 16 checks are available via --checks.
  *
  * Exit codes:
  *   0 — completed, no violations found across all checks
@@ -239,6 +239,18 @@ const CHECK_REGISTRY: CheckEntry[] = [
       return (await runChangeOnInputCheck({
         browser,
         targetUrl: url,
+        outputDir,
+      })) as AuditResultEnvelope;
+    },
+  },
+  {
+    name: 'accessible-authentication-check',
+    kind: 'page',
+    async run({ page, outputDir }) {
+      const { runAccessibleAuthenticationCheck } =
+        await import('./playwright/runAccessibleAuthenticationCheck.js');
+      return (await runAccessibleAuthenticationCheck({
+        page,
         outputDir,
       })) as AuditResultEnvelope;
     },

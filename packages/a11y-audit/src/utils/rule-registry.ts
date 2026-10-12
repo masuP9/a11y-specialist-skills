@@ -288,6 +288,50 @@ export const RULES = {
     classification: 'incomplete',
   },
 
+  // --- accessible-authentication-check ---
+  'auth-paste-blocked': {
+    id: 'a11y-skills/auth-paste-blocked',
+    sc: ['3.3.8'],
+    tags: ['a11y-skills', 'wcag22aa', 'wcag338'],
+    impact: 'serious',
+    scope: 'node',
+    description: 'Ensure password and verification code fields allow pasting',
+    help: 'Allow pasting into authentication fields so password managers can be used (unless another authentication method without a cognitive function test is offered)',
+    helpUrl: `${UNDERSTANDING}/accessible-authentication-minimum.html`,
+    // The failed paste is measured, but 3.3.8 is met when another method without
+    // a cognitive function test exists, or an assistive mechanism (autofill)
+    // works; neither is determined here, so this stays in the manual-review
+    // queue (see the classification policy above).
+    classification: 'incomplete',
+  },
+  'auth-autocomplete': {
+    id: 'a11y-skills/auth-autocomplete',
+    sc: ['3.3.8'],
+    tags: ['a11y-skills', 'wcag22aa', 'wcag338'],
+    impact: 'moderate',
+    scope: 'node',
+    description: 'Ensure authentication fields do not disable autofill',
+    help: 'Use autocomplete="current-password" / "new-password" / "one-time-code" / "username" on authentication fields instead of "off"',
+    helpUrl: `${UNDERSTANDING}/accessible-authentication-minimum.html`,
+    // Whether autofill really is blocked, and whether another mechanism is
+    // available, needs a human.
+    classification: 'incomplete',
+  },
+  'auth-captcha': {
+    id: 'a11y-skills/auth-captcha',
+    sc: ['3.3.8'],
+    tags: ['a11y-skills', 'wcag22aa', 'wcag338'],
+    impact: 'moderate',
+    scope: 'node',
+    description:
+      'Ensure CAPTCHAs in authentication offer an alternative without a cognitive function test',
+    help: 'Check that a CAPTCHA is not the only way through authentication, or that it recognizes objects or user-provided content',
+    helpUrl: `${UNDERSTANDING}/accessible-authentication-minimum.html`,
+    // Candidates are found by name; the alternative and the object-recognition /
+    // user-content exceptions need a human.
+    classification: 'incomplete',
+  },
+
   // --- time-limit-detector ---
   'meta-refresh': {
     id: 'a11y-skills/meta-refresh',

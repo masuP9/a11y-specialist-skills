@@ -1,0 +1,24 @@
+<!doctype html>
+<!--
+  Two password fields; an input event on the first one navigates away.
+  Expected: no exception; first field navigated true and result null; second
+  field paste null (not tried after the navigation); result.url stays this
+  page's URL; auth-paste-blocked is incomplete.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Navigates on paste</title>
+  </head>
+  <body>
+    <form>
+      <input type="password" id="pw1" autocomplete="current-password" />
+      <input type="password" id="pw2" autocomplete="new-password" />
+    </form>
+    <script>
+      document.getElementById('pw1').addEventListener('input', function () {
+        location.assign('none.html');
+      });
+    </script>
+  </body>
+</html>

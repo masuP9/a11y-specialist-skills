@@ -1,0 +1,26 @@
+<!doctype html>
+<!--
+  The page lets the paste happen, then clears the value on input.
+  Expected: auth-paste-blocked is incomplete; paste.result "blocked",
+  pasteEventPrevented false; the summary mentions "may clear the value".
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Paste cleared</title>
+  </head>
+  <body>
+    <form>
+      <label
+        >Password
+        <input type="password" id="pw" autocomplete="current-password"
+      /></label>
+    </form>
+    <script>
+      var pw = document.getElementById('pw');
+      pw.addEventListener('input', function (event) {
+        if (event.inputType === 'insertFromPaste') pw.value = '';
+      });
+    </script>
+  </body>
+</html>

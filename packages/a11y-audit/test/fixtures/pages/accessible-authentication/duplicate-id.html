@@ -1,0 +1,24 @@
+<!doctype html>
+<!--
+  Two password fields share the same id; the first accepts pasting and the
+  second cancels it.
+  Expected: the selectors are distinct (a duplicated id is not used) and the
+  second field is "blocked" while the first is "inserted".
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Duplicate id</title>
+  </head>
+  <body>
+    <form>
+      <input type="password" id="pw" autocomplete="current-password" />
+      <input
+        type="password"
+        id="pw"
+        autocomplete="new-password"
+        onpaste="return false;"
+      />
+    </form>
+  </body>
+</html>

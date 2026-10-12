@@ -67,6 +67,10 @@ export {
   runChangeOnInputCheck,
   type RunChangeOnInputCheckOptions,
 } from './runChangeOnInputCheck.js';
+export {
+  runAccessibleAuthenticationCheck,
+  type RunAccessibleAuthenticationCheckOptions,
+} from './runAccessibleAuthenticationCheck.js';
 
 export {
   resolveOutputPath,

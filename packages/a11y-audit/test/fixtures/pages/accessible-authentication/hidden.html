@@ -1,0 +1,18 @@
+<!doctype html>
+<!--
+  The only password field is inside a closed (hidden) dialog.
+  Expected: the field has visible false and paste null; auth-paste-blocked is
+  incomplete (not tested); no exception.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Hidden login</title>
+  </head>
+  <body>
+    <button type="button">Sign in</button>
+    <div role="dialog" hidden aria-label="Sign in">
+      <input type="password" autocomplete="current-password" />
+    </div>
+  </body>
+</html>

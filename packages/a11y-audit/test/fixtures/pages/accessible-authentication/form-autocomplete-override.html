@@ -1,0 +1,18 @@
+<!doctype html>
+<!--
+  The form has autocomplete="off" but the password field has its own value.
+  Expected: the field's value wins (autocompleteStatus "ok").
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Field overrides form autocomplete</title>
+  </head>
+  <body>
+    <form autocomplete="off">
+      <label
+        >Password <input type="password" autocomplete="current-password"
+      /></label>
+    </form>
+  </body>
+</html>

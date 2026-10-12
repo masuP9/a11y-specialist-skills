@@ -1,0 +1,16 @@
+<!doctype html>
+<!--
+  Only a search field: no authentication field and no CAPTCHA.
+  Expected: all three rules inapplicable; pasteTest.status "skipped-no-targets".
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>No authentication</title>
+  </head>
+  <body>
+    <form role="search">
+      <label>Search <input type="search" name="q" /></label>
+    </form>
+  </body>
+</html>

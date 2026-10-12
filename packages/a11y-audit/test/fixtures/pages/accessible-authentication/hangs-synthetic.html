@@ -1,0 +1,30 @@
+<!doctype html>
+<!--
+  A real paste is cancelled; only a synthetic paste event (isTrusted false)
+  makes the handler loop forever. Two password fields.
+  Expected: the check returns within AUTH_PASTE_FIELD_TIMEOUT_MS + 5s; the
+  first field has result "blocked", pasteEventPrevented null, error "timeout";
+  the second field has paste null (not tried after the timeout).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Synthetic paste hangs</title>
+  </head>
+  <body>
+    <form>
+      <input type="password" id="pw1" autocomplete="current-password" />
+      <input type="password" id="pw2" autocomplete="new-password" />
+    </form>
+    <script>
+      document
+        .getElementById('pw1')
+        .addEventListener('paste', function (event) {
+          if (!event.isTrusted) {
+            for (;;) {}
+          }
+          event.preventDefault();
+        });
+    </script>
+  </body>
+</html>

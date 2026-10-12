@@ -241,6 +241,20 @@ const a11ySnapshot = await page.accessibility.snapshot();
 |---|---|---|---|
 | 3.3.8 | Authentication does not rely on cognitive tests alone | captures | Cognitive-only requirement with no alternative |
 
+### `accessible-authentication-check` CLI Check
+
+`accessible-authentication-check` inspects password, verification code and username fields and CAPTCHA-like elements in the main document, and reports three kinds of `incomplete` candidates.
+
+- **Paste blocking** (`a11y-skills/auth-paste-blocked`): a short text is pasted into password / verification code fields with the keyboard to see whether it is inserted. A field where it is not is a candidate. Fields that could not be measured (not visible, not editable, navigation, timeout) are listed for review too.
+- **autocomplete off** (`a11y-skills/auth-autocomplete`): an authentication field with `autocomplete="off"` or a value that does not suit the field. A field with no attribute, or only `on`, is not reported (password managers usually infer the purpose from the control type; if the field's name matches the 1.3.5 patterns, `autocomplete-audit`'s `autocomplete-missing` may report it, and a field that matches neither is reported by neither check).
+- **CAPTCHA-like elements** (`a11y-skills/auth-captcha`): found by name (`captcha`, `g-recaptcha`, `cf-turnstile`, ...). Invisible (score-based) ones are listed too.
+
+The paste measurement has side effects: it grants clipboard permissions to the caller's context, overwrites the clipboard, and opens a helper page for a moment. Field values are put back, except for a field whose paste timed out, and state the page changes in response to `input` events is not. Pass `paste: false` (function API) when reusing the page. The CLI uses a fresh context per check, so it is not affected.
+
+- Only the three items above are checked automatically. Whether another method without a cognitive function test exists (passkey, SSO, e-mail link), whether an assistive mechanism such as autofill works, and whether a CAPTCHA only recognizes objects or user-provided content are for a human to decide for each candidate.
+- Blind spots: fields inside iframes and shadow roots, forms that appear only after clicking a sign-in button (pass a page with the form open), and custom CAPTCHAs without "captcha" in their markup.
+- Run: `npx -y @a11y-skills/audit --url "<url>" --checks accessible-authentication-check`
+
 ## Auto-play Detection
 
 Supports criteria:
