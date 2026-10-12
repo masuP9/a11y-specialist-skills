@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>focus-indicator: focusable iframe element</title>
+    <style>
+      button:focus,
+      iframe:focus {
+        outline: 3px solid #005fcc;
+      }
+      body {
+        margin: 0;
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- tabindex makes the iframe element itself a Tab stop in the parent. -->
+    <iframe
+      id="focusable-frame"
+      tabindex="0"
+      title="focusable frame"
+      srcdoc='<!doctype html><style>button:focus{outline:3px solid #005fcc}body{margin:0}</style><button id="inner">Inner</button>'
+    ></iframe>
+  </body>
+</html>

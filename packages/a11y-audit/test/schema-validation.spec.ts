@@ -82,6 +82,8 @@ test('focus-indicator-check envelope validates against its schema', () => {
     selector: '#x',
     html: '<button id="x">x</button>',
     htmlTruncated: false,
+    frame: null,
+    shadowHosts: [],
   };
   const details: FocusCheckDetails = {
     totalFocusableElements: 1,

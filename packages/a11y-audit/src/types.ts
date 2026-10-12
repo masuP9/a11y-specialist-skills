@@ -126,7 +126,26 @@ export interface PageRect {
   height: number;
 }
 
-export interface FocusRecord {
+/** Where an element lives: which document, and which shadow roots. */
+export interface FocusElementLocation {
+  /**
+   * The iframe document the element is in; null for the main frame. `url` is
+   * that document's URL (`about:srcdoc` for a `srcdoc` frame). `selector`
+   * points at the iframe element in its parent document, or is null when the
+   * parent cannot be reached from the frame (cross-origin). For nested frames
+   * it describes the innermost frame only.
+   */
+  frame: { url: string; selector: string | null } | null;
+  /**
+   * Selectors of the shadow hosts between the element and its document,
+   * outermost first; empty outside shadow DOM. Each one is relative to the
+   * root that contains the host, like `selector` (which is relative to the
+   * shadow root that contains the element). Closed shadow roots are not seen.
+   */
+  shadowHosts: string[];
+}
+
+export interface FocusRecord extends FocusElementLocation {
   /**
    * Order in which focusin events were received (0-based). Not the Tab order:
    * autofocus and scripted focus also advance it, already-visited elements and
@@ -139,7 +158,11 @@ export interface FocusRecord {
    * element. null when focus arrived another way (autofocus, script).
    */
   tabStep: number | null;
-  /** Element rectangle at the moment it received focus. */
+  /**
+   * Element rectangle at the moment it received focus. Page coordinates of the
+   * element's own document: inside an iframe the origin is that iframe
+   * document's top-left, not the main page's (see `frame`).
+   */
   rect: PageRect;
   tag: string;
   role: string | null;
@@ -157,7 +180,7 @@ export interface FocusRecord {
 }
 
 /** Reference to an element captured in the browser context. */
-export interface FocusElementRef {
+export interface FocusElementRef extends FocusElementLocation {
   tag: string;
   role: string | null;
   name: string;

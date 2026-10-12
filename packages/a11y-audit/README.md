@@ -246,6 +246,23 @@ contexts, so the attribute must already be on the element when the page loads
 The name is passed to `getAttribute` as a plain string; an invalid name throws
 an `Error`.
 
+The focus indicator check's element records (`allElements`, `issues`, and the
+`element` in `focusObscuredIssues` and `onFocusViolations`) carry `frame` and
+`shadowHosts`, which say which document the element is in.
+
+- `frame`: `null` for the main frame. For an element inside an iframe it is
+  `{ url, selector }`: the iframe document's URL and the iframe element's
+  selector in its parent (`selector` is `null` when the parent is cross-origin).
+  For nested iframes it describes the innermost one only.
+- `shadowHosts`: for an element inside an open shadow root, the hosts'
+  selectors, outermost first; `[]` otherwise. `selector` is relative to that
+  shadow root (the inner element is recorded, not the host).
+- `rect` of an element in an iframe is relative to that iframe's document, not
+  the main page.
+- Closed shadow roots are not seen (the host is recorded). Fixed content outside
+  an iframe is not detected as hiding an element inside it (obscuring is judged
+  per document).
+
 ### Output location resolution
 
 For every check:

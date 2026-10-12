@@ -203,9 +203,29 @@ const ELEMENT_EVIDENCE_PROPS: Record<string, JsonSchema> = {
   htmlTruncated: { type: 'boolean' },
 };
 
+const FOCUS_LOCATION_PROPS: Record<string, JsonSchema> = {
+  frame: {
+    type: ['object', 'null'],
+    required: ['url', 'selector'],
+    properties: {
+      url: { type: 'string' },
+      selector: { type: ['string', 'null'] },
+    },
+  },
+  shadowHosts: { type: 'array', items: { type: 'string' } },
+};
+
 const FOCUS_ELEMENT_REF_SCHEMA: JsonSchema = {
   type: 'object',
-  required: ['tag', 'name', 'selector', 'html', 'htmlTruncated'],
+  required: [
+    'tag',
+    'name',
+    'selector',
+    'html',
+    'htmlTruncated',
+    'frame',
+    'shadowHosts',
+  ],
   properties: {
     tag: { type: 'string' },
     role: { type: ['string', 'null'] },
@@ -213,6 +233,7 @@ const FOCUS_ELEMENT_REF_SCHEMA: JsonSchema = {
     selector: { type: 'string' },
     html: { type: 'string' },
     htmlTruncated: { type: 'boolean' },
+    ...FOCUS_LOCATION_PROPS,
     echo: { type: ['string', 'null'] },
   },
 };
@@ -310,9 +331,10 @@ export const FOCUS_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
         type: 'array',
         items: {
           type: 'object',
-          required: ['id', 'tabStep', 'rect'],
+          required: ['id', 'tabStep', 'rect', 'frame', 'shadowHosts'],
           properties: {
             id: { type: 'number' },
+            ...FOCUS_LOCATION_PROPS,
             tabStep: { type: ['number', 'null'] },
             rect: {
               type: 'object',

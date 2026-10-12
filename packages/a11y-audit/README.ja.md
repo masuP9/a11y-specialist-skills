@@ -235,6 +235,19 @@ context でページを開くため、属性はページの読み込み時点で
 （ページのマークアップ、または `createContext` で作る context に `addInitScript` で付ける）。
 属性名は文字列としてそのまま `getAttribute` に渡され、不正な名前は `Error` になります。
 
+フォーカス表示検査の要素の記録（`allElements`、`issues`、`focusObscuredIssues` と
+`onFocusViolations` の `element`）には、要素がどの文書にあるかを示す `frame` と
+`shadowHosts` が付きます。
+
+- `frame`: 主フレームの要素は `null`。iframe の中の要素は `{ url, selector }`（その文書の URL と、
+  親文書での iframe 要素の selector。親から辿れない別オリジンでは `selector` が `null`）。
+  入れ子の iframe は一番内側の iframe だけを表します。
+- `shadowHosts`: open な shadow root の中の要素は、外側から順に host の selector。外の要素は `[]`。
+  `selector` はその shadow root の中での selector です（host ではなく、中の要素そのものを記録します）。
+- iframe の中の要素の `rect` は、主ページではなくその iframe の文書の左上が原点です。
+- closed な shadow root の中は見えず、host として記録されます。iframe の外の固定要素が iframe の
+  中の要素を隠す場合は検出しません（隠れ判定は文書ごと）。
+
 ### 出力先の解決順
 
 各検査共通:

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      focus-indicator: element in an iframe covered by fixed content
+    </title>
+    <style>
+      body {
+        margin: 0;
+      }
+      iframe {
+        display: block;
+        width: 300px;
+        height: 60px;
+        border: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- The fixed bar is inside the frame: obscuring is judged per document,
+         so fixed content in the parent is not seen from the frame. -->
+    <iframe
+      id="obscured-frame"
+      title="obscured frame"
+      srcdoc='<!doctype html><style>body{margin:0}button:focus{outline:3px solid #005fcc}#bar{position:fixed;top:0;left:0;width:100%;height:60px;background:#ddd}</style><button id="inner">Inner</button><div id="bar"></div>'
+    ></iframe>
+  </body>
+</html>
