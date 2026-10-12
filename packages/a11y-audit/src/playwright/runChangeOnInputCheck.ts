@@ -88,9 +88,13 @@ export interface RunChangeOnInputCheckOptions
 /** Timeout for a single Playwright action on a control, so a stuck one cannot eat the whole budget. */
 const ACTION_TIMEOUT_MS = 5_000;
 
-/** Errors Playwright throws when the page is replaced under an action. */
+/**
+ * Errors Playwright throws when the page is replaced under an action. Matched
+ * against the first line only: later lines are a call log that mentions
+ * "navigations" even for a plain timeout.
+ */
 const NAVIGATION_ERROR =
-  /Execution context was destroyed|Frame was detached|Target page, context or browser has been closed|navigat/i;
+  /Execution context was destroyed|Frame was detached|Target page, context or browser has been closed|navigation/i;
 
 /** What the browser reports about one control (see `collectControls`). */
 interface CollectedControl extends ChangeOnInputControl {
@@ -635,10 +639,12 @@ export async function runChangeOnInputCheck(
         await Promise.all(pendingPopups);
         let navigation = navigations.length > 0;
         if (trialError) {
-          const message =
-            trialError instanceof Error
+          const message = (
+            (trialError instanceof Error
               ? trialError.message
-              : String(trialError);
+              : String(trialError)
+            ).split('\n')[0] ?? ''
+          ).slice(0, 200);
           if (!navigation && NAVIGATION_ERROR.test(message)) {
             navigation = true;
           } else if (
@@ -650,7 +656,7 @@ export async function runChangeOnInputCheck(
             await restoreValue();
             skipped.push({
               selector: control.selector,
-              reason: (message.split('\n')[0] ?? '').slice(0, 200),
+              reason: message,
             });
             continue;
           }

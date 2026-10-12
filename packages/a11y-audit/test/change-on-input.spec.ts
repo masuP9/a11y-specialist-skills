@@ -292,6 +292,25 @@ test('値の戻しで change イベントが起きないので、2 回目の呼�
   expect(result.passes.map((r) => r.id)).toContain(RULE_ID);
 });
 
+test('別の要素に覆われて click がタイムアウトする欄は、移動と誤判定されず skipped になる', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  test.setTimeout(60_000);
+  const result = await runChange(
+    'covered.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  expect(result.details.findings).toEqual([]);
+  expect(result.details.restarts).toBe(0);
+  expect(result.details.skipped).toHaveLength(1);
+  expect(result.details.skipped[0]?.selector).toBe('#covered');
+  expect(result.details.skipped[0]?.reason).not.toBe('');
+});
+
 test('settleMs に 0 を渡すと Error になる', async ({
   page,
   browser,
