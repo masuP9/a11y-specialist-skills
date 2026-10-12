@@ -280,6 +280,91 @@ test('focus check: on-focus navigation is a confirmed violation, missing style i
   expect(violation.nodes[0].failureSummary).toContain('navigation');
 });
 
+test('focus check: retries exhausted with no identified 3.2.1 element → on-focus rule is incomplete, not passes', () => {
+  const buckets = normalizeFocusCheck(
+    emptyFocusDetails({
+      totalFocusableElements: 2,
+      interrupted: true,
+      onFocusViolations: [],
+    }),
+  );
+
+  expect(
+    buckets.passes.some(
+      (r) => r.id === 'a11y-skills/no-context-change-on-focus',
+    ),
+  ).toBe(false);
+  const incomplete = buckets.incomplete.find(
+    (r) => r.id === 'a11y-skills/no-context-change-on-focus',
+  );
+  expect(incomplete?.nodes.map((n) => n.target[0])).toEqual(['html']);
+  expect(incomplete?.nodes[0]?.failureSummary).toContain('could not');
+});
+
+test('focus check: walk stopped by a limit right after an unidentified navigation → on-focus rule is incomplete, not passes', () => {
+  const buckets = normalizeFocusCheck(
+    emptyFocusDetails({
+      totalFocusableElements: 1,
+      interrupted: false,
+      unidentifiedNavigation: true,
+      onFocusViolations: [],
+    }),
+  );
+
+  expect(buckets.incomplete.map((r) => r.id)).toContain(
+    'a11y-skills/no-context-change-on-focus',
+  );
+  expect(
+    buckets.passes.some(
+      (r) => r.id === 'a11y-skills/no-context-change-on-focus',
+    ),
+  ).toBe(false);
+});
+
+test('focus check: an unidentified navigation does not hide confirmed 3.2.1 violations', () => {
+  const element = {
+    tag: 'A',
+    role: null,
+    name: 'go',
+    selector: '#go',
+    html: '<a id="go" href="/x">go</a>',
+    htmlTruncated: false,
+  };
+  const buckets = normalizeFocusCheck(
+    emptyFocusDetails({
+      totalFocusableElements: 2,
+      unidentifiedNavigation: true,
+      onFocusViolations: [
+        { element, fromUrl: 'a:b', toUrl: 'a:c', changeType: 'navigation' },
+      ],
+    }),
+  );
+
+  const violation = buckets.violations.find(
+    (r) => r.id === 'a11y-skills/no-context-change-on-focus',
+  );
+  expect(violation?.nodes.map((n) => n.target[0])).toEqual(['#go']);
+});
+
+test('focus check: retries exhausted before any element was recorded → on-focus rule is incomplete, not inapplicable', () => {
+  const buckets = normalizeFocusCheck(
+    emptyFocusDetails({
+      totalFocusableElements: 0,
+      interrupted: true,
+      onFocusViolations: [],
+    }),
+  );
+
+  expect(buckets.incomplete.map((r) => r.id)).toEqual([
+    'a11y-skills/no-context-change-on-focus',
+  ]);
+  expect(
+    buckets.inapplicable.some(
+      (r) => r.id === 'a11y-skills/no-context-change-on-focus',
+    ),
+  ).toBe(false);
+});
+
 test('text-spacing clipping is a confirmed violation', () => {
   const details: TextSpacingCheckDetails = {
     totalElementsChecked: 5,

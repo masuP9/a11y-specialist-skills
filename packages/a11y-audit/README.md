@@ -326,6 +326,11 @@ are kept in the result JSON:
   limit.
 - focus-indicator: `details.interrupted: true` when navigation on focus
   exhausted the retries and some elements were not tested.
+- focus-indicator: `details.unidentifiedNavigation: true` when focus caused a
+  navigation whose element could not be identified and no later attempt
+  identified it (including when retries ran out or a limit stopped the walk).
+  If `onFocusViolations` is empty, `a11y-skills/no-context-change-on-focus` is
+  then `incomplete` instead of `passes`.
 - focus-indicator / keyboard-reachability: see "Time and Tab-press limits"
   below for what happens when a limit is hit.
 
