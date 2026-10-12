@@ -218,6 +218,18 @@ const CHECK_REGISTRY: CheckEntry[] = [
       })) as AuditResultEnvelope;
     },
   },
+  {
+    name: 'motion-actuation-check',
+    kind: 'page',
+    async run({ page, outputDir }) {
+      const { runMotionActuationCheck } =
+        await import('./playwright/runMotionActuationCheck.js');
+      return (await runMotionActuationCheck({
+        page,
+        outputDir,
+      })) as AuditResultEnvelope;
+    },
+  },
 ];
 
 // ---------------------------------------------------------------------------
