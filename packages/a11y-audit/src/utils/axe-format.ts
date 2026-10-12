@@ -10,7 +10,10 @@
  */
 
 import type {
+  AccessibleAuthenticationCheckDetails,
   AuditCheckResult,
+  AuthField,
+  AuthFieldKind,
   AuditResultSummary,
   AutocompleteAuditDetails,
   AutoPlayDetectionDetails,
@@ -39,6 +42,7 @@ import type {
 } from '../types.js';
 import {
   AUDIT_DISCLAIMER,
+  AUTH_EXPECTED_AUTOCOMPLETE,
   HTML_SNIPPET_MAX_LENGTH,
   MOTION_MUTATION_MARGIN,
 } from '../constants.js';
@@ -680,6 +684,105 @@ function describeMotionSimulation(
     return `The DOM changed ${result.domMutations} times during dispatch and ${baseline} times without events; the change may not come from motion.`;
   }
   return 'Synthetic events caused no DOM change (the page may react only to trusted events or draw on canvas).';
+}
+
+const AUTH_KIND_LABELS: Record<AuthFieldKind, string> = {
+  password: 'Password',
+  'one-time-code': 'Verification code',
+  username: 'Username',
+};
+
+/** Why a paste-test target has no usable `paste` result. */
+function describeUntestedPaste(field: AuthField): string {
+  if (!field.visible) return 'not visible';
+  if (!field.editable) return 'not editable';
+  if (field.paste === null) {
+    return 'not tried after an earlier timeout or navigation';
+  }
+  return field.paste.error ?? (field.paste.navigated ? 'navigated' : 'unknown');
+}
+
+export function normalizeAccessibleAuthenticationCheck(
+  details: AccessibleAuthenticationCheckDetails,
+): NormalizedBuckets {
+  const buckets = emptyBuckets();
+  const { fields, captchas, pasteTest } = details;
+  buckets.checkedNodes = fields.length + captchas.length;
+
+  const pasteTargets = fields.filter(
+    (f) => f.kind === 'password' || f.kind === 'one-time-code',
+  );
+  const pasteNodes: NormalizedNode[] = [];
+  for (const field of pasteTargets) {
+    const label = AUTH_KIND_LABELS[field.kind];
+    if (pasteTest.status === 'disabled' || pasteTest.status === 'unavailable') {
+      const reason = pasteTest.reason ? `: ${pasteTest.reason}` : '';
+      pasteNodes.push(
+        toNode(
+          field,
+          `Paste was not tested (${pasteTest.status}${reason}). Check manually whether pasting works.`,
+        ),
+      );
+    } else if (field.paste?.result === 'blocked') {
+      const { valueAfterPaste, pasteEventPrevented } = field.paste;
+      const how =
+        pasteEventPrevented === true
+          ? ' The paste event was cancelled (preventDefault).'
+          : pasteEventPrevented === false
+            ? ' The paste event was not cancelled; a script may clear the value after pasting.'
+            : '';
+      pasteNodes.push(
+        toNode(
+          field,
+          `Pasting into this ${label} field did not insert the text (field value after paste: ${valueAfterPaste === 'empty' ? 'empty' : 'not the pasted text'}).${how} Allow pasting so password managers can be used.`,
+        ),
+      );
+    } else if (field.paste?.result !== 'inserted') {
+      pasteNodes.push(
+        toNode(
+          field,
+          `Paste could not be tested (${describeUntestedPaste(field)}). Check manually whether pasting works.`,
+        ),
+      );
+    }
+  }
+  bucketize(buckets, 'auth-paste-blocked', pasteNodes, pasteTargets.length > 0);
+
+  const autocompleteNodes = fields
+    .filter(
+      (f) =>
+        f.autocompleteStatus === 'off' || f.autocompleteStatus === 'mismatch',
+    )
+    .map((field) =>
+      toNode(
+        field,
+        `${AUTH_KIND_LABELS[field.kind]} field ${
+          field.autocomplete === null || field.autocomplete.trim() === ''
+            ? `inherits autocomplete="${field.formAutocomplete}" from its form, which turns off autofill`
+            : `has autocomplete="${field.autocomplete}", which ${
+                field.autocompleteStatus === 'off'
+                  ? 'turns off autofill'
+                  : 'is not the expected value'
+              }`
+        }. Expected ${AUTH_EXPECTED_AUTOCOMPLETE[field.kind].join(' or ')}.`,
+      ),
+    );
+  bucketize(buckets, 'auth-autocomplete', autocompleteNodes, fields.length > 0);
+
+  const captchaNodes = captchas.map((captcha) =>
+    toNode(
+      captcha,
+      `Looks like a CAPTCHA (matched ${captcha.matchedBy})${captcha.visible ? '' : ', not visible (may be score-based)'}. Check that authentication offers an alternative without a cognitive function test, or that it only asks to recognize objects or user-provided content.`,
+    ),
+  );
+  bucketize(
+    buckets,
+    'auth-captcha',
+    captchaNodes,
+    fields.length > 0 || captchas.length > 0,
+  );
+
+  return buckets;
 }
 
 export function normalizeTimeLimitDetector(
