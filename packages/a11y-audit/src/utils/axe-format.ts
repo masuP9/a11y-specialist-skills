@@ -22,6 +22,9 @@ import type {
   KeyboardReachabilityCheckDetails,
   KeyboardTrapCheckDetails,
   MediaPlaybackRecord,
+  MotionActuationCheckDetails,
+  MotionListener,
+  MotionSimulationResult,
   NormalizedImpact,
   NormalizedNode,
   NormalizedRuleResult,
@@ -596,6 +599,61 @@ export function normalizeRedundantEntryCheck(
   bucketize(buckets, 'redundant-entry', nodes, applicable);
 
   return buckets;
+}
+
+export function normalizeMotionActuationCheck(
+  details: MotionActuationCheckDetails,
+): NormalizedBuckets {
+  const buckets = emptyBuckets();
+
+  if (details.listenerInspection === 'unsupported') {
+    bucketize(
+      buckets,
+      'motion-actuation',
+      [
+        pageNode(
+          'Event listeners could not be inspected (CDP is only available in Chromium). Check manually whether the page reacts to device motion or orientation.',
+        ),
+      ],
+      true,
+    );
+    return buckets;
+  }
+
+  const nodes = details.listeners.map((listener) => {
+    const preview = listener.handlerPreview
+      ? `: ${listener.handlerPreview}`
+      : '';
+    return pageNode(
+      `${listener.target} has a "${listener.type}" listener (script ${listener.scriptId}, line ${listener.lineNumber + 1}:${listener.columnNumber + 1})${preview}. ` +
+        `${describeMotionSimulation(listener, details.simulation.results)} ` +
+        'Verify that the same function is available through UI components and that motion actuation can be turned off.',
+    );
+  });
+  bucketize(buckets, 'motion-actuation', nodes, nodes.length > 0);
+
+  return buckets;
+}
+
+function describeMotionSimulation(
+  listener: MotionListener,
+  results: MotionSimulationResult[],
+): string {
+  if (listener.target === 'document') {
+    return 'Browsers dispatch this event only to window, so this listener may never run.';
+  }
+  const result = results.find((r) => r.type === listener.type);
+  if (!result) return 'Not simulated.';
+  if (result.navigated) {
+    return `Synthetic events caused navigation to ${result.urlAfter}.`;
+  }
+  if (result.domMutations === null) {
+    return `Simulation did not finish (${result.error ?? 'unknown'}); the page's reaction is unknown.`;
+  }
+  if (result.domMutations > 0) {
+    return `Synthetic events changed the DOM (${result.domMutations} mutations).`;
+  }
+  return 'Synthetic events caused no DOM change (the page may react only to trusted events or draw on canvas).';
 }
 
 export function normalizeTimeLimitDetector(

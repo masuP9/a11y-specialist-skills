@@ -73,6 +73,10 @@ export type {
   RedundantEntryGroup,
   RedundantEntryCheckDetails,
   RedundantEntryCheckResult,
+  MotionListener,
+  MotionSimulationResult,
+  MotionActuationCheckDetails,
+  MotionActuationCheckResult,
 } from '../types.js';
 
 /** Minimal JSON Schema object shape (Draft 2020-12 compatible subset). */
@@ -951,6 +955,85 @@ export const REDUNDANT_ENTRY_CHECK_RESULT_SCHEMA: JsonSchema =
     },
   });
 
+const MOTION_EVENT_TYPE_SCHEMA: JsonSchema = {
+  type: 'string',
+  enum: ['devicemotion', 'deviceorientation', 'deviceorientationabsolute'],
+};
+
+export const MOTION_ACTUATION_CHECK_RESULT_SCHEMA: JsonSchema =
+  buildEnvelopeSchema({
+    id: 'motion-actuation-check-result',
+    title: 'MotionActuationCheckResult',
+    source: 'motion-actuation-check',
+    details: {
+      type: 'object',
+      required: ['listenerInspection', 'listeners', 'simulation'],
+      properties: {
+        listenerInspection: { type: 'string', enum: ['cdp', 'unsupported'] },
+        listeners: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: [
+              'target',
+              'type',
+              'useCapture',
+              'passive',
+              'once',
+              'scriptId',
+              'lineNumber',
+              'columnNumber',
+              'handlerPreview',
+            ],
+            properties: {
+              target: { type: 'string', enum: ['window', 'document'] },
+              type: MOTION_EVENT_TYPE_SCHEMA,
+              useCapture: { type: 'boolean' },
+              passive: { type: 'boolean' },
+              once: { type: 'boolean' },
+              scriptId: { type: 'string' },
+              lineNumber: { type: 'integer' },
+              columnNumber: { type: 'integer' },
+              handlerPreview: { type: ['string', 'null'] },
+            },
+          },
+        },
+        simulation: {
+          type: 'object',
+          required: ['status', 'results'],
+          properties: {
+            status: {
+              type: 'string',
+              enum: ['ran', 'disabled', 'skipped-no-listeners', 'unsupported'],
+            },
+            results: {
+              type: 'array',
+              items: {
+                type: 'object',
+                required: [
+                  'type',
+                  'eventsDispatched',
+                  'domMutations',
+                  'navigated',
+                  'urlAfter',
+                  'error',
+                ],
+                properties: {
+                  type: MOTION_EVENT_TYPE_SCHEMA,
+                  eventsDispatched: { type: ['integer', 'null'] },
+                  domMutations: { type: ['integer', 'null'] },
+                  navigated: { type: 'boolean' },
+                  urlAfter: { type: ['string', 'null'] },
+                  error: { type: ['string', 'null'] },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
 /** All result schemas keyed by check id. */
 export const RESULT_SCHEMAS = {
   'axe-audit': AXE_AUDIT_RESULT_SCHEMA,
@@ -966,4 +1049,5 @@ export const RESULT_SCHEMAS = {
   'keyboard-trap-check': KEYBOARD_TRAP_CHECK_RESULT_SCHEMA,
   'keyboard-reachability-check': KEYBOARD_REACHABILITY_CHECK_RESULT_SCHEMA,
   'redundant-entry-check': REDUNDANT_ENTRY_CHECK_RESULT_SCHEMA,
+  'motion-actuation-check': MOTION_ACTUATION_CHECK_RESULT_SCHEMA,
 } as const;

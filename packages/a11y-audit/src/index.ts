@@ -47,6 +47,7 @@ export {
   normalizeFocusCheck,
   normalizeKeyboardReachabilityCheck,
   normalizeKeyboardTrapCheck,
+  normalizeMotionActuationCheck,
   normalizeOrientationCheck,
   normalizeRedundantEntryCheck,
   normalizeReflowCheck,
