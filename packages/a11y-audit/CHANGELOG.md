@@ -3,7 +3,11 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 0.10.0 — 2026-10-12
+
+**Heads-up** — `a11y-skills/auto-play` no longer carries `wcag142`, and its
+recommendation texts no longer cite 1.4.2 (see Changed). New options are
+additive; existing calls keep working.
 
 ### Added
 
