@@ -12,6 +12,7 @@ import {
   normalizeFocusCheck,
   normalizeKeyboardReachabilityCheck,
   normalizeKeyboardTrapCheck,
+  normalizeRedundantEntryCheck,
   normalizeReflowCheck,
   normalizeTargetSizeCheck,
 } from '../dist/index.js';
@@ -19,6 +20,8 @@ import type {
   FocusCheckDetails,
   KeyboardReachabilityCheckDetails,
   KeyboardTrapCheckDetails,
+  RedundantEntryCheckDetails,
+  RedundantEntryField,
   ReflowCheckDetails,
   TargetSizeCheckDetails,
 } from '../dist/index.js';
@@ -397,6 +400,74 @@ test('keyboard-reachability-check envelope with every reachedBy value validates 
     buckets: normalizeKeyboardReachabilityCheck(details),
   });
   expectValid('keyboard-reachability-check', result);
+});
+
+test('redundant-entry-check envelope with scoped and repeated groups (with and without copyControls) validates against its schema', () => {
+  const field = (
+    selector: string,
+    overrides: Partial<RedundantEntryField>,
+  ): RedundantEntryField => ({
+    selector,
+    tagName: 'input',
+    html: `<input id="${selector.slice(1)}">`,
+    htmlTruncated: false,
+    inputType: 'text',
+    name: null,
+    id: selector.slice(1),
+    labelText: null,
+    autocomplete: null,
+    purpose: 'email',
+    purposeSource: 'name',
+    scope: null,
+    section: null,
+    formSelector: '#checkout',
+    ...overrides,
+  });
+  const details: RedundantEntryCheckDetails = {
+    totalFieldsChecked: 4,
+    fieldsWithPurpose: 4,
+    groups: [
+      {
+        purpose: 'street-address',
+        formSelector: '#checkout',
+        kind: 'scoped',
+        fields: [
+          field('#ship', {
+            purpose: 'street-address',
+            purposeSource: 'autocomplete',
+            autocomplete: 'shipping street-address',
+            scope: 'shipping',
+          }),
+          field('#bill', {
+            purpose: 'street-address',
+            purposeSource: 'autocomplete',
+            autocomplete: 'billing street-address',
+            scope: 'billing',
+          }),
+        ],
+        copyControls: [
+          { selector: '#same', tagName: 'input', text: 'Same as shipping' },
+        ],
+      },
+      {
+        purpose: 'email',
+        formSelector: null,
+        kind: 'repeated',
+        fields: [
+          field('#mail', { formSelector: null }),
+          field('#mail2', { name: 'email_confirm', formSelector: null }),
+        ],
+        copyControls: [],
+      },
+    ],
+  };
+  const result = buildAuditResult({
+    source: 'redundant-entry-check',
+    url: 'about:blank',
+    details,
+    buckets: normalizeRedundantEntryCheck(details),
+  });
+  expectValid('redundant-entry-check', result);
 });
 
 test('the pre-0.3.0 flat result shape is rejected', () => {

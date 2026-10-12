@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>redundant-entry finding-scoped fixture</title>
+  </head>
+  <body>
+    <!--
+      Intent: shipping and billing sections ask for the same information via
+      autocomplete tokens, and a checkbox offers to copy the shipping values.
+      Expected: a11y-skills/redundant-entry is `incomplete` with 3 nodes
+      (street-address, postal-code, email: the billing field of each pair).
+      Each group has kind 'scoped' and the checkbox in copyControls.
+    -->
+    <h1>Checkout</h1>
+    <form id="checkout">
+      <label for="ship-address">Shipping address</label>
+      <input
+        type="text"
+        id="ship-address"
+        autocomplete="shipping street-address"
+      />
+      <label for="ship-zip">Shipping postal code</label>
+      <input type="text" id="ship-zip" autocomplete="shipping postal-code" />
+      <label for="ship-email">Shipping email</label>
+      <input type="email" id="ship-email" autocomplete="shipping email" />
+
+      <label
+        ><input type="checkbox" id="same-as-shipping" /> お届け先と同じ</label
+      >
+
+      <label for="bill-address">Billing address</label>
+      <input
+        type="text"
+        id="bill-address"
+        autocomplete="billing street-address"
+      />
+      <label for="bill-zip">Billing postal code</label>
+      <input type="text" id="bill-zip" autocomplete="billing postal-code" />
+      <label for="bill-email">Billing email</label>
+      <input type="email" id="bill-email" autocomplete="billing email" />
+
+      <button type="submit">Order</button>
+    </form>
+  </body>
+</html>

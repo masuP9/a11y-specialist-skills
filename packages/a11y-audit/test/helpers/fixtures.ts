@@ -55,6 +55,7 @@ async function buildRunnerRegistry(): Promise<Record<string, RunnerEntry>> {
     runTargetSizeCheck,
     runKeyboardTrapCheck,
     runKeyboardReachabilityCheck,
+    runRedundantEntryCheck,
   } = await import('../../dist/playwright/index.js');
 
   return {
@@ -105,6 +106,10 @@ async function buildRunnerRegistry(): Promise<Record<string, RunnerEntry>> {
     'keyboard-reachability-check': {
       kind: 'browser-navigating',
       run: (opts) => runKeyboardReachabilityCheck(opts),
+    },
+    'redundant-entry-check': {
+      kind: 'page-current',
+      run: (opts) => runRedundantEntryCheck(opts),
     },
   };
 }
