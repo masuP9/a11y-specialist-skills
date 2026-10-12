@@ -1,0 +1,26 @@
+<!doctype html>
+<!--
+  Controls the check must not change: disabled, readonly, hidden, invisible,
+  and a select with only one option.
+  Expected: controlsTested 0, the rule is inapplicable, and only the
+  single-option select is listed in skipped (with a reason).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Skips</title>
+  </head>
+  <body>
+    <label for="off">Disabled</label>
+    <input type="text" id="off" disabled />
+    <label for="ro">Readonly</label>
+    <input type="text" id="ro" readonly value="fixed" />
+    <input type="hidden" name="token" value="x" />
+    <label for="gone">Invisible</label>
+    <input type="text" id="gone" style="display: none" />
+    <label for="only">Only option</label>
+    <select id="only">
+      <option>One</option>
+    </select>
+  </body>
+</html>

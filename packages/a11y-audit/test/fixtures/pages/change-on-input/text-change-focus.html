@@ -1,0 +1,23 @@
+<!doctype html>
+<!--
+  The change event of the first text field (fired on blur) moves focus to the
+  second one.
+  Expected: one finding for #first with a focus-moved change whose toSelector
+  is #second.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Text change moves focus</title>
+  </head>
+  <body>
+    <label for="first">First</label>
+    <input
+      type="text"
+      id="first"
+      onchange="document.getElementById('second').focus()"
+    />
+    <label for="second">Second</label>
+    <input type="text" id="second" />
+  </body>
+</html>

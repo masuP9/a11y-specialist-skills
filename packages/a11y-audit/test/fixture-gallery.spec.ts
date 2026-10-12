@@ -1,5 +1,5 @@
 /**
- * Fixture Gallery: manifest-driven integration tests for all 14 checks.
+ * Fixture Gallery: manifest-driven integration tests for all 15 checks.
  *
  * Each manifest entry:
  * - Serves an HTML fixture from test/fixtures/pages/ via a worker-scoped
@@ -10,7 +10,7 @@
  * - For 'passes' expectations: also guards against silent inapplicable pass.
  * - Validates the result envelope against RESULT_SCHEMAS[check] via Ajv.
  *
- * Coverage: all 24 custom finding-capable rules from rule-registry.ts
+ * Coverage: all 25 custom finding-capable rules from rule-registry.ts
  * (auto-play and auto-play-audio live in their own specs).
  * axe-audit: representative rule (image-alt); full rule coverage is out of
  * scope for axe (hundreds of external rules).
@@ -332,6 +332,27 @@ const MANIFEST: ManifestEntry[] = [
     fixture: 'motion-actuation/none.html',
     expectRules: {
       'a11y-skills/motion-actuation': 'inapplicable',
+    },
+  },
+
+  // =========================================================================
+  // change-on-input-check
+  // Rule: a11y-skills/no-context-change-on-input (incomplete)
+  // =========================================================================
+  {
+    check: 'change-on-input-check',
+    scenario: 'finding: no-context-change-on-input (select navigates)',
+    fixture: 'change-on-input/select-navigates.html',
+    expectRules: {
+      'a11y-skills/no-context-change-on-input': 'incomplete',
+    },
+  },
+  {
+    check: 'change-on-input-check',
+    scenario: 'clear: handlers only update a status text',
+    fixture: 'change-on-input/clear.html',
+    expectRules: {
+      'a11y-skills/no-context-change-on-input': 'passes',
     },
   },
 

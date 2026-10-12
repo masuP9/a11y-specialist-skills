@@ -1,0 +1,19 @@
+<!doctype html>
+<!--
+  The text field navigates synchronously from its input event, so the page is
+  replaced in the middle of typing. A checkbox without a handler follows it.
+  Expected: no exception; one finding for #live with a navigation change, one
+  restart, and the checkbox is still tested (controlsTested 2). The text field
+  is not tested a second time.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Text navigates on input</title>
+  </head>
+  <body>
+    <label for="live">Live search</label>
+    <input type="text" id="live" oninput="location.assign('landing.html')" />
+    <label><input type="checkbox" id="plain" /> Plain</label>
+  </body>
+</html>
