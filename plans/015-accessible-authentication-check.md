@@ -220,7 +220,7 @@ strict TypeScript、`tsc` ビルド、import 指定子は `.js` 付き、シン�
   `/(otp|one.?time|verification.?code|verify.?code|auth(entication)?.?code|security.?code.?(sms|email)|2fa|mfa|totp|確認コード|認証コード|ワンタイム|検証コード)/i`
   （カードの「セキュリティコード」単独には当てない）。
 - 各欄について記録する: `selector`（`collectBasicFieldInfo` の `getUniqueSelector` と同じ規則。
-  ページ内関数に同じ処理を書く）、`html` / `htmlTruncated`（`HTML_SNIPPET_MAX_LENGTH`。**`cloneNode(false)` した複製から `value` 属性を外してから outerHTML を取る**。初期値に本物の秘密が入っているページで漏らさないため）、
+  ページ内関数に同じ処理を書く）、`html` / `htmlTruncated`（**下記 B の `safeOuterHTML` で取る**。初期値に本物の秘密が入っているページで漏らさないため）、
   `kind`、`inputType`、`name`、`id`、`labelText`、`autocomplete`（属性値。無ければ `null`）、
   `editable`（`:disabled` でも `readOnly` でもない）、`visible`（`getClientRects().length > 0`
   かつ `visibility !== 'hidden'`）、`formSelector`。
@@ -244,6 +244,13 @@ img[src*="captcha" i], img[alt*="captcha" i]
 （`captcha` は `recaptcha` / `hcaptcha` を含む。`<script>` / `<style>` / `<link>` /
 `<meta>` は対象外にする。）各要素について `selector`・`html` / `htmlTruncated`・
 `matchedBy`（当たったセレクタの部分。最初に当たったもの）・`visible` を記録する。
+
+**html 抜粋の秘匿（欄・CAPTCHA 候補の両方に共通）**: ページ内関数に `safeOuterHTML(el)` を
+1 つ書き、`html` はすべてこれで取る。`el.cloneNode(true)` した複製について、複製自身と
+`querySelectorAll('[value]')` の子孫すべての `value` 属性を外してから `outerHTML` を取り、
+`HTML_SNIPPET_MAX_LENGTH` で切る。CAPTCHA 候補は `[id*="captcha" i]` などで親の form を
+拾いうる（`<form id="captcha-login"><input type="password" value="…">`）ため、子孫の
+初期値も漏らさないようにする。
 
 ### C. 貼り付けの実測
 
@@ -540,6 +547,9 @@ normalizeAccessibleAuthenticationCheck(details) })` → `out.header('Accessible 
   controlled input の再現）。期待: `result === 'blocked'`、`valueAfterPaste === 'other'`、
   **結果 JSON 全体（`JSON.stringify(result)`）に `S3cret-Leak-Canary` が含まれない**、
   検査後の欄の値が `S3cret-Leak-Canary` に戻っている。
+  加えて同じページに `<form id="captcha-login"><input type="password" value="S3cret-Leak-Canary-2"></form>`
+  を置き、この form が CAPTCHA 候補に当たる（`captchas` に 1 件）一方で、結果 JSON 全体に
+  `S3cret-Leak-Canary-2` も含まれないこと（`captchas[].html`・正規化後の `nodes[].html` の経路）。
 - `paste-blocked.html`: パスワード欄に `onpaste="return false"`。期待: `auth-paste-blocked` が
   incomplete、`paste.result === 'blocked'`、`pasteEventPrevented === true`。
 - `paste-cleared.html`: `input` で `inputType === 'insertFromPaste'` なら値を消す。期待: incomplete、`result === 'blocked'`、
