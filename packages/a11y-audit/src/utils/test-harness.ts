@@ -245,6 +245,40 @@ export function requireTargetUrl(explicit?: string): string {
 }
 
 /**
+ * Validate the `timeBudgetMs` / `maxTabPresses` options shared by the Tab-walk
+ * checks. `undefined` passes; anything that is not a positive finite number
+ * (`timeBudgetMs`) or positive integer (`maxTabPresses`) is rejected.
+ *
+ * @throws if a value is present but invalid.
+ */
+export function assertWalkLimits(limits: {
+  timeBudgetMs?: number;
+  maxTabPresses?: number;
+}): void {
+  const { timeBudgetMs, maxTabPresses } = limits;
+  if (
+    timeBudgetMs !== undefined &&
+    !(
+      typeof timeBudgetMs === 'number' &&
+      Number.isFinite(timeBudgetMs) &&
+      timeBudgetMs > 0
+    )
+  ) {
+    throw new Error(
+      `\`timeBudgetMs\` must be a positive finite number of milliseconds (got ${String(timeBudgetMs)}).`,
+    );
+  }
+  if (
+    maxTabPresses !== undefined &&
+    !(Number.isInteger(maxTabPresses) && maxTabPresses > 0)
+  ) {
+    throw new Error(
+      `\`maxTabPresses\` must be a positive integer (got ${String(maxTabPresses)}).`,
+    );
+  }
+}
+
+/**
  * Resolve the target URL from the `TEST_PAGE` env var, falling back to the
  * given default. Useful for callers that want a sensible default (e.g. a test
  * fixture URL or preset) instead of throwing when `TEST_PAGE` is unset.

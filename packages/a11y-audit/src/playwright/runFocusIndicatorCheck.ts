@@ -43,6 +43,7 @@ import {
   resolveScreenshotPath,
   takeAuditScreenshot,
   requireTargetUrl,
+  assertWalkLimits,
   createAuditOutput,
   type AuditOutputOptions,
 } from '../utils/test-harness.js';
@@ -121,6 +122,18 @@ export interface RunFocusIndicatorCheckOptions extends AuditOutputOptions {
    * auditing pages with debounced or otherwise delayed focus handlers.
    */
   navigationSettleMs?: number;
+  /**
+   * Stop the Tab walk once this many milliseconds have passed since the check
+   * started, counting every 3.2.1 restart (default: no limit). The result then
+   * carries `details.aborted` with `reason: 'timeout'`.
+   */
+  timeBudgetMs?: number;
+  /**
+   * Stop after this many Tab presses in total, counting every 3.2.1 restart
+   * (default: no limit). The result then carries `details.aborted` with
+   * `reason: 'tab-limit'`.
+   */
+  maxTabPresses?: number;
 }
 
 /**
@@ -136,9 +149,12 @@ export async function runFocusIndicatorCheck(
     screenshot = false,
     contextOptions,
     navigationSettleMs = DEFAULT_NAVIGATION_SETTLE_MS,
+    timeBudgetMs,
+    maxTabPresses,
     ...location
   } = options;
 
+  assertWalkLimits({ timeBudgetMs, maxTabPresses });
   const targetUrl = requireTargetUrl(targetUrlOption);
 
   const out = createAuditOutput({
@@ -159,6 +175,31 @@ export async function runFocusIndicatorCheck(
   // The context for the current attempt. Held outside the loop so it is always
   // closed in `finally`, including if an attempt throws mid-way.
   let context: BrowserContext | null = null;
+
+  const startedAt = Date.now();
+  let tabPresses = 0;
+  let aborted: FocusCheckDetails['aborted'] = null;
+  const limitReached = (): 'timeout' | 'tab-limit' | null => {
+    if (timeBudgetMs !== undefined && Date.now() - startedAt > timeBudgetMs) {
+      return 'timeout';
+    }
+    if (maxTabPresses !== undefined && tabPresses >= maxTabPresses) {
+      return 'tab-limit';
+    }
+    return null;
+  };
+  const abortWalk = (
+    reason: 'timeout' | 'tab-limit',
+    url: string,
+    recordedCount: number,
+    focusableCount: number,
+  ): NonNullable<FocusCheckDetails['aborted']> => {
+    out.warn(
+      `\n⚠️  Stopped by ${reason === 'timeout' ? 'timeBudgetMs' : 'maxTabPresses'}: ` +
+        `${recordedCount} of ${focusableCount} focusable elements were tested.`,
+    );
+    return { reason, url, recordedCount, focusableCount };
+  };
 
   try {
     // Retry loop - restart test when navigation violation is detected
@@ -272,8 +313,15 @@ export async function runFocusIndicatorCheck(
 
       // Tab through all elements with navigation detection
       for (let i = 0; i < count + EXTRA_TAB_ITERATIONS; i++) {
+        const reason = limitReached();
+        if (reason) {
+          aborted = abortWalk(reason, page.url(), focusHistory.length, count);
+          break;
+        }
+
         const urlBeforeTab = page.url();
 
+        tabPresses++;
         await page.keyboard.press('Tab');
 
         // Get currently focused element IMMEDIATELY after Tab
@@ -387,6 +435,14 @@ export async function runFocusIndicatorCheck(
         break;
       }
 
+      const reason = limitReached();
+      if (reason) {
+        aborted = abortWalk(reason, page.url(), focusHistory.length, count);
+        finalFocusHistory = focusHistory;
+        finalPage = page;
+        break;
+      }
+
       // Close context before retry (only if we're going to retry)
       await context.close();
       context = null;
@@ -429,6 +485,7 @@ export async function runFocusIndicatorCheck(
       allElements: finalFocusHistory,
       // Retries exhausted: elements after the last navigation were not tested.
       interrupted: retryCount >= MAX_RETRIES,
+      aborted,
       screenshotPath: screenshot ? resolvedScreenshotPath : '',
     };
 

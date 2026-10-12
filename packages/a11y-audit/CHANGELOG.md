@@ -5,6 +5,15 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+### Added
+
+- `runFocusIndicatorCheck` and `runKeyboardReachabilityCheck` accept
+  `timeBudgetMs` and `maxTabPresses` (invalid values throw). On
+  focus-indicator, which has no limit by default, hitting one sets the new
+  `details.aborted` (`reason: 'timeout' | 'tab-limit'`, `recordedCount`,
+  `focusableCount`); `interrupted` keeps its meaning. On keyboard-reachability
+  they override the previous fixed 60 s / 600-press limits.
+
 ### Changed
 
 - Rule `a11y-skills/auto-play` no longer claims WCAG 1.4.2: its `sc` is now

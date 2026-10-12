@@ -261,6 +261,19 @@ are kept in the result JSON:
   limit.
 - focus-indicator: `details.interrupted: true` when navigation on focus
   exhausted the retries and some elements were not tested.
+- focus-indicator / keyboard-reachability: see "Time and Tab-press limits"
+  below for what happens when a limit is hit.
+
+**Time and Tab-press limits:**
+
+`runFocusIndicatorCheck` and `runKeyboardReachabilityCheck` accept
+`timeBudgetMs` (milliseconds, positive finite number) and `maxTabPresses`
+(positive integer). Zero, negative or non-numeric values throw.
+
+| Check | `timeBudgetMs` default | `maxTabPresses` default | When a limit is hit |
+|---|---|---|---|
+| focus-indicator | no limit | no limit | `details.aborted: { reason: 'timeout' \| 'tab-limit', url, recordedCount, focusableCount }`: `recordedCount` elements were tested out of `focusableCount` focusable ones. Time and presses are counted across 3.2.1 restarts. Separate from `interrupted` (retries exhausted) |
+| keyboard-reachability | 60 s | 600 | time: `details.aborted.reason: 'timeout'`; presses: `details.tabWalkCapped: true` |
 
 **Running checks concurrently:**
 
