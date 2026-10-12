@@ -215,6 +215,37 @@ test("focus indicators", async ({ browser }, testInfo) => {
 });
 ```
 
+`runFocusIndicatorCheck`, `runKeyboardReachabilityCheck` and
+`runKeyboardTrapCheck` accept `createContext` instead of `browser`. Use it to
+attach your own guards (such as a `context.route` URL check) to every context
+the check uses:
+
+```ts
+const result = await runKeyboardTrapCheck({
+  createContext: async () => {
+    const context = await browser.newContext({ locale: "ja-JP" });
+    await context.route("**/*", guardRequest); // your own check
+    return context;
+  },
+  targetUrl: "https://example.com",
+});
+```
+
+- If both `createContext` and `browser` are given, `createContext` wins. Passing neither throws.
+- `contextOptions` is not applied when `createContext` is used; set options inside the function.
+- Return a **new** context on every call (the check closes each one when done; the focus indicator check calls it again on every retry).
+
+To match results to your own elements, pass an attribute name (e.g.
+`data-test-id`) as `echoAttribute` to `runFocusIndicatorCheck`. Every record
+that points at an element (`allElements`, `issues`, the `element` and
+`obscuredBy` in `focusObscuredIssues`, the `element` in `onFocusViolations`)
+then carries the attribute's value as `echo` (`null` when the element lacks it;
+no `echo` at all when the option is omitted). The check opens the page in fresh
+contexts, so the attribute must already be on the element when the page loads
+(page markup, or `addInitScript` on the context returned by `createContext`).
+The name is passed to `getAttribute` as a plain string; an invalid name throws
+an `Error`.
+
 ### Output location resolution
 
 For every check:
@@ -261,6 +292,19 @@ are kept in the result JSON:
   limit.
 - focus-indicator: `details.interrupted: true` when navigation on focus
   exhausted the retries and some elements were not tested.
+- focus-indicator / keyboard-reachability: see "Time and Tab-press limits"
+  below for what happens when a limit is hit.
+
+**Time and Tab-press limits:**
+
+`runFocusIndicatorCheck` and `runKeyboardReachabilityCheck` accept
+`timeBudgetMs` (milliseconds, positive finite number) and `maxTabPresses`
+(positive integer). Zero, negative or non-numeric values throw.
+
+| Check | `timeBudgetMs` default | `maxTabPresses` default | When a limit is hit |
+|---|---|---|---|
+| focus-indicator | no limit | no limit | `details.aborted: { reason: 'timeout' \| 'tab-limit', url, recordedCount, focusableCount }`: `recordedCount` elements were tested out of `focusableCount` focusable ones. Time and presses are counted across 3.2.1 restarts. Separate from `interrupted` (retries exhausted) |
+| keyboard-reachability | 60 s | 600 | time: `details.aborted.reason: 'timeout'`; presses: `details.tabWalkCapped: true` |
 
 **Running checks concurrently:**
 

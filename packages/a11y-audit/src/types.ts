@@ -118,8 +118,29 @@ export type AxeAuditResult = AuditCheckResult<AxeAuditDetails>;
 // Focus Indicator (WCAG 2.4.7 / 2.4.11 / 3.2.1)
 // =============================================================================
 
+/** Element rectangle in page coordinates (viewport rect + scroll offset). */
+export interface PageRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export interface FocusRecord {
+  /**
+   * Order in which focusin events were received (0-based). Not the Tab order:
+   * autofocus and scripted focus also advance it, already-visited elements and
+   * elements skipped after a 3.2.1 violation get none, and a retry restarts it.
+   * Use `tabStep` for the Tab order.
+   */
   id: number;
+  /**
+   * Which Tab key press (1-based, counted per page load) moved focus to this
+   * element. null when focus arrived another way (autofocus, script).
+   */
+  tabStep: number | null;
+  /** Element rectangle at the moment it received focus. */
+  rect: PageRect;
   tag: string;
   role: string | null;
   name: string;
@@ -128,6 +149,11 @@ export interface FocusRecord {
   htmlTruncated: boolean;
   hasFocusStyle: boolean;
   diff: Record<string, string>;
+  /**
+   * Value of the attribute named by the `echoAttribute` option (`null` when
+   * the element lacks it). Absent when the option was not passed.
+   */
+  echo?: string | null;
 }
 
 /** Reference to an element captured in the browser context. */
@@ -138,6 +164,11 @@ export interface FocusElementRef {
   selector: string;
   html: string;
   htmlTruncated: boolean;
+  /**
+   * Value of the attribute named by the `echoAttribute` option (`null` when
+   * the element lacks it). Absent when the option was not passed.
+   */
+  echo?: string | null;
 }
 
 /**
@@ -169,6 +200,19 @@ export interface FocusCheckDetails {
   /** Whether test was interrupted by navigation */
   interrupted: boolean;
   interruptedAt?: number;
+  /**
+   * Set when `timeBudgetMs` or `maxTabPresses` stopped the Tab walk before it
+   * finished; `null` otherwise (absent in results from older versions).
+   * Elements after the stop point were not tested: `recordedCount` of
+   * `focusableCount` focusable elements were recorded. Distinct from
+   * `interrupted`, which means the 3.2.1 retries were exhausted.
+   */
+  aborted?: {
+    reason: 'timeout' | 'tab-limit';
+    url: string;
+    recordedCount: number;
+    focusableCount: number;
+  } | null;
   /**
    * Path the screenshot was (or would be) written to. Empty string when
    * `screenshot` was disabled and no screenshot file was produced.
@@ -202,6 +246,7 @@ export interface FocusObscuredOverlap {
     role: string | null;
     name: string;
     selector: string;
+    echo?: string | null;
   };
   /** The overlapping area */
   overlapRect: BoundingRect;

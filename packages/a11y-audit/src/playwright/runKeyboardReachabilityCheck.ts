@@ -32,7 +32,7 @@
  *   never yields (so a browser call never returns) is not interrupted.
  */
 
-import type { Browser, BrowserContextOptions } from '@playwright/test';
+import type { BrowserContextOptions } from '@playwright/test';
 import { gotoAndSettle } from './gotoAndSettle.js';
 import type {
   KeyboardReachabilityCheckDetails,
@@ -69,25 +69,39 @@ import {
   takeAuditScreenshot,
   resolveScreenshotPath,
   requireTargetUrl,
+  assertWalkLimits,
   createAuditOutput,
+  resolveCreateContext,
   type AuditOutputOptions,
+  type ContextSourceOptions,
 } from '../utils/test-harness.js';
 
 // =============================================================================
 // Options
 // =============================================================================
 
-export interface RunKeyboardReachabilityCheckOptions extends AuditOutputOptions {
-  /** The browser to create audit contexts in. */
-  browser: Browser;
+export interface RunKeyboardReachabilityCheckOptions
+  extends AuditOutputOptions, ContextSourceOptions {
   /** Target URL. Falls back to the `TEST_PAGE` env var; required. */
   targetUrl?: string;
   /** Whether to capture a screenshot (default: false). */
   screenshot?: boolean;
-  /** Options forwarded to `browser.newContext()`. */
+  /** Options forwarded to `browser.newContext()`. Ignored when `createContext` is used. */
   contextOptions?: BrowserContextOptions;
   /** Milliseconds to wait after each key press (default: DEFAULT_NAVIGATION_SETTLE_MS). */
   walkSettleMs?: number;
+  /**
+   * Stop exploring once this many milliseconds have passed
+   * (default: KEYBOARD_REACHABILITY_TIMEOUT_MS). The result then carries
+   * `details.aborted` with `reason: 'timeout'`.
+   */
+  timeBudgetMs?: number;
+  /**
+   * Cap on Tab presses in the initial Tab walk
+   * (default: KEYBOARD_REACHABILITY_MAX_TAB_PRESSES). Hitting it sets
+   * `details.tabWalkCapped`.
+   */
+  maxTabPresses?: number;
 }
 
 // =============================================================================
@@ -765,13 +779,21 @@ export async function runKeyboardReachabilityCheck(
 ): Promise<KeyboardReachabilityCheckResult> {
   const {
     browser,
+    createContext,
     targetUrl: targetUrlOption,
     screenshot = false,
     contextOptions,
     walkSettleMs = DEFAULT_NAVIGATION_SETTLE_MS,
+    timeBudgetMs = KEYBOARD_REACHABILITY_TIMEOUT_MS,
+    maxTabPresses = KEYBOARD_REACHABILITY_MAX_TAB_PRESSES,
     ...location
   } = options;
 
+  assertWalkLimits({ timeBudgetMs, maxTabPresses });
+  const newContext = resolveCreateContext(
+    { browser, createContext },
+    contextOptions,
+  );
   const targetUrl = requireTargetUrl(targetUrlOption);
   const out = createAuditOutput({
     ...location,
@@ -782,7 +804,7 @@ export async function runKeyboardReachabilityCheck(
     DEFAULT_KEYBOARD_REACHABILITY_SCREENSHOT_FILE,
   );
 
-  const context = await browser.newContext(contextOptions);
+  const context = await newContext();
   const page = await context.newPage().catch(async (err: unknown) => {
     await context.close();
     throw err;
@@ -839,7 +861,7 @@ export async function runKeyboardReachabilityCheck(
     };
     const startedAt = Date.now();
     const timedOut = (): boolean => {
-      if (Date.now() - startedAt <= KEYBOARD_REACHABILITY_TIMEOUT_MS) {
+      if (Date.now() - startedAt <= timeBudgetMs) {
         return false;
       }
       run.aborted ??= { reason: 'timeout', url: page.url() };
@@ -955,11 +977,11 @@ export async function runKeyboardReachabilityCheck(
     // 2. Tab walk
     // ------------------------------------------------------------------
     const wanted = enumeration.focusableCount + KEYBOARD_REACHABILITY_TAB_SLACK;
-    const pressN = Math.min(wanted, KEYBOARD_REACHABILITY_MAX_TAB_PRESSES);
-    const tabWalkCapped = wanted > KEYBOARD_REACHABILITY_MAX_TAB_PRESSES;
+    const pressN = Math.min(wanted, maxTabPresses);
+    const tabWalkCapped = wanted > maxTabPresses;
     if (tabWalkCapped) {
       out.warn(
-        `[keyboard-reachability-check] Tab walk capped at ${KEYBOARD_REACHABILITY_MAX_TAB_PRESSES} ` +
+        `[keyboard-reachability-check] Tab walk capped at ${maxTabPresses} ` +
           `presses (page has ${enumeration.focusableCount} focusable elements). ` +
           'Composites late in the tab order are reported as not evaluated.',
       );

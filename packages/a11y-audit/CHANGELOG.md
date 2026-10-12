@@ -5,6 +5,27 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+### Added
+
+- `focus-indicator-check`, `keyboard-reachability-check`, `keyboard-trap-check`:
+  new `createContext` option (`() => Promise<BrowserContext>`) to create audit
+  contexts yourself, e.g. to attach `context.route` guards. `browser` is now
+  optional; one of the two is required. `contextOptions` is ignored with
+  `createContext`.
+- focus-indicator: each `FocusRecord` in `details.allElements` now has `tabStep`
+  (which Tab press moved focus to it, 1-based; `null` for autofocus or scripted
+  focus) and `rect` (`{ x, y, width, height }` in page coordinates at focus
+  time), so the Tab order can be compared with the visual order (WCAG 2.4.3).
+- `runFocusIndicatorCheck` and `runKeyboardReachabilityCheck` accept
+  `timeBudgetMs` and `maxTabPresses` (invalid values throw). On
+  focus-indicator, which has no limit by default, hitting one sets the new
+  `details.aborted` (`reason: 'timeout' | 'tab-limit'`, `recordedCount`,
+  `focusableCount`); `interrupted` keeps its meaning. On keyboard-reachability
+  they override the previous fixed 60 s / 600-press limits.
+- `runFocusIndicatorCheck`: new `echoAttribute` option. Every record that points
+  at an element carries the value of that attribute as `echo` (`null` when the
+  element lacks it), so results can be matched to the caller's own elements.
+
 ### Changed
 
 - `focus-indicator-check` now also compares border color/width/style (per

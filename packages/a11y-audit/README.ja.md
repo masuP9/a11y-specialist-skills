@@ -208,6 +208,33 @@ test("focus indicators", async ({ browser }, testInfo) => {
 });
 ```
 
+`runFocusIndicatorCheck` / `runKeyboardReachabilityCheck` / `runKeyboardTrapCheck` は、
+`browser` の代わりに `createContext` を渡せます。`context.route` による URL 検査のような
+呼び出し側の守りを、検査が使うすべての context に付けたいときに使います。
+
+```ts
+const result = await runKeyboardTrapCheck({
+  createContext: async () => {
+    const context = await browser.newContext({ locale: "ja-JP" });
+    await context.route("**/*", guardRequest); // 呼び出し側の検査
+    return context;
+  },
+  targetUrl: "https://example.com",
+});
+```
+
+- `createContext` と `browser` の両方を渡すと `createContext` が使われます。どちらも無いとエラーになります。
+- `createContext` を使うとき `contextOptions` は使われません。必要なオプションは関数の中で指定してください。
+- 呼ばれるたびに**新しい** context を返してください（検査が使い終わると閉じます。フォーカス表示検査はやり直しのたびに呼びます）。
+
+結果を呼び出し側の要素に結びつけたいときは、`runFocusIndicatorCheck` の `echoAttribute` に属性名（例: `data-test-id`）を
+渡します。要素を指す記録（`allElements`、`issues`、`focusObscuredIssues` の `element` と
+`obscuredBy`、`onFocusViolations` の `element`）すべてに `echo` として属性の値が付きます
+（属性が無い要素は `null`、オプションを渡さなければ `echo` は付きません）。検査は新しい
+context でページを開くため、属性はページの読み込み時点で要素に付いている必要があります
+（ページのマークアップ、または `createContext` で作る context に `addInitScript` で付ける）。
+属性名は文字列としてそのまま `getAttribute` に渡され、不正な名前は `Error` になります。
+
 ### 出力先の解決順
 
 各検査共通:
@@ -249,6 +276,16 @@ const result = await runTargetSizeCheck({
 
 - keyboard-trap: Tab の押下回数が上限に達して打ち切った場合は `details.tabWalkCapped: true`
 - focus-indicator: フォーカスによる遷移でリトライが上限に達し、未検査の要素が残った場合は `details.interrupted: true`
+- focus-indicator / keyboard-reachability: 上限で打ち切った場合の挙動は下の「時間と Tab 回数の上限」を参照
+
+**時間と Tab 回数の上限:**
+
+`runFocusIndicatorCheck` と `runKeyboardReachabilityCheck` は `timeBudgetMs`（ミリ秒、正の有限数）と `maxTabPresses`（正の整数）を受け取ります。0 以下や数でない値はエラーになります。
+
+| チェック | `timeBudgetMs` の既定 | `maxTabPresses` の既定 | 上限に達したとき |
+|---|---|---|---|
+| focus-indicator | 上限なし | 上限なし | `details.aborted: { reason: 'timeout' \| 'tab-limit', url, recordedCount, focusableCount }`。`recordedCount` 件までを検査し、フォーカスできる要素は `focusableCount` 件あった。時間と回数は 3.2.1 のやり直しを含めた全体で数える。`interrupted`（やり直しの使い切り）とは別 |
+| keyboard-reachability | 60 秒 | 600 回 | 時間は `details.aborted.reason: 'timeout'`、回数は `details.tabWalkCapped: true` |
 
 **同時に実行する場合の前提:**
 
