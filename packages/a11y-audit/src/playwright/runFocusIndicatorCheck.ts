@@ -587,6 +587,28 @@ function createFocusTrackerScript(args: {
   const elementSelectors = new Map<Element, string>();
   let focusId = 0;
 
+  // Tab presses seen on this page load. `tabPending` is true between a Tab
+  // keydown and its keyup, so only a focusin caused by that press gets a tabStep.
+  let tabPresses = 0;
+  let tabPending = false;
+  document.addEventListener(
+    'keydown',
+    (e) => {
+      if (e.key === 'Tab') {
+        tabPresses++;
+        tabPending = true;
+      }
+    },
+    true,
+  );
+  document.addEventListener(
+    'keyup',
+    (e) => {
+      if (e.key === 'Tab') tabPending = false;
+    },
+    true,
+  );
+
   /**
    * Generate a CSS selector for an element
    */
@@ -1045,6 +1067,9 @@ function createFocusTrackerScript(args: {
     }
 
     const id = focusId++;
+    const tabStep = tabPending ? tabPresses : null;
+    tabPending = false;
+    const box = el.getBoundingClientRect();
     el.setAttribute('data-focus-visited', String(id));
 
     // Check if changes are actually visible (not just outline-offset without outline)
@@ -1072,6 +1097,13 @@ function createFocusTrackerScript(args: {
     (window as unknown as { reportFocus: (data: unknown) => void }).reportFocus(
       {
         id,
+        tabStep,
+        rect: {
+          x: box.left + window.scrollX,
+          y: box.top + window.scrollY,
+          width: box.width,
+          height: box.height,
+        },
         tag: el.tagName,
         role: el.getAttribute('role'),
         name:

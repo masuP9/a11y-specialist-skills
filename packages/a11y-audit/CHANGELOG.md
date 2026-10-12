@@ -12,6 +12,10 @@ adheres to [Semantic Versioning](https://semver.org/).
   contexts yourself, e.g. to attach `context.route` guards. `browser` is now
   optional; one of the two is required. `contextOptions` is ignored with
   `createContext`.
+- focus-indicator: each `FocusRecord` in `details.allElements` now has `tabStep`
+  (which Tab press moved focus to it, 1-based; `null` for autofocus or scripted
+  focus) and `rect` (`{ x, y, width, height }` in page coordinates at focus
+  time), so the Tab order can be compared with the visual order (WCAG 2.4.3).
 
 ### Changed
 

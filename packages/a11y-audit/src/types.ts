@@ -118,8 +118,29 @@ export type AxeAuditResult = AuditCheckResult<AxeAuditDetails>;
 // Focus Indicator (WCAG 2.4.7 / 2.4.11 / 3.2.1)
 // =============================================================================
 
+/** Element rectangle in page coordinates (viewport rect + scroll offset). */
+export interface PageRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export interface FocusRecord {
+  /**
+   * Order in which focusin events were received (0-based). Not the Tab order:
+   * autofocus and scripted focus also advance it, already-visited elements and
+   * elements skipped after a 3.2.1 violation get none, and a retry restarts it.
+   * Use `tabStep` for the Tab order.
+   */
   id: number;
+  /**
+   * Which Tab key press (1-based, counted per page load) moved focus to this
+   * element. null when focus arrived another way (autofocus, script).
+   */
+  tabStep: number | null;
+  /** Element rectangle at the moment it received focus. */
+  rect: PageRect;
   tag: string;
   role: string | null;
   name: string;

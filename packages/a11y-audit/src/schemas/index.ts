@@ -298,7 +298,27 @@ export const FOCUS_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
         },
       },
       elementsWithObscuredFocus: { type: 'number' },
-      allElements: { type: 'array', items: { type: 'object' } },
+      allElements: {
+        type: 'array',
+        items: {
+          type: 'object',
+          required: ['id', 'tabStep', 'rect'],
+          properties: {
+            id: { type: 'number' },
+            tabStep: { type: ['number', 'null'] },
+            rect: {
+              type: 'object',
+              required: ['x', 'y', 'width', 'height'],
+              properties: {
+                x: { type: 'number' },
+                y: { type: 'number' },
+                width: { type: 'number' },
+                height: { type: 'number' },
+              },
+            },
+          },
+        },
+      },
       interrupted: { type: 'boolean' },
       interruptedAt: { type: 'number' },
       screenshotPath: { type: 'string' },
