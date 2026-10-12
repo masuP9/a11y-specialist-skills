@@ -92,7 +92,15 @@ test('focus-indicator-check envelope validates against its schema', () => {
     focusObscuredIssues: [],
     elementsWithObscuredFocus: 0,
     allElements: [
-      { id: 0, ...element, tag: 'BUTTON', hasFocusStyle: false, diff: {} },
+      {
+        id: 0,
+        tabStep: 1,
+        rect: { x: 0, y: 0, width: 10, height: 10 },
+        ...element,
+        tag: 'BUTTON',
+        hasFocusStyle: false,
+        diff: {},
+      },
     ],
     interrupted: false,
     screenshotPath: '',

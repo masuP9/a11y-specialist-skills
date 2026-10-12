@@ -32,7 +32,7 @@
  *   never yields (so a browser call never returns) is not interrupted.
  */
 
-import type { Browser, BrowserContextOptions } from '@playwright/test';
+import type { BrowserContextOptions } from '@playwright/test';
 import { gotoAndSettle } from './gotoAndSettle.js';
 import type {
   KeyboardReachabilityCheckDetails,
@@ -71,21 +71,22 @@ import {
   requireTargetUrl,
   assertWalkLimits,
   createAuditOutput,
+  resolveCreateContext,
   type AuditOutputOptions,
+  type ContextSourceOptions,
 } from '../utils/test-harness.js';
 
 // =============================================================================
 // Options
 // =============================================================================
 
-export interface RunKeyboardReachabilityCheckOptions extends AuditOutputOptions {
-  /** The browser to create audit contexts in. */
-  browser: Browser;
+export interface RunKeyboardReachabilityCheckOptions
+  extends AuditOutputOptions, ContextSourceOptions {
   /** Target URL. Falls back to the `TEST_PAGE` env var; required. */
   targetUrl?: string;
   /** Whether to capture a screenshot (default: false). */
   screenshot?: boolean;
-  /** Options forwarded to `browser.newContext()`. */
+  /** Options forwarded to `browser.newContext()`. Ignored when `createContext` is used. */
   contextOptions?: BrowserContextOptions;
   /** Milliseconds to wait after each key press (default: DEFAULT_NAVIGATION_SETTLE_MS). */
   walkSettleMs?: number;
@@ -778,6 +779,7 @@ export async function runKeyboardReachabilityCheck(
 ): Promise<KeyboardReachabilityCheckResult> {
   const {
     browser,
+    createContext,
     targetUrl: targetUrlOption,
     screenshot = false,
     contextOptions,
@@ -788,6 +790,10 @@ export async function runKeyboardReachabilityCheck(
   } = options;
 
   assertWalkLimits({ timeBudgetMs, maxTabPresses });
+  const newContext = resolveCreateContext(
+    { browser, createContext },
+    contextOptions,
+  );
   const targetUrl = requireTargetUrl(targetUrlOption);
   const out = createAuditOutput({
     ...location,
@@ -798,7 +804,7 @@ export async function runKeyboardReachabilityCheck(
     DEFAULT_KEYBOARD_REACHABILITY_SCREENSHOT_FILE,
   );
 
-  const context = await browser.newContext(contextOptions);
+  const context = await newContext();
   const page = await context.newPage().catch(async (err: unknown) => {
     await context.close();
     throw err;

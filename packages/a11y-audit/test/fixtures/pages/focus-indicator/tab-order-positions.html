@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>focus-indicator: tab order and element positions</title>
+    <style>
+      :focus {
+        outline: 3px solid #005fcc;
+        outline-offset: 2px;
+      }
+      body {
+        margin: 0;
+        height: 3000px;
+        position: relative;
+      }
+      /* Page coordinates are fixed, so the test can compare against them. */
+      button {
+        position: absolute;
+        width: 120px;
+        height: 40px;
+        margin: 0;
+        padding: 0;
+        border: 1px solid #333;
+      }
+      #first {
+        left: 20px;
+        top: 30px;
+      }
+      #second {
+        left: 200px;
+        top: 90px;
+      }
+      /* Below the first viewport: focusing it scrolls the page. */
+      #third {
+        left: 60px;
+        top: 2000px;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="first">First</button>
+    <button id="second">Second</button>
+    <button id="third">Third</button>
+  </body>
+</html>

@@ -12,7 +12,6 @@
  */
 
 import type {
-  Browser,
   BrowserContext,
   BrowserContextOptions,
   Page,
@@ -45,7 +44,9 @@ import {
   requireTargetUrl,
   assertWalkLimits,
   createAuditOutput,
+  resolveCreateContext,
   type AuditOutputOptions,
+  type ContextSourceOptions,
 } from '../utils/test-harness.js';
 
 // =============================================================================
@@ -106,14 +107,16 @@ const WARNING_STYLES = `
 // Maximum retry attempts to avoid infinite loops
 const MAX_RETRIES = 5;
 
-export interface RunFocusIndicatorCheckOptions extends AuditOutputOptions {
-  /** The browser to create audit contexts in. */
-  browser: Browser;
+export interface RunFocusIndicatorCheckOptions
+  extends AuditOutputOptions, ContextSourceOptions {
   /** Target URL. Falls back to the `TEST_PAGE` env var; required. */
   targetUrl?: string;
   /** Whether to capture a screenshot (default: false). */
   screenshot?: boolean;
-  /** Options forwarded to `browser.newContext()` (locale, viewport, storageState, ...). */
+  /**
+   * Options forwarded to `browser.newContext()` (locale, viewport, storageState, ...).
+   * Ignored when `createContext` is used.
+   */
   contextOptions?: BrowserContextOptions;
   /**
    * Milliseconds to wait after each Tab press for a focus-triggered navigation
@@ -145,6 +148,7 @@ export async function runFocusIndicatorCheck(
 ): Promise<FocusCheckResult> {
   const {
     browser,
+    createContext,
     targetUrl: targetUrlOption,
     screenshot = false,
     contextOptions,
@@ -155,6 +159,10 @@ export async function runFocusIndicatorCheck(
   } = options;
 
   assertWalkLimits({ timeBudgetMs, maxTabPresses });
+  const newContext = resolveCreateContext(
+    { browser, createContext },
+    contextOptions,
+  );
   const targetUrl = requireTargetUrl(targetUrlOption);
 
   const out = createAuditOutput({
@@ -205,7 +213,7 @@ export async function runFocusIndicatorCheck(
     // Retry loop - restart test when navigation violation is detected
     while (retryCount < MAX_RETRIES) {
       // Create a fresh context for each attempt to reset init scripts
-      context = await browser.newContext(contextOptions);
+      context = await newContext();
       const page = await context.newPage();
 
       // Track main-frame navigations (WCAG 3.2.1). Catches URL changes that
@@ -635,6 +643,28 @@ function createFocusTrackerScript(args: {
   const baseStyles = new Map<Element, Record<string, string>>();
   const elementSelectors = new Map<Element, string>();
   let focusId = 0;
+
+  // Tab presses seen on this page load. `tabPending` is true between a Tab
+  // keydown and its keyup, so only a focusin caused by that press gets a tabStep.
+  let tabPresses = 0;
+  let tabPending = false;
+  document.addEventListener(
+    'keydown',
+    (e) => {
+      if (e.key === 'Tab') {
+        tabPresses++;
+        tabPending = true;
+      }
+    },
+    true,
+  );
+  document.addEventListener(
+    'keyup',
+    (e) => {
+      if (e.key === 'Tab') tabPending = false;
+    },
+    true,
+  );
 
   /**
    * Generate a CSS selector for an element
@@ -1094,6 +1124,9 @@ function createFocusTrackerScript(args: {
     }
 
     const id = focusId++;
+    const tabStep = tabPending ? tabPresses : null;
+    tabPending = false;
+    const box = el.getBoundingClientRect();
     el.setAttribute('data-focus-visited', String(id));
 
     // Check if changes are actually visible (not just outline-offset without outline)
@@ -1121,6 +1154,13 @@ function createFocusTrackerScript(args: {
     (window as unknown as { reportFocus: (data: unknown) => void }).reportFocus(
       {
         id,
+        tabStep,
+        rect: {
+          x: box.left + window.scrollX,
+          y: box.top + window.scrollY,
+          width: box.width,
+          height: box.height,
+        },
         tag: el.tagName,
         role: el.getAttribute('role'),
         name:

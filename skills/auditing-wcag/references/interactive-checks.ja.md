@@ -67,7 +67,7 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks focus-indicator-c
   - `focusObscuredIssues` - fixed/sticky要素によるフォーカス遮蔽（2.4.12）
   - `onFocusViolations` - フォーカス時のコンテキスト変更（3.2.1）
   - `interrupted` - ナビゲーションによりテストが中断されたかどうか
-  - `allElements` - テストした全要素とフォーカススタイルの差分
+  - `allElements` - テストした全要素とフォーカススタイルの差分。各要素に Tab の押下回数 `tabStep`（Tab 以外でフォーカスした場合は null）とフォーカス時のページ座標 `rect` を持つ（`id` は focusin を受けた順で、Tab の順とは限らない）
 - `focus-indicators.png` - 問題のある要素に警告ラベルを付けた全ページスクリーンショット（`--screenshot` フラグで有効化）
 
 **3.2.1 検出:**
