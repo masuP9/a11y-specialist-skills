@@ -215,6 +215,26 @@ test("focus indicators", async ({ browser }, testInfo) => {
 });
 ```
 
+`runFocusIndicatorCheck`, `runKeyboardReachabilityCheck` and
+`runKeyboardTrapCheck` accept `createContext` instead of `browser`. Use it to
+attach your own guards (such as a `context.route` URL check) to every context
+the check uses:
+
+```ts
+const result = await runKeyboardTrapCheck({
+  createContext: async () => {
+    const context = await browser.newContext({ locale: "ja-JP" });
+    await context.route("**/*", guardRequest); // your own check
+    return context;
+  },
+  targetUrl: "https://example.com",
+});
+```
+
+- If both `createContext` and `browser` are given, `createContext` wins. Passing neither throws.
+- `contextOptions` is not applied when `createContext` is used; set options inside the function.
+- Return a **new** context on every call (the check closes each one when done; the focus indicator check calls it again on every retry).
+
 ### Output location resolution
 
 For every check:

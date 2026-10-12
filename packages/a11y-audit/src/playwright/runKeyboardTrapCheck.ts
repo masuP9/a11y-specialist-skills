@@ -20,7 +20,7 @@
  * findings); confirmed violations (no escape at all) are rare but critical.
  */
 
-import type { Browser, BrowserContextOptions } from '@playwright/test';
+import type { BrowserContextOptions } from '@playwright/test';
 import { gotoAndSettle } from './gotoAndSettle.js';
 import type {
   KeyboardTrapCheckResult,
@@ -47,21 +47,22 @@ import {
   resolveScreenshotPath,
   requireTargetUrl,
   createAuditOutput,
+  resolveCreateContext,
   type AuditOutputOptions,
+  type ContextSourceOptions,
 } from '../utils/test-harness.js';
 
 // =============================================================================
 // Options
 // =============================================================================
 
-export interface RunKeyboardTrapCheckOptions extends AuditOutputOptions {
-  /** The browser to create audit contexts in. */
-  browser: Browser;
+export interface RunKeyboardTrapCheckOptions
+  extends AuditOutputOptions, ContextSourceOptions {
   /** Target URL. Falls back to the `TEST_PAGE` env var; required. */
   targetUrl?: string;
   /** Whether to capture a screenshot (default: false). */
   screenshot?: boolean;
-  /** Options forwarded to `browser.newContext()`. */
+  /** Options forwarded to `browser.newContext()`. Ignored when `createContext` is used. */
   contextOptions?: BrowserContextOptions;
   /** Milliseconds to wait after each Tab press (default: DEFAULT_NAVIGATION_SETTLE_MS). */
   walkSettleMs?: number;
@@ -92,6 +93,7 @@ export async function runKeyboardTrapCheck(
 ): Promise<KeyboardTrapCheckResult> {
   const {
     browser,
+    createContext,
     targetUrl: targetUrlOption,
     screenshot = false,
     contextOptions,
@@ -99,6 +101,10 @@ export async function runKeyboardTrapCheck(
     ...location
   } = options;
 
+  const newContext = resolveCreateContext(
+    { browser, createContext },
+    contextOptions,
+  );
   const targetUrl = requireTargetUrl(targetUrlOption);
   // Created before the context so invalid output options fail without
   // leaving a browser context behind.
@@ -111,7 +117,7 @@ export async function runKeyboardTrapCheck(
     DEFAULT_KEYBOARD_TRAP_SCREENSHOT_FILE,
   );
 
-  const context = await browser.newContext(contextOptions);
+  const context = await newContext();
   // The try/finally below closes the context; cover newPage() too.
   const page = await context.newPage().catch(async (err: unknown) => {
     await context.close();

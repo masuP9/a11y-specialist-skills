@@ -7,7 +7,12 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { Page } from '@playwright/test';
+import type {
+  Browser,
+  BrowserContext,
+  BrowserContextOptions,
+  Page,
+} from '@playwright/test';
 import { DISCLAIMER_CONSOLE } from '../constants.js';
 
 // =============================================================================
@@ -223,6 +228,43 @@ export function resolveScreenshotPath(
   defaultScreenshotFile: string,
 ): string {
   return path.join(path.dirname(resolvedResultPath), defaultScreenshotFile);
+}
+
+// =============================================================================
+// BrowserContext creation
+// =============================================================================
+
+/** How a check that owns its BrowserContext obtains one. */
+export interface ContextSourceOptions {
+  /** The browser to create audit contexts in. Optional when `createContext` is given. */
+  browser?: Browser;
+  /**
+   * Creates the audit context, so the caller can attach its own guards (e.g.
+   * `context.route`). Takes precedence over `browser`, and `contextOptions` is
+   * not applied — bake any options into this function. It must return a NEW
+   * context on every call (the check closes each one, and the focus-indicator
+   * check asks for a fresh one per retry).
+   */
+  createContext?: () => Promise<BrowserContext>;
+}
+
+/**
+ * Resolve how to create audit contexts: `createContext` if given, else
+ * `browser.newContext(contextOptions)`.
+ *
+ * @throws if neither `browser` nor `createContext` is provided.
+ */
+export function resolveCreateContext(
+  { browser, createContext }: ContextSourceOptions,
+  contextOptions?: BrowserContextOptions,
+): () => Promise<BrowserContext> {
+  if (createContext) return createContext;
+  if (!browser) {
+    throw new Error(
+      'No browser provided. Pass `browser` or `createContext` to create audit contexts.',
+    );
+  }
+  return () => browser.newContext(contextOptions);
 }
 
 // =============================================================================
