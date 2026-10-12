@@ -784,3 +784,58 @@ export const MOTION_MUTATION_MARGIN = 3;
 export const MOTION_SIMULATION_TIMEOUT_MS = 10_000;
 export const DEFAULT_MOTION_ACTUATION_RESULT_FILE =
   'motion-actuation-result.json';
+
+// =============================================================================
+// Accessible Authentication Check Constants (WCAG 3.3.8)
+// =============================================================================
+
+/** WCAG 3.3.8: phrases in a name/label that suggest a one-time verification code. */
+export const AUTH_OTP_NAME_PATTERN =
+  /(one.?time|verification.?code|verify.?code|auth(entication)?.?code|security.?code.?(sms|email)|確認コード|認証コード|ワンタイム|検証コード)/i;
+/**
+ * Short words that suggest a verification code only as whole words (split on
+ * non-alphanumerics and camelCase): `otpCode` / `otp_code` match, `footprint`
+ * does not.
+ */
+export const AUTH_OTP_NAME_WORDS = ['otp', 'totp', '2fa', 'mfa'] as const;
+/** WCAG 3.3.8: elements that look like a CAPTCHA (outermost match only). */
+export const AUTH_CAPTCHA_SELECTOR = [
+  'iframe[src*="captcha" i]',
+  'iframe[src*="challenges.cloudflare.com" i]',
+  'iframe[src*="arkoselabs" i]',
+  'iframe[src*="funcaptcha" i]',
+  '.g-recaptcha',
+  '.h-captcha',
+  '.cf-turnstile',
+  '[data-sitekey]',
+  '[id*="captcha" i]',
+  '[class*="captcha" i]',
+  '[name*="captcha" i]',
+  'img[src*="captcha" i]',
+  'img[alt*="captcha" i]',
+].join(', ');
+/** autocomplete field names accepted for each kind of authentication field. */
+export const AUTH_EXPECTED_AUTOCOMPLETE: Record<
+  'password' | 'one-time-code' | 'username',
+  readonly string[]
+> = {
+  password: ['current-password', 'new-password'],
+  'one-time-code': ['one-time-code'],
+  username: ['username', 'email', 'tel'],
+};
+/** Secure-context page used to write the clipboard; never leaves the browser (route-fulfilled). */
+export const AUTH_PASTE_HELPER_URL = 'https://a11y-audit.invalid/paste-probe';
+/** Two digits: accepted by one-time-code fields, yet never a full code (4 digits or more), so no auto-submit. */
+export const AUTH_PASTE_PROBE = '12';
+export const AUTH_PASTE_SETTLE_MS = 300;
+/** Per page operation. */
+export const AUTH_PASTE_STEP_TIMEOUT_MS = 1_500;
+/**
+ * Per field; the page script is terminated via CDP when exceeded. It must be
+ * larger than the worst case of the steps of one field (7 steps of
+ * AUTH_PASTE_STEP_TIMEOUT_MS plus AUTH_PASTE_SETTLE_MS = 10.8s), so that a slow
+ * page is not mistaken for a hang.
+ */
+export const AUTH_PASTE_FIELD_TIMEOUT_MS = 12_000;
+export const DEFAULT_ACCESSIBLE_AUTHENTICATION_RESULT_FILE =
+  'accessible-authentication-result.json';

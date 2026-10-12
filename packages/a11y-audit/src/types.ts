@@ -32,7 +32,8 @@ export type CheckSource =
   | 'keyboard-trap-check'
   | 'keyboard-reachability-check'
   | 'redundant-entry-check'
-  | 'motion-actuation-check';
+  | 'motion-actuation-check'
+  | 'accessible-authentication-check';
 
 export type NormalizedImpact = 'critical' | 'serious' | 'moderate' | 'minor';
 
@@ -768,6 +769,71 @@ export interface MotionActuationCheckDetails {
 
 export type MotionActuationCheckResult =
   AuditCheckResult<MotionActuationCheckDetails>;
+
+// =============================================================================
+// Accessible Authentication Check (WCAG 3.3.8)
+// =============================================================================
+
+export type AuthFieldKind = 'password' | 'one-time-code' | 'username';
+
+export interface AuthPasteResult {
+  /** null when not measured (navigation, timeout or error). */
+  result: 'inserted' | 'blocked' | null;
+  /**
+   * How the field value compared with the probe after pasting. The raw value is
+   * never recorded: a page may restore a real secret instead of the probe.
+   */
+  valueAfterPaste: 'probe' | 'probe-prefix' | 'empty' | 'other' | null;
+  /** Only measured when result is 'blocked'. */
+  pasteEventPrevented: boolean | null;
+  navigated: boolean;
+  error: string | null;
+}
+
+export interface AuthField {
+  selector: string;
+  html: string;
+  htmlTruncated: boolean;
+  kind: AuthFieldKind;
+  inputType: string;
+  name: string | null;
+  id: string | null;
+  labelText: string | null;
+  autocomplete: string | null;
+  /** Raw autocomplete attribute of the owning form; null without a form or attribute. */
+  formAutocomplete: string | null;
+  autocompleteStatus: 'ok' | 'off' | 'mismatch' | 'missing';
+  editable: boolean;
+  visible: boolean;
+  formSelector: string | null;
+  /** null when the field was not paste-tested (username, hidden, disabled, or pasteTest not 'ran'). */
+  paste: AuthPasteResult | null;
+  /** paste/beforeinput/input listeners on the field itself; null when not inspected. */
+  pasteListenerCount: number | null;
+}
+
+export interface CaptchaCandidate {
+  selector: string;
+  html: string;
+  htmlTruncated: boolean;
+  matchedBy: string;
+  visible: boolean;
+}
+
+export interface AccessibleAuthenticationCheckDetails {
+  fields: AuthField[];
+  captchas: CaptchaCandidate[];
+  pasteTest: {
+    status: 'ran' | 'disabled' | 'unavailable' | 'skipped-no-targets';
+    /** Why the test could not run; null unless status is 'unavailable'. */
+    reason: 'clipboard-permission' | 'paste-shortcut' | 'helper-page' | null;
+    /** The text written to the clipboard; null when not written. */
+    probe: string | null;
+  };
+}
+
+export type AccessibleAuthenticationCheckResult =
+  AuditCheckResult<AccessibleAuthenticationCheckDetails>;
 
 // =============================================================================
 // Time Limit Detector (WCAG 2.2.1)
