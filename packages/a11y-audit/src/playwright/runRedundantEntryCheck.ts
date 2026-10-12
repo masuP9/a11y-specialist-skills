@@ -124,6 +124,16 @@ interface Classified {
 
 /** Decide purpose, scope and section of a field, or null when unknown. */
 function classifyField(field: FieldInfo & BasicFieldInfo): Classified | null {
+  const name = stripWords(field.name);
+  const id = stripWords(field.id);
+  const label = stripWords(field.labelText);
+  const placeholder = stripWords(field.placeholder);
+  // Scope words in name/id/label/placeholder, else the group heading. Used when
+  // the autocomplete value has no explicit shipping/billing token.
+  const inferredScope =
+    [...name.scopes, ...id.scopes, ...label.scopes, ...placeholder.scopes][0] ??
+    scopeFromGroupLabel(field.groupLabel);
+
   const tokens = autocompleteTokens(field.autocomplete ?? '');
   const isOnOff =
     tokens.length === 1 && (tokens[0] === 'on' || tokens[0] === 'off');
@@ -138,7 +148,7 @@ function classifyField(field: FieldInfo & BasicFieldInfo): Classified | null {
           ? 'shipping'
           : tokens.includes('billing')
             ? 'billing'
-            : null,
+            : inferredScope,
         section: tokens.find((token) => token.startsWith('section-')) ?? null,
         contactType:
           tokens.find((token) =>
@@ -148,10 +158,6 @@ function classifyField(field: FieldInfo & BasicFieldInfo): Classified | null {
     }
   }
 
-  const name = stripWords(field.name);
-  const id = stripWords(field.id);
-  const label = stripWords(field.labelText);
-  const placeholder = stripWords(field.placeholder);
   const match = findPatternMatch(
     {
       ...field,
@@ -164,13 +170,10 @@ function classifyField(field: FieldInfo & BasicFieldInfo): Classified | null {
   );
   if (!match) return null;
 
-  const scope =
-    [...name.scopes, ...id.scopes, ...label.scopes, ...placeholder.scopes][0] ??
-    scopeFromGroupLabel(field.groupLabel);
   return {
     purpose: match.token,
     purposeSource: match.matchedBy,
-    scope,
+    scope: inferredScope,
     section: null,
     contactType: null,
   };

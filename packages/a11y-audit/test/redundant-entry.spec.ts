@@ -299,6 +299,37 @@ test('form の外にあり form 属性で関連付けられた「お届け先と
   );
 });
 
+test('shipping/billing トークンが無い autocomplete="email" でも、fieldset の見出しで範囲が分かれれば scoped になる', async ({
+  page,
+}, testInfo) => {
+  await page.setContent(
+    html(`<form id="f">
+      <fieldset><legend>お届け先</legend>
+        <input id="a" autocomplete="email" aria-label="Email">
+      </fieldset>
+      <fieldset><legend>ご請求先</legend>
+        <input id="b" autocomplete="email" aria-label="Email">
+      </fieldset>
+    </form>`),
+  );
+
+  const result = await runRedundantEntryCheck({
+    page,
+    outputDir: testInfo.outputDir,
+  });
+
+  expect(result.details.groups).toHaveLength(1);
+  expect(result.details.groups[0]?.kind).toBe('scoped');
+  expect(result.details.groups[0]?.fields.map((f) => f.scope)).toEqual([
+    'shipping',
+    'billing',
+  ]);
+  expect(result.details.groups[0]?.fields.map((f) => f.purposeSource)).toEqual([
+    'autocomplete',
+    'autocomplete',
+  ]);
+});
+
 test('autocomplete が home tel と work tel の欄はグループにならない', async ({
   page,
 }, testInfo) => {
