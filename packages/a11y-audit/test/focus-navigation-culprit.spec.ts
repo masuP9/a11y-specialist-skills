@@ -46,6 +46,29 @@ const NAVIGATED_AUTOFOCUS_HTML = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>navigated</title></head>
 <body><input id="dest" autofocus aria-label="destination"></body></html>`;
 
+// The iframe is added only when #plain gets focus, i.e. after the check has
+// started walking, and the link inside it navigates the parent page.
+const LAZY_FRAME_HTML = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>lazy frame fixture</title></head>
+<body>
+  <button id="plain">plain</button>
+  <script>
+    document.getElementById('plain').addEventListener('focus', function () {
+      if (document.querySelector('iframe')) return;
+      var frame = document.createElement('iframe');
+      frame.title = 'lazy';
+      frame.src = '/lazy-frame-child';
+      document.body.appendChild(frame);
+    });
+  </script>
+</body></html>`;
+
+const LAZY_FRAME_CHILD_HTML = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>lazy frame child</title></head>
+<body>
+  <a id="inner" href="#" onfocus="top.location.href = '/navigated'">inner</a>
+</body></html>`;
+
 let server: Server;
 let port: number;
 // Requests to the first-attempt pages so far: only the first attempt loses
@@ -60,6 +83,10 @@ test.beforeAll(async () => {
         res.end(NAVIGATED_HTML);
       } else if (req.url === '/navigated-autofocus') {
         res.end(NAVIGATED_AUTOFOCUS_HTML);
+      } else if (req.url === '/lazy-frame') {
+        res.end(LAZY_FRAME_HTML);
+      } else if (req.url === '/lazy-frame-child') {
+        res.end(LAZY_FRAME_CHILD_HTML);
       } else if (req.url === '/always-lost') {
         res.end(page(true));
       } else if (req.url === '/to-autofocus') {
@@ -171,4 +198,21 @@ test('focus report lost and the destination page autofocuses a field: the destin
   expect(
     result.details.onFocusViolations.map((v) => v.element.selector),
   ).toEqual(['#jump']);
+});
+
+test('link in an iframe loaded after the walk started navigates the parent: the link, not the iframe, is recorded as the 3.2.1 culprit', async ({
+  browser,
+}, testInfo) => {
+  // A long settle window lets the iframe load before the next Tab.
+  const result = await runFocusIndicatorCheck({
+    browser,
+    targetUrl: `http://127.0.0.1:${port}/lazy-frame`,
+    outputDir: testInfo.outputDir,
+    quiet: true,
+    navigationSettleMs: 500,
+  });
+
+  expect(
+    result.details.onFocusViolations.map((v) => v.element.selector),
+  ).toEqual(['#inner']);
 });

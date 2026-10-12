@@ -417,30 +417,41 @@ export async function runFocusIndicatorCheck(
 
       // Initialize the focus tracker in every frame (it records each frame's
       // elements' styles before focus) and add up the element counts. A frame
-      // that is mid-navigation counts as zero. Each frame's document token is
-      // kept so that, after a navigation, only reports and answers from the
-      // documents being walked can name the culprit.
+      // that is mid-navigation counts as zero.
       const mainFrame = page.mainFrame();
-      const inits = await Promise.all(
+      const counts = await Promise.all(
         page.frames().map((frame) => {
-          const init = frame.evaluate(() => {
-            const w = window as unknown as {
-              initFocusTracker?: () => number;
-              focusAuditDocumentToken?: string;
-            };
-            return {
-              count: w.initFocusTracker?.() ?? 0,
-              token: w.focusAuditDocumentToken ?? null,
-            };
-          });
-          return frame === mainFrame
-            ? init
-            : init.catch(() => ({ count: 0, token: null }));
+          const init = frame.evaluate(
+            () =>
+              (
+                window as unknown as { initFocusTracker?: () => number }
+              ).initFocusTracker?.() ?? 0,
+          );
+          return frame === mainFrame ? init : init.catch(() => 0);
         }),
       );
-      const count = inits.reduce((sum, init) => sum + init.count, 0);
-      const documentTokens = new Set(inits.map((init) => init.token));
-      documentTokens.delete(null);
+      const count = counts.reduce((sum, n) => sum + n, 0);
+
+      // Tokens of the documents now in the page's frames, including iframes
+      // loaded after the walk started. Read before each Tab so that, after a
+      // navigation, only reports and answers from those documents can name
+      // the culprit.
+      const readDocumentTokens = async (): Promise<Set<string>> => {
+        const tokens = await Promise.all(
+          page
+            .frames()
+            .map((frame) =>
+              frame
+                .evaluate(
+                  () =>
+                    (window as unknown as { focusAuditDocumentToken?: string })
+                      .focusAuditDocumentToken ?? null,
+                )
+                .catch(() => null),
+            ),
+        );
+        return new Set(tokens.filter((token) => token !== null));
+      };
 
       // Mark elements that caused navigation violations (from previous attempts)
       if (skipSelectors.length > 0) {
@@ -498,6 +509,7 @@ export async function runFocusIndicatorCheck(
 
         const urlBeforeTab = page.url();
         const recordedBeforeTab = focusHistory.length;
+        const documentTokens = await readDocumentTokens();
 
         tabPresses++;
         await page.keyboard.press('Tab');
@@ -556,7 +568,9 @@ export async function runFocusIndicatorCheck(
           // leads to can report its own focus (autofocus). Use only reports
           // that arrived after this Tab from the documents being walked;
           // otherwise the culprit is unknown and the attempt restarts without
-          // recording or skipping anything.
+          // recording or skipping anything. Limitation: a page that delays its
+          // own reports (e.g. by wrapping reportFocus) can pass off an earlier
+          // element's report as this Tab's.
           const culprit =
             currentFocusedElement ??
             focusReports
