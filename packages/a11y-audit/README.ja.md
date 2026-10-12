@@ -227,6 +227,14 @@ const result = await runKeyboardTrapCheck({
 - `createContext` を使うとき `contextOptions` は使われません。必要なオプションは関数の中で指定してください。
 - 呼ばれるたびに**新しい** context を返してください（検査が使い終わると閉じます。フォーカス表示検査はやり直しのたびに呼びます）。
 
+結果を呼び出し側の要素に結びつけたいときは、`runFocusIndicatorCheck` の `echoAttribute` に属性名（例: `data-test-id`）を
+渡します。要素を指す記録（`allElements`、`issues`、`focusObscuredIssues` の `element` と
+`obscuredBy`、`onFocusViolations` の `element`）すべてに `echo` として属性の値が付きます
+（属性が無い要素は `null`、オプションを渡さなければ `echo` は付きません）。検査は新しい
+context でページを開くため、属性はページの読み込み時点で要素に付いている必要があります
+（ページのマークアップ、または `createContext` で作る context に `addInitScript` で付ける）。
+属性名は文字列としてそのまま `getAttribute` に渡され、不正な名前は `Error` になります。
+
 ### 出力先の解決順
 
 各検査共通:

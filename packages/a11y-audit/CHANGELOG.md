@@ -22,6 +22,9 @@ adheres to [Semantic Versioning](https://semver.org/).
   `details.aborted` (`reason: 'timeout' | 'tab-limit'`, `recordedCount`,
   `focusableCount`); `interrupted` keeps its meaning. On keyboard-reachability
   they override the previous fixed 60 s / 600-press limits.
+- `runFocusIndicatorCheck`: new `echoAttribute` option. Every record that points
+  at an element carries the value of that attribute as `echo` (`null` when the
+  element lacks it), so results can be matched to the caller's own elements.
 
 ### Changed
 

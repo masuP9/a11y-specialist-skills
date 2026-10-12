@@ -137,7 +137,19 @@ export interface RunFocusIndicatorCheckOptions
    * `reason: 'tab-limit'`.
    */
   maxTabPresses?: number;
+  /**
+   * Name of an attribute on the caller's elements (e.g. `data-test-id`). Every
+   * record that points at an element gets an `echo` field holding that
+   * attribute's value (`null` when the element lacks it), so results can be
+   * matched to the caller's own elements. The check opens fresh contexts, so
+   * the attribute must already be on the element when the page loads (page
+   * markup, or an init script added to the context `createContext` returns).
+   */
+  echoAttribute?: string;
 }
+
+// HTML attribute names exclude whitespace, controls, and `" ' > / =`.
+const INVALID_ATTRIBUTE_NAME = /[\s\p{Cc}"'>/=]|^$/u;
 
 /**
  * Run the focus indicator check, write the result JSON (and optionally a
@@ -155,10 +167,20 @@ export async function runFocusIndicatorCheck(
     navigationSettleMs = DEFAULT_NAVIGATION_SETTLE_MS,
     timeBudgetMs,
     maxTabPresses,
+    echoAttribute,
     ...location
   } = options;
 
   assertWalkLimits({ timeBudgetMs, maxTabPresses });
+  if (
+    echoAttribute !== undefined &&
+    INVALID_ATTRIBUTE_NAME.test(echoAttribute)
+  ) {
+    throw new Error(
+      `echoAttribute must be a valid HTML attribute name (no whitespace or any of " ' > / =), got ${JSON.stringify(echoAttribute)}`,
+    );
+  }
+
   const newContext = resolveCreateContext(
     { browser, createContext },
     contextOptions,
@@ -248,6 +270,7 @@ export async function runFocusIndicatorCheck(
             `${data.tag.toLowerCase()}:nth-of-type(${data.id + 1})`,
           html: data.html,
           htmlTruncated: data.htmlTruncated,
+          ...(data.echo !== undefined && { echo: data.echo }),
         };
       });
 
@@ -266,6 +289,7 @@ export async function runFocusIndicatorCheck(
         warningStyles: WARNING_STYLES,
         skipSelectors: [...skipSelectors],
         htmlSnippetMaxLength: HTML_SNIPPET_MAX_LENGTH,
+        echoAttribute: echoAttribute ?? null,
         obscuredConfig: {
           minOverlapRatio: FOCUS_OBSCURED_MIN_OVERLAP_RATIO,
           minOverlapPx: FOCUS_OBSCURED_MIN_OVERLAP_PX,
@@ -336,7 +360,7 @@ export async function runFocusIndicatorCheck(
         let currentFocusedElement: FocusElementRef | null = null;
         try {
           currentFocusedElement = await page.evaluate(
-            (htmlSnippetMaxLength) => {
+            ({ htmlSnippetMaxLength, echoAttribute }) => {
               const el = document.activeElement;
               if (!el || el === document.body) return null;
 
@@ -377,9 +401,15 @@ export async function runFocusIndicatorCheck(
                   ? html.slice(0, htmlSnippetMaxLength)
                   : html,
                 htmlTruncated,
+                ...(echoAttribute !== null && {
+                  echo: el.getAttribute(echoAttribute),
+                }),
               };
             },
-            HTML_SNIPPET_MAX_LENGTH,
+            {
+              htmlSnippetMaxLength: HTML_SNIPPET_MAX_LENGTH,
+              echoAttribute: echoAttribute ?? null,
+            },
           );
         } catch {
           // Page might have navigated, use lastFocusedElement as fallback
@@ -486,6 +516,7 @@ export async function runFocusIndicatorCheck(
         selector: el.selector,
         html: el.html,
         htmlTruncated: el.htmlTruncated,
+        ...(el.echo !== undefined && { echo: el.echo }),
       })),
       onFocusViolations,
       focusObscuredIssues,
@@ -593,6 +624,7 @@ function createFocusTrackerScript(args: {
   warningStyles: string;
   skipSelectors: string[];
   htmlSnippetMaxLength: number;
+  echoAttribute: string | null;
   obscuredConfig: {
     minOverlapRatio: number;
     minOverlapPx: number;
@@ -605,8 +637,13 @@ function createFocusTrackerScript(args: {
     warningStyles,
     skipSelectors,
     htmlSnippetMaxLength,
+    echoAttribute,
     obscuredConfig,
   } = args;
+
+  /** `{ echo }` for the caller's attribute, or nothing when not requested. */
+  const getEcho = (el: Element): { echo?: string | null } =>
+    echoAttribute === null ? {} : { echo: el.getAttribute(echoAttribute) };
 
   const getHtmlSnippet = (
     el: Element,
@@ -992,6 +1029,7 @@ function createFocusTrackerScript(args: {
         role: string | null;
         name: string;
         selector: string;
+        echo?: string | null;
       };
       overlapRect: { left: number; top: number; width: number; height: number };
       overlapArea: number;
@@ -1035,6 +1073,7 @@ function createFocusTrackerScript(args: {
             obscurer.textContent?.slice(0, 30) ||
             '',
           selector: getSelector(obscurer),
+          ...getEcho(obscurer),
         },
         overlapRect: intersection,
         overlapArea,
@@ -1071,6 +1110,7 @@ function createFocusTrackerScript(args: {
             '',
           selector: getSelector(focusedEl),
           ...getHtmlSnippet(focusedEl),
+          ...getEcho(focusedEl),
         },
         elementRect: {
           left: focusedRect.left,
@@ -1169,6 +1209,7 @@ function createFocusTrackerScript(args: {
         diff,
         selector: elementSelectors.get(el) || getSelector(el),
         ...getHtmlSnippet(el),
+        ...getEcho(el),
       },
     );
 

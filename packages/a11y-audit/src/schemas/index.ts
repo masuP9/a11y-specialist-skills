@@ -213,6 +213,7 @@ const FOCUS_ELEMENT_REF_SCHEMA: JsonSchema = {
     selector: { type: 'string' },
     html: { type: 'string' },
     htmlTruncated: { type: 'boolean' },
+    echo: { type: ['string', 'null'] },
   },
 };
 
