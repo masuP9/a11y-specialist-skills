@@ -224,10 +224,12 @@ export function normalizeFocusCheck(
     applicable,
   );
 
-  // Retries ran out on a navigation whose element was never identified: focus
-  // did change the page, so 3.2.1 can neither pass nor be inapplicable.
+  // Focus changed the page but the element was never identified (retries ran
+  // out, or a limit stopped the restart): 3.2.1 can neither pass nor be
+  // inapplicable. Confirmed violations still take precedence.
   const unattributedNavigation =
-    details.interrupted && details.onFocusViolations.length === 0;
+    (details.interrupted || details.unidentifiedNavigation === true) &&
+    details.onFocusViolations.length === 0;
   bucketize(
     buckets,
     'no-context-change-on-focus',

@@ -176,6 +176,21 @@ async function measureVisualDiff(
   }
 }
 
+function toElementRef(data: FocusRecord): FocusElementRef {
+  return {
+    tag: data.tag,
+    role: data.role,
+    name: data.name,
+    selector:
+      data.selector || `${data.tag.toLowerCase()}:nth-of-type(${data.id + 1})`,
+    html: data.html,
+    htmlTruncated: data.htmlTruncated,
+    frame: data.frame,
+    shadowHosts: data.shadowHosts,
+    ...(data.echo !== undefined && { echo: data.echo }),
+  };
+}
+
 export interface RunFocusIndicatorCheckOptions
   extends AuditOutputOptions, ContextSourceOptions {
   /** Target URL. Falls back to the `TEST_PAGE` env var; required. */
@@ -298,6 +313,8 @@ export async function runFocusIndicatorCheck(
   const skipSelectors: string[] = [];
   let finalFocusHistory: FocusRecord[] = [];
   let retryCount = 0;
+  // Whether the latest navigation's element could not be identified.
+  let unidentifiedNavigation = false;
   let finalPage: Page | null = null;
   // The context for the current attempt. Held outside the loop so it is always
   // closed in `finally`, including if an attempt throws mid-way.
@@ -352,28 +369,25 @@ export async function runFocusIndicatorCheck(
       // Elements before the violating one are focused again on every attempt,
       // so keep only the last attempt's records, like focusHistory.
       focusObscuredIssues.length = 0;
-      let lastFocusedElement: FocusElementRef | null = null;
+      // One entry per focusHistory record: the element and the document that
+      // reported it, used to pick the 3.2.1 culprit.
+      const focusReports: { ref: FocusElementRef; documentToken: string }[] =
+        [];
       let navigationDetected = false;
 
       // Expose function to receive focus reports from browser context
-      await page.exposeFunction('reportFocus', (data: FocusRecord) => {
-        // Filled in after the screenshots; stays null when none could be made.
-        if (screenshotDiff) data.visualDiff = null;
-        focusHistory.push(data);
-        lastFocusedElement = {
-          tag: data.tag,
-          role: data.role,
-          name: data.name,
-          selector:
-            data.selector ||
-            `${data.tag.toLowerCase()}:nth-of-type(${data.id + 1})`,
-          html: data.html,
-          htmlTruncated: data.htmlTruncated,
-          frame: data.frame,
-          shadowHosts: data.shadowHosts,
-          ...(data.echo !== undefined && { echo: data.echo }),
-        };
-      });
+      await page.exposeFunction(
+        'reportFocus',
+        ({
+          documentToken,
+          ...data
+        }: FocusRecord & { documentToken: string }) => {
+          // Filled in after the screenshots; stays null when none could be made.
+          if (screenshotDiff) data.visualDiff = null;
+          focusHistory.push(data);
+          focusReports.push({ ref: toElementRef(data), documentToken });
+        },
+      );
 
       // Expose function to receive focus obscured reports (WCAG 2.4.11 / 2.4.12)
       await page.exposeFunction(
@@ -403,20 +417,30 @@ export async function runFocusIndicatorCheck(
 
       // Initialize the focus tracker in every frame (it records each frame's
       // elements' styles before focus) and add up the element counts. A frame
-      // that is mid-navigation counts as zero.
+      // that is mid-navigation counts as zero. Each frame's document token is
+      // kept so that, after a navigation, only reports and answers from the
+      // documents being walked can name the culprit.
       const mainFrame = page.mainFrame();
-      const counts = await Promise.all(
+      const inits = await Promise.all(
         page.frames().map((frame) => {
-          const init = frame.evaluate(
-            () =>
-              (
-                window as unknown as { initFocusTracker?: () => number }
-              ).initFocusTracker?.() ?? 0,
-          );
-          return frame === mainFrame ? init : init.catch(() => 0);
+          const init = frame.evaluate(() => {
+            const w = window as unknown as {
+              initFocusTracker?: () => number;
+              focusAuditDocumentToken?: string;
+            };
+            return {
+              count: w.initFocusTracker?.() ?? 0,
+              token: w.focusAuditDocumentToken ?? null,
+            };
+          });
+          return frame === mainFrame
+            ? init
+            : init.catch(() => ({ count: 0, token: null }));
         }),
       );
-      const count = counts.reduce((sum, n) => sum + n, 0);
+      const count = inits.reduce((sum, init) => sum + init.count, 0);
+      const documentTokens = new Set(inits.map((init) => init.token));
+      documentTokens.delete(null);
 
       // Mark elements that caused navigation violations (from previous attempts)
       if (skipSelectors.length > 0) {
@@ -478,27 +502,41 @@ export async function runFocusIndicatorCheck(
         tabPresses++;
         await page.keyboard.press('Tab');
 
-        // Get currently focused element IMMEDIATELY after Tab
+        // Get currently focused element IMMEDIATELY after Tab. An answer from
+        // a document reached by navigation (e.g. its autofocus) is ignored.
+        const fromWalkedDocument = (
+          answer: { ref: FocusElementRef; documentToken: string } | null,
+        ) =>
+          answer && documentTokens.has(answer.documentToken)
+            ? answer.ref
+            : null;
         let currentFocusedElement: FocusElementRef | null = null;
         try {
           // While focus is inside an iframe the main frame's activeElement is
           // the iframe element itself, so prefer what a child frame reports.
           // Only the main frame's evaluate may throw (navigation in flight).
-          const describeActive = () =>
-            (
-              window as unknown as {
-                describeActiveElement?: () => FocusElementRef | null;
-              }
-            ).describeActiveElement?.() ?? null;
+          const describeActive = () => {
+            const w = window as unknown as {
+              describeActiveElement?: () => FocusElementRef | null;
+              focusAuditDocumentToken: string;
+            };
+            const ref = w.describeActiveElement?.() ?? null;
+            return ref && { ref, documentToken: w.focusAuditDocumentToken };
+          };
           const childRefs = await Promise.all(
             page
               .frames()
               .filter((frame) => frame !== page.mainFrame())
-              .map((frame) => frame.evaluate(describeActive).catch(() => null)),
+              .map((frame) =>
+                frame
+                  .evaluate(describeActive)
+                  .then(fromWalkedDocument)
+                  .catch(() => null),
+              ),
           );
           currentFocusedElement =
             childRefs.find((ref) => ref !== null) ??
-            (await page.mainFrame().evaluate(describeActive));
+            fromWalkedDocument(await page.mainFrame().evaluate(describeActive));
         } catch {
           // Page might have navigated; fall back to the focus report below.
         }
@@ -514,15 +552,19 @@ export async function runFocusIndicatorCheck(
           // 3.2.1 violation detected!
           navigationDetected = true;
 
-          // The focus report can be lost in the navigation, leaving
-          // lastFocusedElement on the element before. Trust it only when this
-          // Tab's report arrived; otherwise the culprit is unknown and the
-          // attempt restarts without recording or skipping anything.
+          // The focus report can be lost in the navigation, and the page it
+          // leads to can report its own focus (autofocus). Use only reports
+          // that arrived after this Tab from the documents being walked;
+          // otherwise the culprit is unknown and the attempt restarts without
+          // recording or skipping anything.
           const culprit =
             currentFocusedElement ??
-            (focusHistory.length > recordedBeforeTab
-              ? lastFocusedElement
-              : null);
+            focusReports
+              .slice(recordedBeforeTab)
+              .filter((report) => documentTokens.has(report.documentToken))
+              .at(-1)?.ref ??
+            null;
+          unidentifiedNavigation = !culprit;
           if (!culprit) {
             out.warn(
               `\n⚠️  Focus caused navigation from ${urlBeforeTab}, but the element could not be identified. Restarting test...`,
@@ -644,6 +686,7 @@ export async function runFocusIndicatorCheck(
       allElements: finalFocusHistory,
       // Retries exhausted: elements after the last navigation were not tested.
       interrupted: retryCount >= MAX_RETRIES,
+      unidentifiedNavigation,
       aborted,
       screenshotPath: screenshot ? resolvedScreenshotPath : '',
     };
@@ -851,6 +894,13 @@ function createFocusTrackerScript(args: {
   const baseStyles = new Map<Element, Record<string, string>>();
   const elementSelectors = new Map<Element, string>();
   let focusId = 0;
+
+  // Tells this document apart from a page reached by navigation, which runs
+  // this script again (randomUUID needs a secure context).
+  const documentToken = Math.random().toString(36).slice(2);
+  (
+    window as unknown as { focusAuditDocumentToken: string }
+  ).focusAuditDocumentToken = documentToken;
 
   // Tab presses seen on this page load. `tabPending` is true between a Tab
   // keydown and its keyup, so only a focusin caused by that press gets a tabStep.
@@ -1468,6 +1518,7 @@ function createFocusTrackerScript(args: {
         ...getHtmlSnippet(el),
         ...getEcho(el),
         ...getLocation(el),
+        documentToken,
       },
     );
 

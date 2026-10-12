@@ -264,6 +264,14 @@ export interface FocusCheckDetails {
   interrupted: boolean;
   interruptedAt?: number;
   /**
+   * True when focus caused a navigation whose element could not be identified
+   * and no later attempt identified one (the walk was then stopped by a limit,
+   * ran out of retries, or did not see the navigation again). 3.2.1 is then
+   * `incomplete` unless `onFocusViolations` has entries. Absent in results
+   * from older versions.
+   */
+  unidentifiedNavigation?: boolean;
+  /**
    * Set when `timeBudgetMs` or `maxTabPresses` stopped the Tab walk before it
    * finished; `null` otherwise (absent in results from older versions).
    * Elements after the stop point were not tested: `recordedCount` of

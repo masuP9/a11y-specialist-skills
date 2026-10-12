@@ -376,6 +376,7 @@ export const FOCUS_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
       },
       interrupted: { type: 'boolean' },
       interruptedAt: { type: 'number' },
+      unidentifiedNavigation: { type: 'boolean' },
       aborted: {
         type: ['object', 'null'],
         required: ['reason', 'url', 'recordedCount', 'focusableCount'],

@@ -62,10 +62,15 @@ the old rule, check both.
   element's focus report is lost in the navigation (seen on busy CI machines),
   the element focused before it is no longer recorded in `onFocusViolations`
   and skipped from later attempts (which also left it out of the 2.4.7
-  check). The attempt now restarts without recording anything (#84).
-- focus-indicator: when retries run out (`interrupted: true`) and no 3.2.1
-  element was identified, `a11y-skills/no-context-change-on-focus` is now
-  `incomplete` (one page-level node) instead of `passes` or `inapplicable`.
+  check). Neither is a focus report from the page the navigation leads to
+  (e.g. its autofocus field). The attempt now restarts without recording
+  anything (#84).
+- focus-indicator: new `details.unidentifiedNavigation` (optional boolean) is
+  true when such a navigation's element was never identified, because retries
+  ran out or `maxTabPresses` / `timeBudgetMs` stopped the restart. With no
+  `onFocusViolations` (or with `interrupted: true` and none),
+  `a11y-skills/no-context-change-on-focus` is now `incomplete` (one page-level
+  node) instead of `passes` or `inapplicable`.
 
 ## 0.10.0 — 2026-10-12
 

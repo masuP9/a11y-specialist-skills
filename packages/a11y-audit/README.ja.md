@@ -302,7 +302,8 @@ const result = await runTargetSizeCheck({
 `quiet` で消える警告のうち、結果の信頼性に関わるものは結果 JSON に残ります。
 
 - keyboard-trap: Tab の押下回数が上限に達して打ち切った場合は `details.tabWalkCapped: true`
-- focus-indicator: フォーカスによる遷移でリトライが上限に達し、未検査の要素が残った場合は `details.interrupted: true`。このとき遷移を起こした要素を 1 つも特定できていなければ、`a11y-skills/no-context-change-on-focus` は `passes` ではなく `incomplete` になる
+- focus-indicator: フォーカスによる遷移でリトライが上限に達し、未検査の要素が残った場合は `details.interrupted: true`
+- focus-indicator: フォーカスで遷移したが原因の要素を特定できず、その後のやり直しでも特定できなかった場合（やり直しの使い切りや上限での打ち切りを含む）は `details.unidentifiedNavigation: true`。`onFocusViolations` が空なら `a11y-skills/no-context-change-on-focus` は `passes` ではなく `incomplete` になる
 - focus-indicator / keyboard-reachability: 上限で打ち切った場合の挙動は下の「時間と Tab 回数の上限」を参照
 
 **時間と Tab 回数の上限:**
