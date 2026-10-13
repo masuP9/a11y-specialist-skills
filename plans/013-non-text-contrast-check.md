@@ -377,9 +377,16 @@ Node 側で `blockedBy === null` なら `compositeLayers(layers, WHITE)` が**�
 - 判定（上から順に最初に当たったもの）:
   1. 画像の元がある → 色の取れる元の比によらず `undetermined: 'image-icon'`（画像のほうが意味を
      担っているかもしれず、画像の色は測れないため。色の取れる元の指標は記録だけする）。
-  2. 指標が**すべて** 3 以上 → `pass`。
-  3. 指標が**すべて** 3 未満 → `low`。
-  4. 3 以上と 3 未満が混ざる → `undetermined: 'mixed-icon-colors'`。どの部分が意味を担うか
+  2. **SVG の中の重なり**: 同じ `svg` の中で、ある図形の `getBoundingClientRect()` が、文書順で
+     それより前にある**塗り（`fill`）の描かれる図形**（`fill` が `none` でも `a === 0` でもなく、`line` でない）の
+     矩形と面積 0 より大きく重なる → `undetermined: 'svg-overlap'`。先に描かれた塗りの図形が後の図形の
+     背景になり、背景が祖先の色でなくなるため（例: 黒いボタンに白い背景の `rect` と白い虫眼鏡の
+     `path` があると、どちらも黒と比べて 21:1 だが、虫眼鏡は白い `rect` の上で見えない）。
+     描画順と図形の形から背景を決めることはしない。`fill="none"` の線だけのアイコン（重なっても下が
+     塗りでない）と、図形 1 つのアイコンはこの規則に当たらない。
+  3. 指標が**すべて** 3 以上 → `pass`。
+  4. 指標が**すべて** 3 未満 → `low`。
+  5. 3 以上と 3 未満が混ざる → `undetermined: 'mixed-icon-colors'`。どの部分が意味を担うか
      （薄い部分を見えないものとしても意味が分かるか、W3C Understanding 1.4.11 の確認方法）は
      機械では決められないため。最も濃い部分だけで合格にしない。
 - `bestRatio` は記録用に最大の比を入れる（判定には上の規則を使う）。
@@ -405,7 +412,8 @@ export type NonTextContrastUndeterminedReason =
   | 'svg-paint-server'
   | 'image-icon'
   | 'mixed-icon-colors'
-  | 'too-many-icon-parts';
+  | 'too-many-icon-parts'
+  | 'svg-overlap';
 
 export interface NonTextContrastIndicator {
   part:
@@ -547,6 +555,7 @@ export interface RunNonTextContrastCheckOptions extends AuditOutputOptions {
   `color-scheme` → `dark color-scheme without a background`、`accent-color` → `native control with accent-color`、
   `svg-paint-server` → `SVG gradient or pattern`、`image-icon` → `icon is an image`、
   `mixed-icon-colors` → `icon has parts above and below 3:1; check whether the parts below 3:1 are needed to understand it`、
+  `svg-overlap` → `SVG shapes are drawn over filled shapes, so their background is not known`、
   `too-many-icon-parts` → `icon has more than ${NON_TEXT_CONTRAST_MAX_ICON_PARTS} elements`。
 - 部品が 0 件なら 2 ルールとも inapplicable。
 
@@ -616,7 +625,9 @@ export interface RunNonTextContrastCheckOptions extends AuditOutputOptions {
 | `native-only.html` | 既定の checkbox と radio だけ | boundary が inapplicable（`user-agent` のみ） |
 | `icon-low.html` | `<button aria-label="閉じる" style="background:#fff;border:0"><svg viewBox="0 0 10 10" width="20" height="20"><path d="M0 0L10 10" fill="none" stroke="#bbb" stroke-width="2"/></svg></button>` | icon が incomplete、`low` |
 | `icon-good.html` | 同じ形で `style="color:#333"`、`fill="none" stroke="currentColor"` | icon が passes |
-| `icon-mixed.html` | 白いボタンの SVG に、黒の `circle`（`fill="#000"`）と薄い `path`（`fill="none" stroke="#ddd"`） | `undetermined`、`mixed-icon-colors`（濃い部分だけで pass にしない） |
+| `icon-mixed.html` | 白いボタンの `<svg viewBox="0 0 20 10">` に、左半分の黒の `<circle cx="5" cy="5" r="4" fill="#000"/>` と、**重ならない**右半分の薄い `<path d="M12 2L18 8" fill="none" stroke="#ddd"/>` | `undetermined`、`mixed-icon-colors`（濃い部分だけで pass にしない） |
+| `icon-svg-overlap.html` | 黒いボタン（`background:#000`）の SVG に、白の背景 `<rect width="10" height="10" fill="#fff"/>` と、その上の白い `<path d="M2 2L8 8" fill="none" stroke="#fff"/>` | `undetermined`、`svg-overlap`（どちらも黒と 21:1 でも pass にしない） |
+| `icon-stroke-only.html` | 白いボタンの SVG に、重なる 2 本の線 `<path d="M0 0L10 10" fill="none" stroke="#333"/>` `<path d="M10 0L0 10" fill="none" stroke="#333"/>` | `pass`（塗りの無い図形どうしの重なりは `svg-overlap` にしない） |
 | `icon-svg-opacity.html` | 白いボタン 2 つ。1 つ目の SVG は `<circle r="4" cx="5" cy="5" fill="#000" fill-opacity=".1"/>`、2 つ目は `<g opacity=".1"><circle r="4" cx="5" cy="5" fill="#000"/></g>` | 1 つ目は `low`（描かれる色は薄い灰色）、2 つ目は `undetermined`（`opacity`） |
 | `icon-image-mixed.html` | 白いボタンに `<img src="data:image/gif;base64,…" alt="">` と黒の `circle` の SVG | `undetermined`、`image-icon`（SVG が 21:1 でも pass にしない） |
 | `icon-many-parts.html` | 白いボタンの SVG に `rect` を 21 個（`fill="#000"`） | `undetermined`、`too-many-icon-parts` |
@@ -709,7 +720,7 @@ grep -E "non-text-contrast-check|Errors:" /tmp/claude-ntc-all.log
 ## Test plan
 
 - **`test/color.spec.ts`**: 比・相対輝度・合成・丸め・16 進の変換（ブラウザ不要）。
-- **`test/non-text-contrast.spec.ts`**: 26 フィクスチャで部品の分類・除外・枠/塗り/下線の指標・
+- **`test/non-text-contrast.spec.ts`**: 28 フィクスチャで部品の分類・除外・枠/塗り/下線の指標・
   半透明の合成・`oklch` の変換・決められない 6 種・UA の部品・アイコン（SVG / 疑似要素 / 画像）・
   上限・ページを書き換えないこと・schema を検証。
 - **fixture-gallery / rule-classification / schema-validation**: 既存の枠組みに登録。
@@ -753,7 +764,7 @@ ALL must hold:
     `undetermined`。既定の入力欄・`select` は計算済みの枠の色で測る（既定では 3:1 を満たす）。
   - アイコンは SVG の図形の `fill` / `stroke` と疑似要素の文字色だけ。画像・CSS の背景画像のアイコンは
     `undetermined`。濃い部分と薄い部分が混ざるアイコンは、どちらが意味を担うか決められないので
-    `undetermined`（`mixed-icon-colors`）。SVG の図形の面積（描かれない `fill`）は `line` 以外は見ない。
+    `undetermined`（`mixed-icon-colors`）。SVG の図形の面積（描かれない `fill`）は `line` 以外は見ない。塗りのある図形の上に別の図形が重なる SVG は `svg-overlap` で `undetermined`（SVG 内の描画順から背景を決めない）。
   - チェックボックスのチェックの印・スイッチのつまみなど、部品の中の部分どうしの比は見ない。
   - 主文書の light DOM だけ。iframe・shadow root の中は見ない。部品は 300 個まで。
   - グラフ・図など部品以外のグラフィカルオブジェクトは見ない。
