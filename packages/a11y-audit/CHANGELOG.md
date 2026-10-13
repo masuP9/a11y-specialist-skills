@@ -5,6 +5,22 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+### Added
+
+- `focus-order-check` (WCAG 2.4.3): presses Tab through the main document and
+  reports moves against the visual order (back up the page, backwards on one
+  row, detours) as `a11y-skills/focus-order-visual` candidates, and opens /
+  closes likely dialog triggers to report modals that do not take focus or do
+  not return it as `a11y-skills/focus-order-dialog` candidates. Everything is
+  `incomplete`. New `runFocusOrderCheck`, `FocusOrder*` types, schema,
+  `./test-entries/focus-order-check`, and the pure `analyzeFocusOrder`
+  (usable on the `allElements` of `focus-indicator-check`). Known limits:
+  the visual order is a simple estimate (card grids, horizontal scrolling and
+  vertical writing can be misjudged); fixed / sticky elements and the inside
+  of iframes are not compared; only triggers with known attributes open
+  dialogs, and doing so presses Enter / Escape after a reload
+  (`maxDialogTriggers: 0` skips it); Tab cycling inside a modal is not examined.
+
 ### Fixed
 
 - target-size: the part of a target clipped by an ancestor (`overflow: hidden`

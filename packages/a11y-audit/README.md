@@ -31,11 +31,12 @@ test entries.
 | `runMotionActuationCheck` | 2.5.4 Motion Actuation (`devicemotion` / `deviceorientation` listeners, reported as candidates) |
 | `runChangeOnInputCheck` | 3.2.2 On Input (navigation, new windows, focus moves or dialogs caused by just changing a control's value, reported as candidates) |
 | `runAccessibleAuthenticationCheck` | 3.3.8 Accessible Authentication (paste blocking, autocomplete="off", CAPTCHA-like elements, reported as candidates) |
+| `runFocusOrderCheck` | 2.4.3 Focus Order (Tab order vs. visual order, focus in modal dialogs, reported as candidates) |
 
 Most checks take an already-navigated `page`. A few own navigation and take a
 `targetUrl` instead (or `TEST_PAGE`): `runOrientationCheck` and
 `runTimeLimitDetector` (and `runZoomCheck` when a URL is given).
-`runFocusIndicatorCheck`, `runKeyboardReachabilityCheck` and `runChangeOnInputCheck` take a `browser`. `runAutoPlayDetection` needs the
+`runFocusIndicatorCheck`, `runKeyboardReachabilityCheck`, `runChangeOnInputCheck` and `runFocusOrderCheck` take a `browser`. `runAutoPlayDetection` needs the
 optional `pixelmatch` + `pngjs` deps (see Install).
 
 `runRedundantEntryCheck` (3.3.7, `a11y-skills/redundant-entry`) takes an
@@ -180,6 +181,37 @@ const browser = await chromium.launch({
 });
 ```
 
+`runFocusOrderCheck` (2.4.3, `a11y-skills/focus-order-visual` and
+`a11y-skills/focus-order-dialog`) takes a `browser`. It presses Tab through the
+main document once, records where each element sits, and reports moves against
+the visual order as `incomplete` candidates: back up the page
+(`backward-block`), backwards on one row (`backward-inline`), and long jumps
+that return to where they started (detours). A move to the next column
+(`column-wrap`) is not reported. The visual order is estimated with a simple
+rule (top to bottom, along the reading direction within a row (right to left
+for `rtl`), and back up means the next column), so card grids, horizontal
+scrolling and vertical writing can be misjudged. Elements that are or sit
+inside `position: fixed` / `sticky`, and elements without a size, are not
+compared (`details.skippedTransitions`). While focus is inside an iframe the
+iframe's box is the position and the order inside is not examined; only open
+shadow roots are entered. When the walk could not be finished (limit, timeout,
+navigation) a node says the rest was not compared, so the rule is never
+`passes`. Dialogs are tried only from triggers with `aria-haspopup="dialog"`,
+an `aria-controls` pointing at a dialog, `commandfor` + `command="show-modal"`
+or a common library's `data-*` attribute. **It reloads the page, presses Enter
+on each trigger and Escape (or a close button) to close**, so a trigger that
+also submits or navigates can send requests (`maxDialogTriggers: 0` skips this
+part; default 10). Candidates are modals that do not move focus inside when
+opened, or do not return it to the trigger when closed (`incomplete`, since a
+different place can be right). Tab cycling inside the modal is not examined.
+It accepts `timeBudgetMs` (default 60 s) and `maxTabPresses` (default 300).
+The position analysis is exported as the pure function
+`analyzeFocusOrder(points, { viewport, direction })`. With the
+`details.allElements` of `runFocusIndicatorCheck`, pass
+`allElements.filter(r => r.tabStep !== null && r.frame === null)` sorted by
+`tabStep`, each with `positioning: 'flow'` added (fixed / sticky cannot be told
+apart, so false positives increase).
+
 ## Install
 
 ```sh
@@ -244,6 +276,7 @@ redundant-entry-check
 motion-actuation-check
 change-on-input-check
 accessible-authentication-check
+focus-order-check
 ```
 
 ### Exit codes
@@ -486,7 +519,7 @@ are kept in the result JSON:
 
 **Time and Tab-press limits:**
 
-`runFocusIndicatorCheck` and `runKeyboardReachabilityCheck` accept
+`runFocusIndicatorCheck`, `runKeyboardReachabilityCheck` and `runFocusOrderCheck` accept
 `timeBudgetMs` (milliseconds, positive finite number) and `maxTabPresses`
 (positive integer). Zero, negative or non-numeric values throw.
 
@@ -494,6 +527,7 @@ are kept in the result JSON:
 |---|---|---|---|
 | focus-indicator | no limit | no limit | `details.aborted: { reason: 'timeout' \| 'tab-limit', url, recordedCount, focusableCount }`: `recordedCount` elements were tested out of `focusableCount` focusable ones. Time and presses are counted across 3.2.1 restarts. Separate from `interrupted` (retries exhausted) |
 | keyboard-reachability | 60 s | 600 | time: `details.aborted.reason: 'timeout'`; presses: `details.tabWalkCapped: true` |
+| focus-order | 60 s | 300 | time: `details.aborted.reason: 'timeout'` and `tabWalk.ended: 'timeout'`; presses: `details.tabWalk.ended: 'tab-limit'` (`capped: true`). Either way the rest of the order was not compared, so the rule is `incomplete` |
 
 **Running checks concurrently:**
 
@@ -530,7 +564,7 @@ import "@a11y-skills/audit/test-entries/target-size-check";
 // ...also: text-spacing-check, zoom-200-check, orientation-check,
 // autocomplete-audit, time-limit-detector, auto-play-detection,
 // redundant-entry-check, motion-actuation-check, change-on-input-check,
-// accessible-authentication-check
+// accessible-authentication-check, focus-order-check
 import "@a11y-skills/audit/test-entries/text-spacing-check";
 ```
 

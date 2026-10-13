@@ -32,7 +32,7 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks keyboard-reachabi
 ## フォーカス
 | 基準 | 操作 | 証跡 | Fail条件 |
 |---|---|---|---|
-| 2.4.3 | フォーカス順序が視覚順と一致 | フォーカス順ログ | 大きく順序が崩れる |
+| 2.4.3 | フォーカス順序が視覚順と一致 | フォーカス順ログ + `focus-order-check` | 大きく順序が崩れる |
 | 2.4.7 | フォーカス可視化を確認 | スクショ/動画 | フォーカスが視認不可 |
 | 2.4.11 | フォーカスが他のコンテンツに完全には隠されない | スクショ/計測 | 固定ヘッダー/フッター/モーダルでフォーカスが全部隠れる |
 | 2.4.12 (AAA) | フォーカスが他のコンテンツに少しも隠されない | スクショ/計測 | 固定ヘッダー/フッター/モーダルでフォーカスが一部でも隠れる |
@@ -87,6 +87,19 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks focus-indicator-c
 - 見つかったものは `incomplete` の候補。前もって「選ぶとすぐ移動します」等の説明があれば適合なので、説明の有無は候補ごとに人が確かめる。
 - 実ページで値を変え、`change` を起こす。値はイベントなしで戻すが、ページの内部状態は戻らない。自動保存・送信のあるページでは通信が起きうる。
 - 実行: `npx -y @a11y-skills/audit --url "<url>" --checks change-on-input-check`
+
+### `focus-order-check` CLIチェック
+
+Tab を実際に押した順に要素の位置を並べ、見た目の並びから外れた移動（上へ戻る・同じ行で逆向き・遠くへ跳んで戻る）を数値付きで報告します。あわせて、モーダルダイアログを開いたときにフォーカスが中へ移るか、閉じたときに開いたボタンへ戻るかも確かめます。
+
+```bash
+npx -y @a11y-skills/audit --url "https://example.com" --checks focus-order-check
+```
+
+- 候補は常に incomplete です。見た目の順から外れても、意味と操作が保たれていれば 2.4.3 を満たすので、人手で確認します。
+- ダイアログの確認のため、ページを読み直し、開くボタン（`aria-haspopup="dialog"` など）で Enter を、閉じるために Escape（または閉じるボタン）を押します。ボタンが送信や遷移を兼ねるとリクエストが飛ぶので、避けたいときはオプション `maxDialogTriggers: 0` で止めます。
+- `focus-order-result.json` の `details.stops` に Tab の順、`details.transitions` に隣り合う要素の比較、`details.dialogs` にダイアログごとの観察が入ります。
+- 手動で確認するもの: fixed / sticky の要素と iframe の中の順、カード型の格子・縦書き、属性の無いボタンで開くダイアログ、モーダルの中の Tab の巡回。
 
 ## ポインター
 | 基準 | 操作 | 証跡 | Fail条件 |

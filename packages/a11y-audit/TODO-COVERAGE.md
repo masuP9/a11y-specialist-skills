@@ -202,6 +202,22 @@
 - 別の手段（パスキー・SSO・メールのリンク）の有無、自動入力などの支援の仕組みが使えるか、
   CAPTCHA が物の認識・本人が用意した内容の識別にとどまるかは人手で確認する
 
+### 2.4.3 Focus Order - **部分実装** ✅
+**概要**: フォーカス順序が意味と操作性を損なわない
+
+**実装**: `focus-order-check`（`runFocusOrderCheck.ts`、純粋関数 `analyzeFocusOrder`）
+- メイン文書で Tab を押して一巡し、要素の位置を並べて、上へ戻る・同じ行で逆向き・遠くへ跳んで戻る移動を
+  `a11y-skills/focus-order-visual`（`incomplete`）で報告
+- 開くボタン（`aria-haspopup="dialog"` など）で Enter・Escape を押し、モーダルを開いたときにフォーカスが
+  中へ移らない・閉じたときに開いたボタンへ戻らない場合を `a11y-skills/focus-order-dialog`（`incomplete`）で報告
+
+**残る制限**:
+- 見た目の順は単純な規則での推定。カード型の格子・横スクロール・縦書きは誤りうる
+- fixed / sticky の要素と iframe の中の順は比べない。shadow root は開いているものだけ
+- 属性の無いボタンで開くダイアログは見ない。モーダルの中の Tab の巡回（2.1.2 と重なる）も見ない
+- ダイアログの確認はページを読み直して Enter・Escape を押すため、送信や遷移を兼ねるボタンはリクエストを飛ばしうる（`maxDialogTriggers: 0` で止める）
+- 見た目の順から外れても意味が保たれていれば満たすので、すべて人手で確認する
+
 ---
 
 ### 2.1.2 No Keyboard Trap
@@ -252,6 +268,7 @@
 | 達成基準 | カバー元 |
 |---------|---------|
 | 2.1.1 Keyboard | `keyboard-reachability-check`（部分） ✅ |
+| 2.4.3 Focus Order | `focus-order-check`（部分） ✅ |
 | 2.4.1 Bypass Blocks | `automated-checks.md` |
 | 2.4.11 Focus Not Obscured (Minimum) / 2.4.12 (Enhanced) | `focus-indicator-check.ts` ✅ |
 | 2.5.3 Label in Name | `automated-checks.md` |

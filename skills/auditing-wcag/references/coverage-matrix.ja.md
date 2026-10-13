@@ -41,7 +41,7 @@
 | 2.3.1 | 手動 | 動画 | 点滅閾値超でFail |
 | 2.4.1 | 自動 | a11y tree | 回避手段なしでFail |
 | 2.4.2 | 自動 | `document.title` | タイトル空でFail |
-| 2.4.3 | インタラクティブ | フォーカス順ログ | 視覚順と不一致でFail |
+| 2.4.3 | インタラクティブ+自動の候補 | `focus-order-check` **[CLI]** + フォーカス順ログ | 視覚順と不一致で意味・操作が損なわれればFail |
 | 2.4.4 | 自動+コンテンツ | a11y tree + 文面抜粋 | 文脈内で不明瞭ならFail |
 | 2.4.5 | 自動+コンテンツ | リンクグラフ + 検索/サイトマップ検出 | 複数手段なしでFail |
 | 2.4.6 | 自動+コンテンツ | a11y tree/文面 | 見出し/ラベルが不明瞭でFail |
@@ -95,6 +95,7 @@
 | 2.1.1 | `keyboard-reachability-check` | `keyboard-reachability-result.json` |
 | 2.1.2 | `keyboard-trap-check` | `keyboard-trap-result.json` |
 | 2.2.1 | `time-limit-detector` | `time-limit-result.json` |
+| 2.4.3 | `focus-order-check` | `focus-order-result.json` |
 | 2.4.7, 2.4.11, 2.4.12 (AAA), 3.2.1 | `focus-indicator-check` | `focus-indicator-result.json`, `focus-indicators.png` |
 | 2.5.4 | `motion-actuation-check` | `motion-actuation-result.json` |
 | 3.2.2 | `change-on-input-check` | `change-on-input-result.json` |
