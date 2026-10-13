@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <!--
+    Intent: a modal opens without moving focus, and Escape navigates away.
+    Expected: status 'navigated' while focusAfterOpen === 'trigger' is kept;
+    focus-order-dialog has two nodes (focus left outside; could not test).
+  -->
+  <head>
+    <meta charset="utf-8" />
+    <title>Dialog open navigates</title>
+  </head>
+  <body>
+    <button id="open" type="button" aria-haspopup="dialog">Open</button>
+    <div id="d" role="dialog" aria-modal="true" aria-label="Sample" hidden>
+      <p>Dialog body</p>
+    </div>
+    <script>
+      const d = document.getElementById('d');
+      document.getElementById('open').addEventListener('click', () => {
+        d.hidden = false;
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') location.assign('none.html');
+      });
+    </script>
+  </body>
+</html>

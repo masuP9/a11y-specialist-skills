@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <!--
+    Intent: a well-behaved modal. showModal() moves focus inside, Escape closes
+    it, and focus returns to the opening button.
+    Expected: dialogs[0] opened, modal, focusAfterOpen 'inside', closedBy 'escape',
+    focusAfterClose 'trigger'; focus-order-dialog passes.
+  -->
+  <head>
+    <meta charset="utf-8" />
+    <title>Dialog good</title>
+  </head>
+  <body>
+    <button id="open" type="button" aria-haspopup="dialog">Open</button>
+    <dialog id="dlg" aria-label="Sample">
+      <p>Dialog body</p>
+      <button id="close" type="button">Close</button>
+    </dialog>
+    <script>
+      const dlg = document.getElementById('dlg');
+      const open = document.getElementById('open');
+      const close = document.getElementById('close');
+      open.addEventListener('click', () => {
+        dlg.showModal();
+        close.focus();
+      });
+      close.addEventListener('click', () => dlg.close());
+      dlg.addEventListener('close', () => open.focus());
+    </script>
+  </body>
+</html>

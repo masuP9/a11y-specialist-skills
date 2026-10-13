@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <!--
+    Intent: the first three links follow the visual order; the fourth is shown at
+    the top by CSS `order`. A walk cut off after two presses cannot see it.
+    Expected: with maxTabPresses: 2 the walk ends with 'tab-limit' and
+    focus-order-visual is incomplete (not passes) because the rest was not compared.
+  -->
+  <head>
+    <meta charset="utf-8" />
+    <title>Backward tail</title>
+    <style>
+      body {
+        margin: 0;
+        width: 1000px;
+      }
+      div {
+        display: flex;
+        flex-direction: column;
+      }
+      a {
+        display: block;
+        width: 100px;
+        height: 40px;
+        line-height: 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <a href="#a">One</a>
+      <a href="#b">Two</a>
+      <a href="#c">Three</a>
+      <a href="#d" style="order: -1">Four</a>
+    </div>
+  </body>
+</html>
