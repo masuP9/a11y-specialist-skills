@@ -1,0 +1,26 @@
+<!doctype html>
+<!--
+  A pointerdown handler never returns. The next button adds an element on
+  mousedown.
+  Expected: the check returns without throwing; #hang is untested with reason
+  'handler-timeout'; restarts >= 1; after the restart #after is an
+  activated-on-press finding. Run with a short stepTimeoutMs.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Hang pointerdown</title>
+  </head>
+  <body>
+    <button type="button" id="hang">Hang</button>
+    <button type="button" id="after">After</button>
+    <script>
+      document.getElementById('hang').addEventListener('pointerdown', () => {
+        while (true) {}
+      });
+      document.getElementById('after').addEventListener('mousedown', () => {
+        document.body.append(document.createElement('p'));
+      });
+    </script>
+  </body>
+</html>

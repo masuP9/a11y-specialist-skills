@@ -1,0 +1,22 @@
+<!doctype html>
+<!--
+  Pressing #first removes #second from the DOM.
+  Expected: #first is an activated-on-press finding (dom change); #second is
+  untested with reason 'element-gone'; the rule is incomplete and #second also
+  has a node.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Removes next</title>
+  </head>
+  <body>
+    <button type="button" id="first">First</button>
+    <button type="button" id="second">Second</button>
+    <script>
+      document.getElementById('first').addEventListener('mousedown', () => {
+        document.getElementById('second').remove();
+      });
+    </script>
+  </body>
+</html>

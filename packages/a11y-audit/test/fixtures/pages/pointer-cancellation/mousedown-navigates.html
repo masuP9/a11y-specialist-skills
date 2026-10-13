@@ -1,0 +1,25 @@
+<!doctype html>
+<!--
+  A button navigates on mousedown. A second button reacts to click only.
+  Expected: one activated-on-press finding for #go (navigation to
+  landing.html), one restart, and #safe is still pressed after the restart
+  (targetsTested 2). Rule: incomplete.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Mousedown navigates</title>
+  </head>
+  <body>
+    <button id="go" type="button">Go</button>
+    <button id="safe" type="button">Safe</button>
+    <script>
+      document.getElementById('go').addEventListener('mousedown', () => {
+        location.href = 'landing.html';
+      });
+      document.getElementById('safe').addEventListener('click', () => {
+        document.body.append(document.createElement('p'));
+      });
+    </script>
+  </body>
+</html>

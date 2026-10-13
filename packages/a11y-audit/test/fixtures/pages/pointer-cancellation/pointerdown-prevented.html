@@ -1,0 +1,31 @@
+<!doctype html>
+<!--
+  pointerdown calls preventDefault() and adds an element; the mousedown
+  listener would add another element. The browser sends no compatibility mouse
+  events after a cancelled pointerdown, so the check must not send mousedown.
+  Expected: one activated-on-press finding for #p with dispatched
+  ['pointerdown']. Rule: incomplete.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Pointerdown prevented</title>
+  </head>
+  <body>
+    <div role="button" id="p">Press</div>
+    <script>
+      const button = document.getElementById('p');
+      button.addEventListener('pointerdown', (event) => {
+        event.preventDefault();
+        const added = document.createElement('p');
+        added.textContent = 'pointerdown';
+        document.body.append(added);
+      });
+      button.addEventListener('mousedown', () => {
+        const added = document.createElement('p');
+        added.textContent = 'mousedown';
+        document.body.append(added);
+      });
+    </script>
+  </body>
+</html>

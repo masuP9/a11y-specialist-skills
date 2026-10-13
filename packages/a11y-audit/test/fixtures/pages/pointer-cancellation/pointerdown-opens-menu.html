@@ -1,0 +1,26 @@
+<!doctype html>
+<!--
+  A custom button opens a menu on pointerdown (adds a list and sets
+  aria-expanded).
+  Expected: one activated-on-press finding for #menu-btn with a dom change
+  (addedNodes >= 1, attributes include aria-expanded). Rule: incomplete.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Pointerdown opens menu</title>
+  </head>
+  <body>
+    <div role="button" id="menu-btn" aria-expanded="false">Menu</div>
+    <script>
+      const button = document.getElementById('menu-btn');
+      button.addEventListener('pointerdown', () => {
+        const menu = document.createElement('ul');
+        menu.id = 'menu';
+        menu.innerHTML = '<li>One</li><li>Two</li>';
+        document.body.append(menu);
+        button.setAttribute('aria-expanded', 'true');
+      });
+    </script>
+  </body>
+</html>

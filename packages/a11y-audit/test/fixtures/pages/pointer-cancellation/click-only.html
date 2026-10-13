@@ -1,0 +1,22 @@
+<!doctype html>
+<!--
+  A button and a link that act on click only.
+  Expected: no findings, rule passes, targetsTested 2, restarts 0 (a press
+  alone must not navigate; synthetic events do not produce click).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Click only</title>
+  </head>
+  <body>
+    <button type="button" id="b">Button</button>
+    <a href="landing.html" id="l">Link</a>
+    <script>
+      document.getElementById('b').addEventListener('click', () => {
+        document.body.append(document.createElement('p'));
+      });
+      document.getElementById('l').addEventListener('click', () => {});
+    </script>
+  </body>
+</html>

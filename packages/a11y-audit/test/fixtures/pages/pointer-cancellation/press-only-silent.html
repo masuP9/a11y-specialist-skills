@@ -1,0 +1,20 @@
+<!doctype html>
+<!--
+  A div has a mousedown listener that visibly does nothing, and no release or
+  click listener.
+  Expected: one press-only-listener finding for #s (sources ['listener'],
+  pressListener.handlerPreview mentions onPressOnly). Rule: incomplete.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Press-only silent</title>
+  </head>
+  <body>
+    <div id="s" tabindex="0">Silent</div>
+    <script>
+      function onPressOnly() {}
+      document.getElementById('s').addEventListener('mousedown', onPressOnly);
+    </script>
+  </body>
+</html>

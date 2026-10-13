@@ -1,0 +1,25 @@
+<!doctype html>
+<!--
+  150 buttons that act on click only.
+  Expected with the default settings: the check stops at the 100-target limit
+  (aborted.reason 'target-limit', targetsTested 100) well within its time
+  budget.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Many</title>
+  </head>
+  <body>
+    <script>
+      for (let i = 0; i < 150; i += 1) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.id = `b${i}`;
+        button.textContent = `Button ${i}`;
+        button.addEventListener('click', () => {});
+        document.body.append(button);
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,24 @@
+<!doctype html>
+<!--
+  A clock rewrites its text every 700ms (slower than one settle wait). A button
+  reacts to click only.
+  Expected: domObservation 'ignored-background-activity'.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Slow ticker</title>
+  </head>
+  <body>
+    <span id="clock">0</span>
+    <button type="button" id="b">Button</button>
+    <script>
+      let count = 0;
+      setInterval(() => {
+        count += 1;
+        document.getElementById('clock').textContent = String(count);
+      }, 700);
+      document.getElementById('b').addEventListener('click', () => {});
+    </script>
+  </body>
+</html>
