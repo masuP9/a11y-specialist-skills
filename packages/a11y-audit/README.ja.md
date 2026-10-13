@@ -3,7 +3,7 @@
 Playwright + axe-core ベースの WCAG 2.2 アクセシビリティ検査関数。
 
 本パッケージは [`auditing-wcag`](https://github.com/masuP9/a11y-specialist-skills)
-Claude Code skill から機能本体を切り出したものです。18 個の検査を関数として提供し、
+Claude Code skill から機能本体を切り出したものです。19 個の検査を関数として提供し、
 すぐ実行できる Playwright 用の互換 test entry も同梱します。
 
 > **English: see [README.md](./README.md).**
@@ -32,6 +32,7 @@ Claude Code skill から機能本体を切り出したものです。18 個の�
 | `runAccessibleAuthenticationCheck` | 3.3.8 アクセシブルな認証（貼り付けの禁止・autocomplete の off・CAPTCHA らしき要素。候補として報告） |
 | `runPointerGestureCheck` | 2.5.1 ポインタのジェスチャ / 2.5.7 ドラッグ動作（ドラッグ・スワイプ・複数の指で動きそうな部品。候補として報告） |
 | `runFocusOrderCheck` | 2.4.3 フォーカス順序（Tab の順と見た目の並びのずれ・モーダルのフォーカス。候補として報告） |
+| `runNonTextContrastCheck` | 1.4.11 非テキストのコントラスト（入力欄などの枠・塗り、アイコンだけのボタンのアイコン。候補として報告） |
 
 多くの検査は遷移済みの `page` を受けます。一部は navigation を所有し `targetUrl`
 （または `TEST_PAGE`）を受けます: `runOrientationCheck` と `runTimeLimitDetector`
@@ -159,6 +160,31 @@ const browser = await chromium.launch({
 `allElements.filter(r => r.tabStep !== null && r.frame === null)` を `tabStep` 順に並べ、各要素に
 `positioning: 'flow'` を補って渡せます（fixed / sticky を区別できないぶん、誤検出が増えます）。
 
+`runNonTextContrastCheck`（1.4.11、`a11y-skills/non-text-contrast-boundary` と
+`a11y-skills/non-text-contrast-icon`）は遷移済みの `page` を受けます。計算済みスタイルから、
+入力欄・`textarea`・`select`・チェックボックス・ラジオ・スイッチの**枠と塗り**が外側の色と持つ比と、
+文字のないボタン（アイコンだけのボタン）の**アイコンの色**（インライン SVG の `fill` / `stroke`、
+`::before` / `::after` の文字色）が背景と持つ比を測り、3:1 未満と、測れないものを `incomplete` の
+候補にします（`details.components[].status`: `low` / `no-boundary` / `undetermined`）。枠か塗りの
+どれか 1 つが 3:1 あれば `pass` です。色は Chromium で 1×1 の canvas に塗って sRGB に直すので、
+`oklch()` や `color-mix()` も測れます。判定は丸める前の比で行い、表示は切り捨てです（2.996 は 2.99）。
+ブラウザが描く既定のチェックボックス・ラジオ（`appearance` が `none` でなく `accent-color` が `auto`）は、
+著者が見た目を変えていない UA の部品として 1.4.11 の例外になるので測らず、報告もしません
+（`status: 'user-agent'`）。`accent-color` を変えたものは `undetermined` です。色が決まらないときは
+`pass` にせず `undetermined` にし、理由を `undeterminedReason` に残します: `background-image`（画像・
+グラデーション）・`opacity`・`filter`（`filter` / `backdrop-filter` / `mix-blend-mode`）・`out-of-flow`
+（背景なしの絶対・固定配置の下）・`color-scheme`（背景のない dark。`light dark` はブラウザの設定に従う）・`accent-color`・`svg-paint-server`・
+`image-icon`（画像・CSS の背景画像）・`mixed-icon-colors`（3:1 以上と未満の部分が混ざるアイコン）・`too-many-icon-parts`（20 要素超）・
+`svg-overlap`（塗りのある図形の上に別の図形が重なる SVG）・`svg-use`（参照先の図形が自分で色を決める `<use>`、または外部ファイル）・
+`visually-hidden`（opacity や sr-only で隠したネイティブ部品。代わりに描いた部品を確かめる）・`no-icon-color`（読める色が無いアイコン）。
+描かれていない部分（`display: none` など）はアイコンの元として数えず、sr-only の文字は「見える文字」に数えません。読み込んだときの見た目だけを見て、
+ホバー・フォーカス・選択済みなどの状態は見ません。外側の色は祖先の背景から決め、祖先でない要素との
+重なり（`z-index` など）は見ません。`box-shadow` / `outline` で描いた枠は測らず `otherVisuals` に
+有無だけ残します。部品の中の部分（チェックの印・つまみ）、グラフ・図、iframe・shadow root の中は
+見ません。部品は 300 個まで測り、超えた分は `componentCounts` に数えて手動確認の node を足します。
+色の純粋関数 `contrastRatio`・`compositeOver`・`compositeLayers`・`relativeLuminance`・`floorRatio`・
+`toHexColor`（引数は 0〜255 の `{ r, g, b }`）も export しています。
+
 ## インストール
 
 ```sh
@@ -225,6 +251,7 @@ change-on-input-check
 accessible-authentication-check
 pointer-gesture-check
 focus-order-check
+non-text-contrast-check
 ```
 
 ### 終了コード
@@ -477,7 +504,8 @@ import "@a11y-skills/audit/test-entries/target-size-check";
 // 他にも: text-spacing-check, zoom-200-check, orientation-check,
 // autocomplete-audit, time-limit-detector, auto-play-detection,
 // redundant-entry-check, motion-actuation-check, change-on-input-check,
-// accessible-authentication-check, pointer-gesture-check, focus-order-check
+// accessible-authentication-check, pointer-gesture-check, focus-order-check,
+// non-text-contrast-check
 import "@a11y-skills/audit/test-entries/text-spacing-check";
 ```
 

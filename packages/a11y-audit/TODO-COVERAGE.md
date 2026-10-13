@@ -239,6 +239,26 @@
 
 ---
 
+### 1.4.11 Non-text Contrast - **部分実装** ✅
+**概要**: 部品の境界とグラフィカルオブジェクトが隣り合う色と 3:1 以上のコントラストを持つ
+
+**実装**: `non-text-contrast-check`（`runNonTextContrastCheck.ts`、色の純粋関数 `utils/color.ts`）
+- 入力欄・`textarea`・`select`・チェックボックス・ラジオ・スイッチの枠と塗りを、祖先の背景から合成した外側の色と比べ、
+  3:1 未満・枠も塗りも無いものを `a11y-skills/non-text-contrast-boundary`（`incomplete`）で報告
+- 文字のないボタンのアイコン（インライン SVG の `fill` / `stroke`、`::before` / `::after` の文字色）を背景と比べ、
+  3:1 未満を `a11y-skills/non-text-contrast-icon`（`incomplete`）で報告
+- 背景画像・グラデーション・opacity・filter・背景なしの絶対配置・画像のアイコンなど色が決まらないものは
+  `undetermined` として人手に回す
+
+**残る制限**:
+- 読み込んだときの見た目だけ。ホバー・フォーカス・選択済みなどの状態ごとの見た目は見ない
+- 外側の色は祖先の背景から決める。`z-index` や負のマージンによる重なりは見ない
+- `box-shadow` / `outline` / `border-image` / 疑似要素で描いた枠は測らない。UA が描く既定のチェックボックス・ラジオは例外として測らない
+- 部品の中の部分（チェックの印・つまみ）、グラフ・図、iframe・shadow root の中は見ない。部品は 300 個まで
+- 部品の範囲が別の手がかり（配置・文字）で分かる場合は満たすので、すべて人手で確認する
+
+---
+
 ### 2.1.2 No Keyboard Trap
 **概要**: フォーカスがキーボードトラップに陥らない
 
@@ -287,6 +307,7 @@
 | 達成基準 | カバー元 |
 |---------|---------|
 | 2.1.1 Keyboard | `keyboard-reachability-check`（部分） ✅ |
+| 1.4.11 Non-text Contrast | `non-text-contrast-check`（部分） ✅ |
 | 2.4.3 Focus Order | `focus-order-check`（部分） ✅ |
 | 2.4.1 Bypass Blocks | `automated-checks.md` |
 | 2.4.11 Focus Not Obscured (Minimum) / 2.4.12 (Enhanced) | `focus-indicator-check.ts` ✅ |

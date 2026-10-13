@@ -26,7 +26,7 @@
 | 1.4.4 | 自動+手動 | `zoom-200-check` **[CLI]** + スクショ | 200%で欠落/重なりならFail |
 | 1.4.5 | 手動+コンテンツ | スクショ | テキストが画像化ならFail |
 | 1.4.10 | 自動+手動 | `reflow-check` **[CLI]** + スクショ | 横スクロール必須でFail |
-| 1.4.11 | 手動 | スクショ + 色の計測 | 非テキストコントラスト不足でFail（axeに該当ルールなし、CLI未対応） |
+| 1.4.11 | 自動の候補+手動 | `non-text-contrast-check` **[CLI]** + スクショ | 部品の境界・アイコンが3:1未満でFail。状態ごとの見た目・グラフ・画像の背景は手動 |
 | 1.4.12 | 自動+手動 | `text-spacing-check` **[CLI]** + スクショ | 文字欠落/重なりでFail |
 | 1.4.13 | インタラクティブ | 動画/ログ | 解除/保持不可でFail |
 
@@ -91,6 +91,7 @@
 | 1.4.2, 2.2.2 | `auto-play-detection` | `auto-play-screenshots/` |
 | 1.4.4 | `zoom-200-check` | `zoom-200-result.json` |
 | 1.4.10 | `reflow-check` | `reflow-result.json` |
+| 1.4.11 | `non-text-contrast-check` | `non-text-contrast-result.json` |
 | 1.4.12 | `text-spacing-check` | `text-spacing-result.json` |
 | 2.1.1 | `keyboard-reachability-check` | `keyboard-reachability-result.json` |
 | 2.1.2 | `keyboard-trap-check` | `keyboard-trap-result.json` |

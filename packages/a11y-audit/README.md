@@ -4,7 +4,7 @@ Playwright + axe-core based WCAG 2.2 accessibility audit functions.
 
 This package is the functional core extracted from the
 [`auditing-wcag`](https://github.com/masuP9/a11y-specialist-skills) Claude Code
-skill. It ships 18 checks as plain functions plus ready-to-run Playwright
+skill. It ships 19 checks as plain functions plus ready-to-run Playwright
 test entries.
 
 > **日本語版は [README.ja.md](./README.ja.md) を参照してください。**
@@ -33,6 +33,7 @@ test entries.
 | `runAccessibleAuthenticationCheck` | 3.3.8 Accessible Authentication (paste blocking, autocomplete="off", CAPTCHA-like elements, reported as candidates) |
 | `runPointerGestureCheck` | 2.5.1 Pointer Gestures / 2.5.7 Dragging Movements (components likely operated by dragging, swiping or multiple fingers, reported as candidates) |
 | `runFocusOrderCheck` | 2.4.3 Focus Order (Tab order vs. visual order, focus in modal dialogs, reported as candidates) |
+| `runNonTextContrastCheck` | 1.4.11 Non-text Contrast (border / fill of inputs and similar, icons in icon-only buttons, reported as candidates) |
 
 Most checks take an already-navigated `page`. A few own navigation and take a
 `targetUrl` instead (or `TEST_PAGE`): `runOrientationCheck` and
@@ -216,6 +217,45 @@ The position analysis is exported as the pure function
 `tabStep`, each with `positioning: 'flow'` added (fixed / sticky cannot be told
 apart, so false positives increase).
 
+`runNonTextContrastCheck` (1.4.11, `a11y-skills/non-text-contrast-boundary` and
+`a11y-skills/non-text-contrast-icon`) takes a navigated `page`. From computed
+styles it measures the contrast of the **border and fill** of inputs,
+`textarea`, `select`, checkboxes, radio buttons and switches against the color
+around them, and of the **icon color** of buttons without text (inline SVG
+`fill` / `stroke`, text color of `::before` / `::after`) against its background.
+Ratios below 3:1, and anything that cannot be measured, are `incomplete`
+candidates (`details.components[].status`: `low` / `no-boundary` /
+`undetermined`). A component passes when any one of its border or fill reaches
+3:1. Colors are painted on a 1x1 canvas in Chromium and read back as sRGB, so
+`oklch()` and `color-mix()` work. The threshold is compared on the unrounded
+ratio and displayed rounded down (2.996 shows as 2.99). Native checkboxes and
+radio buttons drawn by the browser (`appearance` is not `none` and
+`accent-color` is `auto`) are an exception of 1.4.11 (a user agent control
+whose look the author did not change), so they are neither measured nor
+reported (`status: 'user-agent'`); with `accent-color` they are `undetermined`.
+When a color cannot be decided the component is `undetermined`, never `pass`,
+and `undeterminedReason` says why: `background-image` (image or gradient),
+`opacity`, `filter` (`filter` / `backdrop-filter` / `mix-blend-mode`),
+`out-of-flow` (below a background-less absolute / fixed element),
+`color-scheme` (dark without a background; `light dark` follows the browser
+preference), `accent-color`, `svg-paint-server`,
+`image-icon` (an image or a CSS background image), `mixed-icon-colors` (an icon with parts above and below 3:1),
+`too-many-icon-parts` (more than 20 elements), `svg-use` (an SVG `<use>` whose
+target sets its own colors, or an external file), `visually-hidden` (a native
+control hidden with opacity or sr-only CSS; check the custom control drawn in
+its place), `no-icon-color` (an icon with no readable color) and `svg-overlap` (an SVG where a
+shape is drawn over a filled shape). Parts that are not drawn (`display: none`, ...) are not counted as icon
+sources, and sr-only text does not count as visible text. Only the look at load time is seen, not
+hover, focus or checked states. The outer color comes from ancestor
+backgrounds; overlaps by non-ancestors (`z-index`, ...) are not seen. Borders
+drawn with `box-shadow` / `outline` are not measured (`otherVisuals` records
+that they exist). Parts inside a component (check mark, knob), charts and
+graphics, and iframes / shadow roots are not examined. Up to 300 components are
+measured; the rest are counted in `componentCounts` and a manual-check node is
+added. The color helpers `contrastRatio`, `compositeOver`, `compositeLayers`,
+`relativeLuminance`, `floorRatio` and `toHexColor` (arguments are `{ r, g, b }`
+with 0-255 channels) are exported too.
+
 ## Install
 
 ```sh
@@ -237,7 +277,7 @@ npm install -D pixelmatch pngjs   # only if you use runAutoPlayDetection
 
 ## CLI
 
-Run all 18 checks against a URL with a single command — no test runner needed.
+Run all 19 checks against a URL with a single command — no test runner needed.
 
 ```sh
 npx -y @a11y-skills/audit --url https://example.com
@@ -282,6 +322,7 @@ change-on-input-check
 accessible-authentication-check
 pointer-gesture-check
 focus-order-check
+non-text-contrast-check
 ```
 
 ### Exit codes
@@ -569,7 +610,8 @@ import "@a11y-skills/audit/test-entries/target-size-check";
 // ...also: text-spacing-check, zoom-200-check, orientation-check,
 // autocomplete-audit, time-limit-detector, auto-play-detection,
 // redundant-entry-check, motion-actuation-check, change-on-input-check,
-// accessible-authentication-check, pointer-gesture-check, focus-order-check
+// accessible-authentication-check, pointer-gesture-check, focus-order-check,
+// non-text-contrast-check
 import "@a11y-skills/audit/test-entries/text-spacing-check";
 ```
 
