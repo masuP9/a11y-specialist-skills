@@ -202,7 +202,7 @@ exit code 1 と `Errors: 0` を要求する。`cli-smoke.html` は `<img>` と
 
 - 新規: `src/utils/focus-order.ts`、`src/playwright/runFocusOrderCheck.ts`、
   `src/test-entries/focus-order-check.ts`、
-  `test/fixtures/pages/focus-order/{in-order,backward-block,backward-inline,backward-tail,columns,rtl,detour,fixed,shadow,dialog-good,dialog-focus-outside,dialog-no-return,dialog-navigates,dialog-open-navigates,dialog-mixed,none}.html`、
+  `test/fixtures/pages/focus-order/{in-order,backward-block,backward-inline,backward-tail,columns,rtl,detour,fixed,shadow,first-focus-navigates,dialog-good,dialog-focus-outside,dialog-no-return,dialog-navigates,dialog-open-navigates,dialog-mixed,none}.html`、
   `test/focus-order.spec.ts`、`test/focus-order-analysis.spec.ts`
 - 編集（追加のみ）: `src/constants.ts`、`src/types.ts`、`src/utils/rule-registry.ts`、
   `src/utils/axe-format.ts`、`src/index.ts`、`src/playwright/index.ts`、
@@ -276,7 +276,10 @@ exit code 1 と `Errors: 0` を要求する。`cli-smoke.html` は `<img>` と
    上限に達したら `'tab-limit'`、時間切れなら `'timeout'`（`aborted = { reason: 'timeout', url }` も立てる）、
    遷移なら `'navigation'`。押した回数を `tabWalk.presses` に。
    **`'cycle'` 以外で終わった一巡は「最後まで見たか分からない」扱い**（設計 G で incomplete の pageNode を出す）。
-   ただし記録が 0 件（フォーカスできる要素が無いページ）なら比べるものが無いので inapplicable のまま。
+   **記録が 0 件でも、`'navigation'` / `'timeout'` で止まったときは同じく incomplete**（最初の要素の focus で
+   遷移するページ、記録前の時間切れ）。inapplicable にしてよいのは「対象が無いと確かめられた」場合だけ:
+   `ended === 'tab-limit' && stops.length === 0 && focusableCount === 0 && frameCount === 0`。
+   判定に使うので `focusableCount` と `frameCount` も `tabWalk` に記録する。
 7. 記録した要素を `stops`（Tab の順。`step` は何回目の Tab で来たか、1 始まり）にする。
 
 ### B. ダイアログの確認（runner、Tab の一巡の後）
@@ -481,6 +484,10 @@ export interface FocusOrderCheckDetails {
     presses: number;
     ended: 'cycle' | 'tab-limit' | 'timeout' | 'navigation';
     capped: boolean;
+    /** Focusable elements counted in the main document and open shadow roots before the walk. */
+    focusableCount: number;
+    /** iframe / frame elements in the main document. */
+    frameCount: number;
   };
   /** Triggers found before the `maxDialogTriggers` cap. */
   dialogTriggersFound: number;
@@ -526,11 +533,11 @@ export type FocusOrderCheckResult = AuditCheckResult<FocusOrderCheckDetails>;
     `how` は block: `` `${Math.round(-dy)}px above it` ``、inline: `` `${Math.round(-dx)}px before it on the same row` ``。
   - 遠回り 1 件ごとに、B の要素で
     `` `Tab jumps ${Math.round(distanceIn)}px to ${describe(B)} (step ${B.step}) and ${Math.round(distanceOut)}px back to an element ${Math.round(distanceAcross)}px from where it started. Verify that this element belongs at this point in the order.` ``
-  - **一巡を最後まで見られなかったとき**（`stops.length > 0 && tabWalk.ended !== 'cycle'`。
-    `'tab-limit'` / `'timeout'` / `'navigation'` のどれでも）は pageNode
+  - **一巡を最後まで見られなかったとき**（`tabWalk.ended !== 'cycle'`）は pageNode
     `` `The Tab walk ended without returning to the first element (${tabWalk.ended}) after ${stops.length} elements; the rest of the order was not compared.` ``
-    を足し、`applicable` を真にする（先頭の数件が順方向でも passes にしない）。
-    `stops.length === 0` のときは足さない（inapplicable のまま）。
+    を足し、`applicable` を真にする（先頭の数件が順方向でも、記録が 0 件でも passes / inapplicable にしない）。
+    **例外は「対象が無いと確かめられた」ときだけ**: `ended === 'tab-limit' && stops.length === 0 && tabWalk.focusableCount === 0 && tabWalk.frameCount === 0`
+    なら pageNode を足さない（inapplicable のまま）。
   - `describe(stop)` は `` `<${tag.toLowerCase()}> "${name}"` ``。
 - **`focus-order-dialog`**: `applicable = dialogTriggersFound > 0`（`maxDialogTriggers: 0` で 1 件も試さなかった
   場合も、候補があれば下の「上限で試さなかった」pageNode で incomplete になる）。
@@ -679,6 +686,9 @@ export interface RunFocusOrderCheckOptions
   incomplete で pageNode 1 件（summary に `maxDialogTriggers`）
 - `maxTabPresses: 2` で `in-order.html` → `tabWalk.ended === 'tab-limit'`、`tabWalk.capped === true`、
   `stops.length === 2`
+- `first-focus-navigates.html`（新規フィクスチャ: 最初のリンクの `focus` で `location.assign('none.html')`、ほかにリンク 2 つ）→
+  `stops` が空、`tabWalk.ended === 'navigation'`、`focus-order-visual` が inapplicable ではなく incomplete、例外なし
+- `timeBudgetMs: 1` で `in-order.html` → 記録前に時間切れ（`stops` が空、`tabWalk.ended === 'timeout'`）、`focus-order-visual` が incomplete
 - `maxTabPresses: 2` で `backward-tail.html`（新規フィクスチャ: 先頭 3 リンクは順方向、4 つ目が `order` で上に表示）→
   最初の 2 件だけでは逆向きが見えないが、`focus-order-visual` が passes ではなく incomplete（summary に
   `ended without returning to the first element`）
