@@ -30,6 +30,7 @@ Claude Code skill から機能本体を切り出したものです。10 個の�
 | `runMotionActuationCheck` | 2.5.4 動きによる起動（`devicemotion` / `deviceorientation` の listener。候補として報告） |
 | `runChangeOnInputCheck` | 3.2.2 入力時（値を変えただけで起きる移動・新しいウィンドウ・フォーカス移動・ダイアログ。候補として報告） |
 | `runAccessibleAuthenticationCheck` | 3.3.8 アクセシブルな認証（貼り付けの禁止・autocomplete の off・CAPTCHA らしき要素。候補として報告） |
+| `runPointerGestureCheck` | 2.5.1 ポインタのジェスチャ / 2.5.7 ドラッグ動作（ドラッグ・スワイプ・複数の指で動きそうな部品。候補として報告） |
 
 多くの検査は遷移済みの `page` を受けます。一部は navigation を所有し `targetUrl`
 （または `TEST_PAGE`）を受けます: `runOrientationCheck` と `runTimeLimitDetector`
@@ -100,6 +101,8 @@ CLI はチェックごとに新しい context を使うので影響しません�
 欄にフォーカスが残らないときは貼り付けず、未計測（`error: 'focus-moved'`）として `incomplete` にします。戻らない handler は CDP で打ち切ります。見えない・編集できない欄は実測せず
 `incomplete` です。iframe と shadow root の中の欄、ログインボタンを押してから出るフォーム、名前に
 `captcha` を含まない独自の CAPTCHA は見つかりません。
+
+`runPointerGestureCheck`（2.5.1・2.5.7、`a11y-skills/pointer-gestures`・`a11y-skills/dragging-movements`）は遷移済みの `page` を受けます。ドラッグやスワイプ、複数の指の操作で動く可能性がある要素を、1 つの検査で 2 つのルールに振り分けて `incomplete` の候補にします。拾うのは、`draggable="true"`、`dragstart` / `drop` の listener、同じ要素に「押す」と「動かす」の両方の listener があるもの、複数の指を見る listener（`touches.length` など）、`role="slider"` の自作スライダー、並べ替え・カルーセル・地図の部品のしるしで、文書と open shadow root の中を見ます（`shadowHosts` + `selector`）。動かす listener だけの要素と、20 種類以上の listener を持つ委譲先の要素は候補にせず、後者は `details.delegationRoots` に記録し、ルールごとに 1 つのページ単位の「手で確かめて」node として報告します。`window` / `document` の複数の指・ドラッグの listener はページ単位の node になります。1 点の操作で同じことができるか、必須の操作かは人が確かめます。listener は CDP で取り出すので **Chromium のみ**で、それ以外では属性と部品のしるしだけから候補を出し、手で確かめる node を付けます。イベントは送らずページの状態は変えません。委譲で作られたドラッグ、あとから `document` に付く move listener、iframe の中は見つからず、実際にドラッグして動くかは確かめません。候補は基準ごとに 200 件、listener のある要素は 1000 個までです。
 
 `runAutoPlayDetection` の 1.4.2（`a11y-skills/auto-play-audio`）は、ページと iframe（入れ子・
 shadow root の中も含む）の `<audio>`・`<video>` について、「再生中・消音でない・音量が 0 より大きい・
@@ -199,6 +202,7 @@ redundant-entry-check
 motion-actuation-check
 change-on-input-check
 accessible-authentication-check
+pointer-gesture-check
 ```
 
 ### 終了コード
@@ -450,7 +454,7 @@ import "@a11y-skills/audit/test-entries/target-size-check";
 // 他にも: text-spacing-check, zoom-200-check, orientation-check,
 // autocomplete-audit, time-limit-detector, auto-play-detection,
 // redundant-entry-check, motion-actuation-check, change-on-input-check,
-// accessible-authentication-check
+// accessible-authentication-check, pointer-gesture-check
 import "@a11y-skills/audit/test-entries/text-spacing-check";
 ```
 

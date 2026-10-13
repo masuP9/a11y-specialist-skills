@@ -1,0 +1,47 @@
+<!doctype html>
+<!--
+  Intent: a framework-style root that takes listeners for 25 event types
+  (including pointerdown, pointermove and dragstart).
+  Expected: no candidates; both rules incomplete (one page-level note); delegationRoots is
+  [{ selector: '#root', eventTypeCount: 25 }].
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Delegation root</title>
+  </head>
+  <body>
+    <div id="root"><button type="button">OK</button></div>
+    <script>
+      const types = [
+        'click',
+        'keydown',
+        'keyup',
+        'pointerdown',
+        'pointermove',
+        'pointerup',
+        'dragstart',
+        'drop',
+        'focusin',
+        'focusout',
+        'input',
+        'change',
+        'submit',
+        'mouseover',
+        'mouseout',
+        'contextmenu',
+        'dblclick',
+        'wheel',
+        'scroll',
+        'select',
+        'touchend',
+        'touchcancel',
+        'pointerover',
+        'pointerout',
+        'copy',
+      ];
+      const root = document.getElementById('root');
+      for (const type of types) root.addEventListener(type, () => {});
+    </script>
+  </body>
+</html>

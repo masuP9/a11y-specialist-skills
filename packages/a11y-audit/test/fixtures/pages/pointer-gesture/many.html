@@ -1,0 +1,28 @@
+<!doctype html>
+<!--
+  Intent: more candidates than the cap. 250 draggable divs, then one carousel.
+  Expected: candidates.length 200, candidateCounts.total 251,
+  byCriterion 2.5.7 { found: 250, kept: 200 }, 2.5.1 { found: 1, kept: 0 }.
+  Both rules incomplete (pointer-gestures only through the cut-off note).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Many candidates</title>
+  </head>
+  <body>
+    <div id="items"></div>
+    <section aria-roledescription="carousel" aria-label="Last">
+      <p>Slide</p>
+    </section>
+    <script>
+      const items = document.getElementById('items');
+      for (let i = 0; i < 250; i++) {
+        const div = document.createElement('div');
+        div.setAttribute('draggable', 'true');
+        div.textContent = `Item ${i}`;
+        items.appendChild(div);
+      }
+    </script>
+  </body>
+</html>

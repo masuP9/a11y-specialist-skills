@@ -9,6 +9,7 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import {
   buildAuditResult,
   normalizeAccessibleAuthenticationCheck,
+  normalizePointerGestureCheck,
   normalizeAxeResults,
   normalizeChangeOnInputCheck,
   normalizeFocusCheck,
@@ -21,6 +22,7 @@ import {
 } from '../dist/index.js';
 import type {
   AccessibleAuthenticationCheckDetails,
+  PointerGestureCheckDetails,
   ChangeOnInputCheckDetails,
   FocusCheckDetails,
   KeyboardReachabilityCheckDetails,
@@ -715,6 +717,92 @@ test('accessible-authentication-check envelope for an unavailable paste test val
     buckets: normalizeAccessibleAuthenticationCheck(details),
   });
   expectValid('accessible-authentication-check', result);
+});
+
+test('pointer-gesture-check envelope with a candidate, a page listener and a delegation root validates against its schema', () => {
+  const details: PointerGestureCheckDetails = {
+    listenerInspection: 'cdp',
+    inspectionError: null,
+    candidates: [
+      {
+        selector: '#thumb',
+        shadowHosts: ['#host'],
+        html: '<div id="thumb" role="slider"></div>',
+        htmlTruncated: false,
+        tagName: 'div',
+        role: 'slider',
+        visible: true,
+        signals: [
+          {
+            kind: 'move-listener',
+            detail: 'pointerdown+pointermove',
+            listener: {
+              scriptId: '7',
+              lineNumber: 3,
+              columnNumber: 8,
+              handlerPreview: 'function () {}',
+            },
+          },
+          { kind: 'widget-slider', detail: '[role="slider"]', listener: null },
+        ],
+        criteria: ['2.5.1', '2.5.7'],
+      },
+    ],
+    candidateCounts: {
+      total: 1,
+      byCriterion: {
+        '2.5.1': { found: 1, kept: 1 },
+        '2.5.7': { found: 1, kept: 1 },
+      },
+    },
+    listenerNodesTruncated: false,
+    pageListeners: [
+      {
+        target: 'document',
+        type: 'touchstart',
+        multipoint: true,
+        scriptId: '7',
+        lineNumber: 10,
+        columnNumber: 0,
+        handlerPreview: null,
+      },
+    ],
+    delegationRoots: [
+      { selector: '#root', shadowHosts: [], eventTypeCount: 25 },
+    ],
+  };
+  const result = buildAuditResult({
+    source: 'pointer-gesture-check',
+    url: 'about:blank',
+    details,
+    buckets: normalizePointerGestureCheck(details),
+  });
+  expectValid('pointer-gesture-check', result);
+});
+
+test('pointer-gesture-check envelope for an unsupported browser validates against its schema', () => {
+  const details: PointerGestureCheckDetails = {
+    listenerInspection: 'unsupported',
+    inspectionError: null,
+    candidates: [],
+    candidateCounts: {
+      total: 0,
+      byCriterion: {
+        '2.5.1': { found: 0, kept: 0 },
+        '2.5.7': { found: 0, kept: 0 },
+      },
+    },
+    listenerNodesTruncated: false,
+    pageListeners: [],
+    delegationRoots: [],
+  };
+  const result = buildAuditResult({
+    source: 'pointer-gesture-check',
+    url: 'about:blank',
+    details,
+    buckets: normalizePointerGestureCheck(details),
+  });
+  expectValid('pointer-gesture-check', result);
 });
 
 test('the pre-0.3.0 flat result shape is rejected', () => {

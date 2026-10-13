@@ -1,0 +1,17 @@
+<!doctype html>
+<!--
+  Intent: a tooltip that follows the mouse (mousemove only, no press listener).
+  Expected: no candidates; both rules inapplicable.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Hover only</title>
+  </head>
+  <body>
+    <div id="tip">hover me</div>
+    <script>
+      document.getElementById('tip').addEventListener('mousemove', () => {});
+    </script>
+  </body>
+</html>

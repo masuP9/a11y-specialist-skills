@@ -125,5 +125,6 @@ npx -y @a11y-skills/audit --url "https://example.com" --output-dir ./results
 | `motion-actuation-check` | 2.5.4 | Listeners reacting to device motion / orientation (candidates; needs review) |
 | `change-on-input-check` | 3.2.2 | Navigation, new windows, focus moves or dialogs caused by just changing a form control (candidates; needs review) |
 | `accessible-authentication-check` | 3.3.8 | Paste blocking and autocomplete="off" on password / code fields, CAPTCHA-like elements (candidates; needs review) |
+| `pointer-gesture-check` | 2.5.1, 2.5.7 | Components likely operated by dragging, swiping or multiple fingers (candidates; needs review) |
 
 See the [`@a11y-skills/audit` README](https://www.npmjs.com/package/@a11y-skills/audit) for detailed documentation.

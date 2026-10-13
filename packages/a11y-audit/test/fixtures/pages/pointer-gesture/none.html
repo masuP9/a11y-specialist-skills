@@ -1,0 +1,18 @@
+<!doctype html>
+<!--
+  Intent: a native range input and a plain click button.
+  Expected: no candidates; both rules inapplicable.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>No gestures</title>
+  </head>
+  <body>
+    <label>Volume <input type="range" min="0" max="10" /></label>
+    <button id="go" type="button">Go</button>
+    <script>
+      document.getElementById('go').addEventListener('click', () => {});
+    </script>
+  </body>
+</html>
