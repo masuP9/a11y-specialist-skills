@@ -287,34 +287,43 @@ export function toHexColor(c: RgbColor): string;
 - **除外**（数えない・details に載せない）: `el.matches(':disabled')`、`el.closest('[aria-disabled="true"]')`、
   `el.closest('[inert]')`、`!isVisible(el)`（`getClientRects().length > 0` かつ `visibility !== 'hidden'`）。
   無効な部品は 1.4.11 の例外（inactive）。
-- 上限 `NON_TEXT_CONTRAST_MAX_COMPONENTS = 300`。それを超えた分は測らない。
-  `componentCounts: { found, kept }`（`found` は除外の後で kind が付いた数、`kept = min(found, 300)`）。
+- 上限 `NON_TEXT_CONTRAST_MAX_COMPONENTS = 300`（文書順に、境界の部品とアイコンのボタンを合わせて数える）。
+  それを超えた分は測らないが、**kind の判定（B の表）は全件に行って数える**（軽い処理なので）。
+  `componentCounts: { boundary: { found, kept }, icon: { found, kept } }`
+  （`boundary` は `icon-button` 以外の kind、`icon` は `icon-button`。`found` は除外の後で kind が付いた数、
+  `kept` は測った数）。`found > kept` のグループは normalizer で手動確認の node を足す（設計 I）。
+  **打ち切りが合格扱いにならないようにするため**（`focus-order-check` も上限の打ち切りを incomplete にしている）。
 - 各部品について記録: `selector`（`scopeSelector` のコピー）、`html` / `htmlTruncated`
   （`safeOuterHTML` のコピー）、`kind`、下記 C / D の生データ。
 
 ### C. 背景の色の決め方（ページ内で生データを集め、Node 側で合成する）
 
 ページ内関数 `layersFrom(start: Element | null)` を 1 つ書き、部品の外側（`start = el.parentElement`）と
-アイコンの背景（D）の両方で使う。祖先を 1 つずつ上がり（`parentElement`）、各要素の計算済み
-スタイルを見る:
+アイコンの背景（D）の両方で使う。祖先を 1 つずつ上がり（`parentElement`）、**根（`html`）まで必ず歩く**。
+「背景の層を集める」ことと「祖先の効果を確かめる」ことは別々に止める:
 
-1. 次のどれかに当たったら `blockedBy` を返して止める（**色が決まらない**）:
-   - `backgroundImage !== 'none'` → `'background-image'`（画像・グラデーション）
+1. **効果の確認（根まで続ける）**: 次のどれかに当たったら、その時点で `blockedBy` を返して止める
+   （**色が決まらない**）。`opacity` / `filter` / 合成モードは子孫全体に効くので、不透明な背景より
+   外側の祖先にあっても部品の見た目は変わる。そのため層の収集を終えた後も確認は続ける:
    - `Number(opacity) < 1` → `'opacity'`
    - `filter !== 'none'`、`backdropFilter !== 'none'`、`mixBlendMode !== 'normal'` → `'filter'`
-2. `toRgba(backgroundColor)` の `a > 0` なら `layers` に積む（近い順）。
-3. `a === 1`（不透明）なら止める（`blockedBy: null`）。
-4. まだ不透明な層が無いまま `position` が `absolute` / `fixed` の要素を**通り過ぎる**なら
-   `'out-of-flow'` で止める（その下に描かれているのは祖先ではないかもしれないため）。
-   この判定は 2・3 の後（その要素自身の背景が不透明なら 3 で止まっていて問題ない）。
-5. 根（`html`）まで不透明な層が無ければ、`html` の計算済み `colorScheme` に `dark` が含まれるとき
+2. **層の収集（不透明な層が見つかるまで）**: まだ不透明な層が無い間だけ、次を行う:
+   1. `backgroundImage !== 'none'` → `'background-image'`（画像・グラデーション）で止める。
+      不透明な層より外側の背景画像は隠れているので見ない。
+   2. `toRgba(backgroundColor)` の `a > 0` なら `layers` に積む（近い順）。
+   3. `a === 1`（不透明）なら、以後は層を集めない（1 の確認は続ける）。
+   4. まだ不透明な層が無いまま `position` が `absolute` / `fixed` の要素を**通り過ぎる**なら
+      `'out-of-flow'` で止める（その下に描かれているのは祖先ではないかもしれないため）。
+      この判定は 2・3 の後（その要素自身の背景が不透明なら 3 で層の収集は終わっていて問題ない）。
+3. 根まで歩き終えて不透明な層が無ければ、`html` の計算済み `colorScheme` に `dark` が含まれるとき
    `'color-scheme'`（キャンバスの既定色が白でない）で止める。それ以外は土台を白とする。
 
 返り値 `{ layers: RgbaColor[], blockedBy: NonTextContrastUndeterminedReason | null }`。
 Node 側で `blockedBy === null` なら `compositeLayers(layers, WHITE)` が**外側の色**。
 
-部品そのものについても同じ 1 の判定をする（部品自身の `backgroundImage` / `opacity` / `filter`）。
-当たれば `undetermined`（理由は同じ値）。
+部品そのもの（アイコンなら色を取った要素そのもの）についても同じ判定をする（自身の
+`backgroundImage` / `opacity` / `filter` / `backdropFilter` / `mixBlendMode`）。当たれば `undetermined`（理由は同じ値）。
+部品からアイコンの要素までの間の要素は `layersFrom(svg.parentElement)` などが歩くので重ねて見なくてよい。
 
 ### D. 測るもの（Node 側。ページ内では生データだけ集める）
 
@@ -351,17 +360,25 @@ Node 側で `blockedBy === null` なら `compositeLayers(layers, WHITE)` が**�
 
 | 元 | 色の取り方 | 背景 |
 |----|-----------|------|
-| インライン `svg` の図形（`path, circle, rect, ellipse, line, polyline, polygon, text, use`） | 計算済み `fill` と `stroke`（`none` と `a === 0` は除く。`stroke` は `strokeWidth` が 0 なら除く）。`url(` で始まる（グラデーションなど）→ `undetermined: 'svg-paint-server'` | `layersFrom(svg.parentElement)` |
+| インライン `svg` の図形（`path, circle, rect, ellipse, line, polyline, polygon, text, use`） | 計算済み `fill` と `stroke`（`none` と `a === 0` は除く。`stroke` は `strokeWidth` が 0 なら除く。**`line` の `fill` は描かれないので除く**）。`url(` で始まる（グラデーションなど）→ `undetermined: 'svg-paint-server'` | `layersFrom(svg.parentElement)` |
 | 文字のある `::before` / `::after`（`content` が `none` / `normal` / `""` 以外） | その疑似要素の計算済み `color`（`getComputedStyle(el, '::before').color`） | `layersFrom(el)`（疑似要素の背景は見ない） |
 | `img`、`svg` の中の `image`、ボタンや子孫の `backgroundImage !== 'none'`、`input[type=image]` | 色は取れない → `undetermined: 'image-icon'` | — |
 
 - アイコンの元が 1 つも無い（`svg` も疑似要素の文字も画像も無い）ボタンは `icon-button` にしない（B の条件）。
+- アイコンの元として調べる要素（ボタン自身と子孫）が `NON_TEXT_CONTRAST_MAX_ICON_PARTS`（20）を超えたら、
+  色は集めず `undetermined: 'too-many-icon-parts'`（調べ残しを合格にしない）。
 - 各色について `ratio = contrastRatio(compositeOver(color, bg), bg)`（`bg` は表の背景を C の方法で合成した色。
   決まらなければ `undetermined`、理由は `blockedBy`）。指標の `part` は `'icon'`。
-- 画像の元と色の取れる元が混ざっていれば、**色の取れる元だけで判定**し、`best >= 3` なら `pass`、
-  そうでなければ `undetermined: 'image-icon'`（画像のほうが見分けの役をしているかもしれない）。
-- `best = max(ratio)`。`best < 3` → `'low'`、それ以外 `'pass'`。アイコンの一部が薄くても、
-  最も濃い部分が 3:1 あれば形は分かる、という判断（候補を絞りすぎない向き）。
+  同じ `#rrggbb`・同じ `against` の指標は 1 つにまとめる。
+- 判定（上から順に最初に当たったもの）:
+  1. 画像の元がある → 色の取れる元が無いか、色の取れる元の指標が 1 つでも 3 未満なら
+     `undetermined: 'image-icon'`。色の取れる元の指標が**すべて** 3 以上なら `pass`。
+  2. 指標が**すべて** 3 以上 → `pass`。
+  3. 指標が**すべて** 3 未満 → `low`。
+  4. 3 以上と 3 未満が混ざる → `undetermined: 'mixed-icon-colors'`。どの部分が意味を担うか
+     （薄い部分を見えないものとしても意味が分かるか、W3C Understanding 1.4.11 の確認方法）は
+     機械では決められないため。最も濃い部分だけで合格にしない。
+- `bestRatio` は記録用に最大の比を入れる（判定には上の規則を使う）。
 - `otherVisuals` はアイコンでは常に `[]`。
 
 ### E. 型（`src/types.ts`）
@@ -382,7 +399,9 @@ export type NonTextContrastUndeterminedReason =
   | 'color-scheme'
   | 'accent-color'
   | 'svg-paint-server'
-  | 'image-icon';
+  | 'image-icon'
+  | 'mixed-icon-colors'
+  | 'too-many-icon-parts';
 
 export interface NonTextContrastIndicator {
   part:
@@ -423,7 +442,15 @@ export interface NonTextContrastCheckDetails {
   /** Minimum ratio used (3). */
   threshold: number;
   components: NonTextContrastComponent[];
-  componentCounts: { found: number; kept: number };
+  /**
+   * Components found (after exclusions) and measured, per rule group.
+   * boundary: every kind except icon-button. found > kept means some were
+   * not measured because of NON_TEXT_CONTRAST_MAX_COMPONENTS.
+   */
+  componentCounts: {
+    boundary: { found: number; kept: number };
+    icon: { found: number; kept: number };
+  };
 }
 
 export type NonTextContrastCheckResult =
@@ -483,7 +510,7 @@ export interface RunNonTextContrastCheckOptions extends AuditOutputOptions {
   `measureComponent(raw): NonTextContrastComponent` で D の判定をする。`measureComponent` は
   runner ファイル内の非 export 関数でよい（テストはフィクスチャ経由）。
 - `buildAuditResult({ source: 'non-text-contrast-check', url, details, buckets: normalizeNonTextContrastCheck(details) })`
-  → `out.header('Non-text Contrast Results', 'WCAG 1.4.11', url)` → `out.summary({ Components: kept, Low: …, Undetermined: … })`
+  → `out.header('Non-text Contrast Results', 'WCAG 1.4.11', url)` → `out.summary({ Components: components.length, 'Not measured (limit)': …, Low: …, Undetermined: … })`
   → `out.issueList`（`low` / `no-boundary` / `undetermined` の部品を `selector [kind] status best=…`）
   → `out.save(result)` → `out.outputPaths()`。
 - ファイル先頭コメントに目的・判定・Limitations（Maintenance notes の既知の制限）を書く。
@@ -492,8 +519,12 @@ export interface RunNonTextContrastCheckOptions extends AuditOutputOptions {
 
 `checkedNodes = components.length`。node は `toNode(component, summary)`。
 
+- **打ち切りの node（両ルール共通）**: `componentCounts.<group>.found > kept` のグループのルールには、
+  ``pageNode(`${found - kept} ${groupLabel} were not measured (limit ${NON_TEXT_CONTRAST_MAX_COMPONENTS} components per page). Check them manually.`)``
+  を 1 つ足し、そのルールは applicable とする（`groupLabel`: boundary → `form controls`、icon → `icon buttons`）。
+  これで、先頭 300 件が合格でも残りがあるページは passes にならない。
 - **`non-text-contrast-boundary`**: 対象は `kind !== 'icon-button'` の部品。
-  `applicable = 対象のうち status !== 'user-agent' が 1 つ以上`。
+  `applicable = 対象のうち status !== 'user-agent' が 1 つ以上、または打ち切りがある`。
   node にするのは `low` / `no-boundary` / `undetermined`。summary:
   - low: `` `Best contrast of the ${kindLabel} boundary is ${bestRatio}:1 (${describeIndicators}), below 3:1.${others}` ``
     （`describeIndicators` は例 `border-bottom #cccccc vs #ffffff 1.6:1, background #ffffff vs #ffffff 1:1` のように全指標を並べる。
@@ -501,7 +532,7 @@ export interface RunNonTextContrastCheckOptions extends AuditOutputOptions {
   - no-boundary: `` `The ${kindLabel} has no border or background to mark its boundary.${others} Check whether its extent is identifiable without one.` ``
   - undetermined: `` `Contrast of the ${kindLabel} could not be measured (${reasonText}). Check manually.` ``
   - 1 つも node が無く applicable → passes。
-- **`non-text-contrast-icon`**: 対象は `kind === 'icon-button'`。`applicable = 対象が 1 つ以上`。
+- **`non-text-contrast-icon`**: 対象は `kind === 'icon-button'`。`applicable = 対象が 1 つ以上、または打ち切りがある`。
   node は `low` / `undetermined`。summary:
   - low: `` `Best contrast of the icon is ${bestRatio}:1 (${describeIndicators}), below 3:1.` ``
   - undetermined: 同上の形。
@@ -510,7 +541,9 @@ export interface RunNonTextContrastCheckOptions extends AuditOutputOptions {
 - `reasonText`: `background-image` → `background image or gradient`、`opacity` → `opacity below 1`、
   `filter` → `filter or blend mode`、`out-of-flow` → `positioned over content that is not its ancestor`、
   `color-scheme` → `dark color-scheme without a background`、`accent-color` → `native control with accent-color`、
-  `svg-paint-server` → `SVG gradient or pattern`、`image-icon` → `icon is an image`。
+  `svg-paint-server` → `SVG gradient or pattern`、`image-icon` → `icon is an image`、
+  `mixed-icon-colors` → `icon has parts above and below 3:1; check whether the parts below 3:1 are needed to understand it`、
+  `too-many-icon-parts` → `icon has more than ${NON_TEXT_CONTRAST_MAX_ICON_PARTS} elements`。
 - 部品が 0 件なら 2 ルールとも inapplicable。
 
 ### J. schema
@@ -518,7 +551,7 @@ export interface RunNonTextContrastCheckOptions extends AuditOutputOptions {
 `NON_TEXT_CONTRAST_CHECK_RESULT_SCHEMA` を `buildEnvelopeSchema` で作る。details の `required` は
 型の全フィールド、`kind` / `status` / `undeterminedReason`（`null` を含む）/ `part` / `otherVisuals` の要素は `enum`、
 `color` / `against` は `pattern: '^#[0-9a-f]{6}$'`、`ratio` / `threshold` は `number`、`bestRatio` は `['number', 'null']`、
-`componentCounts` の 2 つは `integer`（`minimum: 0`）。既存 schema（例 `FOCUS_ORDER_STOP_SCHEMA` :1481）の
+`componentCounts.boundary` / `.icon` の `found` / `kept` は `integer`（`minimum: 0`）。既存 schema（例 `FOCUS_ORDER_STOP_SCHEMA` :1481）の
 書き方（`additionalProperties` の扱いなど）に合わせる。`RESULT_SCHEMAS` に `'non-text-contrast-check'` で登録。
 
 ## Steps
@@ -572,23 +605,28 @@ export interface RunNonTextContrastCheckOptions extends AuditOutputOptions {
 | `oklch.html` | `<input style="border:2px solid oklch(0.4 0 0)">` | `pass`（計算済みスタイルが `oklch(...)` でも測れる） |
 | `gradient.html` | `<div style="background:linear-gradient(#fff,#000)"><input></div>` | `undetermined`、`background-image` |
 | `opacity.html` | `<div style="opacity:.5"><input style="border:1px solid #000"></div>` | `undetermined`、`opacity` |
+| `opacity-outer.html` | `<div style="opacity:.1"><div style="background:#fff"><input style="border:1px solid #000"></div></div>` | `undetermined`、`opacity`（不透明な層より外側の効果も見る） |
 | `out-of-flow.html` | 黒い `div` の上に、背景なしの `position:absolute` の `div` で包んだ入力欄を重ねる | `undetermined`、`out-of-flow` |
 | `dark-scheme.html` | `<meta name="color-scheme" content="dark">`、背景指定なしで `<input style="border:1px solid #777">` | `undetermined`、`color-scheme` |
 | `native-controls.html` | 既定の `<input type="checkbox">` と `<input type="radio">`、`accent-color:#ccc` の checkbox | 既定の 2 つは `user-agent`、accent の 1 つは `undetermined`（`accent-color`） |
 | `native-only.html` | 既定の checkbox と radio だけ | boundary が inapplicable（`user-agent` のみ） |
-| `icon-low.html` | `<button aria-label="閉じる" style="background:#fff;border:0"><svg viewBox="0 0 10 10" width="20" height="20"><path d="M0 0L10 10" stroke="#bbb" stroke-width="2"/></svg></button>` | icon が incomplete、`low` |
-| `icon-good.html` | 同じ形で `style="color:#333"`、`stroke="currentColor"` | icon が passes |
+| `icon-low.html` | `<button aria-label="閉じる" style="background:#fff;border:0"><svg viewBox="0 0 10 10" width="20" height="20"><path d="M0 0L10 10" fill="none" stroke="#bbb" stroke-width="2"/></svg></button>` | icon が incomplete、`low` |
+| `icon-good.html` | 同じ形で `style="color:#333"`、`fill="none" stroke="currentColor"` | icon が passes |
+| `icon-mixed.html` | 白いボタンの SVG に、黒の `circle`（`fill="#000"`）と薄い `path`（`fill="none" stroke="#ddd"`） | `undetermined`、`mixed-icon-colors`（濃い部分だけで pass にしない） |
+| `icon-many-parts.html` | 白いボタンの SVG に `rect` を 21 個（`fill="#000"`） | `undetermined`、`too-many-icon-parts` |
 | `icon-font.html` | `<button aria-label="検索"><span class="i"></span></button>`、`.i::before { content: "\2715"; color: #ddd }`、ボタンは `background:#fff;border:0` | `low`（疑似要素の色が取れる） |
 | `icon-image.html` | `<button aria-label="設定"><img src="data:image/gif;base64,…" alt=""></button>` | `undetermined`、`image-icon` |
 | `excluded.html` | 枠 `#eee` の `disabled` な入力欄、`display:none` の入力欄、`aria-disabled="true"` の `role=checkbox`、文字のあるボタン | `components` が 0 件、2 ルールとも inapplicable |
-| `none.html` | 見出しと段落だけ | 2 ルールとも inapplicable、`componentCounts` が `{ found: 0, kept: 0 }` |
-| `many.html` | スクリプトで `<input style="border:1px solid #ccc">` を 310 個作る | `componentCounts` が `{ found: 310, kept: 300 }`、`components.length` 300 |
+| `none.html` | 見出しと段落だけ | 2 ルールとも inapplicable、`componentCounts` の 2 グループとも `{ found: 0, kept: 0 }` |
+| `many.html` | スクリプトで `<input style="border:1px solid #767676">`（合格）を 300 個、その後ろに `<input style="border:1px solid #eee">`（不足）を 10 個作る | `componentCounts.boundary` が `{ found: 310, kept: 300 }`、`components.length` 300、boundary が incomplete で打ち切りの page node を 1 つ持つ（passes にならない） |
 
 `test/non-text-contrast.spec.ts` を先に書く（`test/pointer-gesture.spec.ts` の形。`helpers/fixtures.js` の
 `test` / `runFixtureCheck` を使う）。上の期待を 1 テスト 1 振る舞いで確かめる。加えて:
 
 - normalizer の no-browser テスト（手組み details）: `low` の summary に比と `below 3:1` を含む、
-  `otherVisuals: ['box-shadow']` のとき summary に `box-shadow` を含む、部品 0 件で 2 ルールとも inapplicable。
+  `otherVisuals: ['box-shadow']` のとき summary に `box-shadow` を含む、部品 0 件で 2 ルールとも inapplicable、
+  `components` がすべて `pass` でも `componentCounts.icon` が `{ found: 301, kept: 300 }` なら icon が incomplete
+  （`target: ['html']` の node 1 つ）。
 - 全フィクスチャの結果がエンベロープの schema（`RESULT_SCHEMAS['non-text-contrast-check']`）に valid。
 - 検査の前後で `document.body.innerHTML` が変わらない（`low-border.html` で確認。canvas を挿入しない）。
 
@@ -664,7 +702,7 @@ grep -E "non-text-contrast-check|Errors:" /tmp/claude-ntc-all.log
 ## Test plan
 
 - **`test/color.spec.ts`**: 比・相対輝度・合成・丸め・16 進の変換（ブラウザ不要）。
-- **`test/non-text-contrast.spec.ts`**: 20 フィクスチャで部品の分類・除外・枠/塗り/下線の指標・
+- **`test/non-text-contrast.spec.ts`**: 23 フィクスチャで部品の分類・除外・枠/塗り/下線の指標・
   半透明の合成・`oklch` の変換・決められない 6 種・UA の部品・アイコン（SVG / 疑似要素 / 画像）・
   上限・ページを書き換えないこと・schema を検証。
 - **fixture-gallery / rule-classification / schema-validation**: 既存の枠組みに登録。
@@ -707,7 +745,8 @@ ALL must hold:
   - UA が描く既定のチェックボックス・ラジオは測らない（`user-agent`）。`accent-color` を変えたものは
     `undetermined`。既定の入力欄・`select` は計算済みの枠の色で測る（既定では 3:1 を満たす）。
   - アイコンは SVG の図形の `fill` / `stroke` と疑似要素の文字色だけ。画像・CSS の背景画像のアイコンは
-    `undetermined`。アイコンの一部の色が薄くても、最も濃い部分で判定する。
+    `undetermined`。濃い部分と薄い部分が混ざるアイコンは、どちらが意味を担うか決められないので
+    `undetermined`（`mixed-icon-colors`）。SVG の図形の面積（描かれない `fill`）は `line` 以外は見ない。
   - チェックボックスのチェックの印・スイッチのつまみなど、部品の中の部分どうしの比は見ない。
   - 主文書の light DOM だけ。iframe・shadow root の中は見ない。部品は 300 個まで。
   - グラフ・図など部品以外のグラフィカルオブジェクトは見ない。
