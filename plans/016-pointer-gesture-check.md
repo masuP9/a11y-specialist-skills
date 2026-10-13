@@ -17,6 +17,8 @@
 
 ## Status
 
+- **Codex plan review**: 通過（2 巡目、2026-10-13、見送った low 0 件）
+
 - **Priority**: P2
 - **Effort**: M（2〜3 日相当。共通の listener 取り出し処理の拡張とフィクスチャが半分）
 - **Risk**: LOW〜MEDIUM（新規チェックの追加と、共通モジュール `cdpEventListeners.ts` への
