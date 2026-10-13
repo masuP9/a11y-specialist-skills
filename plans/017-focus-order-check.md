@@ -202,7 +202,7 @@ exit code 1 と `Errors: 0` を要求する。`cli-smoke.html` は `<img>` と
 
 - 新規: `src/utils/focus-order.ts`、`src/playwright/runFocusOrderCheck.ts`、
   `src/test-entries/focus-order-check.ts`、
-  `test/fixtures/pages/focus-order/{in-order,backward-block,backward-inline,columns,rtl,detour,fixed,dialog-good,dialog-focus-outside,dialog-no-return,dialog-navigates,none}.html`、
+  `test/fixtures/pages/focus-order/{in-order,backward-block,backward-inline,backward-tail,columns,rtl,detour,fixed,shadow,dialog-good,dialog-focus-outside,dialog-no-return,dialog-navigates,dialog-open-navigates,dialog-mixed,none}.html`、
   `test/focus-order.spec.ts`、`test/focus-order-analysis.spec.ts`
 - 編集（追加のみ）: `src/constants.ts`、`src/types.ts`、`src/utils/rule-registry.ts`、
   `src/utils/axe-format.ts`、`src/index.ts`、`src/playwright/index.ts`、
@@ -246,9 +246,12 @@ exit code 1 と `Errors: 0` を要求する。`cli-smoke.html` は `<img>` と
 1. `resolveCreateContext` で context を作り、`newPage()`、`gotoAndSettle(page, targetUrl)`。
 2. `page.viewportSize()`（null なら `{ width: 1280, height: 720 }`）と、
    `getComputedStyle(document.documentElement).direction`（`'rtl'` 以外は `'ltr'`）を記録。
-3. 押す回数の上限 `pressN = min(focusableCount + FOCUS_ORDER_TAB_SLACK, maxTabPresses)`。
-   `focusableCount` は主文書の `document.querySelectorAll(FOCUSABLE_SELECTOR).length`。
-   `focusableCount + FOCUS_ORDER_TAB_SLACK > maxTabPresses` なら `tabWalk.capped = true`。
+3. 押す回数の上限 `pressN = min(wanted, maxTabPresses)`、
+   `wanted = focusableCount + FOCUS_ORDER_TAB_SLACK + frameCount * FOCUS_ORDER_FRAME_SLACK`。
+   `focusableCount` は主文書と、**開いている shadow root を再帰的にたどった中**の
+   `querySelectorAll(FOCUSABLE_SELECTOR)` の件数の合計（`runFocusIndicatorCheck.ts:1411-1421` の
+   `queryFocusable` と同じたどり方）。`frameCount` は主文書の `iframe, frame` 要素の数
+   （中を数えられないので 1 枚ごとに余りを足す）。`wanted > maxTabPresses` なら `tabWalk.capped = true`。
 4. 各回: 時間の上限を確かめる → `page.keyboard.press('Tab')` → `page.waitForTimeout(settleMs)` →
    `page.url()` が開始時と違えば `aborted = { reason: 'navigation', url }` で一巡を終える →
    ブラウザ内関数 `describeFocus()` を `page.evaluate`（失敗が `NAVIGATION_ERROR` に当たれば
@@ -272,6 +275,8 @@ exit code 1 と `Errors: 0` を要求する。`cli-smoke.html` は `<img>` と
 6. 1 件目の `elementId` がもう一度出たら一巡したとして終える（`tabWalk.ended = 'cycle'`）。
    上限に達したら `'tab-limit'`、時間切れなら `'timeout'`（`aborted = { reason: 'timeout', url }` も立てる）、
    遷移なら `'navigation'`。押した回数を `tabWalk.presses` に。
+   **`'cycle'` 以外で終わった一巡は「最後まで見たか分からない」扱い**（設計 G で incomplete の pageNode を出す）。
+   ただし記録が 0 件（フォーカスできる要素が無いページ）なら比べるものが無いので inapplicable のまま。
 7. 記録した要素を `stops`（Tab の順。`step` は何回目の Tab で来たか、1 始まり）にする。
 
 ### B. ダイアログの確認（runner、Tab の一巡の後）
@@ -305,8 +310,13 @@ exit code 1 と `Errors: 0` を要求する。`cli-smoke.html` は `<img>` と
    9. 閉じたら `focusAfterClose`: 深い activeElement が開くボタン（同じ要素、または
       要素が作り直された場合に備えて `getUniqueSelector` が開くボタンの selector と同じ）→ `'trigger'`、
       body / null → `'body'`、それ以外 → `'elsewhere'`（`focusAfterCloseSelector`）。閉じなければ `null`。
-   10. 想定外の例外は `status: 'error'`、`error` に例外の 1 行目。次の候補へ。
-3. context はチェック全体の `finally` で閉じる（`runChangeOnInputCheck.ts` と同じ）。
+   10. 想定外の例外（`focus()` の失敗を含む）は `status: 'error'`、`error` に例外の 1 行目。次の候補へ。
+   11. **途中で終わっても、それまでに観察した値は消さない**。例: 開いた直後に `focusAfterOpen` と `modal` を
+       記録し、閉じる操作で遷移したら `status: 'navigated'` にするが、`focusAfterOpen` / `modal` はそのまま残す。
+3. 時間の上限で候補の途中で止めたら、まだ試していない候補の数を `dialogsNotTried` に足し、
+   `aborted = { reason: 'timeout', url }` を立てる。候補の上限（`maxDialogTriggers`）で試さなかった数は
+   `dialogTriggersFound - dialogs.length` で分かる（`dialogsNotTried` には含めない）。
+4. context はチェック全体の `finally` で閉じる（`runChangeOnInputCheck.ts` と同じ）。
 
 ### C. 位置のずれの分析（`src/utils/focus-order.ts`、純粋関数）
 
@@ -354,6 +364,8 @@ export function analyzeFocusOrder(
 ```ts
 /** Tab presses beyond the focusable-element count, for elements the selector misses. */
 export const FOCUS_ORDER_TAB_SLACK = 10;
+/** Extra Tab presses per iframe, whose contents cannot be counted from the main document. */
+export const FOCUS_ORDER_FRAME_SLACK = 20;
 export const FOCUS_ORDER_MAX_TAB_PRESSES = 300;
 export const FOCUS_ORDER_TIMEOUT_MS = 60_000;
 /** Slack for sub-pixel and baseline differences when comparing positions. */
@@ -444,6 +456,7 @@ export interface FocusOrderDialogProbe {
     html: string;
     htmlTruncated: boolean;
   };
+  /** Final state. Values observed before a navigation / error are kept in the fields below. */
   status: 'opened' | 'not-opened' | 'navigated' | 'error';
   dialogSelector: string | null;
   modal: boolean | null;
@@ -472,6 +485,8 @@ export interface FocusOrderCheckDetails {
   /** Triggers found before the `maxDialogTriggers` cap. */
   dialogTriggersFound: number;
   dialogs: FocusOrderDialogProbe[];
+  /** Triggers within the cap that were not tried because the time budget ran out. */
+  dialogsNotTried: number;
   aborted: { reason: 'timeout' | 'navigation'; url: string } | null;
 }
 
@@ -511,21 +526,33 @@ export type FocusOrderCheckResult = AuditCheckResult<FocusOrderCheckDetails>;
     `how` は block: `` `${Math.round(-dy)}px above it` ``、inline: `` `${Math.round(-dx)}px before it on the same row` ``。
   - 遠回り 1 件ごとに、B の要素で
     `` `Tab jumps ${Math.round(distanceIn)}px to ${describe(B)} (step ${B.step}) and ${Math.round(distanceOut)}px back to an element ${Math.round(distanceAcross)}px from where it started. Verify that this element belongs at this point in the order.` ``
-  - `aborted` が null でなければ pageNode
-    `` `The Tab walk stopped early (${reason}) after ${stops.length} elements; the rest of the order was not compared.` ``
-    を足し、`applicable` を真にする（node 0 で passes にしない）。
+  - **一巡を最後まで見られなかったとき**（`stops.length > 0 && tabWalk.ended !== 'cycle'`。
+    `'tab-limit'` / `'timeout'` / `'navigation'` のどれでも）は pageNode
+    `` `The Tab walk ended without returning to the first element (${tabWalk.ended}) after ${stops.length} elements; the rest of the order was not compared.` ``
+    を足し、`applicable` を真にする（先頭の数件が順方向でも passes にしない）。
+    `stops.length === 0` のときは足さない（inapplicable のまま）。
   - `describe(stop)` は `` `<${tag.toLowerCase()}> "${name}"` ``。
-- **`focus-order-dialog`**: `applicable = dialogs.some(d => d.status === 'opened' && d.modal === true)`。
-  `status === 'opened' && modal === true` の probe について:
-  - `focusAfterOpen !== 'inside'` → 開くボタンの node:
+- **`focus-order-dialog`**: `applicable = dialogTriggersFound > 0`（`maxDialogTriggers: 0` で 1 件も試さなかった
+  場合も、候補があれば下の「上限で試さなかった」pageNode で incomplete になる）。
+  未計測は人の確認に回す（`runChangeOnInputCheck` が `untested` を incomplete にするのと同じ考え方）。
+  probe ごとに、当てはまるものを**すべて**開くボタンの node にする（1 つの probe から複数出てよい）:
+  - **開いた直後にフォーカスが外**: `modal === true && focusAfterOpen !== null && focusAfterOpen !== 'inside'`
+    （`status` が最終的に `navigated` / `error` でも、観察済みなら出す）:
     `` `Opening the modal dialog ${dialogSelector} with Enter left focus ${where(focusAfterOpen, focusAfterOpenSelector)}. Verify that focus moves into the dialog.` ``
-  - `closedBy !== null && focusAfterClose !== 'trigger'` → 開くボタンの node:
+  - **閉じたあと戻らない**: `modal === true && closedBy !== null && focusAfterClose !== null && focusAfterClose !== 'trigger'`:
     `` `After closing the modal dialog (${closedBy}), focus went ${where(focusAfterClose, focusAfterCloseSelector)} instead of back to this control. Verify where focus should return.` ``
-  - 1 つの probe から 2 つの node が出てよい。
+  - **未計測**（`untested(reason)` = `` `Could not test the dialog opened by this control (${reason}). Verify manually that focus moves into the dialog and returns on close.` ``）:
+    - `status === 'not-opened'` → reason `Enter did not open a dialog`
+    - `status === 'error'` → reason `` `error: ${error}` ``
+    - `status === 'navigated'` → reason `the page navigated`
+    - `status === 'opened' && modal === true && closedBy === null` → reason `the dialog could not be closed with Escape or a close button, so focus return was not tested`
+  - `dialogsNotTried > 0` → pageNode
+    `` `${dialogsNotTried} dialog trigger(s) were not tried because the time budget ran out.` ``
+  - `dialogTriggersFound > dialogs.length + dialogsNotTried`（候補の上限で試さなかった）→ pageNode
+    `` `Only the first ${dialogs.length + dialogsNotTried} of ${dialogTriggersFound} dialog triggers were tried (maxDialogTriggers).` ``
   - `where`: `'trigger'` → `on the trigger`、`'body'` → `on the document body`、`'elsewhere'` → `` `on ${selector}` ``。
-  - 非モーダル（`modal === false`）・`not-opened`・`navigated`・`error`・閉じられなかったものは node にしない
-    （details にだけ残す）。理由を normalizer のコメントに書く（非モーダルは Tab の順で隣に置けば足りる、
-    閉じられないのは 2.1.2 側の問題）。
+  - 非モーダル（`modal === false`）で開いて閉じたものは node にしない（非モーダルは Tab の順で
+    開くボタンの隣に置けば足りるため）。理由を normalizer のコメントに書く。
 
 ### H. runner `runFocusOrderCheck`
 
@@ -632,16 +659,29 @@ export interface RunFocusOrderCheckOptions
   中の「閉じる」ボタンへフォーカス。Escape では閉じない。「閉じる」で div を `display: none` にするだけ。
   期待: `closedBy === 'close-button'`、`focusAfterClose === 'body'`、incomplete で node 1 件、summary に `instead of back to this control`。
 - `dialog-navigates.html`: `<a href="none.html" aria-haspopup="dialog">`。期待: `status === 'navigated'`、例外なし、
-  `focus-order-dialog` が inapplicable、`result.url` が元のフィクスチャの URL。
+  `focus-order-dialog` が incomplete で node 1 件（summary に `the page navigated`）、`result.url` が元のフィクスチャの URL。
+- `dialog-open-navigates.html`: `aria-haspopup="dialog"` のボタンが `role="dialog" aria-modal="true"` の div を表示する
+  （フォーカスは動かさない）。div 内の Escape の keydown（document に付ける）で `location.assign('none.html')`。
+  期待: `status === 'navigated'`、`focusAfterOpen === 'trigger'` が残っている、`focus-order-dialog` の node が 2 件
+  （開いた直後にフォーカスが外・未計測）。
+- `dialog-mixed.html`: `dialog-good.html` と同じ正常なモーダル 1 つと、`aria-haspopup="dialog"` だが何もしないボタン 1 つ。
+  期待: `dialogs` が 2 件（`opened` と `not-opened`）、`focus-order-dialog` が incomplete で node 1 件（何もしないボタン、
+  summary に `Enter did not open a dialog`）。
+- `shadow.html`: 開いた shadow root を持つ要素 1 つの中に、縦に並んだボタン 25 個（`FOCUS_ORDER_TAB_SLACK` を超える数）。
+  期待: `stops.length === 25`、`tabWalk.ended === 'cycle'`（shadow root の中も上限の計算に入っている）、`focus-order-visual` が passes。
 - `none.html`: 段落だけ（フォーカスできる要素なし）。期待: `stops` が空、2 ルールとも inapplicable、
   有限時間で終わる。
 
 `test/focus-order.spec.ts` を先に書き（`helpers/fixtures.js` の `test` / `runFixtureCheck` を使う。
 `test/keyboard-reachability.spec.ts` が見本）、上の期待を 1 テスト 1 振る舞いで確かめる。加えて:
 
-- `maxDialogTriggers: 0` で `dialog-good.html` → `dialogs` が空、`dialogTriggersFound === 1`、`focus-order-dialog` が inapplicable
+- `maxDialogTriggers: 0` で `dialog-good.html` → `dialogs` が空、`dialogTriggersFound === 1`、`focus-order-dialog` が
+  incomplete で pageNode 1 件（summary に `maxDialogTriggers`）
 - `maxTabPresses: 2` で `in-order.html` → `tabWalk.ended === 'tab-limit'`、`tabWalk.capped === true`、
   `stops.length === 2`
+- `maxTabPresses: 2` で `backward-tail.html`（新規フィクスチャ: 先頭 3 リンクは順方向、4 つ目が `order` で上に表示）→
+  最初の 2 件だけでは逆向きが見えないが、`focus-order-visual` が passes ではなく incomplete（summary に
+  `ended without returning to the first element`）
 - 全ケースでエンベロープが `RESULT_SCHEMAS['focus-order-check']` に valid
 
 失敗理由が「runner が無い / 登録が無い」であることを確かめてから Step 4 へ（Step 4 で
@@ -717,8 +757,9 @@ grep -E "focus-order-check|Errors:" /tmp/claude-fo-all.log
 ## Test plan
 
 - **`test/focus-order-analysis.spec.ts`**（ブラウザ不要）: 遷移の分類 4 種・閾値・rtl・比べない点・遠回り・丸め。
-- **`test/focus-order.spec.ts`**: 12 フィクスチャで Tab の一巡（順・終わり方・上限）、
-  位置のずれの検出、ダイアログの開閉とフォーカス、遷移への頑健さ、schema を検証。
+- **`test/focus-order.spec.ts`**: 16 フィクスチャで Tab の一巡（順・終わり方・上限・shadow root）、
+  位置のずれの検出、ダイアログの開閉とフォーカス、未計測（遷移・開かない・上限）が incomplete に
+  なること、遷移への頑健さ、schema を検証。
 - **fixture-gallery / rule-classification / schema-validation**: 既存の枠組みに登録。
 - **CI**: `--checks all` スモークが新チェックを自動で通す（Step 6）。
 
