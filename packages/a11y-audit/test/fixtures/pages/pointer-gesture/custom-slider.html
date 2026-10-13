@@ -1,0 +1,28 @@
+<!doctype html>
+<!--
+  Intent: a custom slider whose thumb is dragged with pointer events.
+  Expected: candidate #thumb with signals widget-slider and move-listener,
+  criteria ['2.5.1', '2.5.7']. Both rules incomplete.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Custom slider</title>
+  </head>
+  <body>
+    <div
+      id="thumb"
+      role="slider"
+      tabindex="0"
+      aria-valuenow="50"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-label="Volume"
+    ></div>
+    <script>
+      const thumb = document.getElementById('thumb');
+      thumb.addEventListener('pointerdown', () => {});
+      thumb.addEventListener('pointermove', () => {});
+    </script>
+  </body>
+</html>

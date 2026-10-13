@@ -1,0 +1,22 @@
+<!doctype html>
+<!--
+  Intent: a photo that zooms with two fingers (the handler looks at touches.length).
+  Expected: pointer-gestures incomplete; candidate #photo with only a
+  multipoint-listener signal. dragging-movements inapplicable.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Pinch zoom</title>
+  </head>
+  <body>
+    <div id="photo">photo</div>
+    <script>
+      document.getElementById('photo').addEventListener('touchstart', (e) => {
+        if (e.touches.length > 1) {
+          document.title = 'pinch';
+        }
+      });
+    </script>
+  </body>
+</html>

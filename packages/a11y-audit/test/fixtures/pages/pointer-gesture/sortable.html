@@ -1,0 +1,34 @@
+<!doctype html>
+<!--
+  Intent: a sortable list with HTML drag and drop, plus up / down buttons.
+  Expected: dragging-movements incomplete. Candidates: #tasks (drag-listener,
+  dragstart+drop) and the three li (draggable-attribute). pointer-gestures
+  inapplicable.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Sortable list</title>
+  </head>
+  <body>
+    <ul id="tasks">
+      <li draggable="true">
+        Task A <button type="button">Up</button
+        ><button type="button">Down</button>
+      </li>
+      <li draggable="true">
+        Task B <button type="button">Up</button
+        ><button type="button">Down</button>
+      </li>
+      <li draggable="true">
+        Task C <button type="button">Up</button
+        ><button type="button">Down</button>
+      </li>
+    </ul>
+    <script>
+      const tasks = document.getElementById('tasks');
+      tasks.addEventListener('dragstart', () => {});
+      tasks.addEventListener('drop', () => {});
+    </script>
+  </body>
+</html>

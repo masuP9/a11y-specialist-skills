@@ -1,0 +1,22 @@
+<!doctype html>
+<!--
+  Intent: only a document-level touchstart handler that looks at touches.length.
+  Expected: pointer-gestures incomplete with a page-level node (target html);
+  pageListeners[0].multipoint is true.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Document pinch</title>
+  </head>
+  <body>
+    <p>content</p>
+    <script>
+      document.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 1) {
+          document.title = 'pinch';
+        }
+      });
+    </script>
+  </body>
+</html>
