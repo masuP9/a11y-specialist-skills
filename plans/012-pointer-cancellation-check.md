@@ -20,6 +20,8 @@
 
 ## Status
 
+- **Codex plan review**: 通過（2 巡目、2026-10-13、見送った low 0 件）
+
 - **Priority**: P2
 - **Effort**: M（2〜3 日相当。runner とフィクスチャが大半）
 - **Risk**: MEDIUM（ページにイベントを送るチェック。CI の `--checks all` スモークが
