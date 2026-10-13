@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <!--
+    Intent: a modal dialog opens but focus stays on the opening button.
+    Escape hides it again.
+    Expected: focusAfterOpen === 'trigger'; focus-order-dialog is incomplete with
+    one node (the opening button).
+  -->
+  <head>
+    <meta charset="utf-8" />
+    <title>Dialog focus outside</title>
+  </head>
+  <body>
+    <button id="open" type="button" aria-controls="d">Open</button>
+    <div id="d" role="dialog" aria-modal="true" aria-label="Sample" hidden>
+      <p>Dialog body</p>
+      <button id="inner" type="button">Inner</button>
+    </div>
+    <script>
+      const d = document.getElementById('d');
+      document.getElementById('open').addEventListener('click', () => {
+        d.hidden = false;
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') d.hidden = true;
+      });
+    </script>
+  </body>
+</html>

@@ -75,6 +75,10 @@ export {
   runPointerGestureCheck,
   type RunPointerGestureCheckOptions,
 } from './runPointerGestureCheck.js';
+export {
+  runFocusOrderCheck,
+  type RunFocusOrderCheckOptions,
+} from './runFocusOrderCheck.js';
 
 export {
   resolveOutputPath,

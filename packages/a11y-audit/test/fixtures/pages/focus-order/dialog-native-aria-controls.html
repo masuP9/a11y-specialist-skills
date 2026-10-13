@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <!--
+    Intent: the trigger points at a closed native <dialog> only through
+    aria-controls; the click handler just calls showModal(). Escape closes it
+    natively.
+    Expected: dialogTriggersFound === 1, status 'opened', modal === true.
+  -->
+  <head>
+    <meta charset="utf-8" />
+    <title>Dialog native aria-controls</title>
+  </head>
+  <body>
+    <button id="open" type="button" aria-controls="dlg">Open</button>
+    <dialog id="dlg" aria-label="Sample">
+      <p>Dialog body</p>
+      <button type="button">Inner</button>
+    </dialog>
+    <script>
+      const dlg = document.getElementById('dlg');
+      document.getElementById('open').addEventListener('click', () => {
+        dlg.showModal();
+      });
+    </script>
+  </body>
+</html>

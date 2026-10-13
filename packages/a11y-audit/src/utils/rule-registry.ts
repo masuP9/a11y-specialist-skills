@@ -473,6 +473,35 @@ export const RULES = {
     // operable elsewhere (duplicate control, custom shortcut). Always manual review.
     classification: 'incomplete',
   },
+
+  // --- focus-order-check ---
+  'focus-order-visual': {
+    id: 'a11y-skills/focus-order-visual',
+    sc: ['2.4.3'],
+    tags: ['a11y-skills', 'wcag2a', 'wcag243'],
+    impact: 'moderate',
+    scope: 'node',
+    description: 'Ensure the Tab order follows the visual reading order',
+    help: 'Check that focus moving against the visual order still preserves meaning and operability',
+    helpUrl: `${UNDERSTANDING}/focus-order.html`,
+    // An order that departs from the visual one still satisfies 2.4.3 when
+    // meaning and operability are preserved. That judgment is manual.
+    classification: 'incomplete',
+  },
+  'focus-order-dialog': {
+    id: 'a11y-skills/focus-order-dialog',
+    sc: ['2.4.3'],
+    tags: ['a11y-skills', 'wcag2a', 'wcag243'],
+    impact: 'serious',
+    scope: 'node',
+    description:
+      'Ensure focus moves into a modal dialog when it opens and returns to its trigger when it closes',
+    help: 'Move focus into the modal dialog on open, and back to the control that opened it on close',
+    helpUrl: `${UNDERSTANDING}/focus-order.html`,
+    // Focus left outside or not returned is observable, but returning it
+    // elsewhere can be right (trigger removed, flow moves to the next step).
+    classification: 'incomplete',
+  },
 } as const satisfies Record<string, RuleMeta>;
 
 export type RuleKey = keyof typeof RULES;

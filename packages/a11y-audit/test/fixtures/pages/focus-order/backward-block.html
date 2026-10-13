@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <!--
+    Intent: CSS `order` puts the DOM-first link below the DOM-second link, so Tab
+    moves up the page.
+    Expected: one transition of kind 'backward-block'; focus-order-visual is incomplete.
+  -->
+  <head>
+    <meta charset="utf-8" />
+    <title>Backward block</title>
+    <style>
+      body {
+        margin: 0;
+        width: 1000px;
+      }
+      div {
+        display: flex;
+        flex-direction: column;
+      }
+      a {
+        display: block;
+        width: 100px;
+        height: 40px;
+        line-height: 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <a href="#a" style="order: 2">Lower</a>
+      <a href="#b" style="order: 1">Upper</a>
+    </div>
+  </body>
+</html>

@@ -41,7 +41,7 @@ Methods are labeled as Automated/Interactive/Manual/Content and can be combined.
 | 2.3.1 | Manual | video | Fail if flashing exceeds threshold |
 | 2.4.1 | Automated | a11y tree | Fail if no bypass mechanism |
 | 2.4.2 | Automated | `document.title` | Fail if title empty |
-| 2.4.3 | Interactive | focus order log | Fail if order deviates from visual |
+| 2.4.3 | Interactive + automated candidates | `focus-order-check` **[CLI]** + focus order log | Fail if the order deviates from visual order and meaning or operability is lost |
 | 2.4.4 | Automated + Content | a11y tree + excerpts | Fail if link purpose unclear in context |
 | 2.4.5 | Automated + Content | link graph + search/sitemap detection | Fail if only one way provided |
 | 2.4.6 | Automated + Content | a11y tree/excerpts | Fail if headings/labels are unclear |
@@ -95,6 +95,7 @@ The following criteria can be automatically checked via the `a11y-audit` CLI (se
 | 2.1.1 | `keyboard-reachability-check` | `keyboard-reachability-result.json` |
 | 2.1.2 | `keyboard-trap-check` | `keyboard-trap-result.json` |
 | 2.2.1 | `time-limit-detector` | `time-limit-result.json` |
+| 2.4.3 | `focus-order-check` | `focus-order-result.json` |
 | 2.4.7, 2.4.11, 2.4.12 (AAA), 3.2.1 | `focus-indicator-check` | `focus-indicator-result.json`, `focus-indicators.png` |
 | 2.5.4 | `motion-actuation-check` | `motion-actuation-result.json` |
 | 2.5.1, 2.5.7 | `pointer-gesture-check` | `pointer-gesture-result.json` |

@@ -39,6 +39,12 @@ export {
   type SpacingTarget,
 } from './utils/target-spacing.js';
 export {
+  analyzeFocusOrder,
+  type AnalyzeFocusOrderOptions,
+  type FocusOrderAnalysis,
+  type FocusOrderPoint,
+} from './utils/focus-order.js';
+export {
   buildAuditResult,
   mergeNormalizedResults,
   normalizeAccessibleAuthenticationCheck,
@@ -46,6 +52,7 @@ export {
   normalizeAutocompleteAudit,
   normalizeAutoPlayDetection,
   normalizeChangeOnInputCheck,
+  normalizeFocusOrderCheck,
   normalizeFocusCheck,
   normalizeKeyboardReachabilityCheck,
   normalizeKeyboardTrapCheck,

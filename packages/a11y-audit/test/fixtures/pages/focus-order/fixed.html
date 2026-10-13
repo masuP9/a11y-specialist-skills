@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <!--
+    Intent: a sticky header link, three body links and a fixed button. Sticky and
+    fixed elements are not compared (Tab scrolling changes their page coordinates).
+    Expected: skippedTransitions >= 2; focus-order-visual passes.
+  -->
+  <head>
+    <meta charset="utf-8" />
+    <title>Fixed</title>
+    <style>
+      body {
+        margin: 0;
+        width: 1000px;
+        height: 2000px;
+      }
+      header {
+        position: sticky;
+        top: 0;
+        height: 40px;
+        background: #eee;
+      }
+      a {
+        display: block;
+        width: 100px;
+        height: 40px;
+        line-height: 40px;
+      }
+      #fixed {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        width: 100px;
+        height: 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <header><a href="#top">Top</a></header>
+    <a href="#a">One</a>
+    <a href="#b">Two</a>
+    <a href="#c">Three</a>
+    <button id="fixed" type="button">Help</button>
+  </body>
+</html>

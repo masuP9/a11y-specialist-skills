@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+  <!--
+    Intent: the "dialog trigger" is a link that navigates away.
+    Expected: dialogs[0].status === 'navigated', no exception; focus-order-dialog
+    is incomplete with one node (summary contains 'the page navigated');
+    result.url is this fixture's URL.
+  -->
+  <head>
+    <meta charset="utf-8" />
+    <title>Dialog navigates</title>
+  </head>
+  <body>
+    <a href="none.html" aria-haspopup="dialog">Open</a>
+  </body>
+</html>

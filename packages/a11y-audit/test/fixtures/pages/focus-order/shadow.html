@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <!--
+    Intent: 25 buttons (more than the Tab slack) inside one open shadow root, so
+    the Tab press limit must count elements inside shadow roots.
+    Expected: 25 stops, tabWalk.ended === 'cycle'; focus-order-visual passes.
+  -->
+  <head>
+    <meta charset="utf-8" />
+    <title>Shadow</title>
+    <style>
+      body {
+        margin: 0;
+        width: 1000px;
+      }
+    </style>
+  </head>
+  <body>
+    <x-list></x-list>
+    <script>
+      class XList extends HTMLElement {
+        constructor() {
+          super();
+          const root = this.attachShadow({ mode: 'open' });
+          for (let i = 1; i <= 25; i++) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = `B${i}`;
+            button.style.cssText = 'display:block;width:100px;height:20px';
+            root.appendChild(button);
+          }
+        }
+      }
+      customElements.define('x-list', XList);
+    </script>
+  </body>
+</html>

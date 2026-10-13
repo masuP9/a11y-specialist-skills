@@ -22,6 +22,8 @@ import type {
   FocusCheckDetails,
   FocusElementRef,
   FocusObscuredIssue,
+  FocusOrderCheckDetails,
+  FocusOrderStop,
   FocusVisualDiff,
   KeyboardReachabilityCheckDetails,
   KeyboardTrapCheckDetails,
@@ -1301,6 +1303,190 @@ export function normalizeKeyboardReachabilityCheck(
   }
 
   bucketize(buckets, 'keyboard-unreachable', nodes, applicable);
+  return buckets;
+}
+
+// =============================================================================
+// Focus Order Check normalization (WCAG 2.4.3)
+// =============================================================================
+
+function describeFocusOrderStop(stop: FocusOrderStop): string {
+  return `<${stop.tag.toLowerCase()}> "${stop.name}"`;
+}
+
+/**
+ * Every finding is incomplete: a move against the visual order still conforms
+ * when meaning and operability are preserved, and focus that does not return to
+ * the trigger can be right (the trigger disappeared, the flow moved on).
+ *
+ * Non-modal dialogs produce no node: they sit next to their trigger in the Tab
+ * order, so neither moving focus in nor returning it is required.
+ */
+export function normalizeFocusOrderCheck(
+  details: FocusOrderCheckDetails,
+): NormalizedBuckets {
+  const buckets = emptyBuckets();
+  const { stops, tabWalk } = details;
+  buckets.checkedNodes = stops.length + details.dialogs.length;
+
+  const stopNode = (stop: FocusOrderStop, summary: string): NormalizedNode => {
+    const node = toNode(
+      stop,
+      stop.shadowHosts.length > 0
+        ? `${summary} (inside shadow host ${stop.shadowHosts.join(' > ')})`
+        : summary,
+    );
+    node.target = [...stop.shadowHosts, stop.selector];
+    return node;
+  };
+
+  // --- focus-order-visual ---
+  const visualNodes: NormalizedNode[] = [];
+  for (const transition of details.transitions) {
+    if (
+      transition.kind !== 'backward-block' &&
+      transition.kind !== 'backward-inline'
+    ) {
+      continue;
+    }
+    const from = stops[transition.from];
+    const to = stops[transition.to];
+    if (!from || !to) continue;
+    const how =
+      transition.kind === 'backward-block'
+        ? `${Math.round(-transition.dy)}px above it`
+        : `${Math.round(-transition.dx)}px before it on the same row`;
+    visualNodes.push(
+      stopNode(
+        to,
+        `Tab moved from ${describeFocusOrderStop(from)} (step ${from.step}) to ${describeFocusOrderStop(to)} (step ${to.step}), which is ${how}. Verify that this order preserves meaning and operability.`,
+      ),
+    );
+  }
+  for (const detour of details.detours) {
+    const stop = stops[detour.index];
+    if (!stop) continue;
+    visualNodes.push(
+      stopNode(
+        stop,
+        `Tab jumps ${Math.round(detour.distanceIn)}px to ${describeFocusOrderStop(stop)} (step ${stop.step}) and ${Math.round(detour.distanceOut)}px back to an element ${Math.round(detour.distanceAcross)}px from where it started. Verify that this element belongs at this point in the order.`,
+      ),
+    );
+  }
+  const nothingToWalk =
+    tabWalk.ended === 'tab-limit' &&
+    stops.length === 0 &&
+    tabWalk.focusableCount === 0 &&
+    tabWalk.frameCount === 0;
+  const walkIncomplete = tabWalk.ended !== 'cycle' && !nothingToWalk;
+  if (walkIncomplete) {
+    visualNodes.push(
+      pageNode(
+        `The Tab walk ended without returning to the first element (${tabWalk.ended}) after ${stops.length} elements; the rest of the order was not compared.`,
+      ),
+    );
+  }
+  bucketize(
+    buckets,
+    'focus-order-visual',
+    visualNodes,
+    details.transitions.length > 0 || walkIncomplete,
+  );
+
+  // --- focus-order-dialog ---
+  const dialogNodes: NormalizedNode[] = [];
+  const where = (
+    place: 'inside' | 'trigger' | 'body' | 'elsewhere',
+    selector: string | null,
+  ): string => {
+    if (place === 'trigger') return 'on the trigger';
+    if (place === 'body') return 'on the document body';
+    return `on ${selector ?? 'another element'}`;
+  };
+  for (const probe of details.dialogs) {
+    const node = (summary: string): NormalizedNode =>
+      toNode({ ...probe.trigger, selector: probe.trigger.selector }, summary);
+    if (
+      probe.modal === true &&
+      probe.focusAfterOpen !== null &&
+      probe.focusAfterOpen !== 'inside'
+    ) {
+      dialogNodes.push(
+        node(
+          `Opening the modal dialog ${probe.dialogSelector} with Enter left focus ${where(probe.focusAfterOpen, probe.focusAfterOpenSelector)}. Verify that focus moves into the dialog.`,
+        ),
+      );
+    }
+    if (
+      probe.modal === true &&
+      probe.closedBy !== null &&
+      probe.focusAfterClose !== null &&
+      probe.focusAfterClose !== 'trigger'
+    ) {
+      dialogNodes.push(
+        node(
+          `After closing the modal dialog (${probe.closedBy}), focus went ${where(probe.focusAfterClose, probe.focusAfterCloseSelector)} instead of back to this control. Verify where focus should return.`,
+        ),
+      );
+    }
+    let untestedReason: string | null = null;
+    if (probe.status === 'not-opened') {
+      untestedReason = 'Enter did not open a dialog';
+    } else if (probe.status === 'error') {
+      untestedReason = `error: ${probe.error}`;
+    } else if (probe.status === 'navigated') {
+      untestedReason = 'the page navigated';
+    } else if (
+      probe.status === 'opened' &&
+      probe.modal === true &&
+      probe.closedBy === null
+    ) {
+      untestedReason =
+        'the dialog could not be closed with Escape or a close button, so focus return was not tested';
+    }
+    if (untestedReason !== null) {
+      dialogNodes.push(
+        node(
+          `Could not test the dialog opened by this control (${untestedReason}). Verify manually that focus moves into the dialog and returns on close.`,
+        ),
+      );
+    }
+  }
+  if (details.dialogsNotTried > 0) {
+    dialogNodes.push(
+      pageNode(
+        `${details.dialogsNotTried} dialog trigger(s) were not tried because the time budget ran out.`,
+      ),
+    );
+  }
+  const dialogsTried = details.dialogs.length + details.dialogsNotTried;
+  if (details.dialogTriggersFound > dialogsTried) {
+    dialogNodes.push(
+      pageNode(
+        `Only the first ${dialogsTried} of ${details.dialogTriggersFound} dialog triggers were tried (maxDialogTriggers).`,
+      ),
+    );
+  }
+  const searchProblem = {
+    ran: null,
+    navigated: 'the page navigated',
+    timeout: 'the time budget ran out',
+    error: `error: ${details.dialogSearchError}`,
+  }[details.dialogSearch];
+  if (searchProblem !== null) {
+    dialogNodes.push(
+      pageNode(
+        `Dialog triggers could not be collected (${searchProblem}); verify manually that modal dialogs move focus in and return it on close.`,
+      ),
+    );
+  }
+  bucketize(
+    buckets,
+    'focus-order-dialog',
+    dialogNodes,
+    details.dialogTriggersFound > 0 || searchProblem !== null,
+  );
+
   return buckets;
 }
 

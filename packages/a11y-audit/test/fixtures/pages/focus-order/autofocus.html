@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <!--
+    Intent: an in-order layout whose middle input has autofocus, so the Tab walk
+    starts mid-page, passes the end, leaves the page and wraps to the top. The
+    footer-to-header move after the wrap is not a real backward move.
+    Expected: focus-order-visual passes; no backward-* transition; some stop has
+    afterWrap === true.
+  -->
+  <head>
+    <meta charset="utf-8" />
+    <title>Autofocus</title>
+    <style>
+      body {
+        margin: 0;
+        width: 1000px;
+      }
+      nav {
+        display: flex;
+        flex-direction: row;
+      }
+      a,
+      input {
+        display: block;
+        width: 100px;
+        height: 40px;
+        box-sizing: border-box;
+      }
+      a {
+        line-height: 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <a href="#a">Home</a>
+      <a href="#b">News</a>
+      <a href="#c">Docs</a>
+    </nav>
+    <main>
+      <a href="#d">First</a>
+      <input type="text" aria-label="Search" autofocus />
+      <a href="#e">Second</a>
+    </main>
+    <footer>
+      <a href="#f">Footer</a>
+    </footer>
+  </body>
+</html>

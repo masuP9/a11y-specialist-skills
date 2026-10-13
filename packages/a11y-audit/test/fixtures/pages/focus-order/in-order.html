@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <!--
+    Intent: Tab order equals the visual order (nav row, two stacked links, footer).
+    Expected: 6 stops, no backward moves, no detours, tabWalk.ended === 'cycle'.
+    focus-order-visual passes; focus-order-dialog is inapplicable.
+  -->
+  <head>
+    <meta charset="utf-8" />
+    <title>In order</title>
+    <style>
+      body {
+        margin: 0;
+        width: 1000px;
+      }
+      nav {
+        display: flex;
+        flex-direction: row;
+      }
+      a {
+        display: block;
+        width: 100px;
+        height: 40px;
+        line-height: 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <a href="#a">Home</a>
+      <a href="#b">News</a>
+      <a href="#c">Docs</a>
+    </nav>
+    <main>
+      <a href="#d">First</a>
+      <a href="#e">Second</a>
+    </main>
+    <footer>
+      <a href="#f">Footer</a>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <!--
+    Intent: a load script focuses a non-tabbable heading (tabindex="-1") at the
+    top of an in-order layout. Tab never comes back to it, so the walk must end
+    when it returns to the first element reached by Tab.
+    Expected: tabWalk.ended === 'cycle'; stops[0] is the h1 at step 0; no element
+    appears twice except as a revisit; focus-order-visual passes.
+  -->
+  <head>
+    <meta charset="utf-8" />
+    <title>Autofocus non-tabbable</title>
+    <style>
+      body {
+        margin: 0;
+        width: 1000px;
+      }
+      h1 {
+        margin: 0;
+        height: 40px;
+        font-size: 16px;
+      }
+      nav {
+        display: flex;
+        flex-direction: row;
+      }
+      a {
+        display: block;
+        width: 100px;
+        height: 40px;
+        line-height: 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1 id="title" tabindex="-1">Title</h1>
+    <nav>
+      <a href="#a">Home</a>
+      <a href="#b">News</a>
+      <a href="#c">Docs</a>
+    </nav>
+    <main>
+      <a href="#d">First</a>
+      <a href="#e">Second</a>
+    </main>
+    <footer>
+      <a href="#f">Footer</a>
+    </footer>
+    <script>
+      document.getElementById('title').focus();
+    </script>
+  </body>
+</html>

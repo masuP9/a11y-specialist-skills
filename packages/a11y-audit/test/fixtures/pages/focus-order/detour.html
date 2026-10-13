@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <!--
+    Intent: B is absolutely positioned far from A and C, which sit next to each
+    other. DOM order is A, B, C, so Tab jumps to the far corner and straight back.
+    Expected: detours contains B (index 1); focus-order-visual is incomplete with
+    a node whose summary contains 'Tab jumps'.
+  -->
+  <head>
+    <meta charset="utf-8" />
+    <title>Detour</title>
+    <style>
+      body {
+        margin: 0;
+        width: 1000px;
+        height: 1200px;
+        position: relative;
+      }
+      a {
+        display: block;
+        width: 100px;
+        height: 40px;
+        line-height: 40px;
+      }
+      #a {
+        position: absolute;
+        left: 0;
+        top: 0;
+      }
+      #c {
+        position: absolute;
+        left: 120px;
+        top: 0;
+      }
+      #b {
+        position: absolute;
+        left: 900px;
+        top: 900px;
+      }
+    </style>
+  </head>
+  <body>
+    <a id="a" href="#a">A</a>
+    <a id="b" href="#b">B</a>
+    <a id="c" href="#c">C</a>
+  </body>
+</html>

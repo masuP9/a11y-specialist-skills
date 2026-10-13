@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <!--
+    Intent: two columns, DOM order is the left column then the right column.
+    Moving from the bottom of the left column to the top of the right column is
+    a normal column wrap.
+    Expected: one 'column-wrap' transition, no backward moves; focus-order-visual passes.
+  -->
+  <head>
+    <meta charset="utf-8" />
+    <title>Columns</title>
+    <style>
+      body {
+        margin: 0;
+        width: 1000px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 500px 500px;
+      }
+      a {
+        display: block;
+        width: 100px;
+        height: 40px;
+        line-height: 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="grid">
+      <div>
+        <a href="#l1">L1</a>
+        <a href="#l2">L2</a>
+        <a href="#l3">L3</a>
+      </div>
+      <div>
+        <a href="#r1">R1</a>
+        <a href="#r2">R2</a>
+        <a href="#r3">R3</a>
+      </div>
+    </div>
+  </body>
+</html>

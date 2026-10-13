@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <!--
+    Intent: right-to-left page; the DOM-first link is at the right, so Tab moves
+    leftwards, which is the reading direction.
+    Expected: direction === 'rtl', no backward moves; focus-order-visual passes.
+  -->
+  <head>
+    <meta charset="utf-8" />
+    <title>RTL</title>
+    <style>
+      body {
+        margin: 0;
+        width: 1000px;
+      }
+      nav {
+        display: flex;
+        flex-direction: row;
+      }
+      a {
+        display: block;
+        width: 100px;
+        height: 40px;
+        line-height: 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <a href="#a">One</a>
+      <a href="#b">Two</a>
+      <a href="#c">Three</a>
+    </nav>
+  </body>
+</html>

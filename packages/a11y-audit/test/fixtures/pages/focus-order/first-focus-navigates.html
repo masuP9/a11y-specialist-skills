@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+  <!--
+    Intent: focusing the first link navigates away.
+    Expected: no stops, tabWalk.ended === 'navigation', no exception;
+    focus-order-visual is incomplete (not inapplicable).
+  -->
+  <head>
+    <meta charset="utf-8" />
+    <title>First focus navigates</title>
+  </head>
+  <body>
+    <a href="#a" onfocus="location.assign('none.html')">Leaves</a>
+    <a href="#b">Two</a>
+    <a href="#c">Three</a>
+  </body>
+</html>

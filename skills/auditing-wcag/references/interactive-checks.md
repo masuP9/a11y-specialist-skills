@@ -32,7 +32,7 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks keyboard-reachabi
 ## Focus
 | Criterion | Action | Evidence | Fail rule |
 |---|---|---|---|
-| 2.4.3 | Focus order matches visual order | focus order log | Order deviates materially |
+| 2.4.3 | Focus order matches visual order | focus order log + `focus-order-check` | Order deviates materially |
 | 2.4.7 | Focus indicator visible | screenshots/video | Focus not visible |
 | 2.4.11 | Focus not entirely obscured by other content | screenshots/measurement | Focused element entirely hidden by sticky headers/footers/modals |
 | 2.4.12 (AAA) | Focus not obscured at all by other content | screenshots/measurement | Any part of the focused element hidden by sticky headers/footers/modals |
@@ -87,6 +87,19 @@ When an element's focus event triggers navigation:
 - Findings are `incomplete` candidates. Advice given beforehand ("choosing an option goes to the page right away") makes the page conform, so a human checks for such advice on each candidate.
 - It really changes values on the live page and fires `change`. Values are put back without events, but the page's internal state is not restored. Pages that autosave or submit on change may send requests.
 - Run: `npx -y @a11y-skills/audit --url "<url>" --checks change-on-input-check`
+
+### `focus-order-check` CLI Check
+
+Lists elements by the order Tab actually visited them with their positions, and reports moves against the visual order (back up the page, backwards on a row, long jumps that return) with numbers. It also checks whether focus moves into a modal dialog when it opens and returns to the opening control when it closes.
+
+```bash
+npx -y @a11y-skills/audit --url "https://example.com" --checks focus-order-check
+```
+
+- Candidates are always incomplete: an order that departs from the visual one still meets 2.4.3 when meaning and operability are preserved, so verify manually.
+- To test dialogs it reloads the page, presses Enter on likely triggers (`aria-haspopup="dialog"`, etc.) and Escape (or a close button) to close. A trigger that also submits or navigates sends requests; the CLI always tries up to 10 triggers. To press none, call `runFocusOrderCheck` from the function API with `maxDialogTriggers: 0` (triggers are still collected but not pressed), or do not run this check on production pages with side effects.
+- `focus-order-result.json` holds the Tab order in `details.stops`, neighbor comparisons in `details.transitions` and per-dialog observations in `details.dialogs`.
+- Verify manually: fixed / sticky elements and order inside iframes, card grids and vertical writing, dialogs opened by buttons without such attributes, Tab cycling inside a modal.
 
 ## Pointer
 | Criterion | Action | Evidence | Fail rule |

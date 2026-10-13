@@ -3,7 +3,7 @@
 Playwright + axe-core ベースの WCAG 2.2 アクセシビリティ検査関数。
 
 本パッケージは [`auditing-wcag`](https://github.com/masuP9/a11y-specialist-skills)
-Claude Code skill から機能本体を切り出したものです。10 個の検査を関数として提供し、
+Claude Code skill から機能本体を切り出したものです。18 個の検査を関数として提供し、
 すぐ実行できる Playwright 用の互換 test entry も同梱します。
 
 > **English: see [README.md](./README.md).**
@@ -31,11 +31,12 @@ Claude Code skill から機能本体を切り出したものです。10 個の�
 | `runChangeOnInputCheck` | 3.2.2 入力時（値を変えただけで起きる移動・新しいウィンドウ・フォーカス移動・ダイアログ。候補として報告） |
 | `runAccessibleAuthenticationCheck` | 3.3.8 アクセシブルな認証（貼り付けの禁止・autocomplete の off・CAPTCHA らしき要素。候補として報告） |
 | `runPointerGestureCheck` | 2.5.1 ポインタのジェスチャ / 2.5.7 ドラッグ動作（ドラッグ・スワイプ・複数の指で動きそうな部品。候補として報告） |
+| `runFocusOrderCheck` | 2.4.3 フォーカス順序（Tab の順と見た目の並びのずれ・モーダルのフォーカス。候補として報告） |
 
 多くの検査は遷移済みの `page` を受けます。一部は navigation を所有し `targetUrl`
 （または `TEST_PAGE`）を受けます: `runOrientationCheck` と `runTimeLimitDetector`
 （`runZoomCheck` は URL 指定時）。`runFocusIndicatorCheck`・
-`runKeyboardReachabilityCheck`・`runChangeOnInputCheck` は `browser` を受けます。
+`runKeyboardReachabilityCheck`・`runChangeOnInputCheck`・`runFocusOrderCheck` は `browser` を受けます。
 `runAutoPlayDetection` は optional 依存 `pixelmatch` + `pngjs` が必要です（インストール参照）。
 
 `runRedundantEntryCheck`（3.3.7、`a11y-skills/redundant-entry`）は遷移済みの `page` を受けます。
@@ -138,6 +139,26 @@ const browser = await chromium.launch({
 });
 ```
 
+`runFocusOrderCheck`（2.4.3、`a11y-skills/focus-order-visual` と `a11y-skills/focus-order-dialog`）は
+`browser` を受けます。メイン文書で Tab を押して一巡し、各要素の位置を記録して、見た目の並びから
+外れた移動（上へ戻る `backward-block`・同じ行で逆向き `backward-inline`・遠くへ跳んで戻る detour）を
+`incomplete` の候補にします（段組みの次の列への移動 `column-wrap` は報告しません）。見た目の順は
+「上から下、行の中は読む向き（`rtl` は右から左）、上へ戻るなら次の列」という単純な規則で推定するので、
+カード型の格子・横スクロール・縦書きは誤りえます。`position: fixed` / `sticky` の要素（とその中）と
+大きさの無い要素は比べません（`details.skippedTransitions`）。iframe にフォーカスがある間は iframe の箱を
+位置とし、中の順は見ません。shadow root は開いているものだけです。一巡を最後まで見られなかったとき
+（上限・時間切れ・遷移）は、残りを比べていないと伝える node を足し、passes にしません。
+ダイアログは、`aria-haspopup="dialog"`・`aria-controls` の先が dialog・`commandfor` + `command="show-modal"`・
+よく使われるライブラリの `data-*` を持つ開くボタンだけを試します。**ページを読み直し、開くボタンで Enter、
+閉じるために Escape（効かなければ閉じるボタン）を押す**ので、送信や遷移を兼ねるボタンはリクエストを
+飛ばしえます（CLI は常に最大 10 件を試します。関数 API なら `maxDialogTriggers: 0` でどの開くボタンも押さなくなりますが、候補の収集と件数の記録は行います）。モーダルを開いてもフォーカスが中へ
+移らない、閉じても開いたボタンへ戻らない場合を候補にします（戻す先が別でよい場合があるので `incomplete`）。
+モーダルの中の Tab の巡回は見ません。`timeBudgetMs`（既定 60 秒）と `maxTabPresses`（既定 300）を受け取ります。
+位置の分析は純粋関数 `analyzeFocusOrder(points, { viewport, direction })` として公開しています。
+`runFocusIndicatorCheck` の `details.allElements` を持っているなら、
+`allElements.filter(r => r.tabStep !== null && r.frame === null)` を `tabStep` 順に並べ、各要素に
+`positioning: 'flow'` を補って渡せます（fixed / sticky を区別できないぶん、誤検出が増えます）。
+
 ## インストール
 
 ```sh
@@ -203,6 +224,7 @@ motion-actuation-check
 change-on-input-check
 accessible-authentication-check
 pointer-gesture-check
+focus-order-check
 ```
 
 ### 終了コード
@@ -418,12 +440,13 @@ const result = await runTargetSizeCheck({
 
 **時間と Tab 回数の上限:**
 
-`runFocusIndicatorCheck` と `runKeyboardReachabilityCheck` は `timeBudgetMs`（ミリ秒、正の有限数）と `maxTabPresses`（正の整数）を受け取ります。0 以下や数でない値はエラーになります。
+`runFocusIndicatorCheck`・`runKeyboardReachabilityCheck`・`runFocusOrderCheck` は `timeBudgetMs`（ミリ秒、正の有限数）と `maxTabPresses`（正の整数）を受け取ります。0 以下や数でない値はエラーになります。
 
 | チェック | `timeBudgetMs` の既定 | `maxTabPresses` の既定 | 上限に達したとき |
 |---|---|---|---|
 | focus-indicator | 上限なし | 上限なし | `details.aborted: { reason: 'timeout' \| 'tab-limit', url, recordedCount, focusableCount }`。`recordedCount` 件までを検査し、フォーカスできる要素は `focusableCount` 件あった。時間と回数は 3.2.1 のやり直しを含めた全体で数える。`interrupted`（やり直しの使い切り）とは別 |
 | keyboard-reachability | 60 秒 | 600 回 | 時間は `details.aborted.reason: 'timeout'`、回数は `details.tabWalkCapped: true` |
+| focus-order | 60 秒 | 300 回 | 時間は `details.aborted.reason: 'timeout'` と `tabWalk.ended: 'timeout'`、回数は `details.tabWalk.ended: 'tab-limit'`（`capped: true`）。どちらも順序の残りは比べていないので `incomplete` |
 
 **同時に実行する場合の前提:**
 
@@ -454,7 +477,7 @@ import "@a11y-skills/audit/test-entries/target-size-check";
 // 他にも: text-spacing-check, zoom-200-check, orientation-check,
 // autocomplete-audit, time-limit-detector, auto-play-detection,
 // redundant-entry-check, motion-actuation-check, change-on-input-check,
-// accessible-authentication-check, pointer-gesture-check
+// accessible-authentication-check, pointer-gesture-check, focus-order-check
 import "@a11y-skills/audit/test-entries/text-spacing-check";
 ```
 

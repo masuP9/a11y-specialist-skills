@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <!--
+    Intent: one well-behaved modal and one trigger that does nothing.
+    Expected: dialogs has 2 entries ('opened' and 'not-opened'); focus-order-dialog
+    is incomplete with one node (the inert button; summary contains
+    'Enter did not open a dialog').
+  -->
+  <head>
+    <meta charset="utf-8" />
+    <title>Dialog mixed</title>
+  </head>
+  <body>
+    <button id="open" type="button" aria-haspopup="dialog">Open</button>
+    <button id="noop" type="button" aria-haspopup="dialog">Does nothing</button>
+    <dialog id="dlg" aria-label="Sample">
+      <p>Dialog body</p>
+      <button id="close" type="button">Close</button>
+    </dialog>
+    <script>
+      const dlg = document.getElementById('dlg');
+      const open = document.getElementById('open');
+      const close = document.getElementById('close');
+      open.addEventListener('click', () => {
+        dlg.showModal();
+        close.focus();
+      });
+      close.addEventListener('click', () => dlg.close());
+      dlg.addEventListener('close', () => open.focus());
+    </script>
+  </body>
+</html>
