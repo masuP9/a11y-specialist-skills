@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en" style="contain: paint">
+  <head>
+    <meta charset="utf-8" />
+    <title>target-size fixed target under a contained root</title>
+    <style>
+      /* The root's paint containment is the containing block of fixed
+         descendants: #pinned scrolls with the page at document (10, 10). */
+      body {
+        margin: 0;
+        font-family: sans-serif;
+        min-height: 2000px;
+      }
+    </style>
+  </head>
+  <body>
+    <button
+      id="pinned"
+      style="
+        position: fixed;
+        left: 10px;
+        top: 10px;
+        width: 20px;
+        height: 20px;
+        padding: 0;
+        border: 0;
+        box-sizing: border-box;
+      "
+    >
+      p
+    </button>
+  </body>
+</html>

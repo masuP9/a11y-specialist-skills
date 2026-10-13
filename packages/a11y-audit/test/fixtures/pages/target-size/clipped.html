@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>target-size targets clipped by an ancestor's overflow</title>
+    <style>
+      /* Coordinates are document CSS px (absolutely positioned). */
+      body {
+        margin: 0;
+        font-family: sans-serif;
+        /* Room to call the check at a non-zero scroll position. */
+        min-height: 2000px;
+      }
+      .abs {
+        position: absolute;
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        border: 0;
+      }
+      .t {
+        width: 20px;
+        height: 20px;
+        background: #cde;
+        font-size: 10px;
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Collapsed code block: the 300x2000 <pre> shows only its top 30px
+         (100..400 x 100..130). #below sits in the hidden part (center
+         (210, 310)), far from anything visible. -->
+    <div
+      class="abs"
+      style="
+        left: 100px;
+        top: 100px;
+        width: 300px;
+        max-height: 30px;
+        overflow-y: hidden;
+      "
+    >
+      <pre
+        id="long"
+        tabindex="0"
+        style="margin: 0; width: 300px; height: 2000px; background: #eee"
+      >
+code</pre
+      >
+    </div>
+    <a id="below" class="abs t" href="#below" style="left: 200px; top: 300px"
+      >b</a
+    >
+
+    <!-- overflow-x: clip clips the x axis only: the 600x30 button shows
+         500..700 x 100..130. #beside's center (910, 120) lies inside the
+         hidden part. -->
+    <div
+      class="abs"
+      style="
+        left: 500px;
+        top: 100px;
+        width: 200px;
+        height: 30px;
+        overflow-x: clip;
+      "
+    >
+      <button
+        id="wide"
+        class="abs"
+        style="left: 0; top: 0; width: 600px; height: 30px"
+      >
+        wide
+      </button>
+    </div>
+    <button id="beside" class="abs t" style="left: 900px; top: 110px">s</button>
+
+    <!-- A link entirely below the 20px visible box of its clipping parent. -->
+    <div
+      class="abs"
+      style="
+        left: 600px;
+        top: 600px;
+        width: 100px;
+        height: 20px;
+        overflow: hidden;
+      "
+    >
+      <a id="hidden" class="t" href="#hidden" style="margin-top: 40px">h</a>
+    </div>
+
+    <!-- An absolutely positioned link whose containing block is the page
+         escapes the static overflow: hidden wrapper: it is not clipped. -->
+    <div style="width: 10px; height: 10px; overflow: hidden">
+      <a
+        id="escaped"
+        class="abs t"
+        href="#escaped"
+        style="left: 100px; top: 500px"
+        >e</a
+      >
+    </div>
+
+    <!-- A scroll container is not a clip: the 40x40 tab partly scrolled out
+         of the 100px-wide tab bar (800..900) is reachable by scrolling and
+         keeps its full size. -->
+    <div
+      class="abs"
+      style="
+        left: 800px;
+        top: 400px;
+        width: 100px;
+        height: 60px;
+        overflow-x: auto;
+      "
+    >
+      <button
+        id="tab"
+        class="abs"
+        style="left: 70px; top: 0; width: 40px; height: 40px"
+      >
+        tab
+      </button>
+    </div>
+
+    <!-- The clip edge keeps fractional px: a 24.25px button fully inside a
+         24.25px overflow: hidden box is not shrunk below 24px. -->
+    <div
+      class="abs"
+      style="
+        left: 300.5px;
+        top: 400px;
+        width: 24.25px;
+        height: 24.25px;
+        overflow: hidden;
+      "
+    >
+      <button
+        id="frac"
+        class="abs"
+        style="left: 0; top: 0; width: 24.25px; height: 24.25px"
+      >
+        f
+      </button>
+    </div>
+
+    <!-- A 26.25px-wide box with a 1px border (offsetWidth rounds to 26) is
+         not mistaken for a scaled one: the 24px button stays 24px. -->
+    <div
+      class="abs"
+      style="
+        left: 300px;
+        top: 500px;
+        width: 26.25px;
+        height: 26.25px;
+        border: 1px solid #999;
+        overflow: hidden;
+      "
+    >
+      <button
+        id="frac-border"
+        class="abs"
+        style="left: 0; top: 0; width: 24px; height: 24px"
+      >
+        b
+      </button>
+    </div>
+
+    <!-- A reserved scrollbar gutter is not mistaken for a scale: the 24px
+         button in this untransformed content-box clip stays 24px. -->
+    <div
+      class="abs"
+      style="
+        left: 400px;
+        top: 500px;
+        box-sizing: content-box;
+        width: 30px;
+        height: 30px;
+        border: 1px solid #999;
+        overflow: hidden;
+        scrollbar-gutter: stable;
+      "
+    >
+      <button
+        id="gutter"
+        class="abs"
+        style="left: 0; top: 0; width: 24px; height: 24px"
+      >
+        g
+      </button>
+    </div>
+
+    <!-- zoom: 2 doubles the 10px border too: the 10px-wide padding box shows
+         20px on screen, so the 20px (40px on screen) button shows 20px. -->
+    <div class="abs" style="left: 600px; top: 200px; zoom: 2">
+      <div
+        class="abs"
+        style="
+          left: 0;
+          top: 0;
+          width: 30px;
+          height: 40px;
+          border: 10px solid #999;
+          overflow: hidden;
+        "
+      >
+        <button
+          id="zoomed"
+          class="abs"
+          style="left: 0; top: 0; width: 20px; height: 20px"
+        >
+          z
+        </button>
+      </div>
+    </div>
+
+    <!-- An inline <svg> clips its content (UA overflow: hidden): the link's
+         100px-wide rect shows only the svg's 30px. -->
+    <div class="abs" style="left: 500px; top: 400px">
+      <svg width="30" height="30">
+        <a id="svg-link" href="#svg-link">
+          <rect x="0" y="0" width="100" height="30" fill="#cde" />
+        </a>
+      </svg>
+    </div>
+
+    <!-- content-visibility: auto implies paint containment: the 60px-tall
+         link shows only the box's 30px. -->
+    <div
+      class="abs"
+      style="
+        left: 1000px;
+        top: 400px;
+        width: 100px;
+        height: 30px;
+        content-visibility: auto;
+      "
+    >
+      <a id="cv" class="t" href="#cv" style="width: 30px; height: 60px">c</a>
+    </div>
+
+    <!-- A static content-visibility: auto box contains its absolutely
+         positioned descendants (layout containment) and clips them: the
+         100px-tall link shows only the box's 30px. -->
+    <div class="abs" style="left: 1000px; top: 500px">
+      <div style="width: 100px; height: 30px; content-visibility: auto">
+        <a
+          id="cv-abs"
+          class="abs t"
+          href="#cv-abs"
+          style="left: 0; top: 0; height: 100px"
+          >a</a
+        >
+      </div>
+    </div>
+
+    <!-- A transformed clip box: scale(2) doubles the 10px border too. The
+         10x20 padding box shows 20x40 px on screen, so the 20x20 (40x40 on
+         screen) button shows 20 px wide. -->
+    <div
+      class="abs"
+      style="
+        left: 1000px;
+        top: 600px;
+        width: 30px;
+        height: 40px;
+        border: 10px solid #999;
+        overflow: hidden;
+        transform: scale(2);
+        transform-origin: 0 0;
+      "
+    >
+      <button
+        id="scaled"
+        class="abs"
+        style="left: 0; top: 0; width: 20px; height: 20px"
+      >
+        s
+      </button>
+    </div>
+
+    <!-- overflow-clip-margin does not widen an overflow: hidden clip, even
+         with paint containment: the button at 20..50 shows 10px. -->
+    <div
+      class="abs"
+      style="
+        left: 1100px;
+        top: 200px;
+        width: 30px;
+        height: 30px;
+        contain: paint;
+        overflow: hidden;
+        overflow-clip-margin: 20px;
+      "
+    >
+      <button
+        id="paint-hidden"
+        class="abs"
+        style="left: 20px; top: 0; width: 30px; height: 20px"
+      >
+        p
+      </button>
+    </div>
+
+    <!-- overflow-clip-margin: 20px paints 20px beyond the padding box: the
+         10px button at 105..115 is visible. -->
+    <div
+      class="abs"
+      style="
+        left: 1100px;
+        top: 300px;
+        width: 100px;
+        height: 30px;
+        overflow: clip;
+        overflow-clip-margin: 20px;
+      "
+    >
+      <button
+        id="margin-btn"
+        class="abs"
+        style="left: 105px; top: 0; width: 10px; height: 10px"
+      >
+        m
+      </button>
+    </div>
+  </body>
+</html>

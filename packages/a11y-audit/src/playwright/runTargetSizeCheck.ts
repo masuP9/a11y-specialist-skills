@@ -31,6 +31,8 @@
  *   attribute, no role, no tabindex) are not detected, so a verified spacing
  *   exception can miss such a neighbor
  * - Shadow DOM and iframe content are not inspected
+ * - Size and spacing use only the part left visible by ancestors that clip
+ *   their overflow; `clip-path` and `clip` are not considered
  */
 
 import type { Page } from '@playwright/test';
@@ -114,7 +116,10 @@ interface BasicTargetInfo {
 
 interface CollectedTargets {
   targets: BasicTargetInfo[];
-  /** Targets skipped because another element covers their hit-test point. */
+  /**
+   * Targets skipped because another element covers their hit-test point or
+   * a clipping ancestor hides them entirely.
+   */
   occludedCount: number;
   /** Maximum vertical window scroll offset in CSS px. */
   maxScrollY: number;
@@ -188,7 +193,7 @@ function collectBasicTargetInfo(args: {
   const originalScrollX = window.scrollX;
   const originalScrollY = window.scrollY;
 
-  const toDocRect = (rect: DOMRect): Rect => ({
+  const toDocRect = (rect: Rect): Rect => ({
     left: round2(rect.left + originalScrollX),
     top: round2(rect.top + originalScrollY),
     right: round2(rect.right + originalScrollX),
@@ -198,7 +203,9 @@ function collectBasicTargetInfo(args: {
   // Pass 1: visible candidates, measured at the original scroll position.
   interface Candidate {
     el: HTMLElement;
-    rect: DOMRect;
+    /** Size of the visible (unclipped) bounding box. */
+    width: number;
+    height: number;
     appearance: string;
     fixed: boolean;
     boundingRect: Rect;
@@ -234,6 +241,8 @@ function collectBasicTargetInfo(args: {
     isSet(cs.backdropFilter) ||
     /transform|translate|rotate|scale|perspective|filter/.test(cs.willChange) ||
     /paint|layout|strict|content/.test(cs.contain) ||
+    // `content-visibility: auto | hidden` implies layout containment.
+    /auto|hidden/.test(cs.getPropertyValue('content-visibility')) ||
     (cs.containerType !== undefined &&
       cs.containerType !== '' &&
       cs.containerType !== 'normal');
@@ -250,14 +259,198 @@ function collectBasicTargetInfo(args: {
       }
       cursor = cursor.parentElement;
     }
+    // On the root only containment is checked: transform/filter there do not
+    // reliably contain fixed descendants across browsers.
+    if (fixedSeen) {
+      const root = styleOf(document.documentElement);
+      if (
+        /paint|layout|strict|content/.test(root.contain) ||
+        /auto|hidden/.test(root.getPropertyValue('content-visibility'))
+      ) {
+        return false;
+      }
+    }
     return fixedSeen;
   };
-  const toViewportRect = (rect: DOMRect): Rect => ({
+  const toViewportRect = (rect: Rect): Rect => ({
     left: round2(rect.left),
     top: round2(rect.top),
     right: round2(rect.right),
     bottom: round2(rect.bottom),
   });
+
+  // The viewport box left visible by ancestors that clip their overflow
+  // (`overflow: hidden | clip`, per axis, or paint containment). Only
+  // ancestors on the containing-block chain clip: an absolutely positioned
+  // element escapes static ancestors and a viewport-fixed one escapes all.
+  // `<html>`'s overflow is skipped, and so is `<body>`'s when it propagates
+  // to the viewport (both belong to the page scroll); their paint
+  // containment still clips. Scroll containers (`auto | scroll`) are not
+  // clips: their hidden content is reachable by scrolling, so it keeps its
+  // full size. Limitation: `clip-path` and `clip` are not considered, the
+  // part of a scroll container's content outside its scrollport still
+  // counts, and a rotated/skewed/mirrored clip box is approximated by its
+  // bounding box.
+  /** Whether the element or an ancestor may scale/rotate/zoom its box. */
+  const transformedCache = new Map<Element, boolean>();
+  const isTransformed = (el: Element | null): boolean => {
+    if (!el) {
+      return false;
+    }
+    let result = transformedCache.get(el);
+    if (result === undefined) {
+      const cs = styleOf(el);
+      result =
+        isSet(cs.transform) ||
+        isSet(cs.scale) ||
+        isSet(cs.rotate) ||
+        isSet(cs.perspective) ||
+        (cs.zoom !== '' && cs.zoom !== '1' && cs.zoom !== 'normal') ||
+        isTransformed(el.parentElement);
+      transformedCache.set(el, result);
+    }
+    return result;
+  };
+  const clipsAxis = (overflow: string): boolean =>
+    overflow === 'hidden' || overflow === 'clip';
+  const hasContainment = (cs: CSSStyleDeclaration): boolean =>
+    /paint|layout|size|strict|content/.test(cs.contain) ||
+    /auto|hidden/.test(cs.getPropertyValue('content-visibility'));
+  const rootStyle = styleOf(document.documentElement);
+  // Containment on either element stops the propagation.
+  const bodyOverflowPropagates =
+    rootStyle.overflowX === 'visible' &&
+    rootStyle.overflowY === 'visible' &&
+    !hasContainment(rootStyle) &&
+    !(document.body && hasContainment(styleOf(document.body)));
+  const ancestorClip = (el: Element): Rect => {
+    const clip = {
+      left: -Infinity,
+      top: -Infinity,
+      right: Infinity,
+      bottom: Infinity,
+    };
+    let position = styleOf(el).position;
+    for (let anc = el.parentElement; anc; anc = anc.parentElement) {
+      const cs = styleOf(anc);
+      const inChain =
+        position === 'fixed'
+          ? formsContainingBlockForFixed(cs)
+          : position !== 'absolute' ||
+            cs.position !== 'static' ||
+            formsContainingBlockForFixed(cs);
+      // `display: contents` has no box and overflow does not apply to
+      // inline boxes (an inline `<svg>` is a replaced element and does
+      // clip).
+      if (!inChain || cs.display === 'contents') {
+        continue;
+      }
+      position = cs.position;
+      if (cs.display === 'inline' && !(anc instanceof SVGSVGElement)) {
+        continue;
+      }
+      const paint =
+        /paint|strict|content/.test(cs.contain) ||
+        /auto|hidden/.test(cs.getPropertyValue('content-visibility'));
+      const ownOverflow =
+        anc !== document.documentElement &&
+        !(anc === document.body && bodyOverflowPropagates);
+      const overflowX = ownOverflow ? cs.overflowX : 'visible';
+      const overflowY = ownOverflow ? cs.overflowY : 'visible';
+      const clipX = paint || clipsAxis(overflowX);
+      const clipY = paint || clipsAxis(overflowY);
+      if (!clipX && !clipY) {
+        continue;
+      }
+      // Clip edge in viewport coordinates: the padding box, or the
+      // `overflow-clip-margin` box for `overflow: clip` and for paint
+      // containment without an overflow clip (the margin does not widen
+      // `hidden`). Computed lengths keep fractional px (unlike the integer
+      // `clientLeft`/`clientWidth`) and are scaled like the transformed
+      // bounding box; hidden/clip boxes have no scrollbars.
+      const box = anc.getBoundingClientRect();
+      const px = (prop: string): number =>
+        parseFloat(cs.getPropertyValue(prop)) || 0;
+      // Scale only under a transform: otherwise the ratio below is 1 up to
+      // rounding (`offsetWidth`) or scrollbar gutters, which would fake one.
+      // Under a transform it compares with the untransformed border box in
+      // fractional px (limitation: a scrollbar gutter there still skews it).
+      const layoutSize = (size: string, a: string, b: string): number =>
+        px(size) +
+        (cs.boxSizing === 'border-box'
+          ? 0
+          : px(`padding-${a}`) +
+            px(`padding-${b}`) +
+            px(`border-${a}-width`) +
+            px(`border-${b}-width`));
+      const layoutW = layoutSize('width', 'left', 'right');
+      const layoutH = layoutSize('height', 'top', 'bottom');
+      const scaled = isTransformed(anc);
+      const scaleX = scaled && layoutW > 0 ? box.width / layoutW : 1;
+      const scaleY = scaled && layoutH > 0 ? box.height / layoutH : 1;
+      const clipMargin = cs.getPropertyValue('overflow-clip-margin');
+      const inset = (side: string, overflow: string): number => {
+        if (overflow !== 'clip' && !(paint && overflow === 'visible')) {
+          return px(`border-${side}-width`);
+        }
+        const edge = clipMargin.includes('border-box')
+          ? 0
+          : clipMargin.includes('content-box')
+            ? px(`border-${side}-width`) + px(`padding-${side}`)
+            : px(`border-${side}-width`);
+        return edge - (parseFloat(clipMargin.replace(/^[a-z-]+\s*/, '')) || 0);
+      };
+      if (clipX) {
+        clip.left = Math.max(
+          clip.left,
+          box.left + inset('left', overflowX) * scaleX,
+        );
+        clip.right = Math.min(
+          clip.right,
+          box.right - inset('right', overflowX) * scaleX,
+        );
+      }
+      if (clipY) {
+        clip.top = Math.max(
+          clip.top,
+          box.top + inset('top', overflowY) * scaleY,
+        );
+        clip.bottom = Math.min(
+          clip.bottom,
+          box.bottom - inset('bottom', overflowY) * scaleY,
+        );
+      }
+    }
+    return clip;
+  };
+  const intersect = (r: Rect, clip: Rect): Rect | null => {
+    const out = {
+      left: Math.max(r.left, clip.left),
+      top: Math.max(r.top, clip.top),
+      right: Math.min(r.right, clip.right),
+      bottom: Math.min(r.bottom, clip.bottom),
+    };
+    return out.right > out.left && out.bottom > out.top ? out : null;
+  };
+  /**
+   * The element's bounding box and per-line boxes cut to the part clipping
+   * ancestors leave visible, measured now in viewport coordinates.
+   * `bounding` is `null` when nothing is visible.
+   */
+  const visibleBoxes = (
+    el: Element,
+  ): { bounding: Rect | null; rects: Rect[] } => {
+    const clip = ancestorClip(el);
+    return {
+      bounding: intersect(el.getBoundingClientRect(), clip),
+      rects: Array.from(el.getClientRects())
+        .map((r) => intersect(r, clip))
+        .filter((r): r is Rect => r !== null),
+    };
+  };
+
+  // Targets whose painted boxes are entirely clipped by an ancestor.
+  let clippedCount = 0;
 
   elements.forEach((element) => {
     const el = element as HTMLElement;
@@ -294,17 +487,25 @@ function collectBasicTargetInfo(args: {
       return;
     }
 
-    const clientRects = Array.from(el.getClientRects())
-      .filter((r) => r.width > 0 && r.height > 0)
-      .map(convert);
+    // Measure only the part left visible by clipping ancestors (e.g. a
+    // collapsed code block): the hidden part is neither a target area nor a
+    // spacing obstacle.
+    const visible = visibleBoxes(el);
+    if (!visible.bounding) {
+      clippedCount++;
+      return;
+    }
+    const clientRects = visible.rects.map(convert);
 
     candidates.push({
       el,
-      rect,
+      width: round2(visible.bounding.right - visible.bounding.left),
+      height: round2(visible.bounding.bottom - visible.bounding.top),
       appearance: computedStyle.appearance,
       fixed,
-      boundingRect: convert(rect),
-      clientRects: clientRects.length > 0 ? clientRects : [convert(rect)],
+      boundingRect: convert(visible.bounding),
+      clientRects:
+        clientRects.length > 0 ? clientRects : [convert(visible.bounding)],
     });
   });
 
@@ -339,11 +540,9 @@ function collectBasicTargetInfo(args: {
     .map((o) => o.i);
   const inViewport = (x: number, y: number): boolean =>
     x >= 0 && y >= 0 && x < window.innerWidth && y < window.innerHeight;
-  /** Viewport center of the element's first painted box, measured now. */
+  /** Viewport center of the element's first visible box, measured now. */
   const paintedCenter = (el: Element): Point | null => {
-    const fresh = Array.from(el.getClientRects()).find(
-      (r) => r.width > 0 && r.height > 0,
-    );
+    const fresh = visibleBoxes(el).rects[0];
     return fresh
       ? { x: (fresh.left + fresh.right) / 2, y: (fresh.top + fresh.bottom) / 2 }
       : null;
@@ -424,7 +623,7 @@ function collectBasicTargetInfo(args: {
   }
 
   const targets: BasicTargetInfo[] = kept.map((c, index) => {
-    const { el, rect } = c;
+    const { el } = c;
     const tagName = el.tagName.toLowerCase();
     const role = el.getAttribute('role');
     const inputType = el instanceof HTMLInputElement ? el.type : null;
@@ -441,8 +640,8 @@ function collectBasicTargetInfo(args: {
       tagName,
       ...getHtmlSnippet(el),
       role,
-      width: round2(rect.width),
-      height: round2(rect.height),
+      width: c.width,
+      height: c.height,
       href,
       inputType,
       appearance: c.appearance,
@@ -457,7 +656,7 @@ function collectBasicTargetInfo(args: {
 
   return {
     targets,
-    occludedCount: occluded.size,
+    occludedCount: occluded.size + clippedCount,
     maxScrollY: Math.max(
       0,
       document.documentElement.scrollHeight - window.innerHeight,
@@ -878,7 +1077,8 @@ export async function runTargetSizeCheck(
 
   out.summary({
     'Total targets checked': details.totalTargetsChecked,
-    'Skipped (covered by another element)': details.occludedTargets,
+    'Skipped (covered by another element or clipped from view)':
+      details.occludedTargets,
   });
 
   out.log('\nSummary:');
