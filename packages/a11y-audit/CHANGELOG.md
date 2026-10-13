@@ -5,6 +5,30 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+### Added
+
+- `pointer-gesture-check` (WCAG 2.5.1 / 2.5.7): new check, `runPointerGestureCheck`
+  (takes a navigated `page`) and the CLI check name `pointer-gesture-check`.
+  Rules `a11y-skills/pointer-gestures` (tags `wcag21a`, `wcag251`) and
+  `a11y-skills/dragging-movements` (tags `wcag22aa`, `wcag257`); always
+  `incomplete`, because a single-pointer alternative and the essential exception
+  need a human. Lists elements that may be operated by dragging, swiping or
+  multiple fingers: `draggable="true"`, `dragstart` / `drop` listeners, elements
+  with both a press and a move listener, listeners that look at multiple touches,
+  custom `role="slider"` widgets and sortable / carousel / map markup, in the
+  document and in open shadow roots (`shadowHosts` + `selector`). Elements with
+  only a move listener and delegation roots (listeners for 20 or more event
+  types, recorded in `details.delegationRoots` and reported as one page-level
+  manual-check node per rule) are not candidates. At most 200
+  candidates per criterion and 1000 listener nodes are examined
+  (`candidateCounts`, `listenerNodesTruncated`). Internal: the CDP listener
+  inspector gained `forSubtree` and `collectNodes` (one call for a whole
+  document). Known limitations: listeners need Chromium (elsewhere only
+  attributes and widget markup are used); gestures built on delegation, move
+  listeners added after the press and iframes are not found; multiple fingers
+  are recognised from the first 200 characters of the handler; nothing is
+  dragged to see whether something moves.
+
 ### Fixed
 
 - target-size: the part of a target clipped by an ancestor (`overflow: hidden`

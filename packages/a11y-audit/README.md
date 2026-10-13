@@ -31,6 +31,7 @@ test entries.
 | `runMotionActuationCheck` | 2.5.4 Motion Actuation (`devicemotion` / `deviceorientation` listeners, reported as candidates) |
 | `runChangeOnInputCheck` | 3.2.2 On Input (navigation, new windows, focus moves or dialogs caused by just changing a control's value, reported as candidates) |
 | `runAccessibleAuthenticationCheck` | 3.3.8 Accessible Authentication (paste blocking, autocomplete="off", CAPTCHA-like elements, reported as candidates) |
+| `runPointerGestureCheck` | 2.5.1 Pointer Gestures / 2.5.7 Dragging Movements (components likely operated by dragging, swiping or multiple fingers, reported as candidates) |
 
 Most checks take an already-navigated `page`. A few own navigation and take a
 `targetUrl` instead (or `TEST_PAGE`): `runOrientationCheck` and
@@ -131,6 +132,8 @@ is not focused, nothing is pasted and the field is reported as untested
 through CDP. Invisible or non-editable fields are not measured (`incomplete`). Fields inside
 iframes and shadow roots, forms that appear only after clicking a sign-in
 button, and custom CAPTCHAs without `captcha` in their markup are not found.
+
+`runPointerGestureCheck` (2.5.1 and 2.5.7, `a11y-skills/pointer-gestures` and `a11y-skills/dragging-movements`) takes an already-navigated `page`. One check lists elements that may be operated by dragging, swiping or multiple fingers and reports them as `incomplete` candidates under both rules. It picks up `draggable="true"`, `dragstart` / `drop` listeners, elements with both a press and a move listener, listeners that look at multiple touches (`touches.length` etc.), custom `role="slider"` widgets, and markup of sortable lists, carousels and maps, in the document and in open shadow roots (`shadowHosts` + `selector`). Elements with only a move listener, and delegation roots with listeners for 20 or more event types, are not candidates; the latter are recorded in `details.delegationRoots` and reported as one page-level manual-check node per rule. Multipoint and drag listeners on `window` / `document` become page-level nodes. A human verifies that a single-pointer alternative exists, or that the gesture is essential. Listeners are read through CDP, so this is **Chromium only**; elsewhere candidates come from attributes and widget markup only and a manual-check node is added. No events are sent and the page state is not changed. Gestures built on delegation, move listeners added to `document` after the press, and anything in iframes are not found, and nothing is dragged to see whether something moves. At most 200 candidates per criterion are kept and at most 1000 elements with listeners are examined.
 
 For 1.4.2 (`a11y-skills/auto-play-audio`), `runAutoPlayDetection` records
 whether every `<audio>` / `<video>` in the page and its iframes (nested frames
@@ -244,6 +247,7 @@ redundant-entry-check
 motion-actuation-check
 change-on-input-check
 accessible-authentication-check
+pointer-gesture-check
 ```
 
 ### Exit codes
@@ -530,7 +534,7 @@ import "@a11y-skills/audit/test-entries/target-size-check";
 // ...also: text-spacing-check, zoom-200-check, orientation-check,
 // autocomplete-audit, time-limit-detector, auto-play-detection,
 // redundant-entry-check, motion-actuation-check, change-on-input-check,
-// accessible-authentication-check
+// accessible-authentication-check, pointer-gesture-check
 import "@a11y-skills/audit/test-entries/text-spacing-check";
 ```
 

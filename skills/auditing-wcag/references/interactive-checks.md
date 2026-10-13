@@ -91,6 +91,7 @@ When an element's focus event triggers navigation:
 ## Pointer
 | Criterion | Action | Evidence | Fail rule |
 |---|---|---|---|
+| 2.5.1 | Pinch, swipe and other multipoint / path-based gestures have a single-pointer alternative | logs | Operable only by multipoint or path-based gestures |
 | 2.5.4 | Shaking / tilting has a UI-component alternative and motion actuation can be turned off | logs | Operable only by motion, or cannot be turned off |
 | 2.5.7 | Provide alternative to dragging | logs | Dragging is required with no alternative |
 | 2.5.8 | Measure target size | screenshots/measurement | Minimum target size not met |
@@ -103,6 +104,15 @@ When an element's focus event triggers navigation:
 - For event types that have a `window` listener, synthetic events are dispatched and whether the DOM changes (`domMutations`) is recorded as evidence. Synthetic events are `isTrusted: false`, so handlers that accept only trusted events, or that only draw on a canvas, show "no change". The listener is still reported.
 - A listener on `document` only may never run, because browsers dispatch these events to `window` only (nothing is dispatched for it).
 - Run: `npx -y @a11y-skills/audit --url "<url>" --checks motion-actuation-check`
+
+### `pointer-gesture-check` CLI Check
+
+`pointer-gesture-check` reports components likely operated by dragging, swiping or multiple fingers as `incomplete` candidates (`a11y-skills/pointer-gestures` for 2.5.1, `a11y-skills/dragging-movements` for 2.5.7).
+
+- Picked up: `draggable="true"`, `dragstart` / `drop` listeners, elements with both a press and a move listener, listeners that look at multiple touches (`touches.length` etc.), custom `role="slider"` widgets, and markup of sortable lists, carousels and maps. Listeners are read through CDP (Chromium only; elsewhere only attributes and widget markup are used and a manual-check note is added).
+- Not candidates: elements with only a move listener (hover effects), and delegation roots with listeners for 20 or more event types (e.g. a React root); the latter become one page-level manual-check node per rule. Gestures built on delegation cannot be found from listeners.
+- Every candidate is `incomplete`. A human verifies, per candidate, that a single-pointer alternative (buttons or clicks) exists, or that the essential exception applies. Nothing is dragged or swiped to see whether something moves.
+- Run: `npx -y @a11y-skills/audit --url "<url>" --checks pointer-gesture-check`
 
 ### `target-size-check` CLI Check
 

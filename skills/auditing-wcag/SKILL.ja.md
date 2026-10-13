@@ -125,5 +125,6 @@ npx -y @a11y-skills/audit --url "https://example.com" --output-dir ./results
 | `motion-actuation-check` | 2.5.4 | 端末の動き・傾きに反応する処理（候補。要確認） |
 | `change-on-input-check` | 3.2.2 | 欄の値を変えただけで起きる移動・新しいウィンドウ・フォーカス移動・ダイアログ（候補。要確認） |
 | `accessible-authentication-check` | 3.3.8 | パスワード・確認コード欄の貼り付けの禁止、autocomplete の off、CAPTCHA らしき要素（候補。要確認） |
+| `pointer-gesture-check` | 2.5.1, 2.5.7 | ドラッグ・スワイプ・複数の指の操作で動きそうな部品（候補。要確認） |
 
 詳細は [`@a11y-skills/audit` README](https://www.npmjs.com/package/@a11y-skills/audit) を参照してください。
