@@ -325,7 +325,9 @@ Node 側で `blockedBy === null` なら `compositeLayers(layers, WHITE)` が**�
 `backgroundImage` / `opacity` / `filter` / `backdropFilter` / `mixBlendMode`）。当たれば `undetermined`（理由は同じ値）。
 アイコンの背景は色を取った要素の親（SVG の図形なら図形の親、疑似要素ならその持ち主の要素自身）から
 歩くので、SVG の内側の `g`・`svg` 要素を含む間の要素の効果も 1 の確認に入る。疑似要素については
-`getComputedStyle(el, '::before')` の `opacity` / `filter` も自身の判定に入れる。
+`getComputedStyle(el, '::before')` の `opacity` / `filter` / `backgroundImage` も自身の判定に入れ、
+疑似要素自身の `backgroundColor`（`a > 0` のとき）を背景の層の**先頭**（最も近い層）に加える。
+不透明なら、それが文字の背景になる（持ち主から歩いた層はその下に隠れる）。
 
 ### D. 測るもの（Node 側。ページ内では生データだけ集める）
 
@@ -363,7 +365,7 @@ Node 側で `blockedBy === null` なら `compositeLayers(layers, WHITE)` が**�
 | 元 | 色の取り方 | 背景 |
 |----|-----------|------|
 | インライン `svg` の図形（`path, circle, rect, ellipse, line, polyline, polygon, text, use`） | 計算済み `fill` と `stroke`（`none` と `a === 0` は除く。`stroke` は `strokeWidth` が 0 なら除く。**`line` の `fill` は描かれないので除く**）。計算済み `fillOpacity` / `strokeOpacity` をそれぞれの色の `a` に掛ける（描かれる色の透明度）。`url(` で始まる（グラデーションなど）→ `undetermined: 'svg-paint-server'` | `layersFrom(shape.parentElement)`（**図形の親から**歩くので、SVG 内の `<g opacity>`・`svg` 自身・ボタン・その外側の効果をすべて確かめる） |
-| 文字のある `::before` / `::after`（`content` が `none` / `normal` / `""` 以外） | その疑似要素の計算済み `color`（`getComputedStyle(el, '::before').color`） | `layersFrom(el)`（疑似要素の背景は見ない） |
+| 文字のある `::before` / `::after`（`content` が `none` / `normal` / `""` 以外） | その疑似要素の計算済み `color`（`getComputedStyle(el, '::before').color`） | 疑似要素自身の背景色 ＋ `layersFrom(el)`（上の段落のとおり） |
 | `img`、`svg` の中の `image`、ボタンや子孫の `backgroundImage !== 'none'`、`input[type=image]` | 色は取れない → `undetermined: 'image-icon'` | — |
 
 - アイコンの元が 1 つも無い（`svg` も疑似要素の文字も画像も無い）ボタンは `icon-button` にしない（B の条件）。
@@ -619,6 +621,7 @@ export interface RunNonTextContrastCheckOptions extends AuditOutputOptions {
 | `icon-image-mixed.html` | 白いボタンに `<img src="data:image/gif;base64,…" alt="">` と黒の `circle` の SVG | `undetermined`、`image-icon`（SVG が 21:1 でも pass にしない） |
 | `icon-many-parts.html` | 白いボタンの SVG に `rect` を 21 個（`fill="#000"`） | `undetermined`、`too-many-icon-parts` |
 | `icon-font.html` | `<button aria-label="検索"><span class="i"></span></button>`、`.i::before { content: "\2715"; color: #ddd }`、ボタンは `background:#fff;border:0` | `low`（疑似要素の色が取れる） |
+| `icon-font-bg.html` | 白いボタンの `span::before { content: "\2715"; color: #111; background: #222 }` | `low`（疑似要素自身の背景 `#222` と比べる。白と比べて pass にしない） |
 | `icon-image.html` | `<button aria-label="設定"><img src="data:image/gif;base64,…" alt=""></button>` | `undetermined`、`image-icon` |
 | `excluded.html` | 枠 `#eee` の `disabled` な入力欄、`display:none` の入力欄、`aria-disabled="true"` の `role=checkbox`、文字のあるボタン | `components` が 0 件、2 ルールとも inapplicable |
 | `none.html` | 見出しと段落だけ | 2 ルールとも inapplicable、`componentCounts` の 2 グループとも `{ found: 0, kept: 0 }` |
@@ -706,7 +709,7 @@ grep -E "non-text-contrast-check|Errors:" /tmp/claude-ntc-all.log
 ## Test plan
 
 - **`test/color.spec.ts`**: 比・相対輝度・合成・丸め・16 進の変換（ブラウザ不要）。
-- **`test/non-text-contrast.spec.ts`**: 25 フィクスチャで部品の分類・除外・枠/塗り/下線の指標・
+- **`test/non-text-contrast.spec.ts`**: 26 フィクスチャで部品の分類・除外・枠/塗り/下線の指標・
   半透明の合成・`oklch` の変換・決められない 6 種・UA の部品・アイコン（SVG / 疑似要素 / 画像）・
   上限・ページを書き換えないこと・schema を検証。
 - **fixture-gallery / rule-classification / schema-validation**: 既存の枠組みに登録。
