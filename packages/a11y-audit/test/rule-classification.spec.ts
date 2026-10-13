@@ -114,6 +114,10 @@ const FINDING_EXPECTATIONS: Array<{
   { ruleId: 'a11y-skills/auth-paste-blocked', expectedBucket: 'incomplete' },
   { ruleId: 'a11y-skills/auth-autocomplete', expectedBucket: 'incomplete' },
   { ruleId: 'a11y-skills/auth-captcha', expectedBucket: 'incomplete' },
+
+  // focus-order-check
+  { ruleId: 'a11y-skills/focus-order-visual', expectedBucket: 'incomplete' },
+  { ruleId: 'a11y-skills/focus-order-dialog', expectedBucket: 'incomplete' },
 ];
 
 /**
@@ -145,14 +149,14 @@ test('all manifest finding expectations agree with rule-registry classification'
   }
 });
 
-test('all 28 custom finding rules have a manifest entry', () => {
+test('all 30 custom finding rules have a manifest entry', () => {
   const manifestRuleIds = new Set(FINDING_EXPECTATIONS.map((e) => e.ruleId));
 
   const registryRuleIds = Object.values(RULES).map((r) => r.id);
   expect(
     registryRuleIds.length,
-    'rule-registry should have 28 custom rules',
-  ).toBe(28);
+    'rule-registry should have 30 custom rules',
+  ).toBe(30);
 
   for (const ruleId of registryRuleIds) {
     expect(

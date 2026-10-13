@@ -12,6 +12,7 @@ import {
   normalizeAxeResults,
   normalizeChangeOnInputCheck,
   normalizeFocusCheck,
+  normalizeFocusOrderCheck,
   normalizeKeyboardReachabilityCheck,
   normalizeKeyboardTrapCheck,
   normalizeMotionActuationCheck,
@@ -23,6 +24,9 @@ import type {
   AccessibleAuthenticationCheckDetails,
   ChangeOnInputCheckDetails,
   FocusCheckDetails,
+  FocusOrderCheckDetails,
+  FocusOrderStop,
+  FocusOrderTransition,
   KeyboardReachabilityCheckDetails,
   KeyboardTrapCheckDetails,
   MotionActuationCheckDetails,
@@ -715,6 +719,141 @@ test('accessible-authentication-check envelope for an unavailable paste test val
     buckets: normalizeAccessibleAuthenticationCheck(details),
   });
   expectValid('accessible-authentication-check', result);
+});
+
+test('focus-order-check envelope with stops, every transition kind, a detour, dialog probes and an abort validates against its schema', () => {
+  const stop = (step: number, x: number, y: number): FocusOrderStop => ({
+    step,
+    selector: `body > a:nth-child(${step})`,
+    shadowHosts: [],
+    tag: 'a',
+    role: null,
+    name: `Link ${step}`,
+    html: `<a href="#">Link ${step}</a>`,
+    htmlTruncated: false,
+    rect: { x, y, width: 100, height: 40 },
+    positioning: 'flow',
+    inFrame: false,
+  });
+  const transition = (
+    from: number,
+    kind: FocusOrderTransition['kind'],
+  ): FocusOrderTransition => ({
+    from,
+    to: from + 1,
+    kind,
+    dx: -200,
+    dy: -400,
+    distance: 447.2,
+    distanceRatio: 0.316,
+  });
+  const trigger = {
+    selector: '#open',
+    tag: 'button',
+    role: null,
+    name: 'Open',
+    html: '<button id="open">Open</button>',
+    htmlTruncated: false,
+  };
+  const details: FocusOrderCheckDetails = {
+    viewport: { width: 1280, height: 720 },
+    direction: 'ltr',
+    stops: [stop(1, 0, 0), stop(2, 300, 0), stop(3, 0, 400)],
+    transitions: [
+      transition(0, 'forward'),
+      transition(1, 'column-wrap'),
+      transition(2, 'backward-block'),
+      transition(3, 'backward-inline'),
+    ],
+    skippedTransitions: 1,
+    detours: [
+      { index: 1, distanceIn: 900, distanceOut: 880, distanceAcross: 40 },
+    ],
+    tabWalk: {
+      presses: 4,
+      ended: 'cycle',
+      capped: false,
+      focusableCount: 3,
+      frameCount: 0,
+    },
+    dialogTriggersFound: 3,
+    dialogs: [
+      {
+        trigger,
+        status: 'opened',
+        dialogSelector: '#dlg',
+        modal: true,
+        focusAfterOpen: 'inside',
+        focusAfterOpenSelector: null,
+        closedBy: 'escape',
+        focusAfterClose: 'elsewhere',
+        focusAfterCloseSelector: '#other',
+        error: null,
+      },
+      {
+        trigger,
+        status: 'not-opened',
+        dialogSelector: null,
+        modal: null,
+        focusAfterOpen: null,
+        focusAfterOpenSelector: null,
+        closedBy: null,
+        focusAfterClose: null,
+        focusAfterCloseSelector: null,
+        error: null,
+      },
+      {
+        trigger,
+        status: 'navigated',
+        dialogSelector: '#dlg',
+        modal: true,
+        focusAfterOpen: 'trigger',
+        focusAfterOpenSelector: null,
+        closedBy: null,
+        focusAfterClose: null,
+        focusAfterCloseSelector: null,
+        error: null,
+      },
+    ],
+    dialogsNotTried: 0,
+    aborted: { reason: 'timeout', url: 'about:blank' },
+  };
+  const result = buildAuditResult({
+    source: 'focus-order-check',
+    url: 'about:blank',
+    details,
+    buckets: normalizeFocusOrderCheck(details),
+  });
+  expectValid('focus-order-check', result);
+});
+
+test('focus-order-check envelope without an abort validates against its schema', () => {
+  const details: FocusOrderCheckDetails = {
+    viewport: { width: 1280, height: 720 },
+    direction: 'rtl',
+    stops: [],
+    transitions: [],
+    skippedTransitions: 0,
+    detours: [],
+    tabWalk: {
+      presses: 10,
+      ended: 'tab-limit',
+      capped: false,
+      focusableCount: 0,
+      frameCount: 0,
+    },
+    dialogTriggersFound: 0,
+    dialogs: [],
+    dialogsNotTried: 0,
+    aborted: null,
+  };
+  const result = buildAuditResult({
+    source: 'focus-order-check',
+    url: 'about:blank',
+    details,
+    buckets: normalizeFocusOrderCheck(details),
+  });
+  expectValid('focus-order-check', result);
 });
 
 test('the pre-0.3.0 flat result shape is rejected', () => {

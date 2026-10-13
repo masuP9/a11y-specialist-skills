@@ -1,5 +1,5 @@
 /**
- * Fixture Gallery: manifest-driven integration tests for all 16 checks.
+ * Fixture Gallery: manifest-driven integration tests for all 17 checks.
  *
  * Each manifest entry:
  * - Serves an HTML fixture from test/fixtures/pages/ via a worker-scoped
@@ -10,7 +10,7 @@
  * - For 'passes' expectations: also guards against silent inapplicable pass.
  * - Validates the result envelope against RESULT_SCHEMAS[check] via Ajv.
  *
- * Coverage: all 28 custom finding-capable rules from rule-registry.ts
+ * Coverage: all 30 custom finding-capable rules from rule-registry.ts
  * (auto-play and auto-play-audio live in their own specs).
  * axe-audit: representative rule (image-alt); full rule coverage is out of
  * scope for axe (hundreds of external rules).
@@ -393,6 +393,44 @@ const MANIFEST: ManifestEntry[] = [
       'a11y-skills/auth-paste-blocked': 'inapplicable',
       'a11y-skills/auth-autocomplete': 'inapplicable',
       'a11y-skills/auth-captcha': 'inapplicable',
+    },
+  },
+
+  // =========================================================================
+  // focus-order-check
+  // Rules: a11y-skills/focus-order-visual, focus-order-dialog (both incomplete)
+  // =========================================================================
+  {
+    check: 'focus-order-check',
+    scenario:
+      'finding: focus-order-visual (CSS order puts the first link below)',
+    fixture: 'focus-order/backward-block.html',
+    expectRules: {
+      'a11y-skills/focus-order-visual': 'incomplete',
+    },
+  },
+  {
+    check: 'focus-order-check',
+    scenario: 'clear: focus-order-visual (Tab order matches the layout)',
+    fixture: 'focus-order/in-order.html',
+    expectRules: {
+      'a11y-skills/focus-order-visual': 'passes',
+    },
+  },
+  {
+    check: 'focus-order-check',
+    scenario: 'finding: focus-order-dialog (focus stays on the trigger)',
+    fixture: 'focus-order/dialog-focus-outside.html',
+    expectRules: {
+      'a11y-skills/focus-order-dialog': 'incomplete',
+    },
+  },
+  {
+    check: 'focus-order-check',
+    scenario: 'clear: focus-order-dialog (focus moves in and returns)',
+    fixture: 'focus-order/dialog-good.html',
+    expectRules: {
+      'a11y-skills/focus-order-dialog': 'passes',
     },
   },
 
