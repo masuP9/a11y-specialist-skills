@@ -641,8 +641,19 @@ export async function runFocusOrderCheck(
         ended = 'cycle';
         break;
       }
-      const { elementId: _elementId, ...rest } = described;
-      stops.push({ step: presses, ...rest });
+      stops.push({
+        step: presses,
+        selector: described.selector,
+        shadowHosts: described.shadowHosts,
+        tag: described.tag,
+        role: described.role,
+        name: described.name,
+        html: described.html,
+        htmlTruncated: described.htmlTruncated,
+        rect: described.rect,
+        positioning: described.positioning,
+        inFrame: described.inFrame,
+      });
     }
 
     const { transitions, detours, skippedTransitions } = analyzeFocusOrder(
