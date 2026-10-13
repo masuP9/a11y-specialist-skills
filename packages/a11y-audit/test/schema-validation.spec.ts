@@ -735,6 +735,7 @@ test('focus-order-check envelope with stops, every transition kind, a detour, di
     positioning: 'flow',
     inFrame: false,
     afterWrap: false,
+    revisit: false,
   });
   const transition = (
     from: number,

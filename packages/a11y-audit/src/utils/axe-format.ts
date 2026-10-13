@@ -1184,13 +1184,16 @@ export function normalizeFocusOrderCheck(
   const { stops, tabWalk } = details;
   buckets.checkedNodes = stops.length + details.dialogs.length;
 
-  const stopNode = (stop: FocusOrderStop, summary: string): NormalizedNode =>
-    toNode(
+  const stopNode = (stop: FocusOrderStop, summary: string): NormalizedNode => {
+    const node = toNode(
       stop,
       stop.shadowHosts.length > 0
         ? `${summary} (inside shadow host ${stop.shadowHosts.join(' > ')})`
         : summary,
     );
+    node.target = [...stop.shadowHosts, stop.selector];
+    return node;
+  };
 
   // --- focus-order-visual ---
   const visualNodes: NormalizedNode[] = [];

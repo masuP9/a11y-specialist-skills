@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <!--
+    Intent: the autofocused input is first on screen; the link just before it in
+    Tab order (DOM order) is shown below it by CSS `order`. The walk starts at
+    the input, goes round and comes back to it without leaving the page, so the
+    closing move (link -> input) goes up the page.
+    Expected: a backward-block transition whose `to` stop has revisit === true;
+    focus-order-visual is incomplete.
+  -->
+  <head>
+    <meta charset="utf-8" />
+    <title>Autofocus backward</title>
+    <style>
+      body {
+        margin: 0;
+        width: 1000px;
+      }
+      div {
+        display: flex;
+        flex-direction: column;
+      }
+      a,
+      input {
+        display: block;
+        width: 100px;
+        height: 40px;
+        box-sizing: border-box;
+      }
+      a {
+        line-height: 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <a href="#a" style="order: 2">Below</a>
+      <input type="text" aria-label="Search" autofocus style="order: 1" />
+    </div>
+  </body>
+</html>

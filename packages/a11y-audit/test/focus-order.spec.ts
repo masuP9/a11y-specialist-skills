@@ -81,6 +81,68 @@ test.describe('Tab walk', () => {
     expect(bucketOf(VISUAL)).toBe('passes');
   });
 
+  test('autofocus の要素へ画面内で戻る最後の移動が上向きなら、revisit の停止点として backward-block を報告する', async ({
+    baseUrl,
+    page,
+    browser,
+  }, testInfo) => {
+    const { details, bucketOf } = await run(
+      'autofocus-backward.html',
+      baseUrl,
+      {
+        page,
+        browser,
+        testInfo,
+      },
+    );
+    expect(details.stops[0]?.step).toBe(0);
+    const closing = details.transitions.find(
+      (t) => t.kind === 'backward-block',
+    );
+    expect(closing).toBeDefined();
+    expect(details.stops[closing!.to]?.revisit).toBe(true);
+    expect(bucketOf(VISUAL)).toBe('incomplete');
+  });
+
+  test('読み込み時に Tab で届かない見出しへフォーカスされても、最初に Tab で届いた要素へ戻った時点で一巡として終える', async ({
+    baseUrl,
+    page,
+    browser,
+  }, testInfo) => {
+    const { details, bucketOf } = await run(
+      'autofocus-nontabbable.html',
+      baseUrl,
+      { page, browser, testInfo },
+    );
+    expect(details.tabWalk.ended).toBe('cycle');
+    expect(details.stops[0]?.step).toBe(0);
+    expect(details.stops[0]?.tag).toBe('h1');
+    const selectors = details.stops
+      .filter((s) => !s.revisit)
+      .map((s) => s.selector);
+    expect(new Set(selectors).size).toBe(selectors.length);
+    expect(details.tabWalk.presses).toBeLessThan(
+      details.tabWalk.focusableCount + 5,
+    );
+    expect(bucketOf(VISUAL)).toBe('passes');
+  });
+
+  test('shadow root の中で上へ戻る移動の node は、target がホストと要素の 2 要素になる', async ({
+    baseUrl,
+    page,
+    browser,
+  }, testInfo) => {
+    const { details, nodesOf } = await run('shadow-backward.html', baseUrl, {
+      page,
+      browser,
+      testInfo,
+    });
+    expect(details.transitions.map((t) => t.kind)).toContain('backward-block');
+    const node = nodesOf(VISUAL)[0];
+    expect(node?.target).toHaveLength(2);
+    expect(node?.target[0]).toBe(details.stops[0]?.shadowHosts[0]);
+  });
+
   test('order で DOM 1 つ目を下に置くと backward-block を 1 件報告する', async ({
     baseUrl,
     page,

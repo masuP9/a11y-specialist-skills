@@ -1238,7 +1238,10 @@ export type ChangeOnInputCheckResult =
 // =============================================================================
 
 export interface FocusOrderStop {
-  /** Which Tab press (1-based) moved focus here. */
+  /**
+   * Which Tab press (1-based) moved focus here. 0 = already focused when the
+   * page loaded (autofocus or script).
+   */
   step: number;
   /** Relative to the document or shadow root that contains the element. */
   selector: string;
@@ -1260,6 +1263,11 @@ export interface FocusOrderStop {
    * the move into it is not compared.
    */
   afterWrap: boolean;
+  /**
+   * Same element as an earlier stop (the walk's starting point), recorded
+   * again so the move back into it is compared.
+   */
+  revisit: boolean;
 }
 
 export type FocusOrderTransitionKind =

@@ -621,12 +621,28 @@ export async function runFocusOrderCheck(
     let aborted: FocusOrderCheckDetails['aborted'] = null;
     let ended: FocusOrderCheckDetails['tabWalk']['ended'] = 'tab-limit';
     let presses = 0;
-    let firstId: number | null = null;
+    // Where the walk started: the element focused at load (it may not be
+    // tabbable) and the first element reached by Tab. Returning to either
+    // ends the walk.
+    const starts = new Map<number, FocusOrderStop>();
+    let firstTabSeen = false;
     // Element of the previous press; reset when focus left the page, so that a
     // single focusable element is recognized again after the walk wraps.
     let lastId: number | null = null;
     // Focus left the page after at least one stop: the next stop follows a wrap.
     let wrapped = false;
+
+    // Focus may already sit on an element at load (autofocus or script): it is
+    // the first stop (step 0) and the walk starts from there.
+    const initial = await page.evaluate(describeFocus, {
+      snippetMax: HTML_SNIPPET_MAX_LENGTH,
+    });
+    if (initial !== null) {
+      lastId = initial.elementId;
+      const stop = toStop(initial, 0, false, false);
+      starts.set(initial.elementId, stop);
+      stops.push(stop);
+    }
 
     while (true) {
       if (presses >= pressN) {
@@ -664,26 +680,23 @@ export async function runFocusOrderCheck(
       }
       if (described.elementId === lastId) continue;
       lastId = described.elementId;
-      if (firstId === null) {
-        firstId = described.elementId;
-      } else if (described.elementId === firstId) {
+      const start = starts.get(described.elementId);
+      if (start) {
+        // Back at a starting element. When focus stayed in the page since the
+        // last stop, record it again so the closing move is compared too.
+        if (!wrapped) {
+          // Built from what is observed now, not from the earlier stop.
+          stops.push(toStop(described, presses, false, true));
+        }
         ended = 'cycle';
         break;
       }
-      stops.push({
-        step: presses,
-        selector: described.selector,
-        shadowHosts: described.shadowHosts,
-        tag: described.tag,
-        role: described.role,
-        name: described.name,
-        html: described.html,
-        htmlTruncated: described.htmlTruncated,
-        rect: described.rect,
-        positioning: described.positioning,
-        inFrame: described.inFrame,
-        afterWrap: wrapped,
-      });
+      const stop = toStop(described, presses, wrapped, false);
+      if (!firstTabSeen) {
+        firstTabSeen = true;
+        starts.set(described.elementId, stop);
+      }
+      stops.push(stop);
       wrapped = false;
     }
 
@@ -808,6 +821,29 @@ export async function runFocusOrderCheck(
   } finally {
     await context?.close();
   }
+}
+
+function toStop(
+  described: FocusDescription,
+  step: number,
+  afterWrap: boolean,
+  revisit: boolean,
+): FocusOrderStop {
+  return {
+    step,
+    selector: described.selector,
+    shadowHosts: described.shadowHosts,
+    tag: described.tag,
+    role: described.role,
+    name: described.name,
+    html: described.html,
+    htmlTruncated: described.htmlTruncated,
+    rect: described.rect,
+    positioning: described.positioning,
+    inFrame: described.inFrame,
+    afterWrap,
+    revisit,
+  };
 }
 
 /**

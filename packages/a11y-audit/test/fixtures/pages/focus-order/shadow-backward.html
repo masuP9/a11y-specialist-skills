@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <!--
+    Intent: inside one open shadow root, CSS `order` puts the DOM-first button
+    below the DOM-second one, so Tab moves up inside the shadow root.
+    Expected: a backward-block transition; the node target is
+    [host selector, element selector].
+  -->
+  <head>
+    <meta charset="utf-8" />
+    <title>Shadow backward</title>
+    <style>
+      body {
+        margin: 0;
+        width: 1000px;
+      }
+    </style>
+  </head>
+  <body>
+    <x-pair></x-pair>
+    <script>
+      class XPair extends HTMLElement {
+        constructor() {
+          super();
+          const root = this.attachShadow({ mode: 'open' });
+          root.innerHTML = `
+            <div style="display:flex;flex-direction:column">
+              <button type="button" style="order:2;height:40px">Lower</button>
+              <button type="button" style="order:1;height:40px">Upper</button>
+            </div>`;
+        }
+      }
+      customElements.define('x-pair', XPair);
+    </script>
+  </body>
+</html>

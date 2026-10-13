@@ -1324,6 +1324,7 @@ const FOCUS_ORDER_STOP_SCHEMA: JsonSchema = {
     'positioning',
     'inFrame',
     'afterWrap',
+    'revisit',
   ],
   properties: {
     step: { type: 'number' },
@@ -1338,6 +1339,7 @@ const FOCUS_ORDER_STOP_SCHEMA: JsonSchema = {
     positioning: { enum: ['flow', 'fixed', 'sticky'] },
     inFrame: { type: 'boolean' },
     afterWrap: { type: 'boolean' },
+    revisit: { type: 'boolean' },
   },
 };
 
