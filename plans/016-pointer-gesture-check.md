@@ -296,11 +296,14 @@ export interface SubtreeEventListenerRecord extends EventListenerRecord {
    * Stores the nodes for `backendNodeIds` in a new array at window[key] of the
    * main frame, and returns, for each id in order, its index in that array, or
    * -1 when the node could not be resolved or belongs to another frame.
-   * The caller deletes window[key] when done.
+   * `shouldStop` is checked before creating the array and before each node;
+   * once it returns true no more page writes are issued and the remaining ids
+   * are -1. The caller deletes window[key] when done.
    */
   collectNodes(
     backendNodeIds: readonly number[],
     key: string,
+    shouldStop?: () => boolean,
   ): Promise<number[]>;
 ```
 
@@ -314,8 +317,10 @@ export interface SubtreeEventListenerRecord extends EventListenerRecord {
   **既存の `listenersOf` は変えない**（重複する数行は、変換を小さな関数 `toRecord(l)` に切り出して
   両方から呼ぶ形にしてよい。その場合も既存 2 メソッドの返り値は 1 バイトも変えないこと）。
 - `collectNodes`:
+  0. `shouldStop?.()` が true なら、ページに何も書かず全件 -1 を返す。
   1. `Runtime.evaluate({ expression: \`window[${JSON.stringify(key)}] = []\` })`
-  2. 各 id について `DOM.resolveNode({ backendNodeId: id, objectGroup: GROUP })` →
+  2. 各 id について（**各 id の前に `shouldStop?.()` を確かめ、true なら残りを -1 にして返す**。
+     送信中の 1 件は止められないので、書き込みが止まるのは「その 1 件が終わった後」） `DOM.resolveNode({ backendNodeId: id, objectGroup: GROUP })` →
      `Runtime.callFunctionOn({ objectId, functionDeclaration, arguments: [{ value: key }], returnByValue: true })`。
      `functionDeclaration` は
      `'function (key) { if (window !== window.top) return -1; return window[key].push(this) - 1; }'`。
@@ -359,8 +364,17 @@ export interface PointerGestureSignal {
 }
 
 export interface PointerGestureCandidate {
-  /** Unique within the document, or within the shadow root for shadow DOM elements. */
+  /**
+   * Unique within the element's own scope: the document, or the shadow root it
+   * is in. Resolve it after the hosts in `shadowHosts`.
+   */
   selector: string;
+  /**
+   * Open shadow hosts above the element, outermost first; each is looked up in
+   * the document or shadow root opened by the previous one. [] outside shadow DOM.
+   * Same convention as MediaPlaybackRecord.shadowHosts.
+   */
+  shadowHosts: string[];
   html: string;
   htmlTruncated: boolean;
   tagName: string;
@@ -378,20 +392,36 @@ export interface PointerGesturePageListener extends PointerGestureListenerLocati
 }
 
 export interface PointerGestureDelegationRoot {
-  /** 'window', 'document', or the element's selector. */
+  /** 'window', 'document', or the element's selector (same scope rule as candidates). */
   selector: string;
+  /** [] for window / document and elements outside shadow DOM. */
+  shadowHosts: string[];
   eventTypeCount: number;
 }
 
 export interface PointerGestureCheckDetails {
   /** 'failed': CDP was available but inspection threw or timed out. */
   listenerInspection: 'cdp' | 'unsupported' | 'failed';
+  /**
+   * Why inspection failed. 'timeout' when it was cancelled and stopped;
+   * 'timeout-unrecoverable' when it did not stop within the grace period
+   * (the page scan is then skipped). Other values: the error's first line.
+   */
   inspectionError: string | null;
   candidates: PointerGestureCandidate[];
-  /** Candidates found before the POINTER_GESTURE_MAX_CANDIDATES cap. */
-  totalCandidates: number;
-  /** True when candidates or listener nodes were cut at a cap. */
-  truncated: boolean;
+  /**
+   * Candidate cap (POINTER_GESTURE_MAX_CANDIDATES): how many candidates were
+   * found per criterion before cutting, and how many of them were kept.
+   */
+  candidateCounts: {
+    total: number;
+    byCriterion: Record<PointerGestureCriterion, { found: number; kept: number }>;
+  };
+  /**
+   * True when listener nodes beyond POINTER_GESTURE_MAX_LISTENER_NODES were not
+   * resolved, so their signals (for either criterion) are unknown.
+   */
+  listenerNodesTruncated: boolean;
   pageListeners: PointerGesturePageListener[];
   delegationRoots: PointerGestureDelegationRoot[];
 }
@@ -420,6 +450,8 @@ export const POINTER_GESTURE_MAX_CANDIDATES = 200;
 export const POINTER_GESTURE_MAX_LISTENER_NODES = 1_000;
 /** Whole listener inspection (window, document, subtree, node collection). */
 export const POINTER_GESTURE_INSPECTION_TIMEOUT_MS = 15_000;
+/** After a timeout: how long to wait for the in-flight CDP call to finish once cancelled. */
+export const POINTER_GESTURE_CANCEL_GRACE_MS = 3_000;
 export const POINTER_GESTURE_WIDGET_HINTS = [
   { kind: 'widget-slider', selector: '[role="slider"]:not(input)' },
   {
@@ -503,6 +535,9 @@ export function normalizePointerGestureCheck(details: PointerGestureCheckDetails
 ```
 
 - `buckets.checkedNodes = details.candidates.length`。
+- 要素の node は `toNode(candidate, summary)` で作ったあと、**`node.target = [...candidate.shadowHosts, candidate.selector]`**
+  に置き換える（`mediaNode`（`axe-format.ts:1060-1077` 付近）と同じ考え方。shadow root ごとに同じ id が
+  あっても、文書側の同名要素と取り違えない）。
 - 各ルールについて（`'pointer-gestures'` ↔ `'2.5.1'`、`'dragging-movements'` ↔ `'2.5.7'`）:
   1. `nodes` を作る:
      - `listenerInspection !== 'cdp'` なら先頭に `pageNode(...)`:
@@ -524,10 +559,13 @@ export function normalizePointerGestureCheck(details: PointerGestureCheckDetails
      - ページ単位 node（`pageNode`）: `details.pageListeners` のうち、2.5.1 なら `multipoint === true` のもの、
        2.5.7 なら `type` が `dragstart` / `drop` のものごとに 1 つ:
        `${target} has a "${type}" listener (script …)${preview}. Handlers may implement gestures for elements through delegation; ${確認依頼}`
-     - `details.truncated` なら末尾に `pageNode('Only the first ${POINTER_GESTURE_MAX_CANDIDATES} of ${totalCandidates} candidates were recorded.')`
-       を **両ルールに** 1 つ（そのルールの node が他に 1 つ以上あるときだけ）。
-  2. `applicable = nodes.length > 0`（候補が無ければ inapplicable。2.5.4 と同じ考え方:
-     対象の部品が見つからない）。
+     - 打ち切り（**他の node の有無に関係なく**付ける。対象なしと未検査を区別するため）:
+       - `candidateCounts.byCriterion[c].found > .kept` なら
+         `pageNode('Only ${kept} of ${found} candidates for this criterion were recorded (the check keeps the first ${POINTER_GESTURE_MAX_CANDIDATES} candidates in document order); check the rest of the page manually.')`
+       - `listenerNodesTruncated` なら両ルールに
+         `pageNode('Listeners on more than ${POINTER_GESTURE_MAX_LISTENER_NODES} elements were found; elements beyond that were not examined. Check drag and gesture interactions manually.')`
+  2. `applicable = nodes.length > 0`（候補も打ち切りも無ければ inapplicable。2.5.4 と同じ考え方:
+     対象の部品が見つからない）。打ち切りの node があればそれだけで applicable → incomplete になる。
   3. `bucketize(buckets, key, nodes, applicable)`。
 
 ### F. runner（`src/playwright/runPointerGestureCheck.ts`）
@@ -536,6 +574,11 @@ export function normalizePointerGestureCheck(details: PointerGestureCheckDetails
 export interface RunPointerGestureCheckOptions extends AuditOutputOptions {
   /** A page already navigated to the target URL. */
   page: Page;
+  /**
+   * Upper bound for the listener inspection (ms). Default:
+   * POINTER_GESTURE_INSPECTION_TIMEOUT_MS. Mainly for tests of the timeout path.
+   */
+  inspectionTimeoutMs?: number;
 }
 export async function runPointerGestureCheck(options: RunPointerGestureCheckOptions): Promise<PointerGestureCheckResult>;
 ```
@@ -549,10 +592,37 @@ export async function runPointerGestureCheck(options: RunPointerGestureCheckOpti
 1. `const url = page.url()`。`createAuditOutput({ ...location, defaultFile: DEFAULT_POINTER_GESTURE_RESULT_FILE })`。
 2. `openEventListenerInspector(page)` を try/catch で開く（throw したら `listenerInspection: 'failed'`、
    `inspectionError` に 1 行目 200 文字まで）。`null` なら `'unsupported'`。
-3. inspector があれば、次の 3a〜3d を **まとめて** `withTimeout(…, POINTER_GESTURE_INSPECTION_TIMEOUT_MS)` で包む
-   （`withTimeout` は `runAccessibleAuthenticationCheck.ts:358-365` をこのファイルに書き写す）。
-   throw / timeout なら `listenerInspection: 'failed'`、`inspectionError` に文言、listener 由来の
-   シグナル・`pageListeners`・`delegationRoots` は空のまま 4 へ（属性と部品のしるしは 4 で拾う）。
+3. inspector があれば、`const run = { cancelled: false }` と `nodesKey`（3d）を先に作り、次の 3a〜3d を
+   1 つの async 関数 `inspect()` にまとめて、**中止の手順付きで**時間の上限をかける
+   （`withTimeout` は `runAccessibleAuthenticationCheck.ts:358-365` をこのファイルに書き写す。
+   `withTimeout` は元の処理を止めないので、止める手順を次のとおり自分で書く）:
+
+   ```ts
+   const inspection = inspect(); // 3a〜3d。collectNodes に () => run.cancelled を渡す
+   inspection.catch(() => {}); // 時間切れ後の reject を外に漏らさない
+   try {
+     listenerData = await withTimeout(inspection, inspectionTimeoutMs ?? POINTER_GESTURE_INSPECTION_TIMEOUT_MS);
+   } catch (error) {
+     run.cancelled = true; // collectNodes はこれ以上ページに書かない
+     const stopped = await withTimeout(inspection.then(() => true, () => true), POINTER_GESTURE_CANCEL_GRACE_MS)
+       .catch(() => false);
+     listenerInspection = 'failed';
+     inspectionError = isStepTimeout(error) ? (stopped ? 'timeout' : 'timeout-unrecoverable') : firstLine(error);
+     listenerData = 空（pageListeners・delegationRoots・nodeSignals なし）;
+     scanSkipped = !stopped; // 止まらなかった＝ページか CDP が応答しない
+   }
+   ```
+
+   - `inspect()` の中でも、各 CDP 呼び出しの間で `run.cancelled` を確かめ、true なら throw して抜ける。
+   - **時間切れ後は、`inspection` が止まったのを確かめてから**手順 4 と後片付けに進む。止まった後は
+     `collectNodes` がページに書くことは無いので、後片付けの `delete` の後にプロパティが作り直されることは無い。
+   - `scanSkipped` が true（猶予の間にも止まらなかった）なら、手順 4 のページ内の検査は**行わず**、
+     候補 0・`candidateCounts` はすべて 0 で結果を作る（normalizer は `listenerInspection: 'failed'` の
+     ページ単位 node で両ルールを incomplete にする）。後片付けの `delete` だけは
+     `withTimeout(…, 1_000).catch(() => {})` で試みる。この経路ではプロパティが残りうることを
+     runner 先頭コメントの Limitations に書く。
+   - inspector を開けなかった（`unsupported` / `failed`）・時間切れ以外の失敗のときは、listener 由来の
+     シグナル・`pageListeners`・`delegationRoots` は空のまま 4 へ（属性と部品のしるしは 4 で拾う）。
    - 3a. `forExpression('window')` と `forExpression('document')`（型の絞り込みなし）。
    - 3b. `forSubtree('document.documentElement')`（型の絞り込みなし。委譲先の判定に全種類が要る）。
    - 3c. 集計（Node 側）:
@@ -567,28 +637,37 @@ export async function runPointerGestureCheck(options: RunPointerGestureCheckOpti
        `detail` は両方の型を定数の順で。`multipoint-listener`: 上と同じ判定。`listener` は該当した最初の listener の場所）。
        シグナルが 1 つも無いノードは捨てる。
      - 解決するノード = 「シグナルのあるノード」+「委譲先のノード」。`backendNodeId` の昇順で
-       `POINTER_GESTURE_MAX_LISTENER_NODES` 件まで（超えたら `truncated = true`）。
-   - 3d. `const nodesKey = \`__a11yPointerGesture_${randomUUID()}\`` を作り、
-     `inspector.collectNodes(ids, nodesKey)` で番号を得る（-1 のノードは捨てる＝iframe 内か解決できない）。
-4. `page.evaluate(scanPointerGestures, args)` を 1 回呼ぶ（**`finally` で `nodesKey` を delete** する
-   `page.evaluate` を必ず呼ぶ。3 が失敗して `collectNodes` を呼んでいなければ不要）。`args`:
-   `{ nodesKey: string | null, nodeSignals: { index: number; signals: PointerGestureSignal[] }[], delegationIndices: number[],
+       `POINTER_GESTURE_MAX_LISTENER_NODES` 件まで（超えたら `listenerNodesTruncated = true`）。
+   - 3d. `inspector.collectNodes(ids, nodesKey, () => run.cancelled)` で番号を得る（-1 のノードは捨てる＝
+     iframe 内か解決できないか中止された）。`nodesKey` は `\`__a11yPointerGesture_${randomUUID()}\``。
+4. `page.evaluate(scanPointerGestures, args)` を 1 回呼ぶ（`scanSkipped` なら呼ばない）。
+   **`finally` で `window[nodesKey]` を delete する `page.evaluate` を必ず呼ぶ**（`collectNodes` を
+   呼んだかどうかに関係なく。無いプロパティの delete は害が無い）。`args`:
+   `{ nodesKey: string, nodeSignals: { index: number; signals: PointerGestureSignal[] }[], delegationIndices: number[],
    hints: POINTER_GESTURE_WIDGET_HINTS, htmlSnippetMaxLength: HTML_SNIPPET_MAX_LENGTH, maxCandidates: POINTER_GESTURE_MAX_CANDIDATES }`。
    ページ内の処理:
-   - `getUniqueSelector` / `safeOuterHTML` / `isVisible` を `runAccessibleAuthenticationCheck.ts` から書き写す。
-     ただし `getUniqueSelector` は shadow root の中の要素で `document.body` にたどり着かないので、
-     `element.getRootNode()` が `ShadowRoot` なら、その shadow root の中で一意な selector
-     （親をたどって shadow root の直下で止める）を返すように直す。
-   - `Map<Element, { signals: PointerGestureSignal[] }>` を作る。
-     `nodeSignals` は `window[nodesKey][index]` の要素に足す（`Element` でなければ捨てる）。
-     `document.querySelectorAll('[draggable="true"]')` の各要素に `{ kind: 'draggable-attribute', detail: 'draggable="true"', listener: null }`。
-     ヒントごとに `querySelectorAll(hint.selector)` の各要素に `{ kind: hint.kind, detail: hint.selector, listener: null }`
-     （selector が不正で throw しても、そのヒントだけ飛ばす）。
-   - 委譲先: `delegationIndices` の要素の selector を返す（`delegationRoots` に `eventTypeCount` と合わせて Node 側で入れる）。
-   - 要素を文書順（`a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING` で並べる。
-     shadow 内の要素同士・shadow 内外の比較もこの関数で順序が付く）に並べ、`totalCandidates` を数え、
-     先頭 `maxCandidates` 件だけ `{ selector, html, htmlTruncated, tagName, role: getAttribute('role'), visible, signals }` にする。
-   - `criteria` は Node 側で `CRITERIA_BY_SIGNAL` から作る（重複を除き `['2.5.1', '2.5.7']` の順）。
+   - `safeOuterHTML` / `isVisible` を `runAccessibleAuthenticationCheck.ts` から書き写す。
+   - **合成された木（document と open shadow root）を 1 回だけ深さ優先でたどる** `walk(root)` を書く:
+     `root.children` を順にたどり、各要素について「通し番号（=順序）を付ける」「`[draggable="true"]` と
+     各ヒントの selector に `element.matches()` で当てる（selector が不正で throw したらそのヒントだけ以後飛ばす）」、
+     次に `element.shadowRoot` があればその中を、その後に要素の子をたどる。
+     （`compareDocumentPosition` は shadow root をまたぐ比較で順序を返さないので使わない。
+     `document.querySelectorAll` も shadow root の中を探さないので使わない。）
+   - 当たった要素に `{ kind: 'draggable-attribute', detail: 'draggable="true"', listener: null }` /
+     `{ kind: hint.kind, detail: hint.selector, listener: null }` を足す。`nodeSignals` は
+     `window[nodesKey][index]` の要素に足す（`Element` でなければ捨てる）。`Map<Element, signals>` で 1 要素 1 候補にまとめる。
+   - selector と shadow host の経路: `scopeSelector(element)` は `runAccessibleAuthenticationCheck.ts` の
+     `getUniqueSelector` を元に、「探す範囲」を `element.getRootNode()`（`Document` か `ShadowRoot`）にする
+     （id の一意性は `scope.querySelectorAll` で確かめ、親をたどるのは scope の直下まで。scope が
+     `Document` なら今までどおり `body` から始める）。`shadowHostsOf(element)` は、`getRootNode()` が
+     `ShadowRoot` の間 `host` へ上がりながら `scopeSelector(host)` を集めて逆順（外側が先）にする。
+   - 委譲先: `delegationIndices` の要素について `{ selector, shadowHosts }` を返す
+     （`delegationRoots` に `eventTypeCount` と合わせて Node 側で入れる）。
+   - 候補を通し番号の順に並べる。**切る前に**、各候補の `criteria`（`CRITERIA_BY_SIGNAL` から。ページ内で使うので
+     対応表は `args` で渡す）ごとに件数を数えて `found` にする。先頭 `maxCandidates` 件だけ
+     `{ selector, shadowHosts, html, htmlTruncated, tagName, role: getAttribute('role'), visible, signals, criteria }`
+     にし、残した分を基準ごとに数えて `kept` にする。`candidateCounts.total` は切る前の件数。
+   - `criteria` は重複を除き `['2.5.1', '2.5.7']` の順。
 5. `inspector` は `finally` で `withTimeout(inspector.close(), 1_000).catch(() => {})` で閉じる。
 6. `buildAuditResult({ source: 'pointer-gesture-check', url, details, buckets: normalizePointerGestureCheck(details) })`。
 7. `out.header('Pointer Gesture Check Results', 'WCAG 2.5.1 / 2.5.7', result.url)`、
@@ -653,7 +732,11 @@ iframe 内の listener が `forSubtree` に出てこない場合は、そのテ�
 - `widget-carousel` だけの候補 → pointer-gestures が incomplete、dragging-movements が inapplicable
 - `multipoint: true` の `pageListeners` 1 件・候補 0 → pointer-gestures にページ単位 node 1 つ、dragging-movements は inapplicable
 - `pageListeners` が `mousemove` だけ・候補 0 → 両ルール inapplicable
-- `truncated: true`・`totalCandidates: 250` → 両ルールの node に `Only the first 200 of 250` を含む
+- 候補 0・`candidateCounts.byCriterion['2.5.1']` が `{ found: 1, kept: 0 }`（2.5.7 は `{ found: 200, kept: 200 }` の
+  想定で、候補配列は空でよい）→ **pointer-gestures が incomplete**（node に `Only 0 of 1 candidates` を含む）。
+  上限直後に別の基準の候補があっても inapplicable にならないことの確認
+- `listenerNodesTruncated: true`・候補 0 → 両ルールが incomplete、node に `were not examined` を含む
+- shadow root の中の候補（`selector: '#swipe'`, `shadowHosts: ['#host-a']`）→ node の `target` が `['#host-a', '#swipe']`
 
 ### Step 5: フィクスチャと runner（テスト先行）
 
@@ -668,9 +751,9 @@ iframe 内の listener が `forSubtree` に出てこない場合は、そのテ�
 | `hover-only.html` | `<div id="tip">` に `mousemove` だけ | 候補 0、両ルール inapplicable |
 | `delegation-root.html` | `<div id="root">` に 25 種類の型（`click`, `keydown`, `pointerdown`, `pointermove`, `dragstart`, … を配列で回して `addEventListener`） | 候補 0、両ルール inapplicable、`delegationRoots` が `[{ selector: '#root', eventTypeCount: 25 }]` |
 | `document-pinch.html` | `document.addEventListener('touchstart', (e) => { if (e.touches.length > 1) {} })` だけ | pointer-gestures incomplete（node の target が `html`）、`pageListeners[0].multipoint === true` |
-| `shadow.html` | open shadow root の中の `<div id="swipe">` に `touchstart` と `touchmove` | 候補 1 つ（`move-listener`）、`selector` が `#swipe` |
+| `shadow.html` | 文書側に `<div id="swipe">`、`#host-a` と `#host-b` の open shadow root の中にもそれぞれ `<div id="swipe">`。3 つとも `touchstart` と `touchmove`。さらに `#host-b` の shadow root の中に `<div draggable="true" id="drag-in-shadow">` | 候補 4 つ。`#swipe` の 3 つは `shadowHosts` がそれぞれ `[]` / `['#host-a']` / `['#host-b']` で、2.5.7 の node の `target` が `['#swipe']` / `['#host-a', '#swipe']` / `['#host-b', '#swipe']`（区別できる）。`#drag-in-shadow` が `draggable-attribute` で拾われる（shadow root の中も属性で探す）。候補の並びは文書順（`#swipe`、`#host-a` 内、`#host-b` 内の順） |
 | `iframe.html` | 同一オリジンの `<iframe srcdoc>` の中の要素にだけ `pointerdown` + `pointermove` | 候補 0、両ルール inapplicable |
-| `many.html` | スクリプトで `<div draggable="true">` を 250 個作る | `candidates.length === 200`、`totalCandidates === 250`、`truncated === true` |
+| `many.html` | スクリプトで `<div draggable="true">` を 250 個作り、その後ろに `<section aria-roledescription="carousel">` を 1 つ | `candidates.length === 200`、`candidateCounts.total === 251`、`byCriterion['2.5.7']` が `{ found: 250, kept: 200 }`、`byCriterion['2.5.1']` が `{ found: 1, kept: 0 }`。**両ルールとも incomplete**（pointer-gestures は打ち切りの node だけで incomplete） |
 | `none.html` | `<input type="range">` と `click` だけのボタン | 候補 0、両ルール inapplicable |
 
 `test/pointer-gesture.spec.ts` に、`runFixtureCheck('pointer-gesture-check', 'pointer-gesture/<file>', …)` を包む
@@ -680,6 +763,12 @@ iframe 内の listener が `forSubtree` に出てこない場合は、そのテ�
 - 全フィクスチャの結果が `RESULT_SCHEMAS['pointer-gesture-check']` に valid（フィクスチャごとに 1 テスト、
   または `test.describe` 内のパラメータ化。テスト本体に分岐・ループを書かない）
 - チェック後に `window` に `__a11yPointerGesture_` で始まるプロパティが残っていない（`sortable.html`）
+- **時間切れの経路**: span 3000 個すべてに `pointerdown` と `pointermove` を付けたページ（`page.setContent` で作ってよい）に
+  `inspectionTimeoutMs: 1` で実行すると、例外を投げずに結果を返し、`listenerInspection === 'failed'`、
+  `inspectionError === 'timeout'`、両ルールが incomplete、**結果を受け取った後 1 秒待ってから**
+  `window` に `__a11yPointerGesture_` で始まるプロパティが無い（中止後に書き込みが続いていないことの確認）
+- `collectNodes` の中止（`test/cdp-event-listeners.spec.ts` に追加）: `shouldStop` が 2 回目の呼び出しから
+  true を返すと、返り値の 2 件目以降が -1、`window[key].length === 1`。最初から true なら `window[key]` が作られない
 
 次に runner を設計 F で実装し、`src/playwright/index.ts` に export、`src/cli.ts` の `CHECK_REGISTRY` 末尾に
 `kind: 'page'` のエントリ（accessible-authentication と同形）、`src/test-entries/pointer-gesture-check.ts`、
@@ -692,7 +781,7 @@ iframe 内の listener が `forSubtree` に出てこない場合は、そのテ�
 ### Step 6: 大きなページでの時間
 
 `test/pointer-gesture.spec.ts` に「span 5000 個すべてに `pointerdown` と `pointermove` を付けた
-ページ（`page.setContent` で作ってよい）でチェックが 20 秒以内に終わり、`truncated === true`」の
+ページ（`page.setContent` で作ってよい）でチェックが 20 秒以内に終わり、`listenerNodesTruncated === true`」の
 テストを 1 つ足す（テストの timeout は 60 秒。計画時の実測では `forSubtree` 1 回は約 40ms だが、
 `collectNodes` は 1 ノードごとに CDP を 2 回呼ぶので、上限 1000 ノード分の時間がかかる）。
 **Verify**: そのテストが pass。20 秒を超える場合は STOP（`collectNodes` の 1 件ずつの CDP 呼び出しが
@@ -789,6 +878,9 @@ ALL must hold:
 - `forSubtree` が open shadow root の中の listener を返さない（計画時の実測と違う）
 - `DOM.resolveNode` が `DOM.enable` なしで失敗する（計画時の実測と違う。`DOM.enable` を呼ぶかは設計判断）
 - Step 6 で 5000 要素のページが 20 秒以内に終わらない
+- 時間切れの経路のテストで、`inspectionError` が `'timeout-unrecoverable'` になる（普通のページで猶予
+  `POINTER_GESTURE_CANCEL_GRACE_MS` の間に CDP の 1 件が終わらない）、または結果の後に
+  `__a11yPointerGesture_` のプロパティが現れる（中止の仕組みが効いていない）
 - Step 7 で `--checks all` が ERROR・ハング・exit 2 になる
 - いずれかのフィクスチャでチェックがハングする
 - `delegation-root.html` 以外の普通のフィクスチャで要素が委譲先と判定される
@@ -809,7 +901,10 @@ ALL must hold:
   - 複数の指の判定は handler の先頭 200 文字の文字列照合。pointer events で `pointerId` を数える
     実装は見分けられない。
   - iframe の中は見ない（地図の埋め込み iframe は、iframe 要素そのものを `widget-map` として拾う）。
-  - shadow root の中の候補の `selector` はその shadow root の中で一意な形で、文書全体の selector ではない。
+  - shadow root の中の候補は `shadowHosts` + `selector` の経路で表す（closed shadow root の中は見えない）。
+  - listener の取り出しが猶予の間にも止まらない（ページか CDP が応答しない）ときは、ページ内の検査を
+    飛ばして両ルールを incomplete にする。この経路では一時プロパティ `window.__a11yPointerGesture_*` が
+    残りうる。
   - 実際にドラッグ・スワイプしてみて、何かが動くかは確かめない。
 - **follow-up 候補**（本プランの範囲外）:
   - 候補に `page.mouse` で実際にドラッグ（押す→動かす→離す）を送り、DOM の変化を証跡に添える
