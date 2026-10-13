@@ -345,10 +345,20 @@ export interface PointerCancellationPageListener extends PointerGestureListenerL
 }
 
 export interface PointerCancellationCheckDetails {
-  /** 'failed': CDP was available but inspection threw or timed out. Same meaning as PointerGestureCheckDetails. */
+  /**
+   * 'failed': CDP was available but inspection threw or timed out on at least
+   * one page load (a failure on a restart is not hidden by an earlier success).
+   * 'cdp' only when every load was inspected. Same values as PointerGestureCheckDetails.
+   */
   listenerInspection: 'cdp' | 'unsupported' | 'failed';
-  /** 'timeout' or the error's first line (200 chars); null when not failed. */
+  /** First failure: 'timeout' or the error's first line (200 chars); null when not failed. */
   inspectionError: string | null;
+  /**
+   * True when, on some load, more than POINTER_GESTURE_MAX_LISTENER_NODES nodes
+   * had press listeners; the rest were neither pressed for that reason nor
+   * checked for press-only listeners.
+   */
+  listenerNodesTruncated: boolean;
   /** 'ignored-background-activity' when the page changed on its own before any press. */
   domObservation: 'used' | 'ignored-background-activity';
   /** Targets found on the first load. */
@@ -356,13 +366,18 @@ export interface PointerCancellationCheckDetails {
   /** Targets pressed and observed (with or without a change). */
   targetsTested: number;
   findings: PointerCancellationFinding[];
-  /** Targets that could not be pressed (gone, not resolvable after a restart, error). */
+  /**
+   * Targets that could not be pressed or observed: 'element-gone',
+   * 'handler-timeout' (a handler did not return within stepTimeoutMs; the
+   * context was closed and the check restarted), or the error's first line.
+   */
   untested: { target: PointerCancellationTarget; reason: string }[];
   pageListeners: PointerCancellationPageListener[];
   delegationRootCount: number;
   restarts: number;
   aborted: {
-    reason: 'timeout' | 'target-limit' | 'restart-limit';
+    /** 'unresponsive': a hung page could not be closed within stepTimeoutMs. */
+    reason: 'timeout' | 'target-limit' | 'restart-limit' | 'unresponsive';
     testedCount: number;
     foundCount: number;
   } | null;
@@ -385,6 +400,12 @@ export const POINTER_CANCELLATION_MAX_TARGETS = 100;
 export const POINTER_CANCELLATION_MAX_RESTARTS = 10;
 /** Listener inspection (window, document, subtree, node collection) per page load. */
 export const POINTER_CANCELLATION_INSPECTION_TIMEOUT_MS = 15_000;
+/**
+ * Upper bound for each in-page step (startPress / endPress / collectTargets)
+ * and for closing a context: a page handler that never returns must not stall
+ * the check.
+ */
+export const POINTER_CANCELLATION_STEP_TIMEOUT_MS = 5_000;
 /** A listener of one of these types on the element means the press may complete on release. */
 export const POINTER_CANCELLATION_RELEASE_TYPES = [
   'pointerup',
@@ -438,12 +459,22 @@ export function normalizePointerCancellationCheck(details: PointerCancellationCh
   - `press-only-listener`: `Has ${listeners.press.join(' / ')} listener(s) at script ${scriptId}, line ${lineNumber + 1}:${columnNumber + 1} but no pointerup / mouseup / touchend / click listener on the element itself; pressing it caused no visible change. `
   - 両方の末尾に確認依頼:
     `Verify that the function completes on the up-event, or can be aborted (e.g. by moving the pointer away before release) or undone, unless completing on the down-event is essential.`
+- 未検査の要素（`details.untested` の各件）も node にする（`normalizeChangeOnInputCheck` が `untested` を
+  incomplete にしているのと同じ考え方。未検査を合格扱いにしない）。`toNode(target, …)` の後で `target` を
+  `[...shadowHosts, selector]` に置き換え、summary は
+  `Could not be pressed or observed (${reason}). Check manually whether pressing it completes a function on the down-event.`
 - page node（`pageNode`）:
   - `details.aborted` があれば: `Stopped early (${reason}): ${testedCount} of ${foundCount} targets were pressed. Check the rest manually.`
   - `details.domObservation === 'ignored-background-activity'` かつ `targetsTested > 0` なら:
     `The page changed on its own before any press, so DOM changes after a press were not used (navigation, new windows, dialogs and focus moves still were). Check press behaviour manually.`
+  - `details.listenerInspection !== 'cdp'` なら（**他の node の有無・対象の数に関係なく**付ける。
+    「対象なし」と「検査できなかった」を区別するため。`normalizePointerGestureCheck` の同種の node と同じ扱い）:
+    `Event listeners could not be inspected (${listenerInspection}${inspectionError ? `: ${inspectionError}` : ''}). Elements with only a press listener and no interactive role or inline handler were not pressed, and press-only listeners were not reported; check them manually.`
+    （`'unsupported'` の文言には `CDP is only available in Chromium` を含める）
+  - `details.listenerNodesTruncated` なら:
+    `Press listeners were found on more than ${POINTER_GESTURE_MAX_LISTENER_NODES} elements; elements beyond that were not examined. Check press behaviour manually.`
 - `applicable = nodes.length > 0 || details.targetsTested > 0`（`normalizeChangeOnInputCheck` と同じ考え方。
-  押した要素があって何も起きなければ `passes`、押す要素が無ければ `inapplicable`）。
+  押した要素があって何も起きず、未検査・検査欠落も無ければ `passes`、押す要素が無く検査欠落も無ければ `inapplicable`）。
 - `bucketize(buckets, 'pointer-cancellation', nodes, applicable)`。
 - `buckets.checkedNodes` を他の normalizer が設定していればそれに合わせて `details.targetsTested` を入れる
   （設定していなければ何もしない）。
@@ -465,6 +496,8 @@ export interface RunPointerCancellationCheckOptions
   maxTargets?: number;
   /** Upper bound for the listener inspection per page load (default: POINTER_CANCELLATION_INSPECTION_TIMEOUT_MS). Mainly for tests. */
   inspectionTimeoutMs?: number;
+  /** Upper bound for each in-page step and for closing a context (default: POINTER_CANCELLATION_STEP_TIMEOUT_MS). Mainly for tests. */
+  stepTimeoutMs?: number;
 }
 export async function runPointerCancellationCheck(options: RunPointerCancellationCheckOptions): Promise<PointerCancellationCheckResult>;
 ```
@@ -485,8 +518,9 @@ export async function runPointerCancellationCheck(options: RunPointerCancellatio
    3. **初回だけ**: 何もしないでの観察（`backgroundCheck`）。ページ内で `MutationObserver` を張り（下の 2.5 と同じ数え方）、
       `page.waitForTimeout(settleMs)` の後に結果を読む。変化があれば `domObservation = 'ignored-background-activity'`。
    4. listener の取り出し（`inspectListeners`。時間の上限 `inspectionTimeoutMs ?? POINTER_CANCELLATION_INSPECTION_TIMEOUT_MS` を
-      `withTimeout` でかけ、時間切れ・失敗なら `run.cancelled = true` にして根拠なしで続ける。`listenerInspection` /
-      `inspectionError` は**初回の結果を残す**。`openEventListenerInspector` が null なら `'unsupported'`）:
+      `withTimeout` でかけ、時間切れ・失敗なら `run.cancelled = true` にして根拠なしで続ける。`listenerInspection` は
+      **全回を集約する**: どれか 1 回でも失敗すれば `'failed'`（後の回の成功で上書きしない）、`inspectionError` は最初の失敗の値。
+      `openEventListenerInspector` が null なら `'unsupported'`。どこか 1 回でもノードが上限を超えたら `listenerNodesTruncated = true`）:
       - `forExpression('window')` / `forExpression('document')`: 種類が委譲のしきい値以上なら `delegationRootCount++` して飛ばす。
         そうでなければ `POINTER_GESTURE_PRESS_TYPES` の listener を `pageListeners` に（初回だけ）。
       - `forSubtree('document.documentElement')`（型の絞り込みなし。委譲の判定に全種類が要る）→ `backendNodeId` ごとにまとめる。
@@ -524,6 +558,19 @@ export async function runPointerCancellationCheck(options: RunPointerCancellatio
          `shadowHostsOf` の後に `' >>> '` でつなぐ）。最後に要素へ `pointercancel` を送る。数えた結果を返す。
       5. `startPress` / `endPress` が throw したら、1 行目が `NAVIGATION_ERROR` に当たれば移動として扱う。
          それ以外の throw や `missing` は `untested` に `{ target, reason }`（理由は 1 行目 200 文字、`missing` は `'element-gone'`）。
+      5a. **戻らない handler の扱い**: ページ内で動く `page.evaluate`（`backgroundCheck` の読み出し・`collectTargets`・
+         `startPress`・`endPress`）は、すべて `withTimeout(…, stepTimeoutMs ?? POINTER_CANCELLATION_STEP_TIMEOUT_MS)` で包む
+         （`setDefaultTimeout` は `page.evaluate` に効かないため。handler が `while (true) {}` だと evaluate は戻らない）。
+         時間切れになったら:
+         - その target を `untested` に `reason: 'handler-timeout'` で入れる（`tried` には押す前に入っているので、やり直しで再び押されない）。
+         - `withTimeout(context.close(), stepTimeoutMs)` で context ごと閉じる（主スレッドが固まったページでも、context を閉じれば
+           ブラウザ側でページが破棄される。`terminateExecution` は使わない）。閉じられたら `context = null` にして、移動のときと
+           同じくやり直す（`restarts` に数え、`POINTER_CANCELLATION_MAX_RESTARTS` を超えたら `abort('restart-limit')`）。
+         - `context.close()` も時間切れなら `abort('unresponsive')` にしてループを抜け、ここまでの結果で `details` を作って返す
+           （`finally` の `context?.close()` も `withTimeout(…).catch(() => {})` で包み、ここで止まらないようにする）。
+         - 時間切れになった evaluate の promise は `.catch(() => {})` を付けて、後の reject を外に漏らさない。
+         - `collectTargets` や `backgroundCheck` で時間切れになった場合は、その回の対象が分からないので
+           `abort('unresponsive')` にする（押した target が無いので `untested` には入れない）。
       6. 変化を組み立てる: 移動（`navigations` があるか、移動のエラー）→ `{ kind: 'navigation', toUrl: navigations.at(-1) ?? page.url() }`、
          新しいウィンドウ、ダイアログ、フォーカス移動、`domObservation === 'used'` で数のどれかが 0 より大きければ `dom`。
       7. 変化があれば `activated-on-press` の finding。無ければ、`target.listeners` があって `press.length > 0 && release.length === 0`
@@ -573,6 +620,12 @@ details の `required` は型の全フィールド。`listenerInspection` / `dom
 - shadow root の中の候補（`selector: '#b'`, `shadowHosts: ['#host']`）→ node の `target` が `['#host', '#b']`
 - `aborted: { reason: 'timeout', testedCount: 1, foundCount: 5 }`・候補 0・`targetsTested: 1` → incomplete、page node に `1 of 5`
 - `domObservation: 'ignored-background-activity'`・`targetsTested: 2`・候補 0 → incomplete、page node に `changed on its own`
+- `untested` 1 件（`reason: 'handler-timeout'`、`shadowHosts: []`、`selector: '#hang'`）・`targetsTested: 2`・候補 0 →
+  incomplete、node の `target` が `['#hang']` で summary に `handler-timeout`（未検査を passes にしない）
+- `untested` 1 件・`targetsTested: 0`・候補 0 → incomplete（全件未検査でも inapplicable にしない）
+- `listenerInspection: 'failed'`・`inspectionError: 'timeout'`・`targetsFound: 0`・`targetsTested: 0` → incomplete、page node に `could not be inspected (failed: timeout)`
+- `listenerInspection: 'unsupported'`・`targetsTested: 3`・候補 0 → incomplete、page node に `Chromium`
+- `listenerNodesTruncated: true`・`targetsTested: 3`・候補 0 → incomplete、page node に `were not examined`
 
 ### Step 3: normalizer・schema・export
 
@@ -606,6 +659,11 @@ details の `required` は型の全フィールド。`listenerInspection` / `dom
 | `background-ticker.html` | 100ms ごとに `<span id="clock">` の文字を書き換え、`<button>` の `click` だけ | `domObservation === 'ignored-background-activity'`、候補 0、incomplete（page node だけ） |
 | `shadow.html` | `#host` の open shadow root の中の `<button id="b">` の `mousedown` で要素を追加 | finding の `target.shadowHosts` が `['#host']`、`selector` が `#b` |
 | `none.html` | `<p>` と `<input type="text">` だけ | `targetsFound === 0`、inapplicable |
+| `removes-next.html` | `<button id="first">` の `mousedown` で `#second` を削除（DOM の変化）、その後ろに `<button id="second">` | `#first` が `activated-on-press`、`#second` が `untested`（`reason: 'element-gone'`）、incomplete で `#second` の node もある |
+| `hang-pointerdown.html` | `<button id="hang">` の `pointerdown` で `while (true) {}`、その後ろに `<button id="after">` の `mousedown` で要素を追加 | 例外を投げずに返る。`#hang` が `untested`（`reason: 'handler-timeout'`）、`restarts >= 1`、`#after` が `activated-on-press`（やり直しで続きが押される） |
+| `hang-pointercancel.html` | `<button id="hang-cancel">` の `pointercancel` で `while (true) {}`（`pointerdown` では何もしない） | 例外を投げずに返る。`#hang-cancel` が `untested`（`reason: 'handler-timeout'`）、incomplete |
+
+`hang-*.html` のテストは `stepTimeoutMs: 1_000` を渡して短くし、テストの timeout は 60 秒にする。
 
 `test/pointer-cancellation.spec.ts` に、`runFixtureCheck('pointer-cancellation-check', 'pointer-cancellation/<file>', …)` を包む
 `runCancel(fixture, context, baseUrl, extra)` を置き（`test/change-on-input.spec.ts:17-34` と同形。schema 検証もそこで行う）、
@@ -613,7 +671,8 @@ details の `required` は型の全フィールド。`listenerInspection` / `dom
 
 - `maxTargets: 1` で `click-only.html` → `aborted.reason === 'target-limit'`、incomplete
 - `inspectionTimeoutMs: 1` で `press-only-silent.html` → 例外を投げずに返り、`listenerInspection === 'failed'`、
-  `inspectionError === 'timeout'`、`press-only-listener` の finding は無い（根拠なしで続く）
+  `inspectionError === 'timeout'`、`press-only-listener` の finding は無く（根拠なしで続く）、ルールは incomplete
+  （検査欠落の page node。`#s` は `tabindex` だけの `div` なので対象に入らず、`targetsFound === 0` でも inapplicable にならない）
 
 次に runner を設計 F で実装し、`src/playwright/index.ts` に export、`src/cli.ts` の `CHECK_REGISTRY` 末尾に
 `kind: 'browser'` のエントリ（focus-order-check と同形）、`src/test-entries/pointer-cancellation-check.ts`、
@@ -630,6 +689,10 @@ details の `required` は型の全フィールド。`listenerInspection` / `dom
 `targetsTested === 100`」のテストを 1 つ足す（テストの timeout は 120 秒）。
 **Verify**: pass。100 個で予算 60 秒を超えて `timeout` で止まる場合は STOP（1 件あたりの時間が想定
 （`settleMs` 300ms + evaluate 2 回）より大きい。上限・待ち時間の調整は設計判断）。
+
+もう 1 つ、「`<div>` 1001 個それぞれに `mousedown` の listener（何もしない）を付けたページ（`page.setContent` でなく
+フィクスチャ `many-listeners.html` にスクリプトで作る）で、`listenerNodesTruncated === true` になり、ルールが incomplete」の
+テストを足す（`maxTargets: 5` を渡して押す数を減らしてよい。テストの timeout は 120 秒）。
 
 ### Step 7: 既存テストの更新
 
@@ -715,6 +778,8 @@ ALL must hold:
 - Step 6 で 100 個の押下が予算内に終わらない
 - Step 8 で `--checks all` が ERROR・ハング・exit 2 になる
 - いずれかのフィクスチャでチェックがハングする
+- `hang-*.html` で `context.close()` が `stepTimeoutMs` 内に戻らず `aborted.reason === 'unresponsive'` になる
+  （固まったページを context ごと閉じる前提が崩れている。`terminateExecution` を使うかは設計判断）
 - `delegated.html` 以外の普通のフィクスチャで要素が委譲先と判定される
 - schema 検証・lint・format・既存テストのいずれかが green にできない
 
@@ -731,7 +796,9 @@ ALL must hold:
   - 送信・保存などを押し下げで行うページでは、実際に送られる。
   - press-only の判定はその要素自身の listener だけを見る（祖先の `click` は見ない）。CDP は Chromium のみ。
   - iframe の中は見ない。closed shadow root の中は見えない。
-  - 上限: 押すのは 100 要素、予算 60 秒、やり直し 10 回。
+  - 上限: 押すのは 100 要素、予算 60 秒、やり直し 10 回。戻らない handler は 1 ステップ 5 秒で打ち切り、
+    context ごと閉じてやり直す（その要素は未検査として `incomplete`）。
+  - CDP の検査が失敗した・使えない・押す listener の要素が 1000 を超えた場合は、検査欠落の page node で `incomplete` にする。
 - **follow-up 候補**（本プランの範囲外）:
   - 実マウス（CDP `Input.dispatchMouseEvent`）で押し、離す前にポインタを外へ動かして「途中でやめられるか」まで確かめる
     （`isTrusted` の制限が消えるが、`click` を出さずに離す方法の検証が要る）。
