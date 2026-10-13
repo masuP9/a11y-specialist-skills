@@ -323,7 +323,9 @@ Node 側で `blockedBy === null` なら `compositeLayers(layers, WHITE)` が**�
 
 部品そのもの（アイコンなら色を取った要素そのもの）についても同じ判定をする（自身の
 `backgroundImage` / `opacity` / `filter` / `backdropFilter` / `mixBlendMode`）。当たれば `undetermined`（理由は同じ値）。
-部品からアイコンの要素までの間の要素は `layersFrom(svg.parentElement)` などが歩くので重ねて見なくてよい。
+アイコンの背景は色を取った要素の親（SVG の図形なら図形の親、疑似要素ならその持ち主の要素自身）から
+歩くので、SVG の内側の `g`・`svg` 要素を含む間の要素の効果も 1 の確認に入る。疑似要素については
+`getComputedStyle(el, '::before')` の `opacity` / `filter` も自身の判定に入れる。
 
 ### D. 測るもの（Node 側。ページ内では生データだけ集める）
 
@@ -360,7 +362,7 @@ Node 側で `blockedBy === null` なら `compositeLayers(layers, WHITE)` が**�
 
 | 元 | 色の取り方 | 背景 |
 |----|-----------|------|
-| インライン `svg` の図形（`path, circle, rect, ellipse, line, polyline, polygon, text, use`） | 計算済み `fill` と `stroke`（`none` と `a === 0` は除く。`stroke` は `strokeWidth` が 0 なら除く。**`line` の `fill` は描かれないので除く**）。`url(` で始まる（グラデーションなど）→ `undetermined: 'svg-paint-server'` | `layersFrom(svg.parentElement)` |
+| インライン `svg` の図形（`path, circle, rect, ellipse, line, polyline, polygon, text, use`） | 計算済み `fill` と `stroke`（`none` と `a === 0` は除く。`stroke` は `strokeWidth` が 0 なら除く。**`line` の `fill` は描かれないので除く**）。計算済み `fillOpacity` / `strokeOpacity` をそれぞれの色の `a` に掛ける（描かれる色の透明度）。`url(` で始まる（グラデーションなど）→ `undetermined: 'svg-paint-server'` | `layersFrom(shape.parentElement)`（**図形の親から**歩くので、SVG 内の `<g opacity>`・`svg` 自身・ボタン・その外側の効果をすべて確かめる） |
 | 文字のある `::before` / `::after`（`content` が `none` / `normal` / `""` 以外） | その疑似要素の計算済み `color`（`getComputedStyle(el, '::before').color`） | `layersFrom(el)`（疑似要素の背景は見ない） |
 | `img`、`svg` の中の `image`、ボタンや子孫の `backgroundImage !== 'none'`、`input[type=image]` | 色は取れない → `undetermined: 'image-icon'` | — |
 
@@ -371,8 +373,8 @@ Node 側で `blockedBy === null` なら `compositeLayers(layers, WHITE)` が**�
   決まらなければ `undetermined`、理由は `blockedBy`）。指標の `part` は `'icon'`。
   同じ `#rrggbb`・同じ `against` の指標は 1 つにまとめる。
 - 判定（上から順に最初に当たったもの）:
-  1. 画像の元がある → 色の取れる元が無いか、色の取れる元の指標が 1 つでも 3 未満なら
-     `undetermined: 'image-icon'`。色の取れる元の指標が**すべて** 3 以上なら `pass`。
+  1. 画像の元がある → 色の取れる元の比によらず `undetermined: 'image-icon'`（画像のほうが意味を
+     担っているかもしれず、画像の色は測れないため。色の取れる元の指標は記録だけする）。
   2. 指標が**すべて** 3 以上 → `pass`。
   3. 指標が**すべて** 3 未満 → `low`。
   4. 3 以上と 3 未満が混ざる → `undetermined: 'mixed-icon-colors'`。どの部分が意味を担うか
@@ -613,6 +615,8 @@ export interface RunNonTextContrastCheckOptions extends AuditOutputOptions {
 | `icon-low.html` | `<button aria-label="閉じる" style="background:#fff;border:0"><svg viewBox="0 0 10 10" width="20" height="20"><path d="M0 0L10 10" fill="none" stroke="#bbb" stroke-width="2"/></svg></button>` | icon が incomplete、`low` |
 | `icon-good.html` | 同じ形で `style="color:#333"`、`fill="none" stroke="currentColor"` | icon が passes |
 | `icon-mixed.html` | 白いボタンの SVG に、黒の `circle`（`fill="#000"`）と薄い `path`（`fill="none" stroke="#ddd"`） | `undetermined`、`mixed-icon-colors`（濃い部分だけで pass にしない） |
+| `icon-svg-opacity.html` | 白いボタン 2 つ。1 つ目の SVG は `<circle r="4" cx="5" cy="5" fill="#000" fill-opacity=".1"/>`、2 つ目は `<g opacity=".1"><circle r="4" cx="5" cy="5" fill="#000"/></g>` | 1 つ目は `low`（描かれる色は薄い灰色）、2 つ目は `undetermined`（`opacity`） |
+| `icon-image-mixed.html` | 白いボタンに `<img src="data:image/gif;base64,…" alt="">` と黒の `circle` の SVG | `undetermined`、`image-icon`（SVG が 21:1 でも pass にしない） |
 | `icon-many-parts.html` | 白いボタンの SVG に `rect` を 21 個（`fill="#000"`） | `undetermined`、`too-many-icon-parts` |
 | `icon-font.html` | `<button aria-label="検索"><span class="i"></span></button>`、`.i::before { content: "\2715"; color: #ddd }`、ボタンは `background:#fff;border:0` | `low`（疑似要素の色が取れる） |
 | `icon-image.html` | `<button aria-label="設定"><img src="data:image/gif;base64,…" alt=""></button>` | `undetermined`、`image-icon` |
@@ -702,7 +706,7 @@ grep -E "non-text-contrast-check|Errors:" /tmp/claude-ntc-all.log
 ## Test plan
 
 - **`test/color.spec.ts`**: 比・相対輝度・合成・丸め・16 進の変換（ブラウザ不要）。
-- **`test/non-text-contrast.spec.ts`**: 23 フィクスチャで部品の分類・除外・枠/塗り/下線の指標・
+- **`test/non-text-contrast.spec.ts`**: 25 フィクスチャで部品の分類・除外・枠/塗り/下線の指標・
   半透明の合成・`oklch` の変換・決められない 6 種・UA の部品・アイコン（SVG / 疑似要素 / 画像）・
   上限・ページを書き換えないこと・schema を検証。
 - **fixture-gallery / rule-classification / schema-validation**: 既存の枠組みに登録。
