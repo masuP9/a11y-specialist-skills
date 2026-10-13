@@ -862,3 +862,39 @@ export const AUTH_PASTE_STEP_TIMEOUT_MS = 1_500;
 export const AUTH_PASTE_FIELD_TIMEOUT_MS = 12_000;
 export const DEFAULT_ACCESSIBLE_AUTHENTICATION_RESULT_FILE =
   'accessible-authentication-result.json';
+
+// ---------------------------------------------------------------------------
+// focus-order-check (WCAG 2.4.3)
+// ---------------------------------------------------------------------------
+
+/** Tab presses beyond the focusable-element count, for elements the selector misses. */
+export const FOCUS_ORDER_TAB_SLACK = 10;
+/** Extra Tab presses per iframe, whose contents cannot be counted from the main document. */
+export const FOCUS_ORDER_FRAME_SLACK = 20;
+export const FOCUS_ORDER_MAX_TAB_PRESSES = 300;
+export const FOCUS_ORDER_TIMEOUT_MS = 60_000;
+/** Slack for sub-pixel and baseline differences when comparing positions. */
+export const FOCUS_ORDER_TOLERANCE_PX = 8;
+/** A move up smaller than this (and not on the same row) is not reported. */
+export const FOCUS_ORDER_MIN_BACKWARD_PX = 16;
+/** Detour: both legs at least this share of the viewport diagonal ... */
+export const FOCUS_ORDER_DETOUR_FAR_RATIO = 0.5;
+/** ... and the elements before and after it this close. */
+export const FOCUS_ORDER_DETOUR_NEAR_RATIO = 0.25;
+export const FOCUS_ORDER_MAX_DIALOG_TRIGGERS = 10;
+/** Wait after opening / closing a dialog, for transitions and focus scripts. */
+export const FOCUS_ORDER_DIALOG_SETTLE_MS = 300;
+export const FOCUS_ORDER_DIALOG_SELECTOR =
+  'dialog[open], [role="dialog"], [role="alertdialog"], [aria-modal="true"]';
+export const FOCUS_ORDER_DIALOG_TRIGGER_SELECTOR = [
+  '[aria-haspopup="dialog"]',
+  '[data-bs-toggle="modal"]',
+  '[data-toggle="modal"]',
+  '[data-micromodal-trigger]',
+  '[data-a11y-dialog-show]',
+].join(', ');
+export const FOCUS_ORDER_DIALOG_CLOSE_SELECTOR =
+  '[data-bs-dismiss="modal"], [data-dismiss="modal"], [data-micromodal-close], [data-a11y-dialog-hide], form[method="dialog"] button';
+export const FOCUS_ORDER_DIALOG_CLOSE_NAME_PATTERN =
+  /^(close|dismiss|cancel|×|✕|x|閉じる|キャンセル)$/i;
+export const DEFAULT_FOCUS_ORDER_RESULT_FILE = 'focus-order-result.json';

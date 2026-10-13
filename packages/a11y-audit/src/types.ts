@@ -34,7 +34,8 @@ export type CheckSource =
   | 'redundant-entry-check'
   | 'motion-actuation-check'
   | 'change-on-input-check'
-  | 'accessible-authentication-check';
+  | 'accessible-authentication-check'
+  | 'focus-order-check';
 
 export type NormalizedImpact = 'critical' | 'serious' | 'moderate' | 'minor';
 
@@ -1231,3 +1232,105 @@ export interface ChangeOnInputCheckDetails {
 
 export type ChangeOnInputCheckResult =
   AuditCheckResult<ChangeOnInputCheckDetails>;
+
+// =============================================================================
+// Focus Order Check (WCAG 2.4.3)
+// =============================================================================
+
+export interface FocusOrderStop {
+  /** Which Tab press (1-based) moved focus here. */
+  step: number;
+  /** Relative to the document or shadow root that contains the element. */
+  selector: string;
+  /** Shadow hosts above the element, outermost first; empty outside shadow DOM. */
+  shadowHosts: string[];
+  tag: string;
+  role: string | null;
+  name: string;
+  html: string;
+  htmlTruncated: boolean;
+  /** Page coordinates when focused. For `inFrame`, the iframe element's box. */
+  rect: PageRect;
+  /** 'fixed' / 'sticky' when the element or an ancestor has that position; such stops are not compared. */
+  positioning: 'flow' | 'fixed' | 'sticky';
+  /** Focus was inside this iframe; positions inside the frame are not examined. */
+  inFrame: boolean;
+}
+
+export type FocusOrderTransitionKind =
+  | 'forward'
+  | 'column-wrap'
+  | 'backward-block'
+  | 'backward-inline';
+
+export interface FocusOrderTransition {
+  /** Indexes into `stops`. */
+  from: number;
+  to: number;
+  kind: FocusOrderTransitionKind;
+  /** Along the reading direction (positive = forward), px. */
+  dx: number;
+  /** Downward positive, px. */
+  dy: number;
+  /** Between rectangle centers, px. */
+  distance: number;
+  /** `distance` / viewport diagonal. */
+  distanceRatio: number;
+}
+
+export interface FocusOrderDetour {
+  /** Index into `stops` of the far-away element. */
+  index: number;
+  distanceIn: number;
+  distanceOut: number;
+  distanceAcross: number;
+}
+
+export interface FocusOrderDialogProbe {
+  trigger: {
+    selector: string;
+    tag: string;
+    role: string | null;
+    name: string;
+    html: string;
+    htmlTruncated: boolean;
+  };
+  /** Final state. Values observed before a navigation / error are kept in the fields below. */
+  status: 'opened' | 'not-opened' | 'navigated' | 'error';
+  dialogSelector: string | null;
+  modal: boolean | null;
+  focusAfterOpen: 'inside' | 'trigger' | 'body' | 'elsewhere' | null;
+  focusAfterOpenSelector: string | null;
+  closedBy: 'escape' | 'close-button' | null;
+  focusAfterClose: 'trigger' | 'body' | 'elsewhere' | null;
+  focusAfterCloseSelector: string | null;
+  error: string | null;
+}
+
+export interface FocusOrderCheckDetails {
+  viewport: { width: number; height: number };
+  direction: 'ltr' | 'rtl';
+  stops: FocusOrderStop[];
+  /** Pairs of neighboring stops that could be compared. */
+  transitions: FocusOrderTransition[];
+  /** Pairs left out because a stop is fixed / sticky / has no size. */
+  skippedTransitions: number;
+  detours: FocusOrderDetour[];
+  tabWalk: {
+    presses: number;
+    ended: 'cycle' | 'tab-limit' | 'timeout' | 'navigation';
+    capped: boolean;
+    /** Focusable elements counted in the main document and open shadow roots before the walk. */
+    focusableCount: number;
+    /** iframe / frame elements in the main document. */
+    frameCount: number;
+  };
+  /** Triggers found before the `maxDialogTriggers` cap. */
+  dialogTriggersFound: number;
+  dialogs: FocusOrderDialogProbe[];
+  /** Triggers within the cap that were not tried because the time budget ran out. */
+  dialogsNotTried: number;
+  aborted: { reason: 'timeout' | 'navigation'; url: string } | null;
+}
+
+export type FocusOrderCheckResult = AuditCheckResult<FocusOrderCheckDetails>;
