@@ -96,3 +96,149 @@ test('close を 2 回呼んでも例外にならない', async ({ page, baseUrl 
   await inspector.close();
   await expect(inspector.close()).resolves.toBeUndefined();
 });
+
+const SUBTREE_FIXTURE = 'event-listeners/subtree.html';
+
+test('forSubtree は子孫の pointermove を backendNodeId 付きで 1 件返し handlerPreview に関数名を含む', async ({
+  page,
+  baseUrl,
+}) => {
+  await page.goto(`${baseUrl}/${SUBTREE_FIXTURE}`);
+  const inspector = await openEventListenerInspector(page);
+  if (!inspector) throw new Error('CDP is unavailable');
+  try {
+    const listeners = await inspector.forSubtree('document.documentElement', [
+      'pointermove',
+    ]);
+    expect(listeners).toHaveLength(1);
+    expect(listeners[0]?.handlerPreview).toContain('onMove');
+    expect(typeof listeners[0]?.backendNodeId).toBe('number');
+  } finally {
+    await inspector.close();
+  }
+});
+
+test('forSubtree は open shadow root の中の touchmove も 1 件返す', async ({
+  page,
+  baseUrl,
+}) => {
+  await page.goto(`${baseUrl}/${SUBTREE_FIXTURE}`);
+  const inspector = await openEventListenerInspector(page);
+  if (!inspector) throw new Error('CDP is unavailable');
+  try {
+    const listeners = await inspector.forSubtree('document.documentElement', [
+      'touchmove',
+    ]);
+    expect(listeners).toHaveLength(1);
+  } finally {
+    await inspector.close();
+  }
+});
+
+test('collectNodes は forSubtree の backendNodeId から要素を window[key] に並べ番号を返す', async ({
+  page,
+  baseUrl,
+}) => {
+  await page.goto(`${baseUrl}/${SUBTREE_FIXTURE}`);
+  const inspector = await openEventListenerInspector(page);
+  if (!inspector) throw new Error('CDP is unavailable');
+  try {
+    const listeners = await inspector.forSubtree('document.documentElement', [
+      'pointermove',
+    ]);
+    const indices = await inspector.collectNodes(
+      listeners.map((l) => l.backendNodeId),
+      '__testNodes',
+    );
+    const id = await page.evaluate(
+      (i) =>
+        (window as unknown as Record<string, Element[]>)['__testNodes']?.[i]
+          ?.id,
+      indices[0] as number,
+    );
+    expect(id).toBe('map');
+  } finally {
+    await inspector.close();
+  }
+});
+
+test('collectNodes は iframe の中の要素の backendNodeId に -1 を返す', async ({
+  page,
+  baseUrl,
+}) => {
+  await page.goto(`${baseUrl}/${SUBTREE_FIXTURE}`);
+  const inspector = await openEventListenerInspector(page);
+  if (!inspector) throw new Error('CDP is unavailable');
+  try {
+    const listeners = await inspector.forSubtree('document.documentElement', [
+      'pointerdown',
+    ]);
+    expect(listeners.length).toBeGreaterThan(0);
+    const indices = await inspector.collectNodes(
+      listeners.map((l) => l.backendNodeId),
+      '__testNodes',
+    );
+    expect(indices).toEqual(listeners.map(() => -1));
+  } finally {
+    await inspector.close();
+  }
+});
+
+test('collectNodes は shouldStop が 2 回目の呼び出しから true なら 2 件目以降を -1 にして 1 件だけ書く', async ({
+  page,
+  baseUrl,
+}) => {
+  await page.goto(`${baseUrl}/${SUBTREE_FIXTURE}`);
+  const inspector = await openEventListenerInspector(page);
+  if (!inspector) throw new Error('CDP is unavailable');
+  try {
+    const listeners = await inspector.forSubtree('document.documentElement', [
+      'pointermove',
+      'dragstart',
+      'click',
+    ]);
+    expect(listeners).toHaveLength(3);
+    // 1st call: before creating the array; 2nd: before the first node; 3rd+: stop.
+    let calls = 0;
+    const indices = await inspector.collectNodes(
+      listeners.map((l) => l.backendNodeId),
+      '__testNodes',
+      () => ++calls >= 3,
+    );
+    const length = await page.evaluate(
+      () =>
+        (window as unknown as Record<string, Element[]>)['__testNodes']?.length,
+    );
+    expect(indices).toEqual([0, -1, -1]);
+    expect(length).toBe(1);
+  } finally {
+    await inspector.close();
+  }
+});
+
+test('collectNodes は shouldStop が最初から true ならページに何も書かない', async ({
+  page,
+  baseUrl,
+}) => {
+  await page.goto(`${baseUrl}/${SUBTREE_FIXTURE}`);
+  const inspector = await openEventListenerInspector(page);
+  if (!inspector) throw new Error('CDP is unavailable');
+  try {
+    const listeners = await inspector.forSubtree('document.documentElement', [
+      'pointermove',
+    ]);
+    const indices = await inspector.collectNodes(
+      listeners.map((l) => l.backendNodeId),
+      '__testNodes',
+      () => true,
+    );
+    const type = await page.evaluate(
+      () =>
+        typeof (window as unknown as Record<string, unknown>)['__testNodes'],
+    );
+    expect(indices).toEqual([-1]);
+    expect(type).toBe('undefined');
+  } finally {
+    await inspector.close();
+  }
+});
