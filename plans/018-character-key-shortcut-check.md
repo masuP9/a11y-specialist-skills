@@ -19,6 +19,8 @@
 
 ## Status
 
+- **Codex plan review**: 通過（1 巡目、2026-10-13、high 以上 0 件。medium 2 件（遷移後に観察状態を読まない手順、最後のキーのあとは読み込み直さない）を反映、見送った low 0 件）
+
 - **Priority**: P2
 - **Effort**: M（2〜3 日相当。listener の取り出しは既存の `cdpEventListeners.ts` をそのまま使い、
   読み込み直しの流れは `runChangeOnInputCheck.ts` の写しで済む。時間がかかるのは
@@ -228,11 +230,19 @@ exit code 1 と `Errors: 0` を要求する。`cli-smoke.html` は `<img>` と
       `scrollX` / `scrollY` と `page.url()` を控える。
    4. `page.keyboard.press(key)` → `page.waitForTimeout(settleMs)`。
    5. 開いた新しいウィンドウの読み込みを待って閉じる（`runChangeOnInputCheck.ts:721` の `Promise.all(pendingPopups)`）。
-   6. ブラウザ内関数 `readReaction(stateKey)` を `page.evaluate`: `{ mutations, prevented, scrollX, scrollY, focusedSelector }`。
+   6. **先に遷移を確かめる**: main frame の `framenavigated` が記録されている、または `page.url()` が手順 3 で
+      控えた URL と違うなら、`navigation` と確定し、観察状態は読まずに手順 7 へ（遷移後の文書には
+      `window[stateKey]` が無い）。
+   7. 遷移していなければ、ブラウザ内関数 `readReaction(stateKey)` を `page.evaluate`:
+      `{ mutations, prevented, scrollX, scrollY, focusedSelector }`。
       `focusedSelector` は `document.activeElement` が `body` / `html` / null でなければ `getUniqueSelector` の結果、
-      それ以外は null。evaluate が `NAVIGATION_ERROR` で失敗したら遷移とみなす。
-   7. 反応（設計 B）をまとめる。1 つでもあれば `reacted` に `{ key, reactions }` を足す。
-   8. **読み込み直すか**: 反応の種類が `'default-prevented'` だけなら読み込み直さない。それ以外の反応があれば、
+      それ以外は null。`window[stateKey]` が無いとき（判定の直後に遷移した、または同じ URL への再読み込み）は
+      例外にせず `null` を返す。`null` が返った、または evaluate が `NAVIGATION_ERROR` で失敗したときは `navigation`
+      （`toUrl` は `page.url()`）とする。ほかの例外は外へ出す。
+   8. 反応（設計 B）をまとめる。1 つでもあれば `reacted` に `{ key, reactions }` を足す。
+   9. **読み込み直すか**: **まだ押していないキーが残っているときだけ**判断する（最後のキーなら読み込み直さず、
+      上限にも数えない。`runChangeOnInputCheck.ts` が試す対象が残っていないとき再起動しないのと同じ）。
+      反応の種類が `'default-prevented'` だけなら読み込み直さない。それ以外の反応があれば、
       `reloads >= maxReloads` なら `abort('reload-limit')`（残りのキーを `untested` に `reason: 'reload-limit'`）。
       そうでなければ `reloads += 1`、context を閉じて手順 2 と同じく新しい context で読み込み、手順 5 をやり直す
       （baseline は取り直さない）。読み込み直しが例外で失敗したら `abort('reload-failed')`。
@@ -455,6 +465,10 @@ normalizer の単体テストは Step 2 のフィクスチャのテストと Ste
 
 - `maxReloads: 0` で `navigate.html`（`keys: ['g', 'h']`）→ `aborted.reason === 'reload-limit'`、
   `untested` が `[{ key: 'h', reason: 'reload-limit' }]`、node が 2 件（`g` と未計測）
+- `maxReloads: 0` で `navigate.html`（`keys: ['a', 'g']`。`a` は反応せず、最後のキー `g` で遷移）→ `aborted` が null、
+  `untested` が空、`reloads === 0`、`reacted` が `g` だけ（最後のキーのあとは読み込み直さず、上限にも当たらない）
+- `navigate.html` の `g` の遷移は `settleMs` の間に終わる（遷移後の文書に観察状態が無い）が、例外にならず
+  `navigation` として記録され、続きのキーが押される（上の `['g', 'h']` のテストで兼ねる）
 - `timeBudgetMs: 1` で `toggle-panel.html` → `aborted.reason === 'timeout'`、`untested` が空でない、incomplete
 - `keys: ['Enter']` → `Error`、`keys: []` → `Error`、`keys: ['ab']` → `Error`、`maxReloads: -1` → `Error`
 - 全ケースでエンベロープが `RESULT_SCHEMAS['character-key-shortcut-check']` に valid
