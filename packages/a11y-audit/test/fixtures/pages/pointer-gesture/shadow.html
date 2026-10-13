@@ -1,0 +1,36 @@
+<!doctype html>
+<!--
+  Intent: the same id (#swipe) in the document and in two open shadow roots,
+  each with touchstart + touchmove; #host-b also holds a draggable element.
+  Expected: 4 candidates in document order: #swipe, then #swipe in #host-a,
+  then #swipe and #drag-in-shadow in #host-b. shadowHosts are [] / ['#host-a'] /
+  ['#host-b']. #drag-in-shadow has draggable-attribute.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Shadow DOM</title>
+  </head>
+  <body>
+    <div id="swipe">light</div>
+    <div id="host-a"></div>
+    <div id="host-b"></div>
+    <script>
+      function listen(el) {
+        el.addEventListener('touchstart', () => {});
+        el.addEventListener('touchmove', () => {});
+      }
+      listen(document.getElementById('swipe'));
+      for (const id of ['host-a', 'host-b']) {
+        const root = document.getElementById(id).attachShadow({ mode: 'open' });
+        root.innerHTML = '<div id="swipe">shadow</div>';
+        listen(root.getElementById('swipe'));
+      }
+      const draggable = document.createElement('div');
+      draggable.id = 'drag-in-shadow';
+      draggable.setAttribute('draggable', 'true');
+      draggable.textContent = 'drag';
+      document.getElementById('host-b').shadowRoot.append(draggable);
+    </script>
+  </body>
+</html>

@@ -6,6 +6,11 @@
  * skill repository until those checks are ported.
  */
 
+import type {
+  PointerGestureCriterion,
+  PointerGestureSignalKind,
+} from './types.js';
+
 // =============================================================================
 // Common Disclaimer
 // =============================================================================
@@ -862,6 +867,70 @@ export const AUTH_PASTE_STEP_TIMEOUT_MS = 1_500;
 export const AUTH_PASTE_FIELD_TIMEOUT_MS = 12_000;
 export const DEFAULT_ACCESSIBLE_AUTHENTICATION_RESULT_FILE =
   'accessible-authentication-result.json';
+
+/** WCAG 2.5.1 / 2.5.7: listener types the pointer gesture check reads. */
+export const POINTER_GESTURE_PRESS_TYPES = [
+  'pointerdown',
+  'mousedown',
+  'touchstart',
+] as const;
+export const POINTER_GESTURE_MOVE_TYPES = [
+  'pointermove',
+  'mousemove',
+  'touchmove',
+] as const;
+export const POINTER_GESTURE_DRAG_TYPES = ['dragstart', 'drop'] as const;
+/** Safari gesture events; other browsers never fire them, but listeners still show intent. */
+export const POINTER_GESTURE_MULTIPOINT_TYPES = [
+  'gesturestart',
+  'gesturechange',
+] as const;
+/** Matched against handlerPreview of touchstart / touchmove (first 200 chars only). */
+export const POINTER_GESTURE_MULTIPOINT_PATTERN =
+  /\btouches\s*\.\s*length|\btouches\s*\[\s*1\s*\]|\btargetTouches\b|\b(?:e|ev|evt|event)\.scale\b/;
+/** Which criteria each pointer gesture signal kind is reported under. */
+export const POINTER_GESTURE_CRITERIA_BY_SIGNAL: Record<
+  PointerGestureSignalKind,
+  readonly PointerGestureCriterion[]
+> = {
+  'draggable-attribute': ['2.5.7'],
+  'drag-listener': ['2.5.7'],
+  'move-listener': ['2.5.1', '2.5.7'],
+  'multipoint-listener': ['2.5.1'],
+  'widget-slider': ['2.5.7'],
+  'widget-sortable': ['2.5.7'],
+  'widget-carousel': ['2.5.1'],
+  'widget-map': ['2.5.1', '2.5.7'],
+};
+/** A node with listeners for at least this many event types is treated as a framework delegation root. */
+export const POINTER_GESTURE_DELEGATION_MIN_TYPES = 20;
+export const POINTER_GESTURE_MAX_CANDIDATES = 200;
+/** Upper bound on nodes resolved through CDP (listener nodes + delegation roots). */
+export const POINTER_GESTURE_MAX_LISTENER_NODES = 1_000;
+/** Whole listener inspection (window, document, subtree, node collection). */
+export const POINTER_GESTURE_INSPECTION_TIMEOUT_MS = 15_000;
+/** After a timeout: how long to wait for the in-flight CDP call to finish once cancelled. */
+export const POINTER_GESTURE_CANCEL_GRACE_MS = 3_000;
+export const POINTER_GESTURE_WIDGET_HINTS = [
+  { kind: 'widget-slider', selector: '[role="slider"]:not(input)' },
+  {
+    kind: 'widget-sortable',
+    selector:
+      '[aria-roledescription="sortable" i], [aria-roledescription="draggable" i], [data-rbd-drag-handle-draggable-id], [data-rfd-drag-handle-draggable-id], .ui-sortable, [data-sortable]',
+  },
+  {
+    kind: 'widget-carousel',
+    selector:
+      '[aria-roledescription="carousel" i], .swiper, .slick-slider, .splide, .flickity-enabled, .glide, .keen-slider, .embla',
+  },
+  {
+    kind: 'widget-map',
+    selector:
+      '.leaflet-container, .mapboxgl-map, .maplibregl-map, .gm-style, .ol-viewport, iframe[src*="google.com/maps"], iframe[src*="maps.google."], iframe[src*="openstreetmap.org"]',
+  },
+] as const;
+export const DEFAULT_POINTER_GESTURE_RESULT_FILE =
+  'pointer-gesture-result.json';
 
 // ---------------------------------------------------------------------------
 // focus-order-check (WCAG 2.4.3)

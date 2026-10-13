@@ -134,6 +134,25 @@
 
 ---
 
+### 2.5.1 Pointer Gestures / 2.5.7 Dragging Movements - **部分実装** ✅
+**概要**: 複数の指や軌跡に沿った操作（2.5.1）、ドラッグ（2.5.7）で動く機能に、1 点の操作での代わりがある
+
+**実装**: `pointer-gesture-check`（`runPointerGestureCheck.ts`、`cdpEventListeners.ts` の `forSubtree` / `collectNodes`）
+- 1 つのチェックで 2 つのルール（`a11y-skills/pointer-gestures`、`a11y-skills/dragging-movements`）に振り分け、候補はすべて `incomplete`
+- CDP の `DOMDebugger.getEventListeners`（`depth: -1, pierce: true`）で文書全体の listener を 1 回で取り出し、`dragstart` / `drop`、同じ要素の「押す」+「動かす」、複数の指を見る handler（先頭 200 文字の文字列照合）を拾う。`draggable="true"` と部品のしるし（自作スライダー・並べ替え・カルーセル・地図）は文書と open shadow root の中を属性・selector で拾う
+- 動かす listener だけの要素（hover 効果）と、20 種類以上の listener を持つ委譲先の要素は候補にしない（`details.delegationRoots` に記録し、ルールごとに 1 つのページ単位の「手で確かめて」node として報告）。`window` / `document` の複数の指・ドラッグの listener はページ単位の node
+- 候補は基準ごとに 200 件、listener のある要素は 1000 個まで（超えた分は `candidateCounts` / `listenerNodesTruncated` で伝える）
+
+**残る制限**:
+- CDP は Chromium のみ。ほかのブラウザでは属性と部品のしるしだけで候補を出し、手で確かめる node を付ける
+- 委譲で作られたドラッグ・ジェスチャ、押した後に `document` へ付ける move listener、iframe の中は見つからない
+- `pointerId` を数えるなど、先頭 200 文字に現れない複数の指の判定は見分けられない
+- 実際にドラッグ・スワイプして何かが動くかは確かめない（follow-up 候補）
+- 1 点の操作での代わり・必須の操作という例外は人手で確認する
+- listener の取り出しが止まらないページでは検査を飛ばして `incomplete` にし、一時プロパティ `window.__a11yPointerGesture_*` が残りうる
+
+---
+
 ### 2.5.4 Motion Actuation - **部分実装** ✅
 **概要**: 端末を振る・傾ける操作で動く機能に、画面の部品での代替があり、動きでの起動を止められる
 
@@ -271,6 +290,8 @@
 | 2.4.3 Focus Order | `focus-order-check`（部分） ✅ |
 | 2.4.1 Bypass Blocks | `automated-checks.md` |
 | 2.4.11 Focus Not Obscured (Minimum) / 2.4.12 (Enhanced) | `focus-indicator-check.ts` ✅ |
+| 2.5.1 Pointer Gestures | `pointer-gesture-check`（部分） ✅ |
+| 2.5.7 Dragging Movements | `pointer-gesture-check`（部分） ✅ |
 | 2.5.3 Label in Name | `automated-checks.md` |
 | 2.5.4 Motion Actuation | `motion-actuation-check`（部分） ✅ |
 | 2.5.8 Target Size (Minimum) | `target-size-check.ts` ✅ |

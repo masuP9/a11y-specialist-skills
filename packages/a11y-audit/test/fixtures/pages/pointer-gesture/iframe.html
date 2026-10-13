@@ -1,0 +1,18 @@
+<!doctype html>
+<!--
+  Intent: pointerdown + pointermove only on an element inside a same-origin
+  iframe, which is not inspected.
+  Expected: no candidates; both rules inapplicable.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Iframe</title>
+  </head>
+  <body>
+    <iframe
+      title="inner"
+      srcdoc="<div id='inner'>x</div><script>const el = document.getElementById('inner'); el.addEventListener('pointerdown', () => {}); el.addEventListener('pointermove', () => {});</script>"
+    ></iframe>
+  </body>
+</html>

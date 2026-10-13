@@ -35,6 +35,9 @@ import type {
   NormalizedNode,
   NormalizedRuleResult,
   OrientationCheckDetails,
+  PointerGestureCheckDetails,
+  PointerGestureCriterion,
+  PointerGestureSignal,
   RedundantEntryCheckDetails,
   ReflowCheckDetails,
   TargetSizeCheckDetails,
@@ -48,6 +51,9 @@ import {
   AUTH_EXPECTED_AUTOCOMPLETE,
   HTML_SNIPPET_MAX_LENGTH,
   MOTION_MUTATION_MARGIN,
+  POINTER_GESTURE_CRITERIA_BY_SIGNAL,
+  POINTER_GESTURE_MAX_CANDIDATES,
+  POINTER_GESTURE_MAX_LISTENER_NODES,
 } from '../constants.js';
 import { getRule, type RuleKey } from './rule-registry.js';
 import { describeTargetSpacing } from './target-spacing.js';
@@ -851,6 +857,145 @@ export function normalizeAccessibleAuthenticationCheck(
     captchaNodes,
     fields.length > 0 || captchas.length > 0,
   );
+
+  return buckets;
+}
+
+const POINTER_GESTURE_RULES: {
+  key: RuleKey;
+  criterion: PointerGestureCriterion;
+  verify: string;
+}[] = [
+  {
+    key: 'pointer-gestures',
+    criterion: '2.5.1',
+    verify:
+      'Verify that the same function works with a single pointer without a path (e.g. buttons), unless the gesture is essential.',
+  },
+  {
+    key: 'dragging-movements',
+    criterion: '2.5.7',
+    verify:
+      'Verify that the same function works with a single pointer without dragging (e.g. buttons or click-to-place), unless dragging is essential.',
+  },
+];
+
+function describePointerGestureLocation(loc: {
+  scriptId: string;
+  lineNumber: number;
+  columnNumber: number;
+}): string {
+  return `script ${loc.scriptId}, line ${loc.lineNumber + 1}:${loc.columnNumber + 1}`;
+}
+
+function describePointerGestureSignal(signal: PointerGestureSignal): string {
+  const at = signal.listener
+    ? ` at ${describePointerGestureLocation(signal.listener)}`
+    : '';
+  switch (signal.kind) {
+    case 'draggable-attribute':
+      return 'has draggable="true"';
+    case 'drag-listener':
+      return `has ${signal.detail} listener(s)${at}`;
+    case 'move-listener':
+      return `has press and move listeners (${signal.detail})${at}`;
+    case 'multipoint-listener':
+      return `has a listener that looks at multiple touches (${signal.detail})${at}`;
+    default:
+      return `matches ${signal.kind.replace('widget-', '')} markup (${signal.detail})`;
+  }
+}
+
+export function normalizePointerGestureCheck(
+  details: PointerGestureCheckDetails,
+): NormalizedBuckets {
+  const buckets = emptyBuckets();
+  buckets.checkedNodes = details.candidates.length;
+
+  for (const { key, criterion, verify } of POINTER_GESTURE_RULES) {
+    const nodes: NormalizedNode[] = [];
+
+    if (details.inspectionError === 'timeout-unrecoverable') {
+      nodes.push(
+        pageNode(
+          `Event listeners could not be inspected (${details.listenerInspection}: ${details.inspectionError}) and the page scan was skipped, so nothing on this page was examined. Check drag and gesture interactions manually.`,
+        ),
+      );
+    } else if (details.listenerInspection !== 'cdp') {
+      const why = details.inspectionError ? `: ${details.inspectionError}` : '';
+      const chromium =
+        details.listenerInspection === 'unsupported'
+          ? ' CDP is only available in Chromium.'
+          : '';
+      nodes.push(
+        pageNode(
+          `Event listeners could not be inspected (${details.listenerInspection}${why}).${chromium} Candidates come only from attributes and known widget markup; check drag and gesture interactions manually.`,
+        ),
+      );
+    }
+
+    for (const candidate of details.candidates) {
+      if (!candidate.criteria.includes(criterion)) continue;
+      const parts = candidate.signals
+        .filter((s) =>
+          POINTER_GESTURE_CRITERIA_BY_SIGNAL[s.kind].includes(criterion),
+        )
+        .map(describePointerGestureSignal);
+      const hidden = candidate.visible ? '' : ' (not visible at load)';
+      const node = toNode(candidate, `${parts.join('; ')}${hidden}. ${verify}`);
+      // Qualify with the shadow hosts so equal ids in different roots stay apart.
+      node.target = [...candidate.shadowHosts, candidate.selector];
+      nodes.push(node);
+    }
+
+    for (const listener of details.pageListeners) {
+      const matches =
+        criterion === '2.5.1'
+          ? listener.multipoint
+          : listener.type === 'dragstart' || listener.type === 'drop';
+      if (!matches) continue;
+      const preview = listener.handlerPreview
+        ? ` starting with: ${listener.handlerPreview}`
+        : '';
+      nodes.push(
+        pageNode(
+          `${listener.target} has a "${listener.type}" listener (${describePointerGestureLocation(listener)})${preview}. Handlers may implement gestures for elements through delegation; ${verify}`,
+        ),
+      );
+    }
+
+    if (details.delegationRoots.length > 0) {
+      const roots = details.delegationRoots
+        .map(
+          (r) =>
+            `${[...r.shadowHosts, r.selector].join(' >>> ')} (${r.eventTypeCount} types)`,
+        )
+        .join(', ');
+      nodes.push(
+        pageNode(
+          `Listeners for many event types are attached to ${roots} (framework event delegation); gestures handled there cannot be attributed to elements. ${verify}`,
+        ),
+      );
+    }
+
+    const counts = details.candidateCounts.byCriterion[criterion];
+    if (counts.found > counts.kept) {
+      nodes.push(
+        pageNode(
+          `Only ${counts.kept} of ${counts.found} candidates for this criterion were recorded (the check keeps the first ${POINTER_GESTURE_MAX_CANDIDATES} candidates in document order); check the rest of the page manually.`,
+        ),
+      );
+    }
+    if (details.listenerNodesTruncated) {
+      nodes.push(
+        pageNode(
+          `Listeners on more than ${POINTER_GESTURE_MAX_LISTENER_NODES} elements were found; elements beyond that were not examined. Check drag and gesture interactions manually.`,
+        ),
+      );
+    }
+
+    bucketize(buckets, key, nodes, nodes.length > 0);
+  }
 
   return buckets;
 }

@@ -1,5 +1,5 @@
 /**
- * Fixture Gallery: manifest-driven integration tests for all 17 checks.
+ * Fixture Gallery: manifest-driven integration tests for all 18 checks.
  *
  * Each manifest entry:
  * - Serves an HTML fixture from test/fixtures/pages/ via a worker-scoped
@@ -10,7 +10,7 @@
  * - For 'passes' expectations: also guards against silent inapplicable pass.
  * - Validates the result envelope against RESULT_SCHEMAS[check] via Ajv.
  *
- * Coverage: all 30 custom finding-capable rules from rule-registry.ts
+ * Coverage: all 32 custom finding-capable rules from rule-registry.ts
  * (auto-play and auto-play-audio live in their own specs).
  * axe-audit: representative rule (image-alt); full rule coverage is out of
  * scope for axe (hundreds of external rules).
@@ -393,6 +393,39 @@ const MANIFEST: ManifestEntry[] = [
       'a11y-skills/auth-paste-blocked': 'inapplicable',
       'a11y-skills/auth-autocomplete': 'inapplicable',
       'a11y-skills/auth-captcha': 'inapplicable',
+    },
+  },
+
+  // =========================================================================
+  // pointer-gesture-check
+  // Rule: a11y-skills/pointer-gestures (incomplete)
+  // Rule: a11y-skills/dragging-movements (incomplete)
+  // =========================================================================
+  {
+    check: 'pointer-gesture-check',
+    scenario: 'finding: custom slider dragged with pointer events',
+    fixture: 'pointer-gesture/custom-slider.html',
+    expectRules: {
+      'a11y-skills/pointer-gestures': 'incomplete',
+      'a11y-skills/dragging-movements': 'incomplete',
+    },
+  },
+  {
+    check: 'pointer-gesture-check',
+    scenario: 'finding: carousel markup (swipe candidate only)',
+    fixture: 'pointer-gesture/carousel.html',
+    expectRules: {
+      'a11y-skills/pointer-gestures': 'incomplete',
+      'a11y-skills/dragging-movements': 'inapplicable',
+    },
+  },
+  {
+    check: 'pointer-gesture-check',
+    scenario: 'clear: native range input and a click button',
+    fixture: 'pointer-gesture/none.html',
+    expectRules: {
+      'a11y-skills/pointer-gestures': 'inapplicable',
+      'a11y-skills/dragging-movements': 'inapplicable',
     },
   },
 

@@ -83,6 +83,15 @@ export type {
   CaptchaCandidate,
   AccessibleAuthenticationCheckDetails,
   AccessibleAuthenticationCheckResult,
+  PointerGestureSignalKind,
+  PointerGestureCriterion,
+  PointerGestureListenerLocation,
+  PointerGestureSignal,
+  PointerGestureCandidate,
+  PointerGesturePageListener,
+  PointerGestureDelegationRoot,
+  PointerGestureCheckDetails,
+  PointerGestureCheckResult,
   FocusOrderStop,
   FocusOrderTransitionKind,
   FocusOrderTransition,
@@ -1309,6 +1318,166 @@ export const ACCESSIBLE_AUTHENTICATION_CHECK_RESULT_SCHEMA: JsonSchema =
     },
   });
 
+const POINTER_GESTURE_LISTENER_LOCATION_PROPERTIES: Record<string, JsonSchema> =
+  {
+    scriptId: { type: 'string' },
+    lineNumber: { type: 'integer' },
+    columnNumber: { type: 'integer' },
+    handlerPreview: { type: ['string', 'null'] },
+  };
+
+const POINTER_GESTURE_CRITERION_SCHEMA: JsonSchema = {
+  type: 'string',
+  enum: ['2.5.1', '2.5.7'],
+};
+
+const POINTER_GESTURE_COUNT_SCHEMA: JsonSchema = {
+  type: 'object',
+  required: ['found', 'kept'],
+  properties: {
+    found: { type: 'integer' },
+    kept: { type: 'integer' },
+  },
+};
+
+export const POINTER_GESTURE_CHECK_RESULT_SCHEMA: JsonSchema =
+  buildEnvelopeSchema({
+    id: 'pointer-gesture-check-result',
+    title: 'PointerGestureCheckResult',
+    source: 'pointer-gesture-check',
+    details: {
+      type: 'object',
+      required: [
+        'listenerInspection',
+        'inspectionError',
+        'candidates',
+        'candidateCounts',
+        'listenerNodesTruncated',
+        'pageListeners',
+        'delegationRoots',
+      ],
+      properties: {
+        listenerInspection: {
+          type: 'string',
+          enum: ['cdp', 'unsupported', 'failed'],
+        },
+        inspectionError: { type: ['string', 'null'] },
+        candidates: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: [
+              'selector',
+              'shadowHosts',
+              'html',
+              'htmlTruncated',
+              'tagName',
+              'role',
+              'visible',
+              'signals',
+              'criteria',
+            ],
+            properties: {
+              selector: { type: 'string' },
+              shadowHosts: { type: 'array', items: { type: 'string' } },
+              html: { type: 'string' },
+              htmlTruncated: { type: 'boolean' },
+              tagName: { type: 'string' },
+              role: { type: ['string', 'null'] },
+              visible: { type: 'boolean' },
+              signals: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  required: ['kind', 'detail', 'listener'],
+                  properties: {
+                    kind: {
+                      type: 'string',
+                      enum: [
+                        'draggable-attribute',
+                        'drag-listener',
+                        'move-listener',
+                        'multipoint-listener',
+                        'widget-slider',
+                        'widget-sortable',
+                        'widget-carousel',
+                        'widget-map',
+                      ],
+                    },
+                    detail: { type: 'string' },
+                    listener: {
+                      type: ['object', 'null'],
+                      required: [
+                        'scriptId',
+                        'lineNumber',
+                        'columnNumber',
+                        'handlerPreview',
+                      ],
+                      properties: POINTER_GESTURE_LISTENER_LOCATION_PROPERTIES,
+                    },
+                  },
+                },
+              },
+              criteria: {
+                type: 'array',
+                items: POINTER_GESTURE_CRITERION_SCHEMA,
+              },
+            },
+          },
+        },
+        candidateCounts: {
+          type: 'object',
+          required: ['total', 'byCriterion'],
+          properties: {
+            total: { type: 'integer' },
+            byCriterion: {
+              type: 'object',
+              required: ['2.5.1', '2.5.7'],
+              properties: {
+                '2.5.1': POINTER_GESTURE_COUNT_SCHEMA,
+                '2.5.7': POINTER_GESTURE_COUNT_SCHEMA,
+              },
+            },
+          },
+        },
+        listenerNodesTruncated: { type: 'boolean' },
+        pageListeners: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: [
+              'target',
+              'type',
+              'multipoint',
+              'scriptId',
+              'lineNumber',
+              'columnNumber',
+              'handlerPreview',
+            ],
+            properties: {
+              target: { type: 'string', enum: ['window', 'document'] },
+              type: { type: 'string' },
+              multipoint: { type: 'boolean' },
+              ...POINTER_GESTURE_LISTENER_LOCATION_PROPERTIES,
+            },
+          },
+        },
+        delegationRoots: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['selector', 'shadowHosts', 'eventTypeCount'],
+            properties: {
+              selector: { type: 'string' },
+              shadowHosts: { type: 'array', items: { type: 'string' } },
+              eventTypeCount: { type: 'integer' },
+            },
+          },
+        },
+      },
+    },
+  });
+
 const FOCUS_ORDER_STOP_SCHEMA: JsonSchema = {
   type: 'object',
   required: [
@@ -1499,5 +1668,6 @@ export const RESULT_SCHEMAS = {
   'change-on-input-check': CHANGE_ON_INPUT_CHECK_RESULT_SCHEMA,
   'accessible-authentication-check':
     ACCESSIBLE_AUTHENTICATION_CHECK_RESULT_SCHEMA,
+  'pointer-gesture-check': POINTER_GESTURE_CHECK_RESULT_SCHEMA,
   'focus-order-check': FOCUS_ORDER_CHECK_RESULT_SCHEMA,
 } as const;

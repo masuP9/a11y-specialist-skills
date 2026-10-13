@@ -104,6 +104,7 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks focus-order-check
 ## ポインター
 | 基準 | 操作 | 証跡 | Fail条件 |
 |---|---|---|---|
+| 2.5.1 | ピンチ・スワイプなど複数の指や軌跡の操作に、1 点の操作の代わりがあるか | 操作ログ | 複数の指・軌跡でしか操作できない |
 | 2.5.4 | 振る・傾ける操作に画面の部品の代わりがあり、動きでの起動を止められるか | 操作ログ | 動きでしか操作できない、または止められない |
 | 2.5.7 | ドラッグ以外の操作手段を提供 | 操作ログ | ドラッグ必須で代替なし |
 | 2.5.8 | ターゲットサイズを測定 | スクショ/計測 | 最低サイズを満たさない |
@@ -116,6 +117,15 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks focus-order-check
 - `window` に listener がある型には合成イベントを送り、DOM が変わるか（`domMutations`）を証跡にする。合成イベントは `isTrusted: false` なので、信頼されたイベントしか受けない処理や canvas に描くだけの処理は「変化なし」になる。それでも listener がある限り候補には出る。
 - `document` にだけ付いた listener は、ブラウザが `window` にしか送らないので動かない可能性がある（送信しない）。
 - 実行: `npx -y @a11y-skills/audit --url "<url>" --checks motion-actuation-check`
+
+### `pointer-gesture-check` CLIチェック
+
+`pointer-gesture-check` で、ドラッグ・スワイプ・複数の指の操作で動きそうな部品を `incomplete` の候補として報告します（2.5.1 は `a11y-skills/pointer-gestures`、2.5.7 は `a11y-skills/dragging-movements`）。
+
+- 拾うもの: `draggable="true"`、`dragstart` / `drop` の listener、同じ要素に「押す」と「動かす」の両方の listener があるもの、複数の指を見る listener（`touches.length` など）、`role="slider"` の自作スライダー、並べ替え・カルーセル・地図の部品のしるし。listener は CDP で取り出す（Chromium のみ。それ以外では属性と部品のしるしだけで候補を出し、手で確かめるよう促す）。
+- 候補にしないもの: 動かす listener だけの要素（hover 効果など）、20 種類以上の listener を持つ委譲先の要素（React の根など）。後者はルールごとに 1 つのページ単位の「手で確かめて」node になる。委譲で作られたドラッグ・ジェスチャは listener からは拾えない。
+- 候補はすべて `incomplete`。1 点の操作（ボタンやクリック）で同じことができるか、必須の操作という例外に当たるかは、候補ごとに人が確かめる。実際にドラッグ・スワイプして動くかは確かめない。
+- 実行: `npx -y @a11y-skills/audit --url "<url>" --checks pointer-gesture-check`
 
 ### `target-size-check` CLIチェック
 

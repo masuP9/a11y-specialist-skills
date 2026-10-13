@@ -35,6 +35,7 @@ export type CheckSource =
   | 'motion-actuation-check'
   | 'change-on-input-check'
   | 'accessible-authentication-check'
+  | 'pointer-gesture-check'
   | 'focus-order-check';
 
 export type NormalizedImpact = 'critical' | 'serious' | 'moderate' | 'minor';
@@ -836,6 +837,110 @@ export interface AccessibleAuthenticationCheckDetails {
 
 export type AccessibleAuthenticationCheckResult =
   AuditCheckResult<AccessibleAuthenticationCheckDetails>;
+
+// =============================================================================
+// Pointer Gesture Check (WCAG 2.5.1 / 2.5.7)
+// =============================================================================
+
+export type PointerGestureSignalKind =
+  | 'draggable-attribute'
+  | 'drag-listener'
+  | 'move-listener'
+  | 'multipoint-listener'
+  | 'widget-slider'
+  | 'widget-sortable'
+  | 'widget-carousel'
+  | 'widget-map';
+
+export type PointerGestureCriterion = '2.5.1' | '2.5.7';
+
+export interface PointerGestureListenerLocation {
+  scriptId: string;
+  /** 0-based, as CDP reports them. */
+  lineNumber: number;
+  columnNumber: number;
+  handlerPreview: string | null;
+}
+
+export interface PointerGestureSignal {
+  kind: PointerGestureSignalKind;
+  /**
+   * Listener kinds: the event types joined with '+' (e.g. 'pointerdown+pointermove').
+   * Widget kinds: the hint selector that matched. 'draggable-attribute': 'draggable="true"'.
+   */
+  detail: string;
+  /** First matching listener for listener kinds; null otherwise. */
+  listener: PointerGestureListenerLocation | null;
+}
+
+export interface PointerGestureCandidate {
+  /**
+   * Unique within the element's own scope: the document, or the shadow root it
+   * is in. Resolve it after the hosts in `shadowHosts`.
+   */
+  selector: string;
+  /**
+   * Open shadow hosts above the element, outermost first; each is looked up in
+   * the document or shadow root opened by the previous one. [] outside shadow DOM.
+   * Same convention as MediaPlaybackRecord.shadowHosts.
+   */
+  shadowHosts: string[];
+  html: string;
+  htmlTruncated: boolean;
+  tagName: string;
+  role: string | null;
+  visible: boolean;
+  signals: PointerGestureSignal[];
+  /** Criteria this candidate is reported under, in ['2.5.1', '2.5.7'] order. */
+  criteria: PointerGestureCriterion[];
+}
+
+export interface PointerGesturePageListener extends PointerGestureListenerLocation {
+  target: 'window' | 'document';
+  type: string;
+  multipoint: boolean;
+}
+
+export interface PointerGestureDelegationRoot {
+  /** 'window', 'document', or the element's selector (same scope rule as candidates). */
+  selector: string;
+  /** [] for window / document and elements outside shadow DOM. */
+  shadowHosts: string[];
+  eventTypeCount: number;
+}
+
+export interface PointerGestureCheckDetails {
+  /** 'failed': CDP was available but inspection threw or timed out. */
+  listenerInspection: 'cdp' | 'unsupported' | 'failed';
+  /**
+   * Why inspection failed. 'timeout' when it was cancelled and stopped;
+   * 'timeout-unrecoverable' when it did not stop within the grace period
+   * (the page scan is then skipped). Other values: the error's first line.
+   */
+  inspectionError: string | null;
+  candidates: PointerGestureCandidate[];
+  /**
+   * Candidate cap (POINTER_GESTURE_MAX_CANDIDATES): how many candidates were
+   * found per criterion before cutting, and how many of them were kept.
+   */
+  candidateCounts: {
+    total: number;
+    byCriterion: Record<
+      PointerGestureCriterion,
+      { found: number; kept: number }
+    >;
+  };
+  /**
+   * True when listener nodes beyond POINTER_GESTURE_MAX_LISTENER_NODES were not
+   * resolved, so their signals (for either criterion) are unknown.
+   */
+  listenerNodesTruncated: boolean;
+  pageListeners: PointerGesturePageListener[];
+  delegationRoots: PointerGestureDelegationRoot[];
+}
+
+export type PointerGestureCheckResult =
+  AuditCheckResult<PointerGestureCheckDetails>;
 
 // =============================================================================
 // Time Limit Detector (WCAG 2.2.1)

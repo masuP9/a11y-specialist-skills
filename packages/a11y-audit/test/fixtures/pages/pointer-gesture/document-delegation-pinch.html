@@ -1,0 +1,51 @@
+<!doctype html>
+<!--
+  Intent: document is a delegation root (25 event types) and one of its
+  listeners, a touchmove handler, looks at touches.length.
+  Expected: delegationRoots contains document; pageListeners has the multipoint
+  touchmove; pointer-gestures includes a page-level node for it.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Document delegation with pinch</title>
+  </head>
+  <body>
+    <p>content</p>
+    <script>
+      const types = [
+        'click',
+        'keydown',
+        'keyup',
+        'pointerdown',
+        'pointermove',
+        'pointerup',
+        'dragstart',
+        'drop',
+        'focusin',
+        'focusout',
+        'input',
+        'change',
+        'submit',
+        'mouseover',
+        'mouseout',
+        'contextmenu',
+        'dblclick',
+        'wheel',
+        'scroll',
+        'select',
+        'touchend',
+        'touchcancel',
+        'pointerover',
+        'pointerout',
+        'copy',
+      ];
+      for (const type of types) document.addEventListener(type, () => {});
+      document.addEventListener('touchmove', (e) => {
+        if (e.touches.length > 1) {
+          document.title = 'pinch';
+        }
+      });
+    </script>
+  </body>
+</html>

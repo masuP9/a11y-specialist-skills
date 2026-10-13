@@ -1,0 +1,39 @@
+<!doctype html>
+<!--
+  Intent: listeners spread over a subtree, for forSubtree / collectNodes.
+  - #map: pointermove (handler named onMove)
+  - #list: dragstart
+  - #host: open shadow root whose #inner span has touchmove
+  - #frame: same-origin iframe whose #in-frame has pointerdown (other frame)
+  - #b: click
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Subtree event listeners</title>
+  </head>
+  <body>
+    <div id="map">map</div>
+    <ul id="list">
+      <li>one</li>
+    </ul>
+    <div id="host"></div>
+    <iframe
+      id="frame"
+      title="inner frame"
+      srcdoc="<div id='in-frame'>x</div><script>document.getElementById('in-frame').addEventListener('pointerdown', () => {})</script>"
+    ></iframe>
+    <button id="b" type="button">b</button>
+    <script>
+      function onMove(e) {}
+      document.getElementById('map').addEventListener('pointermove', onMove);
+      document.getElementById('list').addEventListener('dragstart', () => {});
+      const root = document
+        .getElementById('host')
+        .attachShadow({ mode: 'open' });
+      root.innerHTML = '<span id="inner">inner</span>';
+      root.getElementById('inner').addEventListener('touchmove', () => {});
+      document.getElementById('b').addEventListener('click', () => {});
+    </script>
+  </body>
+</html>
