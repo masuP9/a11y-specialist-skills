@@ -24,6 +24,9 @@
 
 ## Status
 
+- **Codex plan review**: 5 巡（2026-10-13）。5 巡目の high 1 件（水平・垂直の線が重なり判定をすり抜ける）は
+  判定式の細部だったため反映のうえ再レビューせずに進めた。見送った low 0 件
+
 - **Priority**: P2
 - **Effort**: M（2〜3 日相当。背景色の決め方と、決まらないときの見分けが半分）
 - **Risk**: LOW（新規チェックの追加のみで既存チェックには触れない。ページに
@@ -377,9 +380,14 @@ Node 側で `blockedBy === null` なら `compositeLayers(layers, WHITE)` が**�
 - 判定（上から順に最初に当たったもの）:
   1. 画像の元がある → 色の取れる元の比によらず `undetermined: 'image-icon'`（画像のほうが意味を
      担っているかもしれず、画像の色は測れないため。色の取れる元の指標は記録だけする）。
-  2. **SVG の中の重なり**: 同じ `svg` の中で、ある図形の `getBoundingClientRect()` が、文書順で
-     それより前にある**塗り（`fill`）の描かれる図形**（`fill` が `none` でも `a === 0` でもなく、`line` でない）の
-     矩形と面積 0 より大きく重なる → `undetermined: 'svg-overlap'`。先に描かれた塗りの図形が後の図形の
+  2. **SVG の中の重なり**: 同じ `svg` の中で、ある図形の描画範囲が、文書順でそれより前にある
+     **塗り（`fill`）の描かれる図形**（`fill` が `none` でも `a === 0` でもなく、`line` でない）の描画範囲と
+     重なる → `undetermined: 'svg-overlap'`。描画範囲は `getBoundingClientRect()` を、線が描かれる
+     （D の表の `stroke` の条件を満たす）図形では `strokeWidth`（px の数値）×
+     `svg.getScreenCTM()?.a ?? 1` の半分だけ四方に広げた矩形（`getBoundingClientRect()` は線の太さを
+     含まず、水平・垂直の線では高さ・幅が 0 になるため）。重なりは**閉区間**で判定する
+     （`a.left <= b.right && b.left <= a.right && a.top <= b.bottom && b.top <= a.bottom`。
+     接しているだけ・幅 0 の矩形も重なりとみなし、重なりを否定できないときは合格にしない向き）。先に描かれた塗りの図形が後の図形の
      背景になり、背景が祖先の色でなくなるため（例: 黒いボタンに白い背景の `rect` と白い虫眼鏡の
      `path` があると、どちらも黒と比べて 21:1 だが、虫眼鏡は白い `rect` の上で見えない）。
      描画順と図形の形から背景を決めることはしない。`fill="none"` の線だけのアイコン（重なっても下が
@@ -627,6 +635,7 @@ export interface RunNonTextContrastCheckOptions extends AuditOutputOptions {
 | `icon-good.html` | 同じ形で `style="color:#333"`、`fill="none" stroke="currentColor"` | icon が passes |
 | `icon-mixed.html` | 白いボタンの `<svg viewBox="0 0 20 10">` に、左半分の黒の `<circle cx="5" cy="5" r="4" fill="#000"/>` と、**重ならない**右半分の薄い `<path d="M12 2L18 8" fill="none" stroke="#ddd"/>` | `undetermined`、`mixed-icon-colors`（濃い部分だけで pass にしない） |
 | `icon-svg-overlap.html` | 黒いボタン（`background:#000`）の SVG に、白の背景 `<rect width="10" height="10" fill="#fff"/>` と、その上の白い `<path d="M2 2L8 8" fill="none" stroke="#fff"/>` | `undetermined`、`svg-overlap`（どちらも黒と 21:1 でも pass にしない） |
+| `icon-svg-overlap-line.html` | 黒いボタン 2 つ。どちらも白の背景 `<rect width="10" height="10" fill="#fff"/>` の上に、1 つ目は水平線 `<path d="M2 5L8 5" fill="none" stroke="#fff" stroke-width="2"/>`、2 つ目は垂直線 `<path d="M5 2L5 8" fill="none" stroke="#fff" stroke-width="2"/>` | 2 つとも `undetermined`、`svg-overlap`（幅・高さ 0 の矩形でもすり抜けない） |
 | `icon-stroke-only.html` | 白いボタンの SVG に、重なる 2 本の線 `<path d="M0 0L10 10" fill="none" stroke="#333"/>` `<path d="M10 0L0 10" fill="none" stroke="#333"/>` | `pass`（塗りの無い図形どうしの重なりは `svg-overlap` にしない） |
 | `icon-svg-opacity.html` | 白いボタン 2 つ。1 つ目の SVG は `<circle r="4" cx="5" cy="5" fill="#000" fill-opacity=".1"/>`、2 つ目は `<g opacity=".1"><circle r="4" cx="5" cy="5" fill="#000"/></g>` | 1 つ目は `low`（描かれる色は薄い灰色）、2 つ目は `undetermined`（`opacity`） |
 | `icon-image-mixed.html` | 白いボタンに `<img src="data:image/gif;base64,…" alt="">` と黒の `circle` の SVG | `undetermined`、`image-icon`（SVG が 21:1 でも pass にしない） |
@@ -720,7 +729,7 @@ grep -E "non-text-contrast-check|Errors:" /tmp/claude-ntc-all.log
 ## Test plan
 
 - **`test/color.spec.ts`**: 比・相対輝度・合成・丸め・16 進の変換（ブラウザ不要）。
-- **`test/non-text-contrast.spec.ts`**: 28 フィクスチャで部品の分類・除外・枠/塗り/下線の指標・
+- **`test/non-text-contrast.spec.ts`**: 29 フィクスチャで部品の分類・除外・枠/塗り/下線の指標・
   半透明の合成・`oklch` の変換・決められない 6 種・UA の部品・アイコン（SVG / 疑似要素 / 画像）・
   上限・ページを書き換えないこと・schema を検証。
 - **fixture-gallery / rule-classification / schema-validation**: 既存の枠組みに登録。
