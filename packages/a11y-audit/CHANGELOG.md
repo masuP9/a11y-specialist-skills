@@ -31,6 +31,15 @@ adheres to [Semantic Versioning](https://semver.org/).
   hover / focus / checked states); the outer color comes from ancestor
   backgrounds only; `box-shadow` / `outline` borders are not measured; parts
   inside a component, charts, iframes and shadow roots are not examined.
+
+## 0.13.0 — 2026-10-13
+
+**Heads-up** — `focus-order-check` reloads the page and presses Enter on up to
+10 likely dialog triggers (then Escape or a close button) on the live page, so
+a trigger that also submits or navigates may send requests (see README).
+
+### Added
+
 - `pointer-gesture-check` (WCAG 2.5.1 / 2.5.7): new check, `runPointerGestureCheck`
   (takes a navigated `page`) and the CLI check name `pointer-gesture-check`.
   Rules `a11y-skills/pointer-gestures` (tags `wcag21a`, `wcag251`) and
