@@ -87,6 +87,10 @@ export {
   runNonTextContrastCheck,
   type RunNonTextContrastCheckOptions,
 } from './runNonTextContrastCheck.js';
+export {
+  runCharacterKeyShortcutCheck,
+  type RunCharacterKeyShortcutCheckOptions,
+} from './runCharacterKeyShortcutCheck.js';
 
 export {
   resolveOutputPath,

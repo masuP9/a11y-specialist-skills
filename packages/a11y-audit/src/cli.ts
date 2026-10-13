@@ -305,6 +305,19 @@ const CHECK_REGISTRY: CheckEntry[] = [
       })) as AuditResultEnvelope;
     },
   },
+  {
+    name: 'character-key-shortcut-check',
+    kind: 'browser',
+    async run({ browser, outputDir, url }) {
+      const { runCharacterKeyShortcutCheck } =
+        await import('./playwright/runCharacterKeyShortcutCheck.js');
+      return (await runCharacterKeyShortcutCheck({
+        browser,
+        targetUrl: url,
+        outputDir,
+      })) as AuditResultEnvelope;
+    },
+  },
 ];
 
 // ---------------------------------------------------------------------------
