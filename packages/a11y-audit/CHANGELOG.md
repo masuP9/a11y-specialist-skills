@@ -19,7 +19,7 @@ adheres to [Semantic Versioning](https://semver.org/).
   vertical writing can be misjudged); fixed / sticky elements and the inside
   of iframes are not compared; only triggers with known attributes open
   dialogs, and doing so presses Enter / Escape after a reload
-  (`maxDialogTriggers: 0` skips it); Tab cycling inside a modal is not examined.
+  (the function API's `maxDialogTriggers: 0` presses no trigger); Tab cycling inside a modal is not examined.
 
 ### Fixed
 

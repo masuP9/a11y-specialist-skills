@@ -97,7 +97,7 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks focus-order-check
 ```
 
 - Candidates are always incomplete: an order that departs from the visual one still meets 2.4.3 when meaning and operability are preserved, so verify manually.
-- To test dialogs it reloads the page, presses Enter on likely triggers (`aria-haspopup="dialog"`, etc.) and Escape (or a close button) to close. A trigger that also submits or navigates sends requests; pass the option `maxDialogTriggers: 0` to skip this part.
+- To test dialogs it reloads the page, presses Enter on likely triggers (`aria-haspopup="dialog"`, etc.) and Escape (or a close button) to close. A trigger that also submits or navigates sends requests; the CLI always tries up to 10 triggers. To press none, call `runFocusOrderCheck` from the function API with `maxDialogTriggers: 0` (triggers are still collected but not pressed), or do not run this check on production pages with side effects.
 - `focus-order-result.json` holds the Tab order in `details.stops`, neighbor comparisons in `details.transitions` and per-dialog observations in `details.dialogs`.
 - Verify manually: fixed / sticky elements and order inside iframes, card grids and vertical writing, dialogs opened by buttons without such attributes, Tab cycling inside a modal.
 

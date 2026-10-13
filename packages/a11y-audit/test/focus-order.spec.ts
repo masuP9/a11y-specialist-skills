@@ -64,6 +64,23 @@ test.describe('Tab walk', () => {
     expect(bucketOf(DIALOG)).toBe('inapplicable');
   });
 
+  test('autofocus で途中から始まり末尾で外へ出て先頭へ戻る巡回は、折り返しの移動を比べず passes になる', async ({
+    baseUrl,
+    page,
+    browser,
+  }, testInfo) => {
+    const { details, bucketOf } = await run('autofocus.html', baseUrl, {
+      page,
+      browser,
+      testInfo,
+    });
+    expect(details.stops.some((s) => s.afterWrap)).toBe(true);
+    expect(
+      details.transitions.filter((t) => t.kind.startsWith('backward')),
+    ).toEqual([]);
+    expect(bucketOf(VISUAL)).toBe('passes');
+  });
+
   test('order で DOM 1 つ目を下に置くと backward-block を 1 件報告する', async ({
     baseUrl,
     page,
@@ -389,12 +406,60 @@ test.describe('Dialogs', () => {
       { page, browser, testInfo },
     );
     expect(details.stops).toHaveLength(2);
-    expect(details.dialogSearchFailed).toBe(true);
+    expect(details.dialogSearch).toBe('navigated');
     expect(details.dialogs).toEqual([]);
     expect(bucketOf(DIALOG)).toBe('incomplete');
     expect(nodesOf(DIALOG)[0]?.failureSummary).toContain(
-      'The page navigated before dialog triggers could be collected',
+      'Dialog triggers could not be collected (the page navigated)',
     );
+  });
+
+  test('時間切れ後はページを読み直さず、dialogSearch を timeout にして incomplete になる', async ({
+    baseUrl,
+    page,
+    browser,
+  }, testInfo) => {
+    const { details, bucketOf, nodesOf } = await run(
+      'dialog-good.html',
+      baseUrl,
+      { page, browser, testInfo },
+      { timeBudgetMs: 1 },
+    );
+    expect(details.dialogSearch).toBe('timeout');
+    expect(details.dialogs).toEqual([]);
+    expect(bucketOf(DIALOG)).toBe('incomplete');
+    expect(nodesOf(DIALOG)[0]?.failureSummary).toContain(
+      'the time budget ran out',
+    );
+  });
+
+  test('aria-controls だけで指す閉じたネイティブ dialog も開くボタンとして見つけ、モーダルとして開く', async ({
+    baseUrl,
+    page,
+    browser,
+  }, testInfo) => {
+    const { details } = await run('dialog-native-aria-controls.html', baseUrl, {
+      page,
+      browser,
+      testInfo,
+    });
+    expect(details.dialogTriggersFound).toBe(1);
+    expect(details.dialogs[0]?.status).toBe('opened');
+    expect(details.dialogs[0]?.modal).toBe(true);
+  });
+
+  test('ハッシュだけが変わるリンクで開くモーダルは遷移とみなさず、フォーカスが中へ移ったと記録する', async ({
+    baseUrl,
+    page,
+    browser,
+  }, testInfo) => {
+    const { details } = await run('hash-dialog.html', baseUrl, {
+      page,
+      browser,
+      testInfo,
+    });
+    expect(details.dialogs[0]?.status).toBe('opened');
+    expect(details.dialogs[0]?.focusAfterOpen).toBe('inside');
   });
 
   test('maxDialogTriggers: 0 ではダイアログを試さず、候補があることを incomplete で知らせる', async ({

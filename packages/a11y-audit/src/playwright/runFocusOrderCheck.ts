@@ -33,7 +33,7 @@
  *   is not seen.
  * - It presses Enter to open and Escape / a close button to close, after a
  *   reload per trigger. A trigger that also submits or navigates sends
- *   requests; `maxDialogTriggers: 0` skips this part.
+ *   requests; `maxDialogTriggers: 0` presses no trigger.
  * - Focus trapping inside the dialog (leaking out on Tab) is not examined.
  * - Focus that does not return to the trigger can be right (the trigger is
  *   gone, the flow moves on), hence `incomplete`.
@@ -60,6 +60,7 @@ import {
   FOCUS_ORDER_DIALOG_CLOSE_SELECTOR,
   FOCUS_ORDER_DIALOG_SELECTOR,
   FOCUS_ORDER_DIALOG_SETTLE_MS,
+  FOCUS_ORDER_DIALOG_TARGET_SELECTOR,
   FOCUS_ORDER_DIALOG_TRIGGER_SELECTOR,
   FOCUS_ORDER_FRAME_SLACK,
   FOCUS_ORDER_MAX_DIALOG_TRIGGERS,
@@ -97,7 +98,8 @@ export interface RunFocusOrderCheckOptions
   maxTabPresses?: number;
   /**
    * Dialog triggers to open and close (default: FOCUS_ORDER_MAX_DIALOG_TRIGGERS).
-   * 0 skips the dialog part. Opening presses Enter on the trigger after a reload.
+   * 0 presses no trigger (triggers are still collected and counted). Opening
+   * presses Enter on the trigger after a reload.
    */
   maxDialogTriggers?: number;
 }
@@ -112,11 +114,27 @@ const ACTION_TIMEOUT_MS = 5_000;
 const NAVIGATION_ERROR =
   /Execution context was destroyed|Frame was detached|Target page, context or browser has been closed/i;
 
+/** Compare pages by URL without the fragment: a hash-only change is not a navigation. */
+const withoutHash = (url: string): string => {
+  try {
+    const parsed = new URL(url);
+    parsed.hash = '';
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+};
+
 const firstLine = (error: unknown): string =>
   (error instanceof Error ? error.message : String(error)).split('\n')[0] ?? '';
 
 // =============================================================================
 // Browser-side functions (serialized by Playwright; keep them self-contained)
+//
+// Functions passed to page.evaluate cannot share helpers, so each one that
+// needs getUniqueSelector carries its own copy. Keep them in step: the copies
+// in describeFocus and locateFocus are shadow-root aware (relative to the
+// containing root); the others only see the light DOM and prefix `body > `.
 // =============================================================================
 
 interface FocusDescription {
@@ -152,8 +170,8 @@ function countFocusable(args: { focusableSelector: string }): {
 
 /** Describe the focused element, or null when nothing in the page has focus. Runs in the browser. */
 function describeFocus(args: { snippetMax: number }): FocusDescription | null {
-  // Keep in sync with the function of the same name in the dialog functions.
   // Relative to the root (document or shadow root) that contains the element.
+  // Keep in sync with getUniqueSelector in the other browser-side functions.
   function getUniqueSelector(element: Element): string {
     const root = element.getRootNode() as Document | ShadowRoot;
     const idSelector = `[id="${element.id.replace(/["\\]/g, '\\$&')}"]`;
@@ -253,8 +271,10 @@ interface DialogTrigger {
 function collectDialogTriggers(args: {
   triggerSelector: string;
   dialogSelector: string;
+  targetSelector: string;
   snippetMax: number;
 }): DialogTrigger[] {
+  // Keep in sync with getUniqueSelector in the other browser-side functions.
   function getUniqueSelector(element: Element): string {
     const idSelector = `[id="${element.id.replace(/["\\]/g, '\\$&')}"]`;
     if (element.id && document.querySelectorAll(idSelector).length === 1) {
@@ -282,7 +302,7 @@ function collectDialogTriggers(args: {
     if (
       controls
         ?.split(/\s+/)
-        .some((id) => document.getElementById(id)?.matches(args.dialogSelector))
+        .some((id) => document.getElementById(id)?.matches(args.targetSelector))
     ) {
       return true;
     }
@@ -323,6 +343,7 @@ function collectDialogTriggers(args: {
 
 /** Selectors of the dialogs that are visible now. Runs in the browser. */
 function visibleDialogs(args: { dialogSelector: string }): string[] {
+  // Keep in sync with getUniqueSelector in the other browser-side functions.
   function getUniqueSelector(element: Element): string {
     const idSelector = `[id="${element.id.replace(/["\\]/g, '\\$&')}"]`;
     if (element.id && document.querySelectorAll(idSelector).length === 1) {
@@ -365,6 +386,7 @@ function locateFocus(args: {
   triggerSelector: string;
   dialogSelector: string | null;
 }): FocusPlace {
+  // Keep in sync with getUniqueSelector in the other browser-side functions.
   function getUniqueSelector(element: Element): string {
     const root = element.getRootNode() as Document | ShadowRoot;
     const idSelector = `[id="${element.id.replace(/["\\]/g, '\\$&')}"]`;
@@ -415,7 +437,8 @@ function locateFocus(args: {
   const selector = getUniqueSelector(active);
   if (
     active === document.querySelector(args.triggerSelector) ||
-    selector === args.triggerSelector
+    (active.getRootNode() instanceof Document &&
+      selector === args.triggerSelector)
   ) {
     return { where: 'trigger', selector: null };
   }
@@ -430,6 +453,7 @@ function inspectOpenedDialog(args: {
   before: string[];
   dialogSelector: string;
 }): { dialogSelector: string; modal: boolean } | null {
+  // Keep in sync with getUniqueSelector in the other browser-side functions.
   function getUniqueSelector(element: Element): string {
     const idSelector = `[id="${element.id.replace(/["\\]/g, '\\$&')}"]`;
     if (element.id && document.querySelectorAll(idSelector).length === 1) {
@@ -572,6 +596,8 @@ export async function runFocusOrderCheck(
     context = await newContext();
     const page: Page = await context.newPage();
     page.setDefaultTimeout(ACTION_TIMEOUT_MS);
+    // The line above also caps page.goto; keep Playwright's default for navigations.
+    page.setDefaultNavigationTimeout(30_000);
 
     // --- A. Tab walk --------------------------------------------------------
     await gotoAndSettle(page, targetUrl);
@@ -599,6 +625,8 @@ export async function runFocusOrderCheck(
     // Element of the previous press; reset when focus left the page, so that a
     // single focusable element is recognized again after the walk wraps.
     let lastId: number | null = null;
+    // Focus left the page after at least one stop: the next stop follows a wrap.
+    let wrapped = false;
 
     while (true) {
       if (presses >= pressN) {
@@ -615,7 +643,7 @@ export async function runFocusOrderCheck(
       try {
         await page.keyboard.press('Tab');
         await page.waitForTimeout(settleMs);
-        if (page.url() !== startUrl) {
+        if (withoutHash(page.url()) !== withoutHash(startUrl)) {
           ended = 'navigation';
           aborted = { reason: 'navigation', url: page.url() };
           break;
@@ -631,6 +659,7 @@ export async function runFocusOrderCheck(
       }
       if (described === null) {
         lastId = null;
+        if (stops.length > 0) wrapped = true;
         continue;
       }
       if (described.elementId === lastId) continue;
@@ -653,11 +682,17 @@ export async function runFocusOrderCheck(
         rect: described.rect,
         positioning: described.positioning,
         inFrame: described.inFrame,
+        afterWrap: wrapped,
       });
+      wrapped = false;
     }
 
     const { transitions, detours, skippedTransitions } = analyzeFocusOrder(
-      stops,
+      stops.map((stop) => ({
+        rect: stop.rect,
+        positioning: stop.positioning,
+        breakBefore: stop.afterWrap,
+      })),
       { viewport, direction },
     );
 
@@ -665,22 +700,36 @@ export async function runFocusOrderCheck(
     const dialogs: FocusOrderDialogProbe[] = [];
     let dialogsNotTried = 0;
     let allTriggers: DialogTrigger[] = [];
-    let dialogSearchFailed = false;
-    try {
-      await gotoAndSettle(page, targetUrl);
-      if (page.url() !== startUrl)
-        throw new Error('Execution context was destroyed');
-      allTriggers = await page.evaluate(collectDialogTriggers, {
-        triggerSelector: FOCUS_ORDER_DIALOG_TRIGGER_SELECTOR,
-        dialogSelector: FOCUS_ORDER_DIALOG_SELECTOR,
-        snippetMax: HTML_SNIPPET_MAX_LENGTH,
-      });
-    } catch (error) {
-      // A page that navigates away after load (script redirect) must not lose
-      // the Tab-walk result; other errors still fail the check.
-      if (!NAVIGATION_ERROR.test(firstLine(error))) throw error;
-      dialogSearchFailed = true;
-      aborted ??= { reason: 'navigation', url: page.url() };
+    let dialogSearch: FocusOrderCheckDetails['dialogSearch'] = 'ran';
+    let dialogSearchError: string | null = null;
+    if (timedOut()) {
+      dialogSearch = 'timeout';
+      aborted ??= { reason: 'timeout', url: page.url() };
+    } else {
+      try {
+        await reload(page, targetUrl);
+        if (withoutHash(page.url()) !== withoutHash(startUrl)) {
+          // A script redirected away right after load.
+          dialogSearch = 'navigated';
+          aborted ??= { reason: 'navigation', url: page.url() };
+        } else {
+          allTriggers = await page.evaluate(collectDialogTriggers, {
+            triggerSelector: FOCUS_ORDER_DIALOG_TRIGGER_SELECTOR,
+            dialogSelector: FOCUS_ORDER_DIALOG_SELECTOR,
+            targetSelector: FOCUS_ORDER_DIALOG_TARGET_SELECTOR,
+            snippetMax: HTML_SNIPPET_MAX_LENGTH,
+          });
+        }
+      } catch (error) {
+        // Whatever goes wrong here must not lose the Tab-walk result.
+        if (NAVIGATION_ERROR.test(firstLine(error))) {
+          dialogSearch = 'navigated';
+          aborted ??= { reason: 'navigation', url: page.url() };
+        } else {
+          dialogSearch = 'error';
+          dialogSearchError = firstLine(error);
+        }
+      }
     }
     const triggers = allTriggers.slice(0, maxDialogTriggers);
 
@@ -733,7 +782,8 @@ export async function runFocusOrderCheck(
       dialogTriggersFound: allTriggers.length,
       dialogs,
       dialogsNotTried,
-      dialogSearchFailed,
+      dialogSearch,
+      dialogSearchError,
       aborted,
     };
     const result = buildAuditResult({
@@ -761,6 +811,16 @@ export async function runFocusOrderCheck(
 }
 
 /**
+ * Load the page afresh. When the page already sits on the target URL with a
+ * #fragment, goto is a same-document navigation that keeps the page state, so
+ * state would leak between probes; going through about:blank forces a real load.
+ */
+async function reload(page: Page, targetUrl: string): Promise<void> {
+  await page.goto('about:blank');
+  await gotoAndSettle(page, targetUrl);
+}
+
+/**
  * Open one dialog from its trigger, close it, and record where focus went.
  * Fills `probe` as it observes, so a navigation or error part-way keeps what was
  * seen. Throws on unexpected errors (the caller records them).
@@ -774,8 +834,8 @@ async function probeDialog(
   const dialogSettle = (): Promise<void> =>
     page.waitForTimeout(FOCUS_ORDER_DIALOG_SETTLE_MS);
 
-  await gotoAndSettle(page, targetUrl);
-  const baseline = page.url();
+  await reload(page, targetUrl);
+  const baseline = withoutHash(page.url());
   const before = await page.evaluate(visibleDialogs, {
     dialogSelector: FOCUS_ORDER_DIALOG_SELECTOR,
   });
@@ -786,7 +846,7 @@ async function probeDialog(
   await page.keyboard.press('Enter');
   await dialogSettle();
   const navigated = (): boolean => {
-    if (page.url() === baseline) return false;
+    if (withoutHash(page.url()) === baseline) return false;
     probe.status = 'navigated';
     return true;
   };

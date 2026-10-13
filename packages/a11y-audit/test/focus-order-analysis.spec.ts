@@ -139,3 +139,34 @@ test.describe('analyzeFocusOrder detours', () => {
     expect(detours).toEqual([]);
   });
 });
+
+test.describe('analyzeFocusOrder breakBefore', () => {
+  test('breakBefore の点への移動は分類せず skippedTransitions に数える', () => {
+    const { transitions, skippedTransitions } = analyzeFocusOrder(
+      [point(100, 800), { ...point(100, 0), breakBefore: true }],
+      { viewport, direction: 'ltr' },
+    );
+    expect(transitions).toEqual([]);
+    expect(skippedTransitions).toBe(1);
+  });
+
+  test('breakBefore の点から先の移動は通常どおり分類する', () => {
+    const { transitions } = analyzeFocusOrder(
+      [point(100, 800), { ...point(300, 0), breakBefore: true }, point(100, 0)],
+      { viewport, direction: 'ltr' },
+    );
+    expect(transitions.map((t) => t.kind)).toEqual(['backward-inline']);
+  });
+
+  test('C が breakBefore の遠回りは detour にしない', () => {
+    const { detours } = analyzeFocusOrder(
+      [
+        point(0, 0, 20, 20),
+        point(900, 900, 20, 20),
+        { ...point(10, 10, 20, 20), breakBefore: true },
+      ],
+      { viewport, direction: 'ltr' },
+    );
+    expect(detours).toEqual([]);
+  });
+});

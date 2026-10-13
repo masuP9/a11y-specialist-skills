@@ -97,7 +97,7 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks focus-order-check
 ```
 
 - 候補は常に incomplete です。見た目の順から外れても、意味と操作が保たれていれば 2.4.3 を満たすので、人手で確認します。
-- ダイアログの確認のため、ページを読み直し、開くボタン（`aria-haspopup="dialog"` など）で Enter を、閉じるために Escape（または閉じるボタン）を押します。ボタンが送信や遷移を兼ねるとリクエストが飛ぶので、避けたいときはオプション `maxDialogTriggers: 0` で止めます。
+- ダイアログの確認のため、ページを読み直し、開くボタン（`aria-haspopup="dialog"` など）で Enter を、閉じるために Escape（または閉じるボタン）を押します。ボタンが送信や遷移を兼ねるとリクエストが飛ぶので、CLI は常に最大 10 件の開くボタンを試します。押したくないときは、関数 API の `runFocusOrderCheck` を `maxDialogTriggers: 0` で呼ぶ（開くボタンは集めますが押しません）か、副作用のある本番ページではこのチェックを実行しないでください。
 - `focus-order-result.json` の `details.stops` に Tab の順、`details.transitions` に隣り合う要素の比較、`details.dialogs` にダイアログごとの観察が入ります。
 - 手動で確認するもの: fixed / sticky の要素と iframe の中の順、カード型の格子・縦書き、属性の無いボタンで開くダイアログ、モーダルの中の Tab の巡回。
 

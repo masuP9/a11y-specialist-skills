@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <!--
+    Intent: the trigger is a fragment link; activating it changes only the URL
+    hash and opens a modal that takes focus. Escape hides it and focuses the
+    link again. A hash-only change is not a navigation.
+    Expected: status 'opened', focusAfterOpen === 'inside'.
+  -->
+  <head>
+    <meta charset="utf-8" />
+    <title>Hash dialog</title>
+  </head>
+  <body>
+    <a id="open" href="#login" aria-haspopup="dialog">Log in</a>
+    <div id="d" role="dialog" aria-modal="true" aria-label="Log in" hidden>
+      <button id="inner" type="button">Inner</button>
+    </div>
+    <script>
+      const d = document.getElementById('d');
+      const open = document.getElementById('open');
+      open.addEventListener('click', () => {
+        d.hidden = false;
+        document.getElementById('inner').focus();
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          d.hidden = true;
+          open.focus();
+        }
+      });
+    </script>
+  </body>
+</html>

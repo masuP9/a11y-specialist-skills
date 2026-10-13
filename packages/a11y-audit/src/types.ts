@@ -1255,6 +1255,11 @@ export interface FocusOrderStop {
   positioning: 'flow' | 'fixed' | 'sticky';
   /** Focus was inside this iframe; positions inside the frame are not examined. */
   inFrame: boolean;
+  /**
+   * Focus left the page (wrapped past the end) before reaching this element;
+   * the move into it is not compared.
+   */
+  afterWrap: boolean;
 }
 
 export type FocusOrderTransitionKind =
@@ -1330,8 +1335,13 @@ export interface FocusOrderCheckDetails {
   dialogs: FocusOrderDialogProbe[];
   /** Triggers within the cap that were not tried because the time budget ran out. */
   dialogsNotTried: number;
-  /** The page navigated before dialog triggers could be collected; `dialogs` is empty. */
-  dialogSearchFailed: boolean;
+  /**
+   * How the search for dialog triggers ended. Anything but 'ran' means no
+   * trigger could be collected (`dialogs` is empty).
+   */
+  dialogSearch: 'ran' | 'timeout' | 'navigated' | 'error';
+  /** First line of the error when `dialogSearch` is 'error', else null. */
+  dialogSearchError: string | null;
   aborted: { reason: 'timeout' | 'navigation'; url: string } | null;
 }
 

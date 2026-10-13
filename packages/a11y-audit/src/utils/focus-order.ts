@@ -26,6 +26,11 @@ export interface FocusOrderPoint {
   rect: PageRect;
   /** 'fixed' / 'sticky' points are not compared: Tab scrolling moves their page coordinates. */
   positioning: 'flow' | 'fixed' | 'sticky';
+  /**
+   * Focus left the page (wrapped past the end) before reaching this point; the
+   * move into it is not compared.
+   */
+  breakBefore?: boolean;
 }
 
 export interface AnalyzeFocusOrderOptions {
@@ -69,7 +74,7 @@ export function analyzeFocusOrder(
     const from = points[i];
     const to = points[i + 1];
     if (!from || !to) continue;
-    if (!isComparable(from) || !isComparable(to)) {
+    if (to.breakBefore || !isComparable(from) || !isComparable(to)) {
       skippedTransitions++;
       continue;
     }
@@ -119,6 +124,7 @@ export function analyzeFocusOrder(
     const b = points[i];
     const c = points[i + 1];
     if (!a || !b || !c) continue;
+    if (b.breakBefore || c.breakBefore) continue;
     if (!isComparable(a) || !isComparable(b) || !isComparable(c)) continue;
     const distanceIn = centerDistance(a.rect, b.rect);
     const distanceOut = centerDistance(b.rect, c.rect);

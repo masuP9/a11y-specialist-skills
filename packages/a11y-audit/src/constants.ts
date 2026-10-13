@@ -886,6 +886,12 @@ export const FOCUS_ORDER_MAX_DIALOG_TRIGGERS = 10;
 export const FOCUS_ORDER_DIALOG_SETTLE_MS = 300;
 export const FOCUS_ORDER_DIALOG_SELECTOR =
   'dialog[open], [role="dialog"], [role="alertdialog"], [aria-modal="true"]';
+/**
+ * What an `aria-controls` target may be: unlike FOCUS_ORDER_DIALOG_SELECTOR it
+ * also matches a closed native <dialog>, which has no `open` attribute yet.
+ */
+export const FOCUS_ORDER_DIALOG_TARGET_SELECTOR =
+  'dialog, [role="dialog"], [role="alertdialog"], [aria-modal="true"]';
 export const FOCUS_ORDER_DIALOG_TRIGGER_SELECTOR = [
   '[aria-haspopup="dialog"]',
   '[data-bs-toggle="modal"]',

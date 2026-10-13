@@ -148,7 +148,7 @@ const browser = await chromium.launch({
 ダイアログは、`aria-haspopup="dialog"`・`aria-controls` の先が dialog・`commandfor` + `command="show-modal"`・
 よく使われるライブラリの `data-*` を持つ開くボタンだけを試します。**ページを読み直し、開くボタンで Enter、
 閉じるために Escape（効かなければ閉じるボタン）を押す**ので、送信や遷移を兼ねるボタンはリクエストを
-飛ばしえます（`maxDialogTriggers: 0` で止められ、既定は 10 件）。モーダルを開いてもフォーカスが中へ
+飛ばしえます（CLI は常に最大 10 件を試します。関数 API なら `maxDialogTriggers: 0` でどの開くボタンも押さなくなりますが、候補の収集と件数の記録は行います）。モーダルを開いてもフォーカスが中へ
 移らない、閉じても開いたボタンへ戻らない場合を候補にします（戻す先が別でよい場合があるので `incomplete`）。
 モーダルの中の Tab の巡回は見ません。`timeBudgetMs`（既定 60 秒）と `maxTabPresses`（既定 300）を受け取ります。
 位置の分析は純粋関数 `analyzeFocusOrder(points, { viewport, direction })` として公開しています。

@@ -200,8 +200,9 @@ navigation) a node says the rest was not compared, so the rule is never
 an `aria-controls` pointing at a dialog, `commandfor` + `command="show-modal"`
 or a common library's `data-*` attribute. **It reloads the page, presses Enter
 on each trigger and Escape (or a close button) to close**, so a trigger that
-also submits or navigates can send requests (`maxDialogTriggers: 0` skips this
-part; default 10). Candidates are modals that do not move focus inside when
+also submits or navigates can send requests (the CLI always tries up to 10 triggers;
+with the function API, `maxDialogTriggers: 0` presses no trigger, though
+triggers are still collected and counted). Candidates are modals that do not move focus inside when
 opened, or do not return it to the trigger when closed (`incomplete`, since a
 different place can be right). Tab cycling inside the modal is not examined.
 It accepts `timeBudgetMs` (default 60 s) and `maxTabPresses` (default 300).

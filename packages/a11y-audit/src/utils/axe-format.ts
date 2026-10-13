@@ -1319,10 +1319,16 @@ export function normalizeFocusOrderCheck(
       ),
     );
   }
-  if (details.dialogSearchFailed) {
+  const searchProblem = {
+    ran: null,
+    navigated: 'the page navigated',
+    timeout: 'the time budget ran out',
+    error: `error: ${details.dialogSearchError}`,
+  }[details.dialogSearch];
+  if (searchProblem !== null) {
     dialogNodes.push(
       pageNode(
-        'The page navigated before dialog triggers could be collected; verify manually that modal dialogs move focus in and return it on close.',
+        `Dialog triggers could not be collected (${searchProblem}); verify manually that modal dialogs move focus in and return it on close.`,
       ),
     );
   }
@@ -1330,7 +1336,7 @@ export function normalizeFocusOrderCheck(
     buckets,
     'focus-order-dialog',
     dialogNodes,
-    details.dialogTriggersFound > 0 || details.dialogSearchFailed,
+    details.dialogTriggersFound > 0 || searchProblem !== null,
   );
 
   return buckets;

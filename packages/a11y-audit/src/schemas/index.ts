@@ -1323,6 +1323,7 @@ const FOCUS_ORDER_STOP_SCHEMA: JsonSchema = {
     'rect',
     'positioning',
     'inFrame',
+    'afterWrap',
   ],
   properties: {
     step: { type: 'number' },
@@ -1336,6 +1337,7 @@ const FOCUS_ORDER_STOP_SCHEMA: JsonSchema = {
     rect: PAGE_RECT_SCHEMA,
     positioning: { enum: ['flow', 'fixed', 'sticky'] },
     inFrame: { type: 'boolean' },
+    afterWrap: { type: 'boolean' },
   },
 };
 
@@ -1424,7 +1426,8 @@ export const FOCUS_ORDER_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
       'dialogTriggersFound',
       'dialogs',
       'dialogsNotTried',
-      'dialogSearchFailed',
+      'dialogSearch',
+      'dialogSearchError',
       'aborted',
     ],
     properties: {
@@ -1461,7 +1464,8 @@ export const FOCUS_ORDER_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
       dialogTriggersFound: { type: 'number' },
       dialogs: { type: 'array', items: FOCUS_ORDER_DIALOG_PROBE_SCHEMA },
       dialogsNotTried: { type: 'number' },
-      dialogSearchFailed: { type: 'boolean' },
+      dialogSearch: { enum: ['ran', 'timeout', 'navigated', 'error'] },
+      dialogSearchError: { type: ['string', 'null'] },
       aborted: {
         type: ['object', 'null'],
         required: ['reason', 'url'],
