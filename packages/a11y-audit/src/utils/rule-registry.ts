@@ -332,6 +332,36 @@ export const RULES = {
     classification: 'incomplete',
   },
 
+  // --- pointer-gesture-check ---
+  'pointer-gestures': {
+    id: 'a11y-skills/pointer-gestures',
+    sc: ['2.5.1'],
+    tags: ['a11y-skills', 'wcag21a', 'wcag251'],
+    impact: 'serious',
+    scope: 'node',
+    description:
+      'Ensure functions that use multipoint or path-based gestures can also be operated with a single pointer without a path',
+    help: 'Provide a single-pointer alternative (e.g. buttons) to pinch, swipe and other path-based or multipoint gestures',
+    helpUrl: `${UNDERSTANDING}/pointer-gestures.html`,
+    // Listeners and widget markup only show a gesture may be used; whether a
+    // single-pointer alternative exists, or the gesture is essential, needs a human.
+    classification: 'incomplete',
+  },
+  'dragging-movements': {
+    id: 'a11y-skills/dragging-movements',
+    sc: ['2.5.7'],
+    tags: ['a11y-skills', 'wcag22aa', 'wcag257'],
+    impact: 'serious',
+    scope: 'node',
+    description:
+      'Ensure functions that use dragging can also be operated with a single pointer without dragging',
+    help: 'Provide a single-pointer alternative (e.g. buttons or click-to-place) to drag-and-drop, sliders and sortable lists',
+    helpUrl: `${UNDERSTANDING}/dragging-movements.html`,
+    // Same reason as pointer-gestures: the alternative and the essential
+    // exception need a human.
+    classification: 'incomplete',
+  },
+
   // --- time-limit-detector ---
   'meta-refresh': {
     id: 'a11y-skills/meta-refresh',
