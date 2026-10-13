@@ -3,7 +3,11 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 0.13.0 — 2026-10-13
+
+**Heads-up** — `focus-order-check` reloads the page and presses Enter on up to
+10 likely dialog triggers (then Escape or a close button) on the live page, so
+a trigger that also submits or navigates may send requests (see README).
 
 ### Added
 
