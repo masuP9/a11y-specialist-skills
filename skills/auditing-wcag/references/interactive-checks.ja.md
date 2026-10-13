@@ -14,7 +14,7 @@
 |---|---|---|---|
 | 2.1.1 | すべての機能をキーボードのみで実行 | 操作ログ/動画 | クリック専用操作がある |
 | 2.1.2 | すべてのフォーカスを抜けられる | 操作ログ | フォーカストラップがある |
-| 2.1.4 | 文字キー単独ショートカットの無効化/再割当/フォーカス限定 | 操作ログ | ショートカットが誤発火し回避不可 |
+| 2.1.4 | 文字キー単独ショートカットの無効化/再割当/フォーカス限定 | 操作ログ + `character-key-shortcut-check` | ショートカットが誤発火し回避不可 |
 
 ### `keyboard-reachability-check` CLIチェック
 
@@ -28,6 +28,20 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks keyboard-reachabi
 - `keyboard-reachability-result.json` の `details.elements` に、全要素の到達方法（`tab` / `arrow` / `activedescendant` / `unreachable` / `not-evaluated`）が入ります。
 - コンボボックス（`role="combobox"`）と `aria-haspopup`（`true` / `menu` / `listbox` / `tree`）の要素は ArrowDown で 1 段だけ開き、中の option / menuitem / treeitem も確かめます（`details.popups`）。項目が 10 件を超えるポップアップは、最初の候補に入れる・ArrowDown で次へ移れる・ArrowUp で戻れる、の 3 点だけを確かめます（`sampled`）。キーボードで中に入れなかったポップアップは `opened-not-entered` として記録だけ残すので、人手で確認します。
 - 機能の完全性、2 段目以降のサブメニュー、Enter / Space で開くポップアップ、その他の読み込み後に表示される要素、grid / treegrid、Shadow DOM / iframe、独自ショートカットは手動で確認します。
+
+### `character-key-shortcut-check` CLIチェック
+
+`<body>` にフォーカスを置き、印字できる ASCII の 94 文字（空白を除く）を 1 文字ずつ押して、ページの移動・新しいウィンドウ・ダイアログ・フォーカスの移動・DOM の変化・スクロール・`preventDefault()` が起きたキーを報告します。
+
+```bash
+npx -y @a11y-skills/audit --url "https://example.com" --checks character-key-shortcut-check
+```
+
+- 反応したキーは常に incomplete です。止める・変える設定があるか、フォーカスがある部品の中だけで効くか（2.1.4 の例外）は人手で確認します。
+- `character-key-shortcut-result.json` の `details.listeners` に、キー入力が届く `window` / `document` / `<html>` / `<body>` の listener が入ります（Chromium のみ）。1 つも無ければキーを送らず inapplicable です。
+- **実際にキーを押す**ので、削除・送信をするショートカットのあるページでは副作用があります。関数 API の `keys` で押すキーを絞れます。
+- フォーカスが `<body>` にあるときだけ押すため、アプリ全体を包む要素の keydown や、部品にフォーカスがあるときだけ効くショートカットは見ません。手動で確認します。
+- 開き直すのは目に見える反応があったときだけなので、画面に出ない内部の状態だけを変えるキーの後は、その状態のまま次のキーを押します。後のキーの反応を見落としたり、2 回押すショートカット（`g` → `i`）の 2 つ目が単独のものとして余分に報告されたりします。疑わしいときは `keys` を 1 文字にして個別に確かめます（キーごとの開き直しは、1 回 0.6 秒以上かかり、94 キーで時間の上限を超えるため行いません）。
 
 ## フォーカス
 | 基準 | 操作 | 証跡 | Fail条件 |

@@ -14,7 +14,7 @@ Items verified by simulating user interaction with Playwright. Focus on stateful
 |---|---|---|---|
 | 2.1.1 | Complete all functions with keyboard only | logs/video | Any click-only function exists |
 | 2.1.2 | Escape all focus areas | logs | Keyboard trap exists |
-| 2.1.4 | Single-key shortcuts can be disabled/remapped or are focus-limited | logs | Shortcut triggers unexpectedly with no escape |
+| 2.1.4 | Single-key shortcuts can be disabled/remapped or are focus-limited | logs + `character-key-shortcut-check` | Shortcut triggers unexpectedly with no escape |
 
 ### `keyboard-reachability-check` CLI Check
 
@@ -28,6 +28,20 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks keyboard-reachabi
 - `details.elements` in `keyboard-reachability-result.json` records how every element was reached (`tab` / `arrow` / `activedescendant` / `unreachable` / `not-evaluated`).
 - Comboboxes (`role="combobox"`) and `aria-haspopup` (`true` / `menu` / `listbox` / `tree`) elements are opened one level with ArrowDown, and their option / menuitem / treeitem items are checked too (`details.popups`). Popups with more than 10 items are only sampled: the first item can be entered, ArrowDown moves on, ArrowUp comes back (`sampled`). Popups the keyboard could not get into are only recorded as `opened-not-entered`; verify them manually.
 - Verify manually: completeness of functions, nested submenus, popups opened with Enter / Space, other content shown after load, grid / treegrid, Shadow DOM / iframes, custom shortcuts.
+
+### `character-key-shortcut-check` CLI Check
+
+Puts focus on `<body>`, presses the 94 printable ASCII characters (space excluded) one at a time, and reports the keys that cause a navigation, a new window, a dialog, focus moving, a DOM change, scrolling or `preventDefault()`.
+
+```bash
+npx -y @a11y-skills/audit --url "https://example.com" --checks character-key-shortcut-check
+```
+
+- Keys that react are always incomplete. Verify manually whether the shortcut can be turned off or remapped, or works only while a component has focus (an exception of 2.1.4).
+- `details.listeners` in `character-key-shortcut-result.json` holds the listeners on `window` / `document` / `<html>` / `<body>`, the only objects a key event from `<body>` reaches (Chromium only). With none, no key is sent and the rule is inapplicable.
+- It **really presses keys**: pages whose shortcuts delete or submit have side effects. Narrow the keys with `keys` in the function API.
+- Keys are pressed only with focus on `<body>`, so a keydown on an app-wide wrapper and shortcuts that work only on a focused component are not seen. Verify them manually.
+- It reloads only after a visible reaction, so after a key that changes only internal state the next keys are pressed in that state: later reactions can be missed, and the second key of a two-stroke shortcut (`g` then `i`) can be reported on its own. Check a suspect key alone by passing a single key in `keys` (reloading per key is not done: it costs 0.6 s or more each and 94 keys exceed the time budget).
 
 ## Focus
 | Criterion | Action | Evidence | Fail rule |
