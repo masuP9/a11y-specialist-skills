@@ -83,6 +83,13 @@ export type {
   CaptchaCandidate,
   AccessibleAuthenticationCheckDetails,
   AccessibleAuthenticationCheckResult,
+  FocusOrderStop,
+  FocusOrderTransitionKind,
+  FocusOrderTransition,
+  FocusOrderDetour,
+  FocusOrderDialogProbe,
+  FocusOrderCheckDetails,
+  FocusOrderCheckResult,
 } from '../types.js';
 
 /** Minimal JSON Schema object shape (Draft 2020-12 compatible subset). */
@@ -1302,6 +1309,169 @@ export const ACCESSIBLE_AUTHENTICATION_CHECK_RESULT_SCHEMA: JsonSchema =
     },
   });
 
+const FOCUS_ORDER_STOP_SCHEMA: JsonSchema = {
+  type: 'object',
+  required: [
+    'step',
+    'selector',
+    'shadowHosts',
+    'tag',
+    'role',
+    'name',
+    'html',
+    'htmlTruncated',
+    'rect',
+    'positioning',
+    'inFrame',
+  ],
+  properties: {
+    step: { type: 'number' },
+    selector: { type: 'string' },
+    shadowHosts: { type: 'array', items: { type: 'string' } },
+    tag: { type: 'string' },
+    role: { type: ['string', 'null'] },
+    name: { type: 'string' },
+    html: { type: 'string' },
+    htmlTruncated: { type: 'boolean' },
+    rect: PAGE_RECT_SCHEMA,
+    positioning: { enum: ['flow', 'fixed', 'sticky'] },
+    inFrame: { type: 'boolean' },
+  },
+};
+
+const FOCUS_ORDER_TRANSITION_SCHEMA: JsonSchema = {
+  type: 'object',
+  required: ['from', 'to', 'kind', 'dx', 'dy', 'distance', 'distanceRatio'],
+  properties: {
+    from: { type: 'number' },
+    to: { type: 'number' },
+    kind: {
+      enum: ['forward', 'column-wrap', 'backward-block', 'backward-inline'],
+    },
+    dx: { type: 'number' },
+    dy: { type: 'number' },
+    distance: { type: 'number' },
+    distanceRatio: { type: 'number' },
+  },
+};
+
+const FOCUS_ORDER_DETOUR_SCHEMA: JsonSchema = {
+  type: 'object',
+  required: ['index', 'distanceIn', 'distanceOut', 'distanceAcross'],
+  properties: {
+    index: { type: 'number' },
+    distanceIn: { type: 'number' },
+    distanceOut: { type: 'number' },
+    distanceAcross: { type: 'number' },
+  },
+};
+
+const FOCUS_ORDER_DIALOG_PROBE_SCHEMA: JsonSchema = {
+  type: 'object',
+  required: [
+    'trigger',
+    'status',
+    'dialogSelector',
+    'modal',
+    'focusAfterOpen',
+    'focusAfterOpenSelector',
+    'closedBy',
+    'focusAfterClose',
+    'focusAfterCloseSelector',
+    'error',
+  ],
+  properties: {
+    trigger: {
+      type: 'object',
+      required: ['selector', 'tag', 'role', 'name', 'html', 'htmlTruncated'],
+      properties: {
+        selector: { type: 'string' },
+        tag: { type: 'string' },
+        role: { type: ['string', 'null'] },
+        name: { type: 'string' },
+        html: { type: 'string' },
+        htmlTruncated: { type: 'boolean' },
+      },
+    },
+    status: { enum: ['opened', 'not-opened', 'navigated', 'error'] },
+    dialogSelector: { type: ['string', 'null'] },
+    modal: { type: ['boolean', 'null'] },
+    focusAfterOpen: {
+      enum: ['inside', 'trigger', 'body', 'elsewhere', null],
+    },
+    focusAfterOpenSelector: { type: ['string', 'null'] },
+    closedBy: { enum: ['escape', 'close-button', null] },
+    focusAfterClose: { enum: ['trigger', 'body', 'elsewhere', null] },
+    focusAfterCloseSelector: { type: ['string', 'null'] },
+    error: { type: ['string', 'null'] },
+  },
+};
+
+export const FOCUS_ORDER_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
+  id: 'focus-order-check-result',
+  title: 'FocusOrderCheckResult',
+  source: 'focus-order-check',
+  details: {
+    type: 'object',
+    required: [
+      'viewport',
+      'direction',
+      'stops',
+      'transitions',
+      'skippedTransitions',
+      'detours',
+      'tabWalk',
+      'dialogTriggersFound',
+      'dialogs',
+      'dialogsNotTried',
+      'aborted',
+    ],
+    properties: {
+      viewport: {
+        type: 'object',
+        required: ['width', 'height'],
+        properties: {
+          width: { type: 'number' },
+          height: { type: 'number' },
+        },
+      },
+      direction: { enum: ['ltr', 'rtl'] },
+      stops: { type: 'array', items: FOCUS_ORDER_STOP_SCHEMA },
+      transitions: { type: 'array', items: FOCUS_ORDER_TRANSITION_SCHEMA },
+      skippedTransitions: { type: 'number' },
+      detours: { type: 'array', items: FOCUS_ORDER_DETOUR_SCHEMA },
+      tabWalk: {
+        type: 'object',
+        required: [
+          'presses',
+          'ended',
+          'capped',
+          'focusableCount',
+          'frameCount',
+        ],
+        properties: {
+          presses: { type: 'number' },
+          ended: { enum: ['cycle', 'tab-limit', 'timeout', 'navigation'] },
+          capped: { type: 'boolean' },
+          focusableCount: { type: 'number' },
+          frameCount: { type: 'number' },
+        },
+      },
+      dialogTriggersFound: { type: 'number' },
+      dialogs: { type: 'array', items: FOCUS_ORDER_DIALOG_PROBE_SCHEMA },
+      dialogsNotTried: { type: 'number' },
+      aborted: {
+        type: ['object', 'null'],
+        required: ['reason', 'url'],
+        properties: {
+          reason: { enum: ['timeout', 'navigation'] },
+          url: { type: 'string' },
+        },
+      },
+    },
+  },
+});
+
 /** All result schemas keyed by check id. */
 export const RESULT_SCHEMAS = {
   'axe-audit': AXE_AUDIT_RESULT_SCHEMA,
@@ -1321,4 +1491,5 @@ export const RESULT_SCHEMAS = {
   'change-on-input-check': CHANGE_ON_INPUT_CHECK_RESULT_SCHEMA,
   'accessible-authentication-check':
     ACCESSIBLE_AUTHENTICATION_CHECK_RESULT_SCHEMA,
+  'focus-order-check': FOCUS_ORDER_CHECK_RESULT_SCHEMA,
 } as const;
