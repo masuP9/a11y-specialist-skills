@@ -1330,6 +1330,8 @@ export interface FocusOrderCheckDetails {
   dialogs: FocusOrderDialogProbe[];
   /** Triggers within the cap that were not tried because the time budget ran out. */
   dialogsNotTried: number;
+  /** The page navigated before dialog triggers could be collected; `dialogs` is empty. */
+  dialogSearchFailed: boolean;
   aborted: { reason: 'timeout' | 'navigation'; url: string } | null;
 }
 

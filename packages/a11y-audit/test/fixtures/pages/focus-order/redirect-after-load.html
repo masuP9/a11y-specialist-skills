@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <!--
+    Intent: the first load is normal; the second load (the dialog phase reloads
+    the page) redirects away at once.
+    Expected: no exception, 2 stops, dialogSearchFailed === true;
+    focus-order-dialog is incomplete with a page node.
+  -->
+  <head>
+    <meta charset="utf-8" />
+    <title>Redirect after load</title>
+    <script>
+      const loads = Number(sessionStorage.getItem('loads') || '0') + 1;
+      sessionStorage.setItem('loads', String(loads));
+      if (loads >= 2) location.replace('none.html');
+    </script>
+  </head>
+  <body>
+    <a href="#a">One</a>
+    <a href="#b">Two</a>
+  </body>
+</html>

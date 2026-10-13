@@ -664,12 +664,24 @@ export async function runFocusOrderCheck(
     // --- B. Dialogs ---------------------------------------------------------
     const dialogs: FocusOrderDialogProbe[] = [];
     let dialogsNotTried = 0;
-    await gotoAndSettle(page, targetUrl);
-    const allTriggers = await page.evaluate(collectDialogTriggers, {
-      triggerSelector: FOCUS_ORDER_DIALOG_TRIGGER_SELECTOR,
-      dialogSelector: FOCUS_ORDER_DIALOG_SELECTOR,
-      snippetMax: HTML_SNIPPET_MAX_LENGTH,
-    });
+    let allTriggers: DialogTrigger[] = [];
+    let dialogSearchFailed = false;
+    try {
+      await gotoAndSettle(page, targetUrl);
+      if (page.url() !== startUrl)
+        throw new Error('Execution context was destroyed');
+      allTriggers = await page.evaluate(collectDialogTriggers, {
+        triggerSelector: FOCUS_ORDER_DIALOG_TRIGGER_SELECTOR,
+        dialogSelector: FOCUS_ORDER_DIALOG_SELECTOR,
+        snippetMax: HTML_SNIPPET_MAX_LENGTH,
+      });
+    } catch (error) {
+      // A page that navigates away after load (script redirect) must not lose
+      // the Tab-walk result; other errors still fail the check.
+      if (!NAVIGATION_ERROR.test(firstLine(error))) throw error;
+      dialogSearchFailed = true;
+      aborted ??= { reason: 'navigation', url: page.url() };
+    }
     const triggers = allTriggers.slice(0, maxDialogTriggers);
 
     for (const [index, trigger] of triggers.entries()) {
@@ -721,6 +733,7 @@ export async function runFocusOrderCheck(
       dialogTriggersFound: allTriggers.length,
       dialogs,
       dialogsNotTried,
+      dialogSearchFailed,
       aborted,
     };
     const result = buildAuditResult({

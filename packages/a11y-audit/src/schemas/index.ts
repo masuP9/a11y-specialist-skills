@@ -1424,6 +1424,7 @@ export const FOCUS_ORDER_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
       'dialogTriggersFound',
       'dialogs',
       'dialogsNotTried',
+      'dialogSearchFailed',
       'aborted',
     ],
     properties: {
@@ -1460,6 +1461,7 @@ export const FOCUS_ORDER_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
       dialogTriggersFound: { type: 'number' },
       dialogs: { type: 'array', items: FOCUS_ORDER_DIALOG_PROBE_SCHEMA },
       dialogsNotTried: { type: 'number' },
+      dialogSearchFailed: { type: 'boolean' },
       aborted: {
         type: ['object', 'null'],
         required: ['reason', 'url'],

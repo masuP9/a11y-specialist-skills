@@ -816,6 +816,7 @@ test('focus-order-check envelope with stops, every transition kind, a detour, di
       },
     ],
     dialogsNotTried: 0,
+    dialogSearchFailed: false,
     aborted: { reason: 'timeout', url: 'about:blank' },
   };
   const result = buildAuditResult({
@@ -845,6 +846,7 @@ test('focus-order-check envelope without an abort validates against its schema',
     dialogTriggersFound: 0,
     dialogs: [],
     dialogsNotTried: 0,
+    dialogSearchFailed: false,
     aborted: null,
   };
   const result = buildAuditResult({

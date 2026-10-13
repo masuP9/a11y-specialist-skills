@@ -359,7 +359,7 @@ test.describe('Dialogs', () => {
     page,
     browser,
   }, testInfo) => {
-    const { details, bucketOf, nodesOf } = await run(
+    const { result, details, bucketOf, nodesOf } = await run(
       'dialog-mixed.html',
       baseUrl,
       { page, browser, testInfo },
@@ -368,10 +368,32 @@ test.describe('Dialogs', () => {
       'opened',
       'not-opened',
     ]);
+    expect(result.summary.checkedNodes).toBe(
+      details.stops.length + details.dialogs.length,
+    );
     expect(bucketOf(DIALOG)).toBe('incomplete');
     expect(nodesOf(DIALOG)).toHaveLength(1);
     expect(nodesOf(DIALOG)[0]?.failureSummary).toContain(
       'Enter did not open a dialog',
+    );
+  });
+
+  test('ダイアログ探索の再読み込みで遷移するページは、例外にせず Tab の結果を残して incomplete になる', async ({
+    baseUrl,
+    page,
+    browser,
+  }, testInfo) => {
+    const { details, bucketOf, nodesOf } = await run(
+      'redirect-after-load.html',
+      baseUrl,
+      { page, browser, testInfo },
+    );
+    expect(details.stops).toHaveLength(2);
+    expect(details.dialogSearchFailed).toBe(true);
+    expect(details.dialogs).toEqual([]);
+    expect(bucketOf(DIALOG)).toBe('incomplete');
+    expect(nodesOf(DIALOG)[0]?.failureSummary).toContain(
+      'The page navigated before dialog triggers could be collected',
     );
   });
 

@@ -1182,6 +1182,7 @@ export function normalizeFocusOrderCheck(
 ): NormalizedBuckets {
   const buckets = emptyBuckets();
   const { stops, tabWalk } = details;
+  buckets.checkedNodes = stops.length + details.dialogs.length;
 
   const stopNode = (stop: FocusOrderStop, summary: string): NormalizedNode =>
     toNode(
@@ -1318,11 +1319,18 @@ export function normalizeFocusOrderCheck(
       ),
     );
   }
+  if (details.dialogSearchFailed) {
+    dialogNodes.push(
+      pageNode(
+        'The page navigated before dialog triggers could be collected; verify manually that modal dialogs move focus in and return it on close.',
+      ),
+    );
+  }
   bucketize(
     buckets,
     'focus-order-dialog',
     dialogNodes,
-    details.dialogTriggersFound > 0,
+    details.dialogTriggersFound > 0 || details.dialogSearchFailed,
   );
 
   return buckets;
