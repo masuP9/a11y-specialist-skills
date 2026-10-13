@@ -70,6 +70,7 @@ export {
   normalizeMotionActuationCheck,
   normalizeNonTextContrastCheck,
   normalizeOrientationCheck,
+  normalizePointerCancellationCheck,
   normalizePointerGestureCheck,
   normalizeRedundantEntryCheck,
   normalizeReflowCheck,

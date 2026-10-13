@@ -1,0 +1,24 @@
+<!doctype html>
+<!--
+  A custom button focuses itself on mousedown, as many widgets do.
+  It also has a click listener, so it is not a press-only listener.
+  Expected: no findings (focus moving to the pressed element is not a
+  function); rule: passes.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Focus self</title>
+  </head>
+  <body>
+    <div role="button" tabindex="0" id="f">Focus me</div>
+    <script>
+      const button = document.getElementById('f');
+      button.addEventListener('mousedown', function () {
+        this.focus();
+      });
+      // A click listener keeps the button from being a press-only listener.
+      button.addEventListener('click', () => {});
+    </script>
+  </body>
+</html>

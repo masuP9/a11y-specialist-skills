@@ -9,6 +9,7 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import {
   buildAuditResult,
   normalizeAccessibleAuthenticationCheck,
+  normalizePointerCancellationCheck,
   normalizePointerGestureCheck,
   normalizeAxeResults,
   normalizeChangeOnInputCheck,
@@ -24,6 +25,7 @@ import {
 } from '../dist/index.js';
 import type {
   AccessibleAuthenticationCheckDetails,
+  PointerCancellationCheckDetails,
   PointerGestureCheckDetails,
   ChangeOnInputCheckDetails,
   FocusCheckDetails,
@@ -950,6 +952,104 @@ test('focus-order-check envelope without an abort validates against its schema',
     buckets: normalizeFocusOrderCheck(details),
   });
   expectValid('focus-order-check', result);
+});
+
+test('pointer-cancellation-check envelope with every change kind, a press-only listener, a page listener and an abort validates against its schema', () => {
+  const target = {
+    selector: '#go',
+    shadowHosts: ['#host'],
+    html: '<button id="go">Go</button>',
+    htmlTruncated: false,
+    tagName: 'button',
+    role: null,
+    sources: ['listener' as const, 'interactive' as const],
+    listeners: { press: ['mousedown'], release: [] },
+    pressListener: {
+      scriptId: '7',
+      lineNumber: 3,
+      columnNumber: 4,
+      handlerPreview: 'function onPress() {}',
+    },
+  };
+  const details: PointerCancellationCheckDetails = {
+    listenerInspection: 'cdp',
+    inspectionError: null,
+    listenerNodesTruncated: false,
+    domObservation: 'used',
+    targetsFound: 3,
+    targetsTested: 2,
+    findings: [
+      {
+        target,
+        kind: 'activated-on-press',
+        dispatched: ['pointerdown', 'mousedown'],
+        changes: [
+          { kind: 'navigation', toUrl: 'about:blank' },
+          { kind: 'new-window', url: 'about:blank' },
+          { kind: 'focus-moved', toSelector: '#next' },
+          { kind: 'dialog', dialogType: 'alert', message: 'x' },
+          {
+            kind: 'dom',
+            addedNodes: 1,
+            removedNodes: 0,
+            textChanges: 2,
+            attributes: ['aria-expanded'],
+          },
+        ],
+      },
+      {
+        target: { ...target, selector: '#s' },
+        kind: 'press-only-listener',
+        dispatched: ['pointerdown', 'mousedown'],
+        changes: [],
+      },
+    ],
+    untested: [{ target, reason: 'handler-timeout' }],
+    pageListeners: [
+      {
+        target: 'document',
+        type: 'mousedown',
+        scriptId: '9',
+        lineNumber: 0,
+        columnNumber: 0,
+        handlerPreview: null,
+      },
+    ],
+    delegationRootCount: 1,
+    restarts: 1,
+    aborted: { reason: 'timeout', testedCount: 2, foundCount: 3 },
+  };
+  const result = buildAuditResult({
+    source: 'pointer-cancellation-check',
+    url: 'about:blank',
+    details,
+    buckets: normalizePointerCancellationCheck(details),
+  });
+  expectValid('pointer-cancellation-check', result);
+});
+
+test('pointer-cancellation-check envelope for an unsupported browser validates against its schema', () => {
+  const details: PointerCancellationCheckDetails = {
+    listenerInspection: 'unsupported',
+    inspectionError: null,
+    listenerNodesTruncated: false,
+    domObservation: 'used',
+    targetsFound: 1,
+    targetsTested: 1,
+    findings: [],
+    untested: [],
+    pageListeners: [],
+    delegationRootCount: 0,
+    restarts: 0,
+    aborted: null,
+  };
+  const result = buildAuditResult({
+    source: 'pointer-cancellation-check',
+    url: 'about:blank',
+    details,
+    buckets: normalizePointerCancellationCheck(details),
+  });
+  expectValid('pointer-cancellation-check', result);
 });
 
 function nonTextContrastDetails(color: string): NonTextContrastCheckDetails {

@@ -362,6 +362,22 @@ export const RULES = {
     classification: 'incomplete',
   },
 
+  // --- pointer-cancellation-check ---
+  'pointer-cancellation': {
+    id: 'a11y-skills/pointer-cancellation',
+    sc: ['2.5.2'],
+    tags: ['a11y-skills', 'wcag21a', 'wcag252'],
+    impact: 'serious',
+    scope: 'node',
+    description:
+      'Ensure functions operated with a single pointer are not completed on the down-event, or can be aborted or undone',
+    help: 'Complete the function on the up-event (e.g. click), or let users abort or undo it, unless completing on the down-event is essential',
+    helpUrl: `${UNDERSTANDING}/pointer-cancellation.html`,
+    // Pressing shows what reacts to the down-event; whether it can be aborted or
+    // undone, or reacting on the down-event is essential, needs a human.
+    classification: 'incomplete',
+  },
+
   // --- time-limit-detector ---
   'meta-refresh': {
     id: 'a11y-skills/meta-refresh',

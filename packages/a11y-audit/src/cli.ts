@@ -3,7 +3,7 @@
  * @a11y-skills/audit CLI
  *
  * Runs WCAG 2.2 accessibility checks against a URL without needing a
- * Playwright test runner. All 18 checks are available via --checks.
+ * Playwright test runner. All 20 checks are available via --checks.
  *
  * Exit codes:
  *   0 — completed, no violations found across all checks
@@ -274,6 +274,19 @@ const CHECK_REGISTRY: CheckEntry[] = [
       const { runFocusOrderCheck } =
         await import('./playwright/runFocusOrderCheck.js');
       return (await runFocusOrderCheck({
+        browser,
+        targetUrl: url,
+        outputDir,
+      })) as AuditResultEnvelope;
+    },
+  },
+  {
+    name: 'pointer-cancellation-check',
+    kind: 'browser',
+    async run({ browser, outputDir, url }) {
+      const { runPointerCancellationCheck } =
+        await import('./playwright/runPointerCancellationCheck.js');
+      return (await runPointerCancellationCheck({
         browser,
         targetUrl: url,
         outputDir,

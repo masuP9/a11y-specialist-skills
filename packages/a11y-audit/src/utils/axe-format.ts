@@ -40,6 +40,9 @@ import type {
   NormalizedNode,
   NormalizedRuleResult,
   OrientationCheckDetails,
+  PointerCancellationChange,
+  PointerCancellationCheckDetails,
+  PointerCancellationTarget,
   PointerGestureCheckDetails,
   PointerGestureCriterion,
   PointerGestureSignal,
@@ -59,6 +62,7 @@ import {
   NON_TEXT_CONTRAST_MAX_COMPONENTS,
   NON_TEXT_CONTRAST_MAX_ICON_PARTS,
   POINTER_GESTURE_CRITERIA_BY_SIGNAL,
+  POINTER_GESTURE_DELEGATION_MIN_TYPES,
   POINTER_GESTURE_MAX_CANDIDATES,
   POINTER_GESTURE_MAX_LISTENER_NODES,
 } from '../constants.js';
@@ -1003,6 +1007,144 @@ export function normalizePointerGestureCheck(
 
     bucketize(buckets, key, nodes, nodes.length > 0);
   }
+
+  return buckets;
+}
+
+const POINTER_CANCELLATION_VERIFY =
+  'Verify that the function completes on the up-event, or can be aborted (e.g. by moving the pointer away before release) or undone, unless completing on the down-event is essential.';
+
+function describePointerCancellationChange(
+  change: PointerCancellationChange,
+): string {
+  switch (change.kind) {
+    case 'navigation':
+      return `navigation to ${change.toUrl}`;
+    case 'new-window':
+      return `a new window (${change.url})`;
+    case 'focus-moved':
+      return `focus moving to ${change.toSelector}`;
+    case 'dialog':
+      return `a ${change.dialogType} dialog ("${change.message}")`;
+    case 'dom':
+      return `DOM changes (${change.addedNodes} added, ${change.removedNodes} removed, ${change.textChanges} text, attributes: ${change.attributes.join(', ') || 'none'})`;
+  }
+}
+
+/**
+ * Findings and untested targets become incomplete nodes (whether the function
+ * can be aborted or undone, or the down-event is essential, needs a human).
+ * Page nodes keep a partial or blind run from being reported as a pass.
+ */
+export function normalizePointerCancellationCheck(
+  details: PointerCancellationCheckDetails,
+): NormalizedBuckets {
+  const buckets = emptyBuckets();
+  buckets.checkedNodes = details.targetsTested;
+
+  const nodes: NormalizedNode[] = [];
+  const withScopedTarget = (
+    target: PointerCancellationTarget,
+    summary: string,
+  ): NormalizedNode => {
+    const node = toNode(target, summary);
+    // Qualify with the shadow hosts so equal ids in different roots stay apart.
+    node.target = [...target.shadowHosts, target.selector];
+    return node;
+  };
+
+  for (const { target, kind, dispatched, changes } of details.findings) {
+    if (kind === 'activated-on-press') {
+      const caused = changes.map(describePointerCancellationChange).join(', ');
+      nodes.push(
+        withScopedTarget(
+          target,
+          `Pressing it (${dispatched.join(' + ')}, not released) caused ${caused}. ${POINTER_CANCELLATION_VERIFY}`,
+        ),
+      );
+      continue;
+    }
+    const at = target.pressListener
+      ? ` at script ${target.pressListener.scriptId}, line ${target.pressListener.lineNumber + 1}:${target.pressListener.columnNumber + 1}`
+      : '';
+    nodes.push(
+      withScopedTarget(
+        target,
+        `Has ${(target.listeners?.press ?? []).join(' / ')} listener(s)${at} but no pointerup / mouseup / touchend / click listener on the element itself; pressing it caused no visible change. ${POINTER_CANCELLATION_VERIFY}`,
+      ),
+    );
+  }
+
+  for (const { target, reason } of details.untested) {
+    nodes.push(
+      withScopedTarget(
+        target,
+        `Could not be pressed or observed (${reason}). Check manually whether pressing it completes a function on the down-event.`,
+      ),
+    );
+  }
+
+  if (details.aborted) {
+    const { reason, testedCount, foundCount } = details.aborted;
+    nodes.push(
+      pageNode(
+        `Stopped early (${reason}): ${testedCount} of ${foundCount} targets were pressed. Check the rest manually.`,
+      ),
+    );
+  }
+  if (
+    details.domObservation === 'ignored-background-activity' &&
+    details.targetsTested > 0
+  ) {
+    nodes.push(
+      pageNode(
+        'The page changed on its own before any press, so DOM changes after a press were not used (navigation, new windows, dialogs and focus moves still were). Check press behaviour manually.',
+      ),
+    );
+  }
+  if (details.listenerInspection !== 'cdp') {
+    const why = details.inspectionError ? `: ${details.inspectionError}` : '';
+    const chromium =
+      details.listenerInspection === 'unsupported'
+        ? ' CDP is only available in Chromium.'
+        : '';
+    nodes.push(
+      pageNode(
+        `Event listeners could not be inspected (${details.listenerInspection}${why}).${chromium} Elements with only a press listener and no interactive role or inline handler were not pressed, and press-only listeners were not reported; check them manually.`,
+      ),
+    );
+  }
+  if (details.delegationRootCount > 0) {
+    nodes.push(
+      pageNode(
+        `${details.delegationRootCount} delegation root(s) (listeners for ${POINTER_GESTURE_DELEGATION_MIN_TYPES} or more event types) were found; press handlers dispatched through them cannot be attributed to elements, and elements without an interactive role or inline handler were not pressed. Check press behaviour manually.`,
+      ),
+    );
+  }
+  for (const listener of details.pageListeners) {
+    const preview = listener.handlerPreview
+      ? `: ${listener.handlerPreview}`
+      : '';
+    nodes.push(
+      pageNode(
+        `${listener.target} has a "${listener.type}" listener (script ${listener.scriptId}, line ${listener.lineNumber + 1}:${listener.columnNumber + 1})${preview}. It may complete functions for elements through delegation; ${POINTER_CANCELLATION_VERIFY}`,
+      ),
+    );
+  }
+  if (details.listenerNodesTruncated) {
+    nodes.push(
+      pageNode(
+        `Press listeners were found on more than ${POINTER_GESTURE_MAX_LISTENER_NODES} elements; elements beyond that were not examined. Check press behaviour manually.`,
+      ),
+    );
+  }
+
+  bucketize(
+    buckets,
+    'pointer-cancellation',
+    nodes,
+    nodes.length > 0 || details.targetsTested > 0,
+  );
 
   return buckets;
 }

@@ -1655,6 +1655,178 @@ export const FOCUS_ORDER_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
   },
 });
 
+const POINTER_CANCELLATION_LISTENER_LOCATION_SCHEMA: JsonSchema = {
+  type: ['object', 'null'],
+  required: ['scriptId', 'lineNumber', 'columnNumber', 'handlerPreview'],
+  properties: POINTER_GESTURE_LISTENER_LOCATION_PROPERTIES,
+};
+
+const POINTER_CANCELLATION_TARGET_SCHEMA: JsonSchema = {
+  type: 'object',
+  required: [
+    'selector',
+    'shadowHosts',
+    'html',
+    'htmlTruncated',
+    'tagName',
+    'role',
+    'sources',
+    'listeners',
+    'pressListener',
+  ],
+  properties: {
+    selector: { type: 'string' },
+    shadowHosts: { type: 'array', items: { type: 'string' } },
+    html: { type: 'string' },
+    htmlTruncated: { type: 'boolean' },
+    tagName: { type: 'string' },
+    role: { type: ['string', 'null'] },
+    sources: {
+      type: 'array',
+      items: { enum: ['listener', 'inline-handler', 'interactive'] },
+    },
+    listeners: {
+      type: ['object', 'null'],
+      required: ['press', 'release'],
+      properties: {
+        press: { type: 'array', items: { type: 'string' } },
+        release: { type: 'array', items: { type: 'string' } },
+      },
+    },
+    pressListener: POINTER_CANCELLATION_LISTENER_LOCATION_SCHEMA,
+  },
+};
+
+// A DOM change joins the four context changes; INPUT_CONTEXT_CHANGE_SCHEMA is shared and stays as is.
+const POINTER_CANCELLATION_CHANGE_SCHEMA: JsonSchema = {
+  oneOf: [
+    INPUT_CONTEXT_CHANGE_SCHEMA,
+    {
+      type: 'object',
+      required: [
+        'kind',
+        'addedNodes',
+        'removedNodes',
+        'textChanges',
+        'attributes',
+      ],
+      properties: {
+        kind: { const: 'dom' },
+        addedNodes: { type: 'integer' },
+        removedNodes: { type: 'integer' },
+        textChanges: { type: 'integer' },
+        attributes: { type: 'array', items: { type: 'string' } },
+      },
+    },
+  ],
+};
+
+export const POINTER_CANCELLATION_CHECK_RESULT_SCHEMA: JsonSchema =
+  buildEnvelopeSchema({
+    id: 'pointer-cancellation-check-result',
+    title: 'PointerCancellationCheckResult',
+    source: 'pointer-cancellation-check',
+    details: {
+      type: 'object',
+      required: [
+        'listenerInspection',
+        'inspectionError',
+        'listenerNodesTruncated',
+        'domObservation',
+        'targetsFound',
+        'targetsTested',
+        'findings',
+        'untested',
+        'pageListeners',
+        'delegationRootCount',
+        'restarts',
+        'aborted',
+      ],
+      properties: {
+        listenerInspection: {
+          type: 'string',
+          enum: ['cdp', 'unsupported', 'failed'],
+        },
+        inspectionError: { type: ['string', 'null'] },
+        listenerNodesTruncated: { type: 'boolean' },
+        domObservation: {
+          type: 'string',
+          enum: ['used', 'ignored-background-activity'],
+        },
+        targetsFound: { type: 'integer' },
+        targetsTested: { type: 'integer' },
+        findings: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['target', 'kind', 'dispatched', 'changes'],
+            properties: {
+              target: POINTER_CANCELLATION_TARGET_SCHEMA,
+              kind: {
+                type: 'string',
+                enum: ['activated-on-press', 'press-only-listener'],
+              },
+              dispatched: { type: 'array', items: { type: 'string' } },
+              changes: {
+                type: 'array',
+                items: POINTER_CANCELLATION_CHANGE_SCHEMA,
+              },
+            },
+          },
+        },
+        untested: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['target', 'reason'],
+            properties: {
+              target: POINTER_CANCELLATION_TARGET_SCHEMA,
+              reason: { type: 'string' },
+            },
+          },
+        },
+        pageListeners: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: [
+              'target',
+              'type',
+              'scriptId',
+              'lineNumber',
+              'columnNumber',
+              'handlerPreview',
+            ],
+            properties: {
+              target: { type: 'string', enum: ['window', 'document'] },
+              type: { type: 'string' },
+              ...POINTER_GESTURE_LISTENER_LOCATION_PROPERTIES,
+            },
+          },
+        },
+        delegationRootCount: { type: 'integer' },
+        restarts: { type: 'integer' },
+        aborted: {
+          type: ['object', 'null'],
+          required: ['reason', 'testedCount', 'foundCount'],
+          properties: {
+            reason: {
+              type: 'string',
+              enum: [
+                'timeout',
+                'target-limit',
+                'restart-limit',
+                'unresponsive',
+              ],
+            },
+            testedCount: { type: 'integer' },
+            foundCount: { type: 'integer' },
+          },
+        },
+      },
+    },
+  });
+
 const NON_TEXT_CONTRAST_HEX_COLOR_SCHEMA: JsonSchema = {
   type: 'string',
   pattern: '^#[0-9a-f]{6}$',
@@ -1787,5 +1959,6 @@ export const RESULT_SCHEMAS = {
     ACCESSIBLE_AUTHENTICATION_CHECK_RESULT_SCHEMA,
   'pointer-gesture-check': POINTER_GESTURE_CHECK_RESULT_SCHEMA,
   'focus-order-check': FOCUS_ORDER_CHECK_RESULT_SCHEMA,
+  'pointer-cancellation-check': POINTER_CANCELLATION_CHECK_RESULT_SCHEMA,
   'non-text-contrast-check': NON_TEXT_CONTRAST_CHECK_RESULT_SCHEMA,
 } as const;

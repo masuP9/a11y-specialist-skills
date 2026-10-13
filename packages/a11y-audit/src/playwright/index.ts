@@ -80,6 +80,10 @@ export {
   type RunFocusOrderCheckOptions,
 } from './runFocusOrderCheck.js';
 export {
+  runPointerCancellationCheck,
+  type RunPointerCancellationCheckOptions,
+} from './runPointerCancellationCheck.js';
+export {
   runNonTextContrastCheck,
   type RunNonTextContrastCheckOptions,
 } from './runNonTextContrastCheck.js';

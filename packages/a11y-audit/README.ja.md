@@ -3,7 +3,7 @@
 Playwright + axe-core ベースの WCAG 2.2 アクセシビリティ検査関数。
 
 本パッケージは [`auditing-wcag`](https://github.com/masuP9/a11y-specialist-skills)
-Claude Code skill から機能本体を切り出したものです。19 個の検査を関数として提供し、
+Claude Code skill から機能本体を切り出したものです。20 個の検査を関数として提供し、
 すぐ実行できる Playwright 用の互換 test entry も同梱します。
 
 > **English: see [README.md](./README.md).**
@@ -32,12 +32,13 @@ Claude Code skill から機能本体を切り出したものです。19 個の�
 | `runAccessibleAuthenticationCheck` | 3.3.8 アクセシブルな認証（貼り付けの禁止・autocomplete の off・CAPTCHA らしき要素。候補として報告） |
 | `runPointerGestureCheck` | 2.5.1 ポインタのジェスチャ / 2.5.7 ドラッグ動作（ドラッグ・スワイプ・複数の指で動きそうな部品。候補として報告） |
 | `runFocusOrderCheck` | 2.4.3 フォーカス順序（Tab の順と見た目の並びのずれ・モーダルのフォーカス。候補として報告） |
+| `runPointerCancellationCheck` | 2.5.2 ポインタのキャンセル（押し下げだけで動く部品。候補として報告） |
 | `runNonTextContrastCheck` | 1.4.11 非テキストのコントラスト（入力欄などの枠・塗り、アイコンだけのボタンのアイコン。候補として報告） |
 
 多くの検査は遷移済みの `page` を受けます。一部は navigation を所有し `targetUrl`
 （または `TEST_PAGE`）を受けます: `runOrientationCheck` と `runTimeLimitDetector`
 （`runZoomCheck` は URL 指定時）。`runFocusIndicatorCheck`・
-`runKeyboardReachabilityCheck`・`runChangeOnInputCheck`・`runFocusOrderCheck` は `browser` を受けます。
+`runKeyboardReachabilityCheck`・`runChangeOnInputCheck`・`runFocusOrderCheck`・`runPointerCancellationCheck` は `browser` を受けます。
 `runAutoPlayDetection` は optional 依存 `pixelmatch` + `pngjs` が必要です（インストール参照）。
 
 `runRedundantEntryCheck`（3.3.7、`a11y-skills/redundant-entry`）は遷移済みの `page` を受けます。
@@ -160,6 +161,24 @@ const browser = await chromium.launch({
 `allElements.filter(r => r.tabStep !== null && r.frame === null)` を `tabStep` 順に並べ、各要素に
 `positioning: 'flow'` を補って渡せます（fixed / sticky を区別できないぶん、誤検出が増えます）。
 
+`runPointerCancellationCheck`（2.5.2、`a11y-skills/pointer-cancellation`）は `browser` を受けて自前の
+context を作り、ページが移動したら新しい context でやり直して試した要素を飛ばします。操作できる要素
+（押す listener を持つもの・インラインの `onpointerdown` などを持つもの・ボタンやリンクなど。文書と open
+shadow root の中）に、押し下げのイベント（`pointerdown` と `mousedown`）だけを**合成して送り**、離しません。
+ページの移動・新しいウィンドウ・ダイアログ・フォーカスの移動（押した要素自身へのものを除く）・DOM の変化
+（`style` 属性を除く）が起きた要素を `activated-on-press`、押す listener だけを持ち（離す・クリックの
+listener が要素自身に無く）変化も見えなかった要素を `press-only-listener` として、どちらも `incomplete` の
+候補にします。離したときに実行されるか、途中でやめられるか、取り消せるか、押し下げでの実行が必須かは人が
+確かめます。何もしなくても DOM が変わるページでは DOM の変化を根拠にせず（`details.domObservation`）、
+戻らない handler は 1 ステップ 5 秒で打ち切って context ごと閉じ、その要素を未検査として `incomplete` に
+します。**合成イベントなのでページのスクリプトが動きます**——押し下げで送信や保存をするページでは実際に
+実行されえます（`isTrusted` を確かめる処理には反応されません。`touchstart` は送りません）。listener は CDP で
+取り出すので **Chromium のみ**で、それ以外では listener の根拠が付かず、手で確かめる node を付けます。
+20 種類以上の listener を持つ委譲先の要素があるとき、`window` / `document` に押す listener があるときも、
+要素に帰属できず、役割やインラインの属性を持たない要素は押していないので、ページ単位の「手で確かめて」node を
+付けて `incomplete` にします（`details.delegationRootCount`・`details.pageListeners`）。
+iframe の中・closed shadow root は見ません。押すのは 100 要素まで、予算は 60 秒（`timeBudgetMs`）です。
+
 `runNonTextContrastCheck`（1.4.11、`a11y-skills/non-text-contrast-boundary` と
 `a11y-skills/non-text-contrast-icon`）は遷移済みの `page` を受けます。計算済みスタイルから、
 入力欄・`textarea`・`select`・チェックボックス・ラジオ・スイッチの**枠と塗り**が外側の色と持つ比と、
@@ -251,6 +270,7 @@ change-on-input-check
 accessible-authentication-check
 pointer-gesture-check
 focus-order-check
+pointer-cancellation-check
 non-text-contrast-check
 ```
 
@@ -505,6 +525,7 @@ import "@a11y-skills/audit/test-entries/target-size-check";
 // autocomplete-audit, time-limit-detector, auto-play-detection,
 // redundant-entry-check, motion-actuation-check, change-on-input-check,
 // accessible-authentication-check, pointer-gesture-check, focus-order-check,
+// pointer-cancellation-check
 // non-text-contrast-check
 import "@a11y-skills/audit/test-entries/text-spacing-check";
 ```

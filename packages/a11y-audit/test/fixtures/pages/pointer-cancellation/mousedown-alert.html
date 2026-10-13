@@ -1,0 +1,20 @@
+<!doctype html>
+<!--
+  A button shows an alert on mousedown.
+  Expected: one activated-on-press finding whose changes include a dialog
+  (alert, "x"). Rule: incomplete.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Mousedown alert</title>
+  </head>
+  <body>
+    <button type="button" id="a">Alert</button>
+    <script>
+      document.getElementById('a').addEventListener('mousedown', () => {
+        alert('x');
+      });
+    </script>
+  </body>
+</html>

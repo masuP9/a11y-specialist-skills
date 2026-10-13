@@ -1,0 +1,55 @@
+<!doctype html>
+<!--
+  A framework-style root holds listeners for many event types and acts on
+  pointerdown for any descendant with data-action.
+  Expected: the root is a delegation root (delegationRootCount 1) and is not
+  pressed for its own listeners; the button #d is pressed as an interactive
+  element and is an activated-on-press finding (sources ['interactive']).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Delegated</title>
+  </head>
+  <body>
+    <div id="root">
+      <button type="button" id="d" data-action>Act</button>
+    </div>
+    <script>
+      const root = document.getElementById('root');
+      const types = [
+        'click',
+        'dblclick',
+        'keydown',
+        'keyup',
+        'keypress',
+        'focusin',
+        'focusout',
+        'input',
+        'change',
+        'submit',
+        'wheel',
+        'contextmenu',
+        'dragstart',
+        'dragend',
+        'dragover',
+        'drop',
+        'touchend',
+        'touchmove',
+        'pointerup',
+        'pointermove',
+        'pointerover',
+        'pointerout',
+        'mouseup',
+        'mousemove',
+        'mouseover',
+      ];
+      for (const type of types) root.addEventListener(type, () => {});
+      root.addEventListener('pointerdown', (event) => {
+        if (event.target.closest('[data-action]')) {
+          root.append(document.createElement('p'));
+        }
+      });
+    </script>
+  </body>
+</html>

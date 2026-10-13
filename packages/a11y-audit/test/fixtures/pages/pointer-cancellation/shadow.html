@@ -1,0 +1,24 @@
+<!doctype html>
+<!--
+  A button inside an open shadow root adds an element on mousedown.
+  Expected: one activated-on-press finding with target.shadowHosts ['#host']
+  and selector '#b'.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Shadow</title>
+  </head>
+  <body>
+    <div id="host"></div>
+    <script>
+      const root = document
+        .getElementById('host')
+        .attachShadow({ mode: 'open' });
+      root.innerHTML = '<button type="button" id="b">Shadow</button>';
+      root.getElementById('b').addEventListener('mousedown', () => {
+        root.append(document.createElement('p'));
+      });
+    </script>
+  </body>
+</html>

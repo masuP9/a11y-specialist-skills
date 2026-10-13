@@ -1,0 +1,29 @@
+<!doctype html>
+<!--
+  A button does nothing on pointerdown, acts on click, and shows an alert when
+  it receives pointercancel (which the check sends after observing a press).
+  The next button reacts to click only.
+  Expected: no finding for #cd (the dialog belongs to the cancel, not the
+  press) and none for #next; both are tested; rule: passes.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Cancel dialog</title>
+  </head>
+  <body>
+    <button type="button" id="cd">Cancel dialog</button>
+    <button type="button" id="next">Next</button>
+    <script>
+      const button = document.getElementById('cd');
+      button.addEventListener('pointerdown', () => {});
+      button.addEventListener('click', () => {
+        document.body.append(document.createElement('p'));
+      });
+      button.addEventListener('pointercancel', () => {
+        alert('cancelled');
+      });
+      document.getElementById('next').addEventListener('click', () => {});
+    </script>
+  </body>
+</html>

@@ -37,6 +37,7 @@ export type CheckSource =
   | 'accessible-authentication-check'
   | 'pointer-gesture-check'
   | 'focus-order-check'
+  | 'pointer-cancellation-check'
   | 'non-text-contrast-check';
 
 export type NormalizedImpact = 'critical' | 'serious' | 'moderate' | 'minor';
@@ -1460,6 +1461,110 @@ export interface FocusOrderCheckDetails {
 }
 
 export type FocusOrderCheckResult = AuditCheckResult<FocusOrderCheckDetails>;
+
+// =============================================================================
+// pointer-cancellation-check (WCAG 2.5.2)
+// =============================================================================
+
+export type PointerCancellationTargetSource =
+  | 'listener'
+  | 'inline-handler'
+  | 'interactive';
+
+export interface PointerCancellationTarget {
+  /**
+   * Unique within the element's own scope: the document, or the shadow root it
+   * is in. Resolve it after the hosts in `shadowHosts`.
+   */
+  selector: string;
+  /** Open shadow hosts above the element, outermost first; [] outside shadow DOM. Same convention as PointerGestureCandidate.shadowHosts. */
+  shadowHosts: string[];
+  html: string;
+  htmlTruncated: boolean;
+  tagName: string;
+  role: string | null;
+  /** Why the element was pressed, in ['listener', 'inline-handler', 'interactive'] order. */
+  sources: PointerCancellationTargetSource[];
+  /**
+   * Listener types on the element itself, in constant order; null when
+   * listeners were not inspected (listenerInspection !== 'cdp') or the element
+   * was not resolved through CDP.
+   */
+  listeners: { press: string[]; release: string[] } | null;
+  /** First press listener on the element itself; null when there is none or listeners were not inspected. */
+  pressListener: PointerGestureListenerLocation | null;
+}
+
+export type PointerCancellationChange =
+  | InputContextChange
+  | {
+      kind: 'dom';
+      addedNodes: number;
+      removedNodes: number;
+      textChanges: number;
+      /** Names of changed attributes (style excluded), unique, at most POINTER_CANCELLATION_MAX_ATTRIBUTES. */
+      attributes: string[];
+    };
+
+export interface PointerCancellationFinding {
+  target: PointerCancellationTarget;
+  kind: 'activated-on-press' | 'press-only-listener';
+  /** Events sent: ['pointerdown', 'mousedown'], or ['pointerdown'] when it was cancelled. */
+  dispatched: string[];
+  /** Empty for 'press-only-listener'. */
+  changes: PointerCancellationChange[];
+}
+
+export interface PointerCancellationPageListener extends PointerGestureListenerLocation {
+  target: 'window' | 'document';
+  type: string;
+}
+
+export interface PointerCancellationCheckDetails {
+  /**
+   * 'failed': CDP was available but inspection threw or timed out on at least
+   * one page load (a failure on a restart is not hidden by an earlier success).
+   * 'cdp' only when every load was inspected. Same values as PointerGestureCheckDetails.
+   */
+  listenerInspection: 'cdp' | 'unsupported' | 'failed';
+  /** First failure: 'timeout' or the error's first line (200 chars); null when not failed. */
+  inspectionError: string | null;
+  /**
+   * True when, on some load, more than POINTER_GESTURE_MAX_LISTENER_NODES nodes
+   * had press listeners; the rest were neither pressed for that reason nor
+   * checked for press-only listeners.
+   */
+  listenerNodesTruncated: boolean;
+  /** 'ignored-background-activity' when the page changed on its own before any press. */
+  domObservation: 'used' | 'ignored-background-activity';
+  /** Targets found on the first load. */
+  targetsFound: number;
+  /** Targets pressed and observed (with or without a change). */
+  targetsTested: number;
+  findings: PointerCancellationFinding[];
+  /**
+   * Targets that could not be pressed or observed: 'element-gone',
+   * 'handler-timeout' (a handler did not return within stepTimeoutMs; the
+   * context was closed and the check restarted), or the error's first line.
+   */
+  untested: { target: PointerCancellationTarget; reason: string }[];
+  pageListeners: PointerCancellationPageListener[];
+  delegationRootCount: number;
+  restarts: number;
+  aborted: {
+    /**
+     * 'unresponsive': the page did not answer within stepTimeoutMs while
+     * collecting targets or watching the page before the first press, or a
+     * hung page could not be closed within stepTimeoutMs.
+     */
+    reason: 'timeout' | 'target-limit' | 'restart-limit' | 'unresponsive';
+    testedCount: number;
+    foundCount: number;
+  } | null;
+}
+
+export type PointerCancellationCheckResult =
+  AuditCheckResult<PointerCancellationCheckDetails>;
 
 // --- non-text-contrast-check (WCAG 1.4.11) ---
 

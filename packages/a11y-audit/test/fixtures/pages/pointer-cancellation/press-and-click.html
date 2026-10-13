@@ -1,0 +1,23 @@
+<!doctype html>
+<!--
+  A button has a mousedown listener that does nothing and a click listener that
+  acts. Pressing alone changes nothing, and the click listener means the press
+  is not a press-only listener.
+  Expected: no findings; rule: passes.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Press and click</title>
+  </head>
+  <body>
+    <div id="pc" role="button">Press</div>
+    <script>
+      const button = document.getElementById('pc');
+      button.addEventListener('mousedown', () => {});
+      button.addEventListener('click', () => {
+        document.body.append(document.createElement('p'));
+      });
+    </script>
+  </body>
+</html>

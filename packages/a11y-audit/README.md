@@ -4,7 +4,7 @@ Playwright + axe-core based WCAG 2.2 accessibility audit functions.
 
 This package is the functional core extracted from the
 [`auditing-wcag`](https://github.com/masuP9/a11y-specialist-skills) Claude Code
-skill. It ships 19 checks as plain functions plus ready-to-run Playwright
+skill. It ships 20 checks as plain functions plus ready-to-run Playwright
 test entries.
 
 > **日本語版は [README.ja.md](./README.ja.md) を参照してください。**
@@ -33,12 +33,13 @@ test entries.
 | `runAccessibleAuthenticationCheck` | 3.3.8 Accessible Authentication (paste blocking, autocomplete="off", CAPTCHA-like elements, reported as candidates) |
 | `runPointerGestureCheck` | 2.5.1 Pointer Gestures / 2.5.7 Dragging Movements (components likely operated by dragging, swiping or multiple fingers, reported as candidates) |
 | `runFocusOrderCheck` | 2.4.3 Focus Order (Tab order vs. visual order, focus in modal dialogs, reported as candidates) |
+| `runPointerCancellationCheck` | 2.5.2 Pointer Cancellation (components that act on the down-event alone, reported as candidates) |
 | `runNonTextContrastCheck` | 1.4.11 Non-text Contrast (border / fill of inputs and similar, icons in icon-only buttons, reported as candidates) |
 
 Most checks take an already-navigated `page`. A few own navigation and take a
 `targetUrl` instead (or `TEST_PAGE`): `runOrientationCheck` and
 `runTimeLimitDetector` (and `runZoomCheck` when a URL is given).
-`runFocusIndicatorCheck`, `runKeyboardReachabilityCheck`, `runChangeOnInputCheck` and `runFocusOrderCheck` take a `browser`. `runAutoPlayDetection` needs the
+`runFocusIndicatorCheck`, `runKeyboardReachabilityCheck`, `runChangeOnInputCheck`, `runFocusOrderCheck` and `runPointerCancellationCheck` take a `browser`. `runAutoPlayDetection` needs the
 optional `pixelmatch` + `pngjs` deps (see Install).
 
 `runRedundantEntryCheck` (3.3.7, `a11y-skills/redundant-entry`) takes an
@@ -217,6 +218,34 @@ The position analysis is exported as the pure function
 `tabStep`, each with `positioning: 'flow'` added (fixed / sticky cannot be told
 apart, so false positives increase).
 
+`runPointerCancellationCheck` (2.5.2, `a11y-skills/pointer-cancellation`) takes
+a `browser`, creates its own contexts, and when a press navigates the page it
+restarts in a fresh context and skips the elements already tried. To each
+operable element (those with a press listener, those with an inline
+`onpointerdown` etc., and buttons, links and the like, in the document and open
+shadow roots) it **dispatches synthetic** down-events only (`pointerdown`, then
+`mousedown`) and never releases. An element where a navigation, new window,
+dialog, focus move (other than to the pressed element itself) or DOM change
+(excluding the `style` attribute) follows is an `activated-on-press` candidate;
+one that has only a press listener (no release or click listener on the element
+itself) and showed no visible change is a `press-only-listener` candidate. Both
+are `incomplete`; a human checks whether the function runs on release, can be
+aborted or undone, or whether the down-event is essential. On a page that
+changes its DOM on its own, DOM changes are not used as evidence
+(`details.domObservation`); a handler that never returns is cut off after 5 s
+per step, the context is closed and the element is reported as untested
+(`incomplete`). **Because the events are dispatched, page scripts run**: a page
+that submits or saves on the down-event may really do so (handlers that check
+`isTrusted` do not react, and `touchstart` is not sent). Listeners are read
+through CDP, so this is **Chromium only**; elsewhere there is no listener
+evidence and a manual-check node is added. Delegation roots (listeners for 20
+or more event types) and press listeners on `window` / `document` cannot be
+attributed to elements, and elements without an interactive role or inline
+handler are not pressed, so each adds a page-level manual-check node and makes
+the rule `incomplete` (`details.delegationRootCount`, `details.pageListeners`).
+Elements in iframes and closed shadow roots are not examined. At most 100 elements are pressed, within a 60 s
+budget (`timeBudgetMs`).
+
 `runNonTextContrastCheck` (1.4.11, `a11y-skills/non-text-contrast-boundary` and
 `a11y-skills/non-text-contrast-icon`) takes a navigated `page`. From computed
 styles it measures the contrast of the **border and fill** of inputs,
@@ -277,7 +306,7 @@ npm install -D pixelmatch pngjs   # only if you use runAutoPlayDetection
 
 ## CLI
 
-Run all 19 checks against a URL with a single command — no test runner needed.
+Run all 20 checks against a URL with a single command — no test runner needed.
 
 ```sh
 npx -y @a11y-skills/audit --url https://example.com
@@ -322,6 +351,7 @@ change-on-input-check
 accessible-authentication-check
 pointer-gesture-check
 focus-order-check
+pointer-cancellation-check
 non-text-contrast-check
 ```
 
@@ -611,6 +641,7 @@ import "@a11y-skills/audit/test-entries/target-size-check";
 // autocomplete-audit, time-limit-detector, auto-play-detection,
 // redundant-entry-check, motion-actuation-check, change-on-input-check,
 // accessible-authentication-check, pointer-gesture-check, focus-order-check,
+// pointer-cancellation-check
 // non-text-contrast-check
 import "@a11y-skills/audit/test-entries/text-spacing-check";
 ```
