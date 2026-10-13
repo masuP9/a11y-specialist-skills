@@ -550,6 +550,22 @@ export const RULES = {
     helpUrl: `${UNDERSTANDING}/non-text-contrast.html`,
     classification: 'incomplete',
   },
+
+  // --- character-key-shortcut-check ---
+  'character-key-shortcut': {
+    id: 'a11y-skills/character-key-shortcut',
+    sc: ['2.1.4'],
+    tags: ['a11y-skills', 'wcag21a', 'wcag214'],
+    impact: 'serious',
+    scope: 'page',
+    description:
+      'Ensure single character key shortcuts can be turned off, remapped, or are active only on focus',
+    help: 'Let users turn off or remap single-key shortcuts, or limit them to when the component has focus',
+    helpUrl: `${UNDERSTANDING}/character-key-shortcuts.html`,
+    // A key that reacts can be observed, but whether the shortcut can be turned
+    // off or remapped, or is active only while a component has focus, needs a human.
+    classification: 'incomplete',
+  },
 } as const satisfies Record<string, RuleMeta>;
 
 export type RuleKey = keyof typeof RULES;

@@ -1035,3 +1035,46 @@ export const NON_TEXT_CONTRAST_MAX_COMPONENTS = 300;
 export const NON_TEXT_CONTRAST_MAX_ICON_PARTS = 20;
 export const DEFAULT_NON_TEXT_CONTRAST_RESULT_FILE =
   'non-text-contrast-result.json';
+
+// ---------------------------------------------------------------------------
+// character-key-shortcut-check (WCAG 2.1.4)
+// ---------------------------------------------------------------------------
+
+/** Events a single-character shortcut is bound to. */
+export const CHARACTER_KEY_EVENT_TYPES = [
+  'keydown',
+  'keypress',
+  'keyup',
+] as const;
+/**
+ * Keys pressed one at a time with focus on <body>: printable ASCII except
+ * space (letters, digits, punctuation and symbols; `?` and other shifted
+ * symbols are included because they produce a single character).
+ */
+export const CHARACTER_KEY_SHORTCUT_KEYS: readonly string[] = Array.from(
+  { length: 0x7e - 0x21 + 1 },
+  (_, i) => String.fromCharCode(0x21 + i),
+);
+/**
+ * Keys that need Shift on a US layout (A-Z and the shifted symbols). They are
+ * sent as `Shift+<key>` so that `e.shiftKey` is set and `e.code` is that of the
+ * physical key (`?` -> Slash).
+ */
+export const CHARACTER_KEY_SHIFTED_KEYS: ReadonlySet<string> = new Set(
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ~!@#$%^&*()_+{}|:"<>?',
+);
+/** Wait after each key for a reaction to surface. */
+export const CHARACTER_KEY_SHORTCUT_SETTLE_MS = 100;
+export const CHARACTER_KEY_SHORTCUT_TIMEOUT_MS = 60_000;
+/** Reloads after a key caused a change, before giving up on the remaining keys. */
+export const CHARACTER_KEY_SHORTCUT_MAX_RELOADS = 30;
+/** Same idea as MOTION_MUTATION_MARGIN: DOM changes must clearly exceed the page's own. */
+export const CHARACTER_KEY_MUTATION_MARGIN = 3;
+/**
+ * Windows of `settleMs` measured with no key pressed; the largest count is the
+ * baseline (about a second at the default), so a page that changes only every
+ * so often is still seen.
+ */
+export const CHARACTER_KEY_BASELINE_WINDOWS = 10;
+export const DEFAULT_CHARACTER_KEY_SHORTCUT_RESULT_FILE =
+  'character-key-shortcut-result.json';

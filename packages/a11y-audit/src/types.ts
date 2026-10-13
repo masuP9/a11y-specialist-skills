@@ -38,7 +38,8 @@ export type CheckSource =
   | 'pointer-gesture-check'
   | 'focus-order-check'
   | 'pointer-cancellation-check'
-  | 'non-text-contrast-check';
+  | 'non-text-contrast-check'
+  | 'character-key-shortcut-check';
 
 export type NormalizedImpact = 'critical' | 'serious' | 'moderate' | 'minor';
 
@@ -1643,3 +1644,63 @@ export interface NonTextContrastCheckDetails {
 
 export type NonTextContrastCheckResult =
   AuditCheckResult<NonTextContrastCheckDetails>;
+
+// =============================================================================
+// Character Key Shortcut Check (WCAG 2.1.4)
+// =============================================================================
+
+export type CharacterKeyEventType = 'keydown' | 'keypress' | 'keyup';
+
+export interface CharacterKeyListener {
+  /** Where the listener is; key events from <body> reach only these four. */
+  target: 'window' | 'document' | 'html' | 'body';
+  type: CharacterKeyEventType;
+  useCapture: boolean;
+  passive: boolean;
+  once: boolean;
+  scriptId: string;
+  /** 0-based, as CDP reports them. */
+  lineNumber: number;
+  columnNumber: number;
+  handlerPreview: string | null;
+}
+
+export type CharacterKeyReaction =
+  | { kind: 'navigation'; toUrl: string }
+  | { kind: 'new-window'; url: string }
+  | { kind: 'dialog'; dialogType: string; message: string }
+  | { kind: 'focus-moved'; toSelector: string }
+  | { kind: 'dom-change'; mutations: number }
+  | { kind: 'scroll'; dx: number; dy: number }
+  | { kind: 'default-prevented' };
+
+export interface CharacterKeyResult {
+  key: string;
+  reactions: CharacterKeyReaction[];
+}
+
+export interface CharacterKeyShortcutCheckDetails {
+  /** 'unsupported' outside Chromium: keys are pressed without knowing the listeners. */
+  listenerInspection: 'cdp' | 'unsupported';
+  listeners: CharacterKeyListener[];
+  /** 'skipped-no-listeners': CDP found no key listener that a key pressed on <body> can reach. */
+  keyProbe: 'ran' | 'skipped-no-listeners';
+  /** Keys pressed, in order. */
+  keysTried: string[];
+  /** Keys that caused at least one reaction, in the order pressed. */
+  reacted: CharacterKeyResult[];
+  untested: {
+    key: string;
+    reason: 'timeout' | 'reload-limit' | 'reload-failed' | 'focus-not-on-body';
+  }[];
+  /** DOM changes over `settleMs` with no key pressed; null when keys were not sent. */
+  baselineDomMutations: number | null;
+  reloads: number;
+  aborted: {
+    reason: 'timeout' | 'reload-limit' | 'reload-failed';
+    url: string;
+  } | null;
+}
+
+export type CharacterKeyShortcutCheckResult =
+  AuditCheckResult<CharacterKeyShortcutCheckDetails>;

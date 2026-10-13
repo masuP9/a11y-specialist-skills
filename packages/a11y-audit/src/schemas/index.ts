@@ -105,6 +105,12 @@ export type {
   NonTextContrastComponent,
   NonTextContrastCheckDetails,
   NonTextContrastCheckResult,
+  CharacterKeyEventType,
+  CharacterKeyListener,
+  CharacterKeyReaction,
+  CharacterKeyResult,
+  CharacterKeyShortcutCheckDetails,
+  CharacterKeyShortcutCheckResult,
 } from '../types.js';
 
 /** Minimal JSON Schema object shape (Draft 2020-12 compatible subset). */
@@ -1938,6 +1944,168 @@ export const NON_TEXT_CONTRAST_CHECK_RESULT_SCHEMA: JsonSchema =
     },
   });
 
+const CHARACTER_KEY_REACTION_SCHEMA: JsonSchema = {
+  oneOf: [
+    {
+      type: 'object',
+      required: ['kind', 'toUrl'],
+      properties: { kind: { const: 'navigation' }, toUrl: { type: 'string' } },
+    },
+    {
+      type: 'object',
+      required: ['kind', 'url'],
+      properties: { kind: { const: 'new-window' }, url: { type: 'string' } },
+    },
+    {
+      type: 'object',
+      required: ['kind', 'dialogType', 'message'],
+      properties: {
+        kind: { const: 'dialog' },
+        dialogType: { type: 'string' },
+        message: { type: 'string' },
+      },
+    },
+    {
+      type: 'object',
+      required: ['kind', 'toSelector'],
+      properties: {
+        kind: { const: 'focus-moved' },
+        toSelector: { type: 'string' },
+      },
+    },
+    {
+      type: 'object',
+      required: ['kind', 'mutations'],
+      properties: {
+        kind: { const: 'dom-change' },
+        mutations: { type: 'integer' },
+      },
+    },
+    {
+      type: 'object',
+      required: ['kind', 'dx', 'dy'],
+      properties: {
+        kind: { const: 'scroll' },
+        dx: { type: 'number' },
+        dy: { type: 'number' },
+      },
+    },
+    {
+      type: 'object',
+      required: ['kind'],
+      properties: { kind: { const: 'default-prevented' } },
+    },
+  ],
+};
+
+export const CHARACTER_KEY_SHORTCUT_CHECK_RESULT_SCHEMA: JsonSchema =
+  buildEnvelopeSchema({
+    id: 'character-key-shortcut-check-result',
+    title: 'CharacterKeyShortcutCheckResult',
+    source: 'character-key-shortcut-check',
+    details: {
+      type: 'object',
+      required: [
+        'listenerInspection',
+        'listeners',
+        'keyProbe',
+        'keysTried',
+        'reacted',
+        'untested',
+        'baselineDomMutations',
+        'reloads',
+        'aborted',
+      ],
+      properties: {
+        listenerInspection: { type: 'string', enum: ['cdp', 'unsupported'] },
+        listeners: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: [
+              'target',
+              'type',
+              'useCapture',
+              'passive',
+              'once',
+              'scriptId',
+              'lineNumber',
+              'columnNumber',
+              'handlerPreview',
+            ],
+            properties: {
+              target: {
+                type: 'string',
+                enum: ['window', 'document', 'html', 'body'],
+              },
+              type: { type: 'string', enum: ['keydown', 'keypress', 'keyup'] },
+              useCapture: { type: 'boolean' },
+              passive: { type: 'boolean' },
+              once: { type: 'boolean' },
+              scriptId: { type: 'string' },
+              lineNumber: { type: 'integer' },
+              columnNumber: { type: 'integer' },
+              handlerPreview: { type: ['string', 'null'] },
+            },
+          },
+        },
+        keyProbe: { type: 'string', enum: ['ran', 'skipped-no-listeners'] },
+        keysTried: { type: 'array', items: { type: 'string' } },
+        reacted: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['key', 'reactions'],
+            properties: {
+              key: { type: 'string' },
+              reactions: {
+                type: 'array',
+                items: CHARACTER_KEY_REACTION_SCHEMA,
+              },
+            },
+          },
+        },
+        untested: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['key', 'reason'],
+            properties: {
+              key: { type: 'string' },
+              reason: {
+                type: 'string',
+                enum: [
+                  'timeout',
+                  'reload-limit',
+                  'reload-failed',
+                  'focus-not-on-body',
+                ],
+              },
+            },
+          },
+        },
+        baselineDomMutations: { type: ['integer', 'null'] },
+        reloads: { type: 'integer' },
+        aborted: {
+          oneOf: [
+            { type: 'null' },
+            {
+              type: 'object',
+              required: ['reason', 'url'],
+              properties: {
+                reason: {
+                  type: 'string',
+                  enum: ['timeout', 'reload-limit', 'reload-failed'],
+                },
+                url: { type: 'string' },
+              },
+            },
+          ],
+        },
+      },
+    },
+  });
+
 /** All result schemas keyed by check id. */
 export const RESULT_SCHEMAS = {
   'axe-audit': AXE_AUDIT_RESULT_SCHEMA,
@@ -1961,4 +2129,5 @@ export const RESULT_SCHEMAS = {
   'focus-order-check': FOCUS_ORDER_CHECK_RESULT_SCHEMA,
   'pointer-cancellation-check': POINTER_CANCELLATION_CHECK_RESULT_SCHEMA,
   'non-text-contrast-check': NON_TEXT_CONTRAST_CHECK_RESULT_SCHEMA,
+  'character-key-shortcut-check': CHARACTER_KEY_SHORTCUT_CHECK_RESULT_SCHEMA,
 } as const;
