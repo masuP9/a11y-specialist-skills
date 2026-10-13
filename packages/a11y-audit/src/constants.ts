@@ -973,3 +973,37 @@ export const FOCUS_ORDER_DIALOG_CLOSE_SELECTOR =
 export const FOCUS_ORDER_DIALOG_CLOSE_NAME_PATTERN =
   /^(close|dismiss|cancel|×|✕|x|閉じる|キャンセル)$/i;
 export const DEFAULT_FOCUS_ORDER_RESULT_FILE = 'focus-order-result.json';
+
+// =============================================================================
+// pointer-cancellation-check (WCAG 2.5.2)
+// =============================================================================
+
+/** WCAG 2.5.2: wait after a press for a change to surface. */
+export const POINTER_CANCELLATION_SETTLE_MS = 300;
+/** Wall-clock budget for the whole check. */
+export const POINTER_CANCELLATION_TIMEOUT_MS = 60_000;
+/** Minimum time to watch the page for changes of its own before the first press. */
+export const POINTER_CANCELLATION_BACKGROUND_MS = 1_000;
+export const POINTER_CANCELLATION_MAX_TARGETS = 100;
+export const POINTER_CANCELLATION_MAX_RESTARTS = 10;
+/** Listener inspection (window, document, subtree, node collection) per page load. */
+export const POINTER_CANCELLATION_INSPECTION_TIMEOUT_MS = 15_000;
+/**
+ * Upper bound for each in-page step (startPress / endPress / collectTargets)
+ * and for closing a context: a page handler that never returns must not stall
+ * the check.
+ */
+export const POINTER_CANCELLATION_STEP_TIMEOUT_MS = 5_000;
+/** A listener of one of these types on the element means the press may complete on release. */
+export const POINTER_CANCELLATION_RELEASE_TYPES = [
+  'pointerup',
+  'mouseup',
+  'touchend',
+  'click',
+] as const;
+/** Elements that are pressed even without a press listener of their own (delegated handlers). */
+export const POINTER_CANCELLATION_TARGET_SELECTOR =
+  'a[href], area[href], button, summary, input[type="button"], input[type="submit"], input[type="reset"], input[type="image"], input[type="checkbox"], input[type="radio"], [role="button"], [role="link"], [role="tab"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"], [role="checkbox"], [role="radio"], [role="switch"], [role="treeitem"], [onclick], [onmousedown], [onpointerdown], [ontouchstart]';
+export const POINTER_CANCELLATION_MAX_ATTRIBUTES = 10;
+export const DEFAULT_POINTER_CANCELLATION_RESULT_FILE =
+  'pointer-cancellation-result.json';
