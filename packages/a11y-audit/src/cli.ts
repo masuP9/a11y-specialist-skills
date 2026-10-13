@@ -255,6 +255,18 @@ const CHECK_REGISTRY: CheckEntry[] = [
       })) as AuditResultEnvelope;
     },
   },
+  {
+    name: 'pointer-gesture-check',
+    kind: 'page',
+    async run({ page, outputDir }) {
+      const { runPointerGestureCheck } =
+        await import('./playwright/runPointerGestureCheck.js');
+      return (await runPointerGestureCheck({
+        page,
+        outputDir,
+      })) as AuditResultEnvelope;
+    },
+  },
 ];
 
 // ---------------------------------------------------------------------------

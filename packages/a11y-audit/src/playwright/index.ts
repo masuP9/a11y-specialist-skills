@@ -71,6 +71,10 @@ export {
   runAccessibleAuthenticationCheck,
   type RunAccessibleAuthenticationCheckOptions,
 } from './runAccessibleAuthenticationCheck.js';
+export {
+  runPointerGestureCheck,
+  type RunPointerGestureCheckOptions,
+} from './runPointerGestureCheck.js';
 
 export {
   resolveOutputPath,
