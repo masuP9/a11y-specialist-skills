@@ -1,0 +1,38 @@
+<!doctype html>
+<!--
+  Intent: a white button whose SVG has 21 black rects (more than the 20-element limit).
+  Expected: undetermined, reason too-many-icon-parts.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Many icon parts</title>
+  </head>
+  <body>
+    <button aria-label="Grid" style="background: #fff; border: 0">
+      <svg viewBox="0 0 70 10" width="140" height="20">
+        <rect x="0" width="2" height="10" fill="#000" />
+        <rect x="3" width="2" height="10" fill="#000" />
+        <rect x="6" width="2" height="10" fill="#000" />
+        <rect x="9" width="2" height="10" fill="#000" />
+        <rect x="12" width="2" height="10" fill="#000" />
+        <rect x="15" width="2" height="10" fill="#000" />
+        <rect x="18" width="2" height="10" fill="#000" />
+        <rect x="21" width="2" height="10" fill="#000" />
+        <rect x="24" width="2" height="10" fill="#000" />
+        <rect x="27" width="2" height="10" fill="#000" />
+        <rect x="30" width="2" height="10" fill="#000" />
+        <rect x="33" width="2" height="10" fill="#000" />
+        <rect x="36" width="2" height="10" fill="#000" />
+        <rect x="39" width="2" height="10" fill="#000" />
+        <rect x="42" width="2" height="10" fill="#000" />
+        <rect x="45" width="2" height="10" fill="#000" />
+        <rect x="48" width="2" height="10" fill="#000" />
+        <rect x="51" width="2" height="10" fill="#000" />
+        <rect x="54" width="2" height="10" fill="#000" />
+        <rect x="57" width="2" height="10" fill="#000" />
+        <rect x="60" width="2" height="10" fill="#000" />
+      </svg>
+    </button>
+  </body>
+</html>

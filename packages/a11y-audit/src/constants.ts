@@ -1007,3 +1007,31 @@ export const POINTER_CANCELLATION_TARGET_SELECTOR =
 export const POINTER_CANCELLATION_MAX_ATTRIBUTES = 10;
 export const DEFAULT_POINTER_CANCELLATION_RESULT_FILE =
   'pointer-cancellation-result.json';
+
+// ---------------------------------------------------------------------------
+// Non-text contrast (WCAG 1.4.11)
+// ---------------------------------------------------------------------------
+/** WCAG 1.4.11: minimum contrast ratio for UI component boundaries and icons. */
+export const NON_TEXT_CONTRAST_MIN_RATIO = 3;
+export const NON_TEXT_CONTRAST_SELECTOR =
+  'input, textarea, select, button, [role="switch"], [role="checkbox"], [role="radio"], [role="textbox"], [role="searchbox"], [role="combobox"], [role="button"]';
+export const NON_TEXT_CONTRAST_TEXT_INPUT_TYPES: readonly string[] = [
+  'text',
+  'email',
+  'password',
+  'search',
+  'tel',
+  'url',
+  'number',
+  'date',
+  'datetime-local',
+  'month',
+  'time',
+  'week',
+];
+/** Components measured per page; the rest are counted in componentCounts.found only. */
+export const NON_TEXT_CONTRAST_MAX_COMPONENTS = 300;
+/** Elements inside one icon-only button that are examined for icon colors. */
+export const NON_TEXT_CONTRAST_MAX_ICON_PARTS = 20;
+export const DEFAULT_NON_TEXT_CONTRAST_RESULT_FILE =
+  'non-text-contrast-result.json';

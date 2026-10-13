@@ -1,0 +1,25 @@
+<!doctype html>
+<!--
+  Intent: a text-less button whose only icon is a ::before with empty content and a CSS background image.
+  Expected: icon-button status undetermined, reason image-icon; the icon rule is incomplete.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Pseudo-element background image icon</title>
+    <style>
+      .i::before {
+        content: '';
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        background-image: url('data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7');
+      }
+    </style>
+  </head>
+  <body>
+    <button aria-label="Settings" style="background: #fff; border: 0">
+      <span class="i"></span>
+    </button>
+  </body>
+</html>

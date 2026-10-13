@@ -128,5 +128,6 @@ npx -y @a11y-skills/audit --url "https://example.com" --output-dir ./results
 | `pointer-gesture-check` | 2.5.1, 2.5.7 | ドラッグ・スワイプ・複数の指の操作で動きそうな部品（候補。要確認） |
 | `focus-order-check` | 2.4.3 | Tab の順と見た目の並びのずれ（上へ戻る・行内で逆向き・遠回り）、モーダルを開いたときと閉じたときのフォーカス（候補。要確認） |
 | `pointer-cancellation-check` | 2.5.2 | 押し下げただけで動く部品（ページの移動・新しいウィンドウ・ダイアログ・DOM の変化）と、押す listener だけを持つ要素（候補。要確認） |
+| `non-text-contrast-check` | 1.4.11 | 入力欄・チェックボックス・ラジオ・スイッチの枠や塗りと外側の色の比、アイコンだけのボタンのアイコンの比（3:1 未満と測れないものを候補に。要確認） |
 
 詳細は [`@a11y-skills/audit` README](https://www.npmjs.com/package/@a11y-skills/audit) を参照してください。

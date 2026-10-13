@@ -1,0 +1,15 @@
+<!doctype html>
+<!--
+  Intent: the border is written in oklch(); the computed style keeps that syntax, so the color
+  must be converted through a canvas.
+  Expected: status pass.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>oklch border</title>
+  </head>
+  <body>
+    <input aria-label="Name" style="border: 2px solid oklch(0.4 0 0)" />
+  </body>
+</html>

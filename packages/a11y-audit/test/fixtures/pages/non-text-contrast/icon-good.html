@@ -1,0 +1,23 @@
+<!doctype html>
+<!--
+  Intent: an icon-only button whose SVG stroke follows currentColor (#333) on white.
+  Expected: icon-button status pass; icon rule passes.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Good icon</title>
+  </head>
+  <body>
+    <button aria-label="Close" style="background: #fff; border: 0; color: #333">
+      <svg viewBox="0 0 10 10" width="20" height="20">
+        <path
+          d="M0 0L10 10"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        />
+      </svg>
+    </button>
+  </body>
+</html>

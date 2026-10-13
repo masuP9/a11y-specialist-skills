@@ -1,0 +1,16 @@
+<!doctype html>
+<!--
+  Intent: a default native checkbox inside an almost transparent wrapper; the ancestor opacity changes how it looks.
+  Expected: status undetermined, reason opacity (not user-agent).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Native checkbox under opacity</title>
+  </head>
+  <body>
+    <div style="opacity: 0.1">
+      <input type="checkbox" aria-label="Agree" />
+    </div>
+  </body>
+</html>

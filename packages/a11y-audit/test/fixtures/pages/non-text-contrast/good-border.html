@@ -1,0 +1,24 @@
+<!doctype html>
+<!--
+  Intent: a text field with a #767676 border and a custom checkbox (appearance none) with a #595959 border.
+  Expected: both components pass; boundary rule passes.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Good borders</title>
+  </head>
+  <body>
+    <input aria-label="Name" style="border: 1px solid #767676" />
+    <input
+      type="checkbox"
+      aria-label="Agree"
+      style="
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #595959;
+      "
+    />
+  </body>
+</html>

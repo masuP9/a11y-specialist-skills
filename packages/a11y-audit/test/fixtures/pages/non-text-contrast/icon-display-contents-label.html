@@ -1,0 +1,20 @@
+<!doctype html>
+<!--
+  Intent: a button with a faint SVG icon and a visible text label wrapped in a display: contents span
+  (the wrapper has no box of its own, but its text is drawn).
+  Expected: not an icon button (no component); the icon rule is inapplicable.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Label in a display contents wrapper</title>
+  </head>
+  <body>
+    <button style="background: #fff; border: 0">
+      <svg viewBox="0 0 10 10" width="20" height="20">
+        <path d="M0 0L10 10" fill="none" stroke="#ccc" stroke-width="2" />
+      </svg>
+      <span style="display: contents">Close</span>
+    </button>
+  </body>
+</html>

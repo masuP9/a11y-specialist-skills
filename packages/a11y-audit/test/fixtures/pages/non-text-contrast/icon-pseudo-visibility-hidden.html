@@ -1,0 +1,27 @@
+<!doctype html>
+<!--
+  Intent: a white button with a visible faint (#ccc) SVG icon and a ::before glyph that is visibility: hidden.
+  The hidden glyph is not drawn, so it must not be measured.
+  Expected: icon-button status low (not mixed-icon-colors).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Hidden pseudo-element glyph</title>
+    <style>
+      .i::before {
+        content: '\2715';
+        color: #000;
+        visibility: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <button aria-label="Close" style="background: #fff; border: 0">
+      <svg viewBox="0 0 10 10" width="20" height="20">
+        <path d="M0 0L10 10" fill="none" stroke="#ccc" stroke-width="2" />
+      </svg>
+      <span class="i"></span>
+    </button>
+  </body>
+</html>

@@ -29,6 +29,30 @@ adheres to [Semantic Versioning](https://semver.org/).
   influence a later one; changes after 300 ms are missed; listeners need
   Chromium; iframes and closed shadow roots are not examined; at most 100
   elements within a 60 s budget.
+- `non-text-contrast-check` (WCAG 1.4.11): new check, `runNonTextContrastCheck`
+  (takes a navigated `page`) and the CLI check name `non-text-contrast-check`.
+  Rules `a11y-skills/non-text-contrast-boundary` and
+  `a11y-skills/non-text-contrast-icon` (tags `wcag21aa`, `wcag1411`); always
+  `incomplete`. Measures from computed styles the contrast of the border / fill of
+  inputs, `textarea`, `select`, checkboxes, radio buttons and switches against the
+  surrounding color, and of the icon (inline SVG `fill` / `stroke`, `::before` /
+  `::after` text color) of buttons without text against its background; reports
+  below 3:1 and anything whose color cannot be decided (`undeterminedReason`:
+  background image, opacity, filter, out-of-flow, dark color-scheme (`light
+  dark` follows the browser preference), accent-color, SVG paint server, image
+  icon, mixed icon colors, too many icon parts, SVG overlap, SVG `<use>` whose
+  target sets its own colors, visually hidden native control, no readable icon
+  color). Icon parts that are not drawn are ignored and sr-only text does not
+  stop a button from being an icon button. Colors are converted to sRGB through a detached canvas, so
+  `oklch()` and `color-mix()` work. Native checkboxes and radio buttons drawn by
+  the browser are not measured (`user-agent`). Also exported: the pure color
+  functions `contrastRatio`, `compositeOver`, `compositeLayers`,
+  `relativeLuminance`, `floorRatio`, `toHexColor` and `WHITE` (0-255 sRGB
+  channels). At most 300 components are measured (`componentCounts`; the rest
+  get a manual-check node). Known limitations: only the load-time look (no
+  hover / focus / checked states); the outer color comes from ancestor
+  backgrounds only; `box-shadow` / `outline` borders are not measured; parts
+  inside a component, charts, iframes and shadow roots are not examined.
 
 ## 0.13.0 — 2026-10-13
 

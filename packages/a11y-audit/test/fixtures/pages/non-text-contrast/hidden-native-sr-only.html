@@ -1,0 +1,34 @@
+<!doctype html>
+<!--
+  Intent: a native checkbox hidden with the sr-only technique, with a custom box drawn by a sibling span.
+  Expected: the checkbox is undetermined, reason visually-hidden; the boundary rule is incomplete.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Native checkbox visually hidden</title>
+    <style>
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+      }
+    </style>
+  </head>
+  <body>
+    <label>
+      <input type="checkbox" class="sr-only" aria-label="Agree" />
+      <span
+        style="
+          display: inline-block;
+          width: 16px;
+          height: 16px;
+          border: 1px solid #ddd;
+        "
+      ></span>
+      Agree
+    </label>
+  </body>
+</html>

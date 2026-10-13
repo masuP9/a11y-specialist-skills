@@ -1,0 +1,23 @@
+<!doctype html>
+<!--
+  Intent: a sprite icon via <use> whose symbol path sets no color, so it takes fill: currentColor (#333) from the button.
+  Expected: icon-button status pass.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Use inheriting color</title>
+  </head>
+  <body>
+    <svg style="display: none">
+      <symbol id="plain" viewBox="0 0 10 10">
+        <path d="M0 0h10v10z" />
+      </symbol>
+    </svg>
+    <button aria-label="Close" style="background: #fff; border: 0; color: #333">
+      <svg width="20" height="20" style="fill: currentColor">
+        <use href="#plain" />
+      </svg>
+    </button>
+  </body>
+</html>

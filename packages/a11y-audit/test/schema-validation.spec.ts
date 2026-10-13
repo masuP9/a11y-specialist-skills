@@ -18,6 +18,7 @@ import {
   normalizeKeyboardReachabilityCheck,
   normalizeKeyboardTrapCheck,
   normalizeMotionActuationCheck,
+  normalizeNonTextContrastCheck,
   normalizeRedundantEntryCheck,
   normalizeReflowCheck,
   normalizeTargetSizeCheck,
@@ -34,6 +35,7 @@ import type {
   KeyboardReachabilityCheckDetails,
   KeyboardTrapCheckDetails,
   MotionActuationCheckDetails,
+  NonTextContrastCheckDetails,
   RedundantEntryCheckDetails,
   RedundantEntryField,
   ReflowCheckDetails,
@@ -1048,6 +1050,120 @@ test('pointer-cancellation-check envelope for an unsupported browser validates a
     buckets: normalizePointerCancellationCheck(details),
   });
   expectValid('pointer-cancellation-check', result);
+});
+
+function nonTextContrastDetails(color: string): NonTextContrastCheckDetails {
+  const base = {
+    html: '<input>',
+    htmlTruncated: false,
+    undeterminedReason: null,
+    bestRatio: 1.6,
+    indicators: [
+      { part: 'border-top' as const, color, against: '#ffffff', ratio: 1.6 },
+    ],
+    otherVisuals: [],
+  };
+  return {
+    threshold: 3,
+    components: [
+      { ...base, selector: '#a', kind: 'text-input', status: 'low' },
+      { ...base, selector: '#b', kind: 'checkbox', status: 'pass' },
+      {
+        ...base,
+        selector: '#c',
+        kind: 'radio',
+        status: 'no-boundary',
+        bestRatio: null,
+        indicators: [],
+        otherVisuals: ['box-shadow', 'outline'],
+      },
+      {
+        ...base,
+        selector: '#d',
+        kind: 'switch',
+        status: 'undetermined',
+        undeterminedReason: 'opacity',
+        bestRatio: null,
+        indicators: [],
+      },
+      {
+        ...base,
+        selector: '#e',
+        kind: 'icon-button',
+        status: 'user-agent',
+        bestRatio: null,
+        indicators: [],
+      },
+    ],
+    componentCounts: {
+      boundary: { found: 4, kept: 4 },
+      icon: { found: 1, kept: 1 },
+    },
+  };
+}
+
+test('non-text-contrast-check envelope with every kind and status validates against its schema', () => {
+  const details = nonTextContrastDetails('#cccccc');
+  const result = buildAuditResult({
+    source: 'non-text-contrast-check',
+    url: 'about:blank',
+    details,
+    buckets: normalizeNonTextContrastCheck(details),
+  });
+  expectValid('non-text-contrast-check', result);
+});
+
+test('non-text-contrast-check envelope with the svg-use, visually-hidden and no-icon-color reasons validates against its schema', () => {
+  const base = nonTextContrastDetails('#cccccc').components[0]!;
+  const undetermined = {
+    ...base,
+    status: 'undetermined' as const,
+    bestRatio: null,
+    indicators: [],
+  };
+  const details: NonTextContrastCheckDetails = {
+    threshold: 3,
+    components: [
+      {
+        ...undetermined,
+        kind: 'icon-button',
+        undeterminedReason: 'svg-use',
+      },
+      {
+        ...undetermined,
+        kind: 'checkbox',
+        undeterminedReason: 'visually-hidden',
+      },
+      {
+        ...undetermined,
+        kind: 'icon-button',
+        undeterminedReason: 'no-icon-color',
+      },
+    ],
+    componentCounts: {
+      boundary: { found: 1, kept: 1 },
+      icon: { found: 2, kept: 2 },
+    },
+  };
+  const result = buildAuditResult({
+    source: 'non-text-contrast-check',
+    url: 'about:blank',
+    details,
+    buckets: normalizeNonTextContrastCheck(details),
+  });
+  expectValid('non-text-contrast-check', result);
+});
+
+test('non-text-contrast-check envelope with a color that is not #rrggbb is rejected', () => {
+  const details = nonTextContrastDetails('red');
+  const result = buildAuditResult({
+    source: 'non-text-contrast-check',
+    url: 'about:blank',
+    details,
+    buckets: normalizeNonTextContrastCheck(details),
+  });
+  const validate = ajv.compile(RESULT_SCHEMAS['non-text-contrast-check']);
+  expect(validate(result)).toBe(false);
 });
 
 test('the pre-0.3.0 flat result shape is rejected', () => {

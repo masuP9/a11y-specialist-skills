@@ -31,6 +31,11 @@ import type {
   MotionActuationCheckDetails,
   MotionListener,
   MotionSimulationResult,
+  NonTextContrastCheckDetails,
+  NonTextContrastComponent,
+  NonTextContrastComponentKind,
+  NonTextContrastIndicator,
+  NonTextContrastUndeterminedReason,
   NormalizedImpact,
   NormalizedNode,
   NormalizedRuleResult,
@@ -54,6 +59,8 @@ import {
   AUTH_EXPECTED_AUTOCOMPLETE,
   HTML_SNIPPET_MAX_LENGTH,
   MOTION_MUTATION_MARGIN,
+  NON_TEXT_CONTRAST_MAX_COMPONENTS,
+  NON_TEXT_CONTRAST_MAX_ICON_PARTS,
   POINTER_GESTURE_CRITERIA_BY_SIGNAL,
   POINTER_GESTURE_DELEGATION_MIN_TYPES,
   POINTER_GESTURE_MAX_CANDIDATES,
@@ -1628,6 +1635,129 @@ export function normalizeFocusOrderCheck(
     dialogNodes,
     details.dialogTriggersFound > 0 || searchProblem !== null,
   );
+
+  return buckets;
+}
+
+// =============================================================================
+// Non-text Contrast Check normalization (WCAG 1.4.11)
+// =============================================================================
+
+const NON_TEXT_CONTRAST_KIND_LABELS: Record<
+  NonTextContrastComponentKind,
+  string
+> = {
+  'text-input': 'text field',
+  checkbox: 'checkbox',
+  radio: 'radio button',
+  switch: 'switch',
+  'icon-button': 'icon button',
+};
+
+const NON_TEXT_CONTRAST_REASON_TEXT: Record<
+  NonTextContrastUndeterminedReason,
+  string
+> = {
+  'background-image': 'background image or gradient',
+  opacity: 'opacity below 1',
+  filter: 'filter or blend mode',
+  'out-of-flow': 'positioned over content that is not its ancestor',
+  'color-scheme': 'dark color-scheme without a background',
+  'accent-color': 'native control with accent-color',
+  'svg-paint-server': 'SVG gradient or pattern',
+  'image-icon': 'icon is an image or a CSS background image',
+  'mixed-icon-colors':
+    'icon has parts above and below 3:1; check whether the parts below 3:1 are needed to understand it',
+  'svg-overlap':
+    'SVG shapes are drawn over filled shapes, so their background is not known',
+  'svg-use': 'icon drawn with SVG <use> whose shapes set their own colors',
+  'visually-hidden':
+    'the control is visually hidden; check the custom control drawn in its place',
+  'no-icon-color': 'no icon color could be read',
+  'too-many-icon-parts': `icon has more than ${NON_TEXT_CONTRAST_MAX_ICON_PARTS} elements`,
+};
+
+function describeNonTextContrastIndicators(
+  indicators: NonTextContrastIndicator[],
+): string {
+  return indicators
+    .map((i) => `${i.part} ${i.color} vs ${i.against} ${i.ratio}:1`)
+    .join(', ');
+}
+
+/**
+ * Both rules are incomplete (see rule-registry). A group whose components were
+ * cut off by NON_TEXT_CONTRAST_MAX_COMPONENTS gets a page node, so a clean
+ * first 300 never turns into a pass for the rest.
+ */
+export function normalizeNonTextContrastCheck(
+  details: NonTextContrastCheckDetails,
+): NormalizedBuckets {
+  const buckets = emptyBuckets();
+  const { components, componentCounts } = details;
+  buckets.checkedNodes = components.length;
+
+  const summarize = (c: NonTextContrastComponent): string | null => {
+    const kindLabel = NON_TEXT_CONTRAST_KIND_LABELS[c.kind];
+    const others =
+      c.otherVisuals.length > 0
+        ? ` It also has ${c.otherVisuals.join(' and ')}, which was not measured; check whether that marks the boundary.`
+        : '';
+    if (c.status === 'low') {
+      const subject =
+        c.kind === 'icon-button' ? 'icon' : `${kindLabel} boundary`;
+      return `Best contrast of the ${subject} is ${c.bestRatio}:1 (${describeNonTextContrastIndicators(c.indicators)}), below 3:1.${c.kind === 'icon-button' ? '' : others}`;
+    }
+    if (c.status === 'no-boundary') {
+      return `The ${kindLabel} has no border or background to mark its boundary.${others} Check whether its extent is identifiable without one.`;
+    }
+    if (c.status === 'undetermined') {
+      const reason = c.undeterminedReason
+        ? NON_TEXT_CONTRAST_REASON_TEXT[c.undeterminedReason]
+        : 'unknown reason';
+      return `Contrast of the ${kindLabel} could not be measured (${reason}). Check manually.`;
+    }
+    return null;
+  };
+
+  const groups = [
+    {
+      key: 'non-text-contrast-boundary',
+      counts: componentCounts.boundary,
+      label: 'form controls',
+      targets: components.filter((c) => c.kind !== 'icon-button'),
+      measurable: (c: NonTextContrastComponent) => c.status !== 'user-agent',
+    },
+    {
+      key: 'non-text-contrast-icon',
+      counts: componentCounts.icon,
+      label: 'icon buttons',
+      targets: components.filter((c) => c.kind === 'icon-button'),
+      measurable: () => true,
+    },
+  ] as const;
+
+  for (const group of groups) {
+    const nodes: NormalizedNode[] = [];
+    for (const c of group.targets) {
+      const summary = summarize(c);
+      if (summary !== null) nodes.push(toNode(c, summary));
+    }
+    const cutOff = group.counts.found - group.counts.kept;
+    if (cutOff > 0) {
+      nodes.push(
+        pageNode(
+          `${cutOff} ${group.label} were not measured (limit ${NON_TEXT_CONTRAST_MAX_COMPONENTS} components per page). Check them manually.`,
+        ),
+      );
+    }
+    bucketize(
+      buckets,
+      group.key,
+      nodes,
+      group.targets.some(group.measurable) || cutOff > 0,
+    );
+  }
 
   return buckets;
 }

@@ -1,0 +1,22 @@
+<!doctype html>
+<!--
+  Intent: a white button with a visible black icon and a second, display:none SVG whose path is faint (#ccc).
+  The hidden SVG is not drawn, so it must not be measured.
+  Expected: icon-button status pass.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Hidden icon part</title>
+  </head>
+  <body>
+    <button aria-label="Close" style="background: #fff; border: 0">
+      <svg viewBox="0 0 10 10" width="20" height="20">
+        <path d="M0 0L10 10" fill="none" stroke="#000" stroke-width="2" />
+      </svg>
+      <svg viewBox="0 0 10 10" width="20" height="20" style="display: none">
+        <path d="M0 10L10 0" fill="none" stroke="#ccc" stroke-width="2" />
+      </svg>
+    </button>
+  </body>
+</html>

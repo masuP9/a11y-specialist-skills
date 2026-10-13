@@ -37,7 +37,8 @@ export type CheckSource =
   | 'accessible-authentication-check'
   | 'pointer-gesture-check'
   | 'focus-order-check'
-  | 'pointer-cancellation-check';
+  | 'pointer-cancellation-check'
+  | 'non-text-contrast-check';
 
 export type NormalizedImpact = 'critical' | 'serious' | 'moderate' | 'minor';
 
@@ -1564,3 +1565,81 @@ export interface PointerCancellationCheckDetails {
 
 export type PointerCancellationCheckResult =
   AuditCheckResult<PointerCancellationCheckDetails>;
+
+// --- non-text-contrast-check (WCAG 1.4.11) ---
+
+export type NonTextContrastComponentKind =
+  | 'text-input'
+  | 'checkbox'
+  | 'radio'
+  | 'switch'
+  | 'icon-button';
+
+export type NonTextContrastUndeterminedReason =
+  | 'background-image'
+  | 'opacity'
+  | 'filter'
+  | 'out-of-flow'
+  | 'color-scheme'
+  | 'accent-color'
+  | 'svg-paint-server'
+  | 'image-icon'
+  | 'mixed-icon-colors'
+  | 'too-many-icon-parts'
+  | 'svg-overlap'
+  | 'svg-use'
+  | 'visually-hidden'
+  | 'no-icon-color';
+
+export interface NonTextContrastIndicator {
+  part:
+    | 'background'
+    | 'border-top'
+    | 'border-right'
+    | 'border-bottom'
+    | 'border-left'
+    | 'icon';
+  /** '#rrggbb' after compositing over what is behind it. */
+  color: string;
+  /** '#rrggbb' of the adjacent color it is compared with. */
+  against: string;
+  /** Contrast ratio rounded down to 2 decimals. */
+  ratio: number;
+}
+
+export interface NonTextContrastComponent {
+  selector: string;
+  html: string;
+  htmlTruncated: boolean;
+  kind: NonTextContrastComponentKind;
+  /**
+   * pass: best indicator ≥ threshold. low: below. no-boundary: no border or
+   * background to measure. undetermined: a color could not be decided.
+   * user-agent: native control drawn by the browser, not measured (exception).
+   */
+  status: 'pass' | 'low' | 'no-boundary' | 'undetermined' | 'user-agent';
+  /** Set only when status is 'undetermined'. */
+  undeterminedReason: NonTextContrastUndeterminedReason | null;
+  /** Highest indicator ratio (rounded down); null when there are no indicators. */
+  bestRatio: number | null;
+  indicators: NonTextContrastIndicator[];
+  otherVisuals: ('box-shadow' | 'outline')[];
+}
+
+export interface NonTextContrastCheckDetails {
+  /** Minimum ratio used (3). */
+  threshold: number;
+  components: NonTextContrastComponent[];
+  /**
+   * Components found (after exclusions) and measured, per rule group.
+   * boundary: every kind except icon-button. found > kept means some were
+   * not measured because of NON_TEXT_CONTRAST_MAX_COMPONENTS.
+   */
+  componentCounts: {
+    boundary: { found: number; kept: number };
+    icon: { found: number; kept: number };
+  };
+}
+
+export type NonTextContrastCheckResult =
+  AuditCheckResult<NonTextContrastCheckDetails>;

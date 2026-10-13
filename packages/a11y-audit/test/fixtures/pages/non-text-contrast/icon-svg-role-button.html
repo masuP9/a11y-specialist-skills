@@ -1,0 +1,23 @@
+<!doctype html>
+<!--
+  Intent: an SVG element itself used as a button (role="button"); SVG elements have no innerText.
+  Expected: the check does not throw; the component is measured as icon-button, status low (#ccc stroke on white).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>SVG with role button</title>
+  </head>
+  <body>
+    <svg
+      role="button"
+      tabindex="0"
+      aria-label="Close"
+      viewBox="0 0 10 10"
+      width="20"
+      height="20"
+    >
+      <path d="M0 0L10 10" fill="none" stroke="#ccc" stroke-width="2" />
+    </svg>
+  </body>
+</html>

@@ -518,6 +518,38 @@ export const RULES = {
     // elsewhere can be right (trigger removed, flow moves to the next step).
     classification: 'incomplete',
   },
+
+  // --- non-text-contrast-check ---
+  // Both rules are incomplete: colors come from ancestor backgrounds, so
+  // overlaps by non-ancestors (siblings, z-index), box-shadow or image borders
+  // are not seen. A component whose extent is shown by something other than a
+  // border or fill (position, text), or that keeps the UA default look, can
+  // still satisfy 1.4.11. Only blind-spot-free findings with no applicable
+  // exception may be violations (see the policy at the top of this file).
+  'non-text-contrast-boundary': {
+    id: 'a11y-skills/non-text-contrast-boundary',
+    sc: ['1.4.11'],
+    tags: ['a11y-skills', 'wcag21aa', 'wcag1411'],
+    impact: 'serious',
+    scope: 'node',
+    description:
+      'Ensure the visual boundary of form controls has a contrast ratio of at least 3:1 with adjacent colors',
+    help: 'Give inputs, checkboxes, radio buttons and switches a border or background with at least 3:1 contrast against what surrounds them',
+    helpUrl: `${UNDERSTANDING}/non-text-contrast.html`,
+    classification: 'incomplete',
+  },
+  'non-text-contrast-icon': {
+    id: 'a11y-skills/non-text-contrast-icon',
+    sc: ['1.4.11'],
+    tags: ['a11y-skills', 'wcag21aa', 'wcag1411'],
+    impact: 'serious',
+    scope: 'node',
+    description:
+      'Ensure icons in icon-only buttons have a contrast ratio of at least 3:1 with their background',
+    help: 'Make the icon of an icon-only button contrast at least 3:1 with the button background',
+    helpUrl: `${UNDERSTANDING}/non-text-contrast.html`,
+    classification: 'incomplete',
+  },
 } as const satisfies Record<string, RuleMeta>;
 
 export type RuleKey = keyof typeof RULES;

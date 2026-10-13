@@ -83,6 +83,10 @@ export {
   runPointerCancellationCheck,
   type RunPointerCancellationCheckOptions,
 } from './runPointerCancellationCheck.js';
+export {
+  runNonTextContrastCheck,
+  type RunNonTextContrastCheckOptions,
+} from './runNonTextContrastCheck.js';
 
 export {
   resolveOutputPath,

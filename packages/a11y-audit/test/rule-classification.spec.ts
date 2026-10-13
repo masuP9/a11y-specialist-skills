@@ -124,6 +124,15 @@ const FINDING_EXPECTATIONS: Array<{
 
   // pointer-cancellation-check
   { ruleId: 'a11y-skills/pointer-cancellation', expectedBucket: 'incomplete' },
+  // non-text-contrast-check
+  {
+    ruleId: 'a11y-skills/non-text-contrast-boundary',
+    expectedBucket: 'incomplete',
+  },
+  {
+    ruleId: 'a11y-skills/non-text-contrast-icon',
+    expectedBucket: 'incomplete',
+  },
 ];
 
 /**
@@ -155,14 +164,14 @@ test('all manifest finding expectations agree with rule-registry classification'
   }
 });
 
-test('all 33 custom finding rules have a manifest entry', () => {
+test('all 35 custom finding rules have a manifest entry', () => {
   const manifestRuleIds = new Set(FINDING_EXPECTATIONS.map((e) => e.ruleId));
 
   const registryRuleIds = Object.values(RULES).map((r) => r.id);
   expect(
     registryRuleIds.length,
-    'rule-registry should have 33 custom rules',
-  ).toBe(33);
+    'rule-registry should have 35 custom rules',
+  ).toBe(35);
 
   for (const ruleId of registryRuleIds) {
     expect(

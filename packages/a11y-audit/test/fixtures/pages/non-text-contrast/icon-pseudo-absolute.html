@@ -1,0 +1,25 @@
+<!doctype html>
+<!--
+  Intent: a black button whose ::before glyph (#fff) is position: absolute and drawn outside the button
+  (top: -30px), on the white page. Its real background is not the button's.
+  Expected: icon-button status undetermined, reason out-of-flow.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Absolutely positioned pseudo-element icon</title>
+    <style>
+      .b::before {
+        content: '\2715';
+        color: #fff;
+        position: absolute;
+        top: -30px;
+      }
+    </style>
+  </head>
+  <body>
+    <button class="b" aria-label="Close" style="background: #000; border: 0">
+      &nbsp;
+    </button>
+  </body>
+</html>

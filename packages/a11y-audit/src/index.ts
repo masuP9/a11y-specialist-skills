@@ -45,6 +45,17 @@ export {
   type FocusOrderPoint,
 } from './utils/focus-order.js';
 export {
+  WHITE,
+  compositeLayers,
+  compositeOver,
+  contrastRatio,
+  floorRatio,
+  relativeLuminance,
+  toHexColor,
+  type RgbColor,
+  type RgbaColor,
+} from './utils/color.js';
+export {
   buildAuditResult,
   mergeNormalizedResults,
   normalizeAccessibleAuthenticationCheck,
@@ -57,6 +68,7 @@ export {
   normalizeKeyboardReachabilityCheck,
   normalizeKeyboardTrapCheck,
   normalizeMotionActuationCheck,
+  normalizeNonTextContrastCheck,
   normalizeOrientationCheck,
   normalizePointerCancellationCheck,
   normalizePointerGestureCheck,

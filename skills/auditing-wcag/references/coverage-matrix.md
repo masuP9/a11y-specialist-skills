@@ -26,7 +26,7 @@ Methods are labeled as Automated/Interactive/Manual/Content and can be combined.
 | 1.4.4 | Automated + Manual | `zoom-200-check` **[CLI]** + screenshots | Fail if loss/overlap at 200% |
 | 1.4.5 | Manual + Content | screenshots | Fail if text is image-based |
 | 1.4.10 | Automated + Manual | `reflow-check` **[CLI]** + screenshots | Fail if horizontal scroll required |
-| 1.4.11 | Manual | screenshots + color measurement | Fail if non-text contrast insufficient (no axe rule, not covered by CLI) |
+| 1.4.11 | Automated candidates + manual | `non-text-contrast-check` **[CLI]** + screenshots | Fail if a component boundary or icon is below 3:1. States, charts and image backgrounds are manual |
 | 1.4.12 | Automated + Manual | `text-spacing-check` **[CLI]** + screenshots | Fail on text clipping/overlap |
 | 1.4.13 | Interactive | video/logs | Fail if hover/focus content cannot be dismissed/retained |
 
@@ -91,6 +91,7 @@ The following criteria can be automatically checked via the `a11y-audit` CLI (se
 | 1.4.2, 2.2.2 | `auto-play-detection` | `auto-play-screenshots/` |
 | 1.4.4 | `zoom-200-check` | `zoom-200-result.json` |
 | 1.4.10 | `reflow-check` | `reflow-result.json` |
+| 1.4.11 | `non-text-contrast-check` | `non-text-contrast-result.json` |
 | 1.4.12 | `text-spacing-check` | `text-spacing-result.json` |
 | 2.1.1 | `keyboard-reachability-check` | `keyboard-reachability-result.json` |
 | 2.1.2 | `keyboard-trap-check` | `keyboard-trap-result.json` |

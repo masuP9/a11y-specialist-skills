@@ -1,0 +1,26 @@
+<!doctype html>
+<!--
+  Intent: 300 passing text fields followed by 10 low-contrast ones. Only the first 300 are measured.
+  Expected: componentCounts.boundary is { found: 310, kept: 300 }; components.length is 300;
+  the boundary rule is incomplete with a page node about the unmeasured ones.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Many components</title>
+  </head>
+  <body>
+    <script>
+      const make = (count, border) => {
+        for (let i = 0; i < count; i++) {
+          const input = document.createElement('input');
+          input.setAttribute('aria-label', 'Field');
+          input.style.border = `1px solid ${border}`;
+          document.body.append(input);
+        }
+      };
+      make(300, '#767676');
+      make(10, '#eee');
+    </script>
+  </body>
+</html>

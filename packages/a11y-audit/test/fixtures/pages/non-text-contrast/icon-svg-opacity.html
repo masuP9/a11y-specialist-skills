@@ -1,0 +1,24 @@
+<!doctype html>
+<!--
+  Intent: two white buttons with a black circle. The first uses fill-opacity .1 (a faint
+  grey is drawn); the second wraps the circle in a group with opacity .1.
+  Expected: first low; second undetermined, reason opacity.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>SVG opacity</title>
+  </head>
+  <body>
+    <button aria-label="Fill opacity" style="background: #fff; border: 0">
+      <svg viewBox="0 0 10 10" width="20" height="20">
+        <circle r="4" cx="5" cy="5" fill="#000" fill-opacity=".1" />
+      </svg>
+    </button>
+    <button aria-label="Group opacity" style="background: #fff; border: 0">
+      <svg viewBox="0 0 10 10" width="20" height="20">
+        <g opacity=".1"><circle r="4" cx="5" cy="5" fill="#000" /></g>
+      </svg>
+    </button>
+  </body>
+</html>

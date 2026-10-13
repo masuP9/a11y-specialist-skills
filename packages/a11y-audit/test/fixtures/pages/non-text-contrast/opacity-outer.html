@@ -1,0 +1,19 @@
+<!doctype html>
+<!--
+  Intent: an opaque white layer sits inside an almost transparent wrapper; the opacity above
+  the opaque layer still changes how the field looks.
+  Expected: status undetermined, reason opacity.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Opacity outside the opaque layer</title>
+  </head>
+  <body>
+    <div style="opacity: 0.1">
+      <div style="background: #fff">
+        <input aria-label="Name" style="border: 1px solid #000" />
+      </div>
+    </div>
+  </body>
+</html>

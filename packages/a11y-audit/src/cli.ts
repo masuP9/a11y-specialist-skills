@@ -3,7 +3,7 @@
  * @a11y-skills/audit CLI
  *
  * Runs WCAG 2.2 accessibility checks against a URL without needing a
- * Playwright test runner. All 18 checks are available via --checks.
+ * Playwright test runner. All 20 checks are available via --checks.
  *
  * Exit codes:
  *   0 — completed, no violations found across all checks
@@ -289,6 +289,18 @@ const CHECK_REGISTRY: CheckEntry[] = [
       return (await runPointerCancellationCheck({
         browser,
         targetUrl: url,
+        outputDir,
+      })) as AuditResultEnvelope;
+    },
+  },
+  {
+    name: 'non-text-contrast-check',
+    kind: 'page',
+    async run({ page, outputDir }) {
+      const { runNonTextContrastCheck } =
+        await import('./playwright/runNonTextContrastCheck.js');
+      return (await runNonTextContrastCheck({
+        page,
         outputDir,
       })) as AuditResultEnvelope;
     },

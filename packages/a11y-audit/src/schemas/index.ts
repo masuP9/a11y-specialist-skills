@@ -99,6 +99,12 @@ export type {
   FocusOrderDialogProbe,
   FocusOrderCheckDetails,
   FocusOrderCheckResult,
+  NonTextContrastComponentKind,
+  NonTextContrastUndeterminedReason,
+  NonTextContrastIndicator,
+  NonTextContrastComponent,
+  NonTextContrastCheckDetails,
+  NonTextContrastCheckResult,
 } from '../types.js';
 
 /** Minimal JSON Schema object shape (Draft 2020-12 compatible subset). */
@@ -1821,6 +1827,117 @@ export const POINTER_CANCELLATION_CHECK_RESULT_SCHEMA: JsonSchema =
     },
   });
 
+const NON_TEXT_CONTRAST_HEX_COLOR_SCHEMA: JsonSchema = {
+  type: 'string',
+  pattern: '^#[0-9a-f]{6}$',
+};
+
+const NON_TEXT_CONTRAST_INDICATOR_SCHEMA: JsonSchema = {
+  type: 'object',
+  required: ['part', 'color', 'against', 'ratio'],
+  properties: {
+    part: {
+      enum: [
+        'background',
+        'border-top',
+        'border-right',
+        'border-bottom',
+        'border-left',
+        'icon',
+      ],
+    },
+    color: NON_TEXT_CONTRAST_HEX_COLOR_SCHEMA,
+    against: NON_TEXT_CONTRAST_HEX_COLOR_SCHEMA,
+    ratio: { type: 'number' },
+  },
+};
+
+const NON_TEXT_CONTRAST_COMPONENT_SCHEMA: JsonSchema = {
+  type: 'object',
+  required: [
+    'selector',
+    'html',
+    'htmlTruncated',
+    'kind',
+    'status',
+    'undeterminedReason',
+    'bestRatio',
+    'indicators',
+    'otherVisuals',
+  ],
+  properties: {
+    selector: { type: 'string' },
+    html: { type: 'string' },
+    htmlTruncated: { type: 'boolean' },
+    kind: {
+      enum: ['text-input', 'checkbox', 'radio', 'switch', 'icon-button'],
+    },
+    status: {
+      enum: ['pass', 'low', 'no-boundary', 'undetermined', 'user-agent'],
+    },
+    undeterminedReason: {
+      enum: [
+        'background-image',
+        'opacity',
+        'filter',
+        'out-of-flow',
+        'color-scheme',
+        'accent-color',
+        'svg-paint-server',
+        'image-icon',
+        'mixed-icon-colors',
+        'too-many-icon-parts',
+        'svg-overlap',
+        'svg-use',
+        'visually-hidden',
+        'no-icon-color',
+        null,
+      ],
+    },
+    bestRatio: { type: ['number', 'null'] },
+    indicators: { type: 'array', items: NON_TEXT_CONTRAST_INDICATOR_SCHEMA },
+    otherVisuals: {
+      type: 'array',
+      items: { enum: ['box-shadow', 'outline'] },
+    },
+  },
+};
+
+const NON_TEXT_CONTRAST_COUNT_SCHEMA: JsonSchema = {
+  type: 'object',
+  required: ['found', 'kept'],
+  properties: {
+    found: { type: 'integer', minimum: 0 },
+    kept: { type: 'integer', minimum: 0 },
+  },
+};
+
+export const NON_TEXT_CONTRAST_CHECK_RESULT_SCHEMA: JsonSchema =
+  buildEnvelopeSchema({
+    id: 'non-text-contrast-check-result',
+    title: 'NonTextContrastCheckResult',
+    source: 'non-text-contrast-check',
+    details: {
+      type: 'object',
+      required: ['threshold', 'components', 'componentCounts'],
+      properties: {
+        threshold: { type: 'number' },
+        components: {
+          type: 'array',
+          items: NON_TEXT_CONTRAST_COMPONENT_SCHEMA,
+        },
+        componentCounts: {
+          type: 'object',
+          required: ['boundary', 'icon'],
+          properties: {
+            boundary: NON_TEXT_CONTRAST_COUNT_SCHEMA,
+            icon: NON_TEXT_CONTRAST_COUNT_SCHEMA,
+          },
+        },
+      },
+    },
+  });
+
 /** All result schemas keyed by check id. */
 export const RESULT_SCHEMAS = {
   'axe-audit': AXE_AUDIT_RESULT_SCHEMA,
@@ -1843,4 +1960,5 @@ export const RESULT_SCHEMAS = {
   'pointer-gesture-check': POINTER_GESTURE_CHECK_RESULT_SCHEMA,
   'focus-order-check': FOCUS_ORDER_CHECK_RESULT_SCHEMA,
   'pointer-cancellation-check': POINTER_CANCELLATION_CHECK_RESULT_SCHEMA,
+  'non-text-contrast-check': NON_TEXT_CONTRAST_CHECK_RESULT_SCHEMA,
 } as const;

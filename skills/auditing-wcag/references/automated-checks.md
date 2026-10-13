@@ -65,7 +65,7 @@ Only machine-verifiable items from the Playwright accessibility tree are covered
 |---|---|---|---|
 | 1.4.1 | Text references to color for UI identification | a11y tree text | Color name used to identify UI elements or convey information |
 | 1.4.3 | Text contrast ratio meets AA | axe color-contrast | Ratio below 4.5:1 (normal) or 3:1 (large) |
-| 1.4.11 | Non-text contrast meets AA | axe non-text color contrast rules | Ratio below 3:1 |
+| 1.4.11 | Non-text contrast meets AA | `non-text-contrast-check` [CLI] (component boundaries, icon-only buttons) | Ratio below 3:1 |
 
 > **1.4.1 Check A - Text references:** Scan accessible text for color references (red, blue, green, etc. in any language/variation) that indicate reliance on color alone:
 > - Instructions: "Required fields are red", "Click the green button"

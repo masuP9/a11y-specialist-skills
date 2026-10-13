@@ -1,0 +1,26 @@
+<!doctype html>
+<!--
+  Intent: like icon-svg-overlap.html but the stroke is a horizontal (first button) or vertical
+  (second button) line, whose bounding box has zero height / width.
+  Expected: both undetermined, reason svg-overlap.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>SVG overlap with straight lines</title>
+  </head>
+  <body>
+    <button aria-label="Horizontal" style="background: #000; border: 0">
+      <svg viewBox="0 0 10 10" width="20" height="20">
+        <rect width="10" height="10" fill="#fff" />
+        <path d="M2 5L8 5" fill="none" stroke="#fff" stroke-width="2" />
+      </svg>
+    </button>
+    <button aria-label="Vertical" style="background: #000; border: 0">
+      <svg viewBox="0 0 10 10" width="20" height="20">
+        <rect width="10" height="10" fill="#fff" />
+        <path d="M5 2L5 8" fill="none" stroke="#fff" stroke-width="2" />
+      </svg>
+    </button>
+  </body>
+</html>

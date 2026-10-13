@@ -1,0 +1,19 @@
+<!doctype html>
+<!--
+  Intent: an icon with a black circle and a separate faint (#ddd) stroke that do not overlap.
+  Expected: undetermined, reason mixed-icon-colors (the dark part alone must not make it pass).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Mixed icon colors</title>
+  </head>
+  <body>
+    <button aria-label="Mixed" style="background: #fff; border: 0">
+      <svg viewBox="0 0 20 10" width="40" height="20">
+        <circle cx="5" cy="5" r="4" fill="#000" />
+        <path d="M12 2L18 8" fill="none" stroke="#ddd" />
+      </svg>
+    </button>
+  </body>
+</html>

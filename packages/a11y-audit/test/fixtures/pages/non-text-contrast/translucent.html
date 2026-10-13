@@ -1,0 +1,26 @@
+<!doctype html>
+<!--
+  Intent: translucent colors must be composited. The first field sits on 50% black (outer about #808080) with a #808080 border;
+  the second has a 20% black border on white (about #cccccc).
+  Expected: both low.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Translucent colors</title>
+  </head>
+  <body>
+    <div style="background: rgba(0, 0, 0, 0.5); padding: 8px">
+      <input
+        id="on-dark"
+        aria-label="On dark"
+        style="border: 1px solid #808080; background: transparent"
+      />
+    </div>
+    <input
+      id="faint-border"
+      aria-label="Faint border"
+      style="border: 1px solid rgba(0, 0, 0, 0.2)"
+    />
+  </body>
+</html>

@@ -1,0 +1,16 @@
+<!doctype html>
+<!--
+  Intent: default checkbox and radio button (drawn by the browser), plus a checkbox with accent-color.
+  Expected: first two user-agent (not reported); third undetermined, reason accent-color.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Native controls</title>
+  </head>
+  <body>
+    <input type="checkbox" aria-label="Default checkbox" />
+    <input type="radio" aria-label="Default radio" />
+    <input type="checkbox" aria-label="Accent" style="accent-color: #ccc" />
+  </body>
+</html>

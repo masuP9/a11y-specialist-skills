@@ -1,0 +1,33 @@
+<!doctype html>
+<!--
+  Intent: the usual accessible icon button: a faint (#ccc) SVG icon plus visually hidden text (sr-only CSS).
+  The hidden text is not visible text, so the button is an icon button.
+  Expected: icon-button status low.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Icon button with sr-only text</title>
+    <style>
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+        border: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <button style="background: #fff; border: 0">
+      <svg viewBox="0 0 10 10" width="20" height="20">
+        <path d="M0 0L10 10" fill="none" stroke="#ccc" stroke-width="2" />
+      </svg>
+      <span class="sr-only">Close</span>
+    </button>
+  </body>
+</html>
