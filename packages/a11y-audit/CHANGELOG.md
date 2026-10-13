@@ -3,6 +3,24 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixed
+
+- target-size: the part of a target clipped by an ancestor (`overflow: hidden`
+  / `clip` per axis, paint containment including `content-visibility: auto`,
+  an inline `<svg>`) no longer counts as target area. Size, spacing and the
+  hit-test point use the visible part only, so the hidden lower part of a
+  collapsed code block no longer makes a distant link fail the spacing
+  exception, and a target whose center is clipped is no longer dropped as
+  covered. Only the containing-block chain clips (absolute/fixed descendants
+  escape static ancestors); `overflow-clip-margin`, transforms and `zoom` are
+  taken into account. Targets entirely clipped from view are counted in
+  `occludedTargets`. Scroll containers (`auto` / `scroll`) are not treated as
+  clips; `clip-path` / `clip` are not considered.
+- target-size: a `position: fixed` target under a root with containment
+  (`contain: paint` etc.) is treated as scrolling with the page.
+
 ## 0.12.0 — 2026-10-13
 
 **Heads-up** — the CLI now launches Chromium with

@@ -282,6 +282,335 @@ test('target-size-check — fixed target below a flow target with little scroll 
   ]);
 });
 
+test.describe('target-size-check — targets clipped by an ancestor overflow', () => {
+  const allIssues = (r: TargetSizeCheckResult): TargetSizeIssue[] => [
+    ...r.details.failAA,
+    ...r.details.failAAAOnly,
+    ...r.details.exceptedTargets,
+  ];
+
+  test.beforeEach(async ({ baseUrl, page }) => {
+    await page.goto(`${baseUrl}/target-size/clipped.html`, {
+      waitUntil: 'networkidle',
+    });
+  });
+
+  test('a link under the hidden part of a collapsed code block gets a verified spacing exception', async ({
+    page,
+  }, testInfo) => {
+    const result = await runTargetSizeCheck({
+      page,
+      outputDir: testInfo.outputDir,
+      quiet: true,
+    });
+
+    const below = allIssues(result).find((i) => i.selector === '#below');
+    expect(below?.exception).toBe('spacing');
+    expect(below?.exceptionAssessment).toBe('verified');
+    expect(below?.spacing?.intersections).toEqual([]);
+  });
+
+  test('a collapsed code block is measured by its visible part only', async ({
+    page,
+  }, testInfo) => {
+    const result = await runTargetSizeCheck({
+      page,
+      outputDir: testInfo.outputDir,
+      quiet: true,
+    });
+
+    const long = allIssues(result).find((i) => i.selector === '#long');
+    expect(long?.level).toBe('fail-aaa-only');
+    expect(long?.width).toBe(300);
+    expect(long?.height).toBe(30);
+  });
+
+  test('overflow-x: clip hides the clipped part of a wide button from its neighbor', async ({
+    page,
+  }, testInfo) => {
+    const result = await runTargetSizeCheck({
+      page,
+      outputDir: testInfo.outputDir,
+      quiet: true,
+    });
+
+    const beside = allIssues(result).find((i) => i.selector === '#beside');
+    expect(beside?.exceptionAssessment).toBe('verified');
+    expect(beside?.spacing?.intersections).toEqual([]);
+  });
+
+  test('a wide button whose center is clipped is kept and measured by its visible part', async ({
+    page,
+  }, testInfo) => {
+    const result = await runTargetSizeCheck({
+      page,
+      outputDir: testInfo.outputDir,
+      quiet: true,
+    });
+
+    const wide = allIssues(result).find((i) => i.selector === '#wide');
+    expect(wide?.width).toBe(200);
+    expect(wide?.height).toBe(30);
+  });
+
+  test('a link entirely inside the hidden part of a clipped box is skipped as not visible', async ({
+    page,
+  }, testInfo) => {
+    const result = await runTargetSizeCheck({
+      page,
+      outputDir: testInfo.outputDir,
+      quiet: true,
+    });
+
+    expect(allIssues(result).some((i) => i.selector === '#hidden')).toBe(false);
+    expect(result.details.occludedTargets).toBe(1);
+  });
+
+  test('an absolutely positioned link escaping a static overflow: hidden wrapper keeps its full size', async ({
+    page,
+  }, testInfo) => {
+    const result = await runTargetSizeCheck({
+      page,
+      outputDir: testInfo.outputDir,
+      quiet: true,
+    });
+
+    const escaped = allIssues(result).find((i) => i.selector === '#escaped');
+    expect(escaped?.width).toBe(20);
+    expect(escaped?.height).toBe(20);
+  });
+
+  test('a tab partly scrolled out of an overflow-x: auto bar keeps its full size', async ({
+    page,
+  }, testInfo) => {
+    const result = await runTargetSizeCheck({
+      page,
+      outputDir: testInfo.outputDir,
+      quiet: true,
+    });
+
+    const tab = allIssues(result).find((i) => i.selector === '#tab');
+    expect(tab?.width).toBe(40);
+    expect(tab?.height).toBe(40);
+  });
+
+  test('a fractional-px clip box does not shrink a fully visible 24.25px button', async ({
+    page,
+  }, testInfo) => {
+    const result = await runTargetSizeCheck({
+      page,
+      outputDir: testInfo.outputDir,
+      quiet: true,
+    });
+
+    const frac = allIssues(result).find((i) => i.selector === '#frac');
+    expect(frac?.level).toBe('fail-aaa-only');
+    expect(frac?.width).toBe(24.25);
+  });
+
+  test('a fractional-px clip box with a border does not shrink a fully visible 24px button', async ({
+    page,
+  }, testInfo) => {
+    const result = await runTargetSizeCheck({
+      page,
+      outputDir: testInfo.outputDir,
+      quiet: true,
+    });
+
+    const fracBorder = allIssues(result).find(
+      (i) => i.selector === '#frac-border',
+    );
+    expect(fracBorder?.width).toBe(24);
+    expect(fracBorder?.height).toBe(24);
+  });
+
+  test('a scrollbar gutter on an untransformed clip box does not shrink a fully visible 24px button', async ({
+    page,
+  }, testInfo) => {
+    const result = await runTargetSizeCheck({
+      page,
+      outputDir: testInfo.outputDir,
+      quiet: true,
+    });
+
+    const gutter = allIssues(result).find((i) => i.selector === '#gutter');
+    expect(gutter?.width).toBe(24);
+    expect(gutter?.height).toBe(24);
+  });
+
+  test('a clip box under zoom: 2 scales its border before clipping', async ({
+    page,
+  }, testInfo) => {
+    const result = await runTargetSizeCheck({
+      page,
+      outputDir: testInfo.outputDir,
+      quiet: true,
+    });
+
+    const zoomed = allIssues(result).find((i) => i.selector === '#zoomed');
+    expect(zoomed?.width).toBe(20);
+    expect(zoomed?.height).toBe(40);
+  });
+
+  test('an inline svg clips a link drawn beyond its width', async ({
+    page,
+  }, testInfo) => {
+    const result = await runTargetSizeCheck({
+      page,
+      outputDir: testInfo.outputDir,
+      quiet: true,
+    });
+
+    const svgLink = allIssues(result).find((i) => i.selector === '#svg-link');
+    expect(svgLink?.width).toBe(30);
+  });
+
+  test('content-visibility: auto clips a link taller than its box', async ({
+    page,
+  }, testInfo) => {
+    const result = await runTargetSizeCheck({
+      page,
+      outputDir: testInfo.outputDir,
+      quiet: true,
+    });
+
+    const cv = allIssues(result).find((i) => i.selector === '#cv');
+    expect(cv?.height).toBe(30);
+  });
+
+  test('a static content-visibility: auto box clips its absolutely positioned link', async ({
+    page,
+  }, testInfo) => {
+    const result = await runTargetSizeCheck({
+      page,
+      outputDir: testInfo.outputDir,
+      quiet: true,
+    });
+
+    const cvAbs = allIssues(result).find((i) => i.selector === '#cv-abs');
+    expect(cvAbs?.height).toBe(30);
+  });
+
+  test('a scale(2) clip box scales its border before clipping', async ({
+    page,
+  }, testInfo) => {
+    const result = await runTargetSizeCheck({
+      page,
+      outputDir: testInfo.outputDir,
+      quiet: true,
+    });
+
+    const scaled = allIssues(result).find((i) => i.selector === '#scaled');
+    expect(scaled?.width).toBe(20);
+    expect(scaled?.height).toBe(40);
+  });
+
+  test('overflow-clip-margin does not widen an overflow: hidden clip with paint containment', async ({
+    page,
+  }, testInfo) => {
+    const result = await runTargetSizeCheck({
+      page,
+      outputDir: testInfo.outputDir,
+      quiet: true,
+    });
+
+    const paintHidden = allIssues(result).find(
+      (i) => i.selector === '#paint-hidden',
+    );
+    expect(paintHidden?.width).toBe(10);
+  });
+
+  test('overflow-clip-margin keeps a button painted in the margin', async ({
+    page,
+  }, testInfo) => {
+    const result = await runTargetSizeCheck({
+      page,
+      outputDir: testInfo.outputDir,
+      quiet: true,
+    });
+
+    const marginBtn = allIssues(result).find(
+      (i) => i.selector === '#margin-btn',
+    );
+    expect(marginBtn?.width).toBe(10);
+    expect(marginBtn?.height).toBe(10);
+  });
+
+  test('called at scroll 300, the collapsed code block is still measured by its visible part', async ({
+    page,
+  }, testInfo) => {
+    await page.evaluate(() =>
+      window.scrollTo({ top: 300, behavior: 'instant' }),
+    );
+
+    const result = await runTargetSizeCheck({
+      page,
+      outputDir: testInfo.outputDir,
+      quiet: true,
+    });
+
+    const long = allIssues(result).find((i) => i.selector === '#long');
+    expect(long?.height).toBe(30);
+    const below = allIssues(result).find((i) => i.selector === '#below');
+    expect(below?.exceptionAssessment).toBe('verified');
+    expect(await page.evaluate(() => window.scrollY)).toBe(300);
+  });
+});
+
+test('target-size-check — body paint containment clips a tall code block', async ({
+  baseUrl,
+  page,
+}, testInfo) => {
+  await page.goto(`${baseUrl}/target-size/clipped-body.html`, {
+    waitUntil: 'networkidle',
+  });
+
+  const result = await runTargetSizeCheck({
+    page,
+    outputDir: testInfo.outputDir,
+    quiet: true,
+  });
+
+  const long = result.details.failAAAOnly.find((i) => i.selector === '#long');
+  expect(long?.height).toBe(30);
+});
+
+test('target-size-check — a layout-contained body clips with its own overflow: hidden', async ({
+  baseUrl,
+  page,
+}, testInfo) => {
+  await page.goto(`${baseUrl}/target-size/clipped-body-layout.html`, {
+    waitUntil: 'networkidle',
+  });
+
+  const result = await runTargetSizeCheck({
+    page,
+    outputDir: testInfo.outputDir,
+    quiet: true,
+  });
+
+  const long = result.details.failAAAOnly.find((i) => i.selector === '#long');
+  expect(long?.height).toBe(30);
+});
+
+test('target-size-check — root paint containment clips a tall code block', async ({
+  baseUrl,
+  page,
+}, testInfo) => {
+  await page.goto(`${baseUrl}/target-size/clipped-root.html`, {
+    waitUntil: 'networkidle',
+  });
+
+  const result = await runTargetSizeCheck({
+    page,
+    outputDir: testInfo.outputDir,
+    quiet: true,
+  });
+
+  const long = result.details.failAAAOnly.find((i) => i.selector === '#long');
+  expect(long?.height).toBe(30);
+});
+
 test.describe('target-size-check — resolveAccessibleNames', () => {
   const allIssues = (r: TargetSizeCheckResult): TargetSizeIssue[] => [
     ...r.details.failAA,
@@ -309,4 +638,26 @@ test.describe('target-size-check — resolveAccessibleNames', () => {
     // Everything but the name is unchanged.
     expect(unnamed).toEqual(named.map((i) => ({ ...i, accessibleName: null })));
   });
+});
+
+test('target-size-check — a fixed target under a paint-contained root scrolls with the page', async ({
+  baseUrl,
+  page,
+}, testInfo) => {
+  await page.goto(`${baseUrl}/target-size/root-contain-fixed.html`, {
+    waitUntil: 'networkidle',
+  });
+  await page.evaluate(() => window.scrollTo({ top: 300, behavior: 'instant' }));
+
+  const result = await runTargetSizeCheck({
+    page,
+    outputDir: testInfo.outputDir,
+    quiet: true,
+  });
+
+  const pinned = [
+    ...result.details.failAA,
+    ...result.details.exceptedTargets,
+  ].find((i) => i.selector === '#pinned');
+  expect(pinned?.spacing?.center).toEqual({ x: 20, y: 20 });
 });

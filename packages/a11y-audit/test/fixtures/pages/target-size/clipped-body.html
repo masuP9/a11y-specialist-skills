@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>target-size target clipped by body's paint containment</title>
+    <style>
+      /* body's paint containment clips its content to its 30px height
+         (it is not propagated to the viewport). */
+      body {
+        margin: 0;
+        font-family: sans-serif;
+        height: 30px;
+        contain: paint;
+      }
+    </style>
+  </head>
+  <body>
+    <pre
+      id="long"
+      tabindex="0"
+      style="margin: 0; width: 300px; height: 2000px; background: #eee"
+    >
+code</pre
+    >
+  </body>
+</html>
