@@ -1,0 +1,17 @@
+<!doctype html>
+<!--
+  Intent: a text field in a background-less absolutely positioned wrapper that is drawn over a black block.
+  Expected: status undetermined, reason out-of-flow.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Out of flow</title>
+  </head>
+  <body>
+    <div style="background: #000; height: 100px"></div>
+    <div style="position: absolute; top: 10px; left: 10px">
+      <input aria-label="Name" style="border: 1px solid #fff" />
+    </div>
+  </body>
+</html>

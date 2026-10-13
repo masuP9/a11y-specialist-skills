@@ -1,0 +1,24 @@
+<!doctype html>
+<!--
+  Intent: the ::before character (#111) has its own #222 background on a white button; it must be
+  compared with #222, not with white.
+  Expected: icon-button status low.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Icon font with own background</title>
+    <style>
+      span::before {
+        content: '\2715';
+        color: #111;
+        background: #222;
+      }
+    </style>
+  </head>
+  <body>
+    <button aria-label="Search" style="background: #fff; border: 0">
+      <span></span>
+    </button>
+  </body>
+</html>

@@ -1,5 +1,5 @@
 /**
- * Fixture Gallery: manifest-driven integration tests for all 18 checks.
+ * Fixture Gallery: manifest-driven integration tests for all 19 checks.
  *
  * Each manifest entry:
  * - Serves an HTML fixture from test/fixtures/pages/ via a worker-scoped
@@ -10,7 +10,7 @@
  * - For 'passes' expectations: also guards against silent inapplicable pass.
  * - Validates the result envelope against RESULT_SCHEMAS[check] via Ajv.
  *
- * Coverage: all 32 custom finding-capable rules from rule-registry.ts
+ * Coverage: all 34 custom finding-capable rules from rule-registry.ts
  * (auto-play and auto-play-audio live in their own specs).
  * axe-audit: representative rule (image-alt); full rule coverage is out of
  * scope for axe (hundreds of external rules).
@@ -464,6 +464,52 @@ const MANIFEST: ManifestEntry[] = [
     fixture: 'focus-order/dialog-good.html',
     expectRules: {
       'a11y-skills/focus-order-dialog': 'passes',
+    },
+  },
+
+  // =========================================================================
+  // non-text-contrast-check
+  // Rules: a11y-skills/non-text-contrast-boundary, non-text-contrast-icon (both incomplete)
+  // =========================================================================
+  {
+    check: 'non-text-contrast-check',
+    scenario: 'finding: non-text-contrast-boundary (#ccc border on white)',
+    fixture: 'non-text-contrast/low-border.html',
+    expectRules: {
+      'a11y-skills/non-text-contrast-boundary': 'incomplete',
+    },
+  },
+  {
+    check: 'non-text-contrast-check',
+    scenario: 'clear: non-text-contrast-boundary (#767676 border)',
+    fixture: 'non-text-contrast/good-border.html',
+    expectRules: {
+      'a11y-skills/non-text-contrast-boundary': 'passes',
+    },
+  },
+  {
+    check: 'non-text-contrast-check',
+    scenario: 'finding: non-text-contrast-icon (#bbb icon on white)',
+    fixture: 'non-text-contrast/icon-low.html',
+    expectRules: {
+      'a11y-skills/non-text-contrast-icon': 'incomplete',
+    },
+  },
+  {
+    check: 'non-text-contrast-check',
+    scenario: 'clear: non-text-contrast-icon (#333 icon on white)',
+    fixture: 'non-text-contrast/icon-good.html',
+    expectRules: {
+      'a11y-skills/non-text-contrast-icon': 'passes',
+    },
+  },
+  {
+    check: 'non-text-contrast-check',
+    scenario: 'not applicable: no form controls or buttons',
+    fixture: 'non-text-contrast/none.html',
+    expectRules: {
+      'a11y-skills/non-text-contrast-boundary': 'inapplicable',
+      'a11y-skills/non-text-contrast-icon': 'inapplicable',
     },
   },
 

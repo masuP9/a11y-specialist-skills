@@ -1,0 +1,20 @@
+<!doctype html>
+<!--
+  Intent: a black button whose SVG has a white background rect with a white magnifier stroke on top.
+  Both are 21:1 against black but the stroke sits on the white rect.
+  Expected: undetermined, reason svg-overlap.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>SVG overlap</title>
+  </head>
+  <body>
+    <button aria-label="Search" style="background: #000; border: 0">
+      <svg viewBox="0 0 10 10" width="20" height="20">
+        <rect width="10" height="10" fill="#fff" />
+        <path d="M2 2L8 8" fill="none" stroke="#fff" />
+      </svg>
+    </button>
+  </body>
+</html>

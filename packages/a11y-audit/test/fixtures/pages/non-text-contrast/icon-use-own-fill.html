@@ -1,0 +1,22 @@
+<!doctype html>
+<!--
+  Intent: a sprite icon via <use> whose symbol path sets its own faint fill (#ddd). The <use> element's own
+  inherited fill (black) is not what is drawn.
+  Expected: icon-button status undetermined, reason svg-use.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Use with own fill</title>
+  </head>
+  <body>
+    <svg style="display: none">
+      <symbol id="faint" viewBox="0 0 10 10">
+        <path d="M0 0h10v10z" fill="#ddd" />
+      </symbol>
+    </svg>
+    <button aria-label="Close" style="background: #fff; border: 0">
+      <svg width="20" height="20"><use href="#faint" /></svg>
+    </button>
+  </body>
+</html>

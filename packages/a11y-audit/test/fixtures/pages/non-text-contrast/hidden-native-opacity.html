@@ -1,0 +1,30 @@
+<!doctype html>
+<!--
+  Intent: a native checkbox hidden with opacity: 0, with a custom box drawn by a sibling span (#ddd border).
+  The native input must not be treated as an untouched browser control.
+  Expected: the checkbox is undetermined, reason opacity; the boundary rule is incomplete.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Native checkbox hidden by opacity</title>
+  </head>
+  <body>
+    <label>
+      <input
+        type="checkbox"
+        style="opacity: 0; position: absolute"
+        aria-label="Agree"
+      />
+      <span
+        style="
+          display: inline-block;
+          width: 16px;
+          height: 16px;
+          border: 1px solid #ddd;
+        "
+      ></span>
+      Agree
+    </label>
+  </body>
+</html>

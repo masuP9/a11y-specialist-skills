@@ -1,0 +1,26 @@
+<!doctype html>
+<!--
+  Intent: a sprite icon via <use> whose symbol path gets a faint fill (#ddd) from a stylesheet rule, not an attribute.
+  Expected: icon-button status undetermined, reason svg-use.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Use with stylesheet fill</title>
+    <style>
+      .sprite path {
+        fill: #ddd;
+      }
+    </style>
+  </head>
+  <body>
+    <svg class="sprite" style="display: none">
+      <symbol id="faint" viewBox="0 0 10 10">
+        <path d="M0 0h10v10z" />
+      </symbol>
+    </svg>
+    <button aria-label="Close" style="background: #fff; border: 0">
+      <svg width="20" height="20"><use href="#faint" /></svg>
+    </button>
+  </body>
+</html>

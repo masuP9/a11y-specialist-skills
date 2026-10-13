@@ -1,0 +1,24 @@
+<!doctype html>
+<!--
+  Intent: the symbol path states fill="black", which equals its parent's computed fill, while the <use>
+  element sets fill="#ccc". The explicit paint on the target is what is drawn, not the <use> gray.
+  Expected: icon-button status undetermined, reason svg-use.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Use with explicit paint equal to the parent's</title>
+  </head>
+  <body>
+    <svg style="display: none">
+      <defs>
+        <symbol id="explicit" viewBox="0 0 10 10">
+          <path fill="black" d="M0 0h10v10z" />
+        </symbol>
+      </defs>
+    </svg>
+    <button aria-label="Close" style="background: #fff; border: 0">
+      <svg width="20" height="20"><use href="#explicit" fill="#ccc" /></svg>
+    </button>
+  </body>
+</html>

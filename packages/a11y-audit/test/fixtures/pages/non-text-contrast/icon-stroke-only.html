@@ -1,0 +1,19 @@
+<!doctype html>
+<!--
+  Intent: two crossing #333 lines (no fill) on a white button.
+  Expected: pass (overlap of unfilled shapes is not svg-overlap).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Stroke only icon</title>
+  </head>
+  <body>
+    <button aria-label="Close" style="background: #fff; border: 0">
+      <svg viewBox="0 0 10 10" width="20" height="20">
+        <path d="M0 0L10 10" fill="none" stroke="#333" />
+        <path d="M10 0L0 10" fill="none" stroke="#333" />
+      </svg>
+    </button>
+  </body>
+</html>

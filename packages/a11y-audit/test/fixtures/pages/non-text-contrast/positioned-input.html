@@ -1,0 +1,25 @@
+<!doctype html>
+<!--
+  Intent: a transparent text field that is itself position: absolute and sits over a black block that is not its
+  ancestor. The body behind its ancestors is white, but the field is drawn over black.
+  Expected: status undetermined, reason out-of-flow.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Positioned input over a sibling</title>
+  </head>
+  <body>
+    <div style="background: #000; height: 100px"></div>
+    <input
+      aria-label="Name"
+      style="
+        position: absolute;
+        top: 0;
+        left: 0;
+        background: transparent;
+        border: 1px solid #000;
+      "
+    />
+  </body>
+</html>

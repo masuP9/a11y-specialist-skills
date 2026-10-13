@@ -1,0 +1,24 @@
+<!doctype html>
+<!--
+  Intent: a white button with both an image and a black SVG circle.
+  Expected: undetermined, reason image-icon (the SVG must not make it pass).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Image and SVG icon</title>
+  </head>
+  <body>
+    <button aria-label="Mixed" style="background: #fff; border: 0">
+      <img
+        alt=""
+        width="16"
+        height="16"
+        src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+      />
+      <svg viewBox="0 0 10 10" width="20" height="20">
+        <circle cx="5" cy="5" r="4" fill="#000" />
+      </svg>
+    </button>
+  </body>
+</html>

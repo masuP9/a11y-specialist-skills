@@ -1,0 +1,19 @@
+<!doctype html>
+<!--
+  Intent: a white button with a faint (#ccc) SVG icon and a label whose text color is transparent.
+  Expected: icon-button status low.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Icon button with a transparent text label</title>
+  </head>
+  <body>
+    <button style="background: #fff; border: 0">
+      <svg viewBox="0 0 10 10" width="20" height="20">
+        <path d="M0 0L10 10" fill="none" stroke="#ccc" stroke-width="2" />
+      </svg>
+      <span style="color: transparent">Close</span>
+    </button>
+  </body>
+</html>

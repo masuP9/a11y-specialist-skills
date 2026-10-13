@@ -121,6 +121,16 @@ const FINDING_EXPECTATIONS: Array<{
   // focus-order-check
   { ruleId: 'a11y-skills/focus-order-visual', expectedBucket: 'incomplete' },
   { ruleId: 'a11y-skills/focus-order-dialog', expectedBucket: 'incomplete' },
+
+  // non-text-contrast-check
+  {
+    ruleId: 'a11y-skills/non-text-contrast-boundary',
+    expectedBucket: 'incomplete',
+  },
+  {
+    ruleId: 'a11y-skills/non-text-contrast-icon',
+    expectedBucket: 'incomplete',
+  },
 ];
 
 /**
@@ -152,14 +162,14 @@ test('all manifest finding expectations agree with rule-registry classification'
   }
 });
 
-test('all 32 custom finding rules have a manifest entry', () => {
+test('all 34 custom finding rules have a manifest entry', () => {
   const manifestRuleIds = new Set(FINDING_EXPECTATIONS.map((e) => e.ruleId));
 
   const registryRuleIds = Object.values(RULES).map((r) => r.id);
   expect(
     registryRuleIds.length,
-    'rule-registry should have 32 custom rules',
-  ).toBe(32);
+    'rule-registry should have 34 custom rules',
+  ).toBe(34);
 
   for (const ruleId of registryRuleIds) {
     expect(

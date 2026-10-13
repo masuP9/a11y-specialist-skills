@@ -1,0 +1,18 @@
+<!doctype html>
+<!--
+  Intent: two borderless text fields marked only by their fill. The first is #e0e0e0, the second #595959.
+  Expected: first low, second pass (indicator: background).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Fill only</title>
+  </head>
+  <body>
+    <input aria-label="Light" style="border: 0; background: #e0e0e0" />
+    <input
+      aria-label="Dark"
+      style="border: 0; background: #595959; color: #fff"
+    />
+  </body>
+</html>

@@ -1,0 +1,19 @@
+<!doctype html>
+<!--
+  Intent: an overlay with a translucent background and backdrop-filter wraps an opaque white block that holds
+  the input. backdrop-filter only changes what is behind the overlay, not the white block.
+  Expected: status pass.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Backdrop filter outside the opaque layer</title>
+  </head>
+  <body>
+    <div style="background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px)">
+      <div style="background: #fff">
+        <input aria-label="Name" style="border: 1px solid #767676" />
+      </div>
+    </div>
+  </body>
+</html>

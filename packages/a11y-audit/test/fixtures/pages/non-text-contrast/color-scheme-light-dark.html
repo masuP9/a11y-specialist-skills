@@ -1,0 +1,20 @@
+<!doctype html>
+<!--
+  Intent: a page that supports both schemes (color-scheme: light dark) with a #767676 border input.
+  Under the default light preference the canvas is white.
+  Expected: status pass (under an emulated dark preference: undetermined, reason color-scheme).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Light and dark color scheme</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+    </style>
+  </head>
+  <body>
+    <input aria-label="Name" style="border: 1px solid #767676" />
+  </body>
+</html>

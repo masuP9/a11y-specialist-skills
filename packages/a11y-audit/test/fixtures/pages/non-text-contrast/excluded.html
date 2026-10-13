@@ -1,0 +1,18 @@
+<!doctype html>
+<!--
+  Intent: components that must not be counted: a disabled field, a hidden field,
+  an aria-disabled checkbox, and a button with visible text.
+  Expected: no components; both rules inapplicable.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Excluded components</title>
+  </head>
+  <body>
+    <input aria-label="Disabled" disabled style="border: 1px solid #eee" />
+    <input aria-label="Hidden" style="display: none; border: 1px solid #eee" />
+    <div role="checkbox" aria-checked="false" aria-disabled="true"></div>
+    <button>Save</button>
+  </body>
+</html>
