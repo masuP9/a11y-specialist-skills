@@ -1,0 +1,24 @@
+<!doctype html>
+<!--
+  Only the keyup of the Shift key reacts: it opens an alert dialog. No
+  character key does anything.
+  Expected (keys A, a): releasing Shift after "A" happens after the reaction
+  of "A" is settled, so the dialog is not counted as a reaction of "A":
+  reacted is empty and nothing is reloaded.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Shift keyup dialog</title>
+  </head>
+  <body>
+    <main>
+      <p>Releasing Shift opens a dialog.</p>
+    </main>
+    <script>
+      document.addEventListener('keyup', (e) => {
+        if (e.key === 'Shift') alert('shift');
+      });
+    </script>
+  </body>
+</html>

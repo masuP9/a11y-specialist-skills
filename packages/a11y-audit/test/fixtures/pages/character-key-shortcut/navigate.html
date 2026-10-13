@@ -1,0 +1,24 @@
+<!doctype html>
+<!--
+  "g" navigates to none.html; "h" shows a panel.
+  Expected (keys g, h): g -> navigation, h -> dom-change after a reload,
+  reloads 1, the result url is this page.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Navigate</title>
+  </head>
+  <body>
+    <main>
+      <p>Press g to go, h for help.</p>
+      <div id="help" hidden>Help</div>
+    </main>
+    <script>
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'g') location.assign('none.html');
+        if (e.key === 'h') document.getElementById('help').hidden = false;
+      });
+    </script>
+  </body>
+</html>

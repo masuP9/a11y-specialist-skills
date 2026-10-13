@@ -1,5 +1,5 @@
 /**
- * Fixture Gallery: manifest-driven integration tests for all 20 checks.
+ * Fixture Gallery: manifest-driven integration tests for all 21 checks.
  *
  * Each manifest entry:
  * - Serves an HTML fixture from test/fixtures/pages/ via a worker-scoped
@@ -10,7 +10,7 @@
  * - For 'passes' expectations: also guards against silent inapplicable pass.
  * - Validates the result envelope against RESULT_SCHEMAS[check] via Ajv.
  *
- * Coverage: all 35 custom finding-capable rules from rule-registry.ts
+ * Coverage: all 36 custom finding-capable rules from rule-registry.ts
  * (auto-play and auto-play-audio live in their own specs).
  * axe-audit: representative rule (image-alt); full rule coverage is out of
  * scope for axe (hundreds of external rules).
@@ -531,6 +531,35 @@ const MANIFEST: ManifestEntry[] = [
     expectRules: {
       'a11y-skills/non-text-contrast-boundary': 'inapplicable',
       'a11y-skills/non-text-contrast-icon': 'inapplicable',
+    },
+  },
+
+  // =========================================================================
+  // character-key-shortcut-check
+  // Rule: a11y-skills/character-key-shortcut (incomplete)
+  // =========================================================================
+  {
+    check: 'character-key-shortcut-check',
+    scenario: 'finding: character-key-shortcut ("k" toggles a panel)',
+    fixture: 'character-key-shortcut/toggle-panel.html',
+    expectRules: {
+      'a11y-skills/character-key-shortcut': 'incomplete',
+    },
+  },
+  {
+    check: 'character-key-shortcut-check',
+    scenario: 'clear: character-key-shortcut (Escape-only listener)',
+    fixture: 'character-key-shortcut/escape-only.html',
+    expectRules: {
+      'a11y-skills/character-key-shortcut': 'passes',
+    },
+  },
+  {
+    check: 'character-key-shortcut-check',
+    scenario: 'not applicable: no key listeners',
+    fixture: 'character-key-shortcut/none.html',
+    expectRules: {
+      'a11y-skills/character-key-shortcut': 'inapplicable',
     },
   },
 

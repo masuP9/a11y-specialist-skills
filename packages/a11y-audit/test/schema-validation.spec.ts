@@ -13,6 +13,7 @@ import {
   normalizePointerGestureCheck,
   normalizeAxeResults,
   normalizeChangeOnInputCheck,
+  normalizeCharacterKeyShortcutCheck,
   normalizeFocusCheck,
   normalizeFocusOrderCheck,
   normalizeKeyboardReachabilityCheck,
@@ -28,6 +29,7 @@ import type {
   PointerCancellationCheckDetails,
   PointerGestureCheckDetails,
   ChangeOnInputCheckDetails,
+  CharacterKeyShortcutCheckDetails,
   FocusCheckDetails,
   FocusOrderCheckDetails,
   FocusOrderStop,
@@ -1163,6 +1165,109 @@ test('non-text-contrast-check envelope with a color that is not #rrggbb is rejec
     buckets: normalizeNonTextContrastCheck(details),
   });
   const validate = ajv.compile(RESULT_SCHEMAS['non-text-contrast-check']);
+  expect(validate(result)).toBe(false);
+});
+
+test('character-key-shortcut-check envelope with two listeners, all seven reactions, an untested key and an abort validates against its schema', () => {
+  const details: CharacterKeyShortcutCheckDetails = {
+    listenerInspection: 'cdp',
+    listeners: [
+      {
+        target: 'document',
+        type: 'keydown',
+        useCapture: false,
+        passive: false,
+        once: false,
+        scriptId: '12',
+        lineNumber: 3,
+        columnNumber: 8,
+        handlerPreview: '(e) => { if (e.key === "k") togglePanel(); }',
+      },
+      {
+        target: 'body',
+        type: 'keyup',
+        useCapture: true,
+        passive: true,
+        once: true,
+        scriptId: '13',
+        lineNumber: 0,
+        columnNumber: 0,
+        handlerPreview: null,
+      },
+    ],
+    keyProbe: 'ran',
+    keysTried: ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
+    reacted: [
+      { key: 'a', reactions: [{ kind: 'navigation', toUrl: 'about:blank' }] },
+      { key: 'b', reactions: [{ kind: 'new-window', url: 'about:blank' }] },
+      {
+        key: 'c',
+        reactions: [{ kind: 'dialog', dialogType: 'alert', message: 'hi' }],
+      },
+      {
+        key: 'd',
+        reactions: [{ kind: 'focus-moved', toSelector: '#search' }],
+      },
+      { key: 'e', reactions: [{ kind: 'dom-change', mutations: 7 }] },
+      { key: 'f', reactions: [{ kind: 'scroll', dx: 0, dy: 200 }] },
+      { key: 'g', reactions: [{ kind: 'default-prevented' }] },
+    ],
+    untested: [{ key: 'h', reason: 'reload-limit' }],
+    baselineDomMutations: 2,
+    reloads: 6,
+    aborted: { reason: 'reload-limit', url: 'about:blank' },
+  };
+  const result = buildAuditResult({
+    source: 'character-key-shortcut-check',
+    url: 'about:blank',
+    details,
+    buckets: normalizeCharacterKeyShortcutCheck(details),
+  });
+  expectValid('character-key-shortcut-check', result);
+});
+
+test('character-key-shortcut-check envelope without CDP and without an abort validates against its schema', () => {
+  const details: CharacterKeyShortcutCheckDetails = {
+    listenerInspection: 'unsupported',
+    listeners: [],
+    keyProbe: 'ran',
+    keysTried: ['k'],
+    reacted: [],
+    untested: [],
+    baselineDomMutations: 0,
+    reloads: 0,
+    aborted: null,
+  };
+  const result = buildAuditResult({
+    source: 'character-key-shortcut-check',
+    url: 'about:blank',
+    details,
+    buckets: normalizeCharacterKeyShortcutCheck(details),
+  });
+  expectValid('character-key-shortcut-check', result);
+});
+
+test('character-key-shortcut-check envelope with a reaction of unknown kind is rejected', () => {
+  const details = {
+    listenerInspection: 'cdp',
+    listeners: [],
+    keyProbe: 'ran',
+    keysTried: ['k'],
+    reacted: [{ key: 'k', reactions: [{ kind: 'teleport' }] }],
+    untested: [],
+    baselineDomMutations: 0,
+    reloads: 0,
+    aborted: null,
+  };
+  const result = buildAuditResult({
+    source: 'character-key-shortcut-check',
+    url: 'about:blank',
+    details,
+    buckets: normalizeCharacterKeyShortcutCheck(
+      details as unknown as CharacterKeyShortcutCheckDetails,
+    ),
+  });
+  const validate = ajv.compile(RESULT_SCHEMAS['character-key-shortcut-check']);
   expect(validate(result)).toBe(false);
 });
 

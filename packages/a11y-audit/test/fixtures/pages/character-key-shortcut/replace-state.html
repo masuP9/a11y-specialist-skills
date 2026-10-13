@@ -1,0 +1,26 @@
+<!doctype html>
+<!--
+  The page calls history.replaceState() with the same URL, once shortly after
+  load and then every second. The only key listener reacts to Escape.
+  Expected (five letters): a same-document history update is not a
+  navigation, so reacted is empty.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Replace state</title>
+  </head>
+  <body>
+    <main>
+      <p>A page that rewrites its own history entry.</p>
+    </main>
+    <script>
+      const touch = () => history.replaceState(null, '', location.href);
+      setTimeout(touch, 50);
+      setInterval(touch, 1000);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') document.querySelector('main').remove();
+      });
+    </script>
+  </body>
+</html>

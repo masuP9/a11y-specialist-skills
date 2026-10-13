@@ -1,0 +1,22 @@
+<!doctype html>
+<!--
+  A window keydown listener calls preventDefault() for "x" and does nothing
+  visible.
+  Expected (key x): reactions [{ kind: 'default-prevented' }], no reload.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Prevent default</title>
+  </head>
+  <body>
+    <main>
+      <p>A page that swallows x.</p>
+    </main>
+    <script>
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'x') e.preventDefault();
+      });
+    </script>
+  </body>
+</html>

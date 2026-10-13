@@ -1,0 +1,21 @@
+<!doctype html>
+<!--
+  "j" scrolls the page down by 200 px.
+  Expected (key j): scroll with dy 200.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Scroll</title>
+  </head>
+  <body>
+    <main style="height: 3000px">
+      <p>Press j to scroll.</p>
+    </main>
+    <script>
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'j') window.scrollBy(0, 200);
+      });
+    </script>
+  </body>
+</html>

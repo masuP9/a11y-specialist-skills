@@ -1,0 +1,32 @@
+<!doctype html>
+<!--
+  900 ms after load (after the load settles, so while the baseline is being
+  measured) the page replaces itself with the same page plus "?reloaded=1"
+  (it does nothing when the query is present). The check opens the target URL
+  without the query in every new context, so the redirect happens in each
+  one. "k" shows a panel.
+  Expected (key k): the redirect during the baseline does not make the check
+  throw. The baseline is thrown away and measured again in a fresh context;
+  the page redirects again within that, and the check goes on to stop at
+  maxReloads. See the spec for the exact expectations.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Baseline redirect</title>
+  </head>
+  <body>
+    <main>
+      <p>Press k.</p>
+      <div id="panel" hidden>Panel</div>
+    </main>
+    <script>
+      if (!location.search.includes('reloaded=1')) {
+        setTimeout(() => location.replace('?reloaded=1'), 900);
+      }
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'k') document.getElementById('panel').hidden = false;
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,22 @@
+<!doctype html>
+<!--
+  A document keydown listener that reacts to Escape only.
+  Expected: the listener is found, all 94 keys are pressed, none reacts, the
+  rule passes.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Escape only</title>
+  </head>
+  <body>
+    <main>
+      <p id="banner">Press Escape to dismiss this banner.</p>
+    </main>
+    <script>
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') document.getElementById('banner')?.remove();
+      });
+    </script>
+  </body>
+</html>

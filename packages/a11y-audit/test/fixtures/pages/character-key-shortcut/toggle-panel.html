@@ -1,0 +1,25 @@
+<!doctype html>
+<!--
+  A single-key shortcut: "k" toggles a panel.
+  Expected (keys j, k): only "k" reacts, with a dom-change; incomplete.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Toggle panel</title>
+  </head>
+  <body>
+    <main>
+      <p>Press k to toggle the panel.</p>
+      <div id="panel" hidden>Panel</div>
+    </main>
+    <script>
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'k') {
+          const panel = document.getElementById('panel');
+          panel.hidden = !panel.hidden;
+        }
+      });
+    </script>
+  </body>
+</html>

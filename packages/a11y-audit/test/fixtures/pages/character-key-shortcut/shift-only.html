@@ -1,0 +1,29 @@
+<!doctype html>
+<!--
+  Only the Shift key itself reacts: on keydown of "Shift" the page rewrites a
+  DOM node and calls preventDefault(). No character key does anything.
+  Expected (keys A, ?, a): the Shift press that accompanies "A" and "?" is not
+  part of the observed window, so reacted is empty and nothing is reloaded.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Shift only</title>
+  </head>
+  <body>
+    <main>
+      <p id="status">idle</p>
+    </main>
+    <script>
+      let n = 0;
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Shift') {
+          e.preventDefault();
+          n += 1;
+          document.getElementById('status').textContent = 'shift ' + n;
+          document.body.append(document.createElement('span'));
+        }
+      });
+    </script>
+  </body>
+</html>

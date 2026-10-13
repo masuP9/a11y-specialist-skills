@@ -1,0 +1,33 @@
+<!doctype html>
+<!--
+  "g" navigates to none.html, but only after the page is busy for a while: a
+  timer blocks the main thread so that the navigation commits after the
+  settle wait of "g" has ended. "h" shows a panel.
+  Expected (keys g, h): the navigation is noticed before "h" is pressed and
+  recorded on "g" (not dropped); the check reloads and then presses "h" in the
+  fresh page, which shows its panel (dom-change). reloads 1.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Late navigate</title>
+  </head>
+  <body>
+    <main>
+      <p>Press g to go (late), h for help.</p>
+      <div id="help" hidden>Help</div>
+    </main>
+    <script>
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'g') {
+          setTimeout(() => {
+            const end = Date.now() + 250;
+            while (Date.now() < end);
+            location.assign('none.html');
+          }, 50);
+        }
+        if (e.key === 'h') document.getElementById('help').hidden = false;
+      });
+    </script>
+  </body>
+</html>
