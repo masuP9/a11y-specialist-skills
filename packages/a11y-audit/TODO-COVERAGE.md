@@ -153,6 +153,27 @@
 
 ---
 
+### 2.5.2 Pointer Cancellation - **部分実装** ✅
+**概要**: 単一ポインタで操作する機能が、押し下げだけで実行されない（離したときに実行する・途中でやめられる・取り消せる、のいずれか。押し下げでの実行が必須なら例外）
+
+**実装**: `pointer-cancellation-check`（`runPointerCancellationCheck.ts`、`cdpEventListeners.ts` の `forSubtree` / `collectNodes`）
+- 操作できる要素（押す listener を持つもの・インラインの `onpointerdown` などを持つもの・ボタンやリンクなど）に、押し下げの合成イベント（`pointerdown`、続けて `mousedown`）だけを送って離さず、ページの移動・新しいウィンドウ・ダイアログ・フォーカスの移動・DOM の変化（`style` 属性を除く）を `activated-on-press` の候補にする。確認のあとは `pointercancel` を送る
+- 押す listener だけを持ち、離す・クリックの listener が要素自身に無く、変化も見えなかった要素は `press-only-listener` の候補（見えない処理をしている可能性）。候補はすべて `incomplete`（`a11y-skills/pointer-cancellation`）
+- 自前の BrowserContext を使い、移動したら作り直して試した要素を飛ばす。戻らない handler は 1 ステップ 5 秒で打ち切り、context ごと閉じてやり直し、その要素は未検査として `incomplete`
+- 何もしなくても DOM が変わるページでは DOM の変化を根拠にしない（`details.domObservation`）
+- 20 種類以上の listener を持つ委譲先の要素（`details.delegationRootCount`）と、`window` / `document` の押す listener（`details.pageListeners`）は、要素に帰属できないのでページ単位の「手で確かめて」node として報告し、`incomplete` にする
+
+**残る制限**:
+- 押し下げは合成イベント（`isTrusted === false`）で、`isTrusted` を確かめる処理には反応されない。`touchstart` は送らない
+- 押した後は `pointercancel` を送るだけで、ハンドラが始めた処理は元に戻さない（前の要素の影響が後に出ることがある）
+- `settleMs`（300ms）より後に表れる変化は見逃す。送信・保存を押し下げで行うページでは実際に送られる
+- press-only の判定は要素自身の listener だけ（祖先の `click` は見ない）。CDP は Chromium のみ
+- iframe の中・closed shadow root は見ない。押すのは 100 要素まで、予算 60 秒、やり直し 10 回
+- 離したときの実行・中止・取り消しの手段と、押し下げでの実行が必須という例外は人手で確認する
+- follow-up 候補: 実マウス（CDP `Input.dispatchMouseEvent`）で押して離す前にポインタを外へ動かし、途中でやめられるかまで確かめる。`touchstart` の合成
+
+---
+
 ### 2.5.4 Motion Actuation - **部分実装** ✅
 **概要**: 端末を振る・傾ける操作で動く機能に、画面の部品での代替があり、動きでの起動を止められる
 
@@ -291,6 +312,7 @@
 | 2.4.1 Bypass Blocks | `automated-checks.md` |
 | 2.4.11 Focus Not Obscured (Minimum) / 2.4.12 (Enhanced) | `focus-indicator-check.ts` ✅ |
 | 2.5.1 Pointer Gestures | `pointer-gesture-check`（部分） ✅ |
+| 2.5.2 Pointer Cancellation | `pointer-cancellation-check`（部分） ✅ |
 | 2.5.7 Dragging Movements | `pointer-gesture-check`（部分） ✅ |
 | 2.5.3 Label in Name | `automated-checks.md` |
 | 2.5.4 Motion Actuation | `motion-actuation-check`（部分） ✅ |

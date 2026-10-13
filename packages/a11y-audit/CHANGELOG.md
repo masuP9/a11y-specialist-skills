@@ -41,6 +41,28 @@ adheres to [Semantic Versioning](https://semver.org/).
   of iframes are not compared; only triggers with known attributes open
   dialogs, and doing so presses Enter / Escape after a reload
   (the function API's `maxDialogTriggers: 0` presses no trigger); Tab cycling inside a modal is not examined.
+- `pointer-cancellation-check` (WCAG 2.5.2): new check, `runPointerCancellationCheck`
+  (takes a `browser`; owns its contexts and restarts after a navigation) and the
+  CLI check name `pointer-cancellation-check`. Rule
+  `a11y-skills/pointer-cancellation` (tags `wcag21a`, `wcag252`); always
+  `incomplete`, because release-time completion, abort / undo and the essential
+  exception need a human. Dispatches synthetic down-events only (`pointerdown`,
+  then `mousedown`) to operable elements without releasing, then sends
+  `pointercancel`. Two candidate kinds: `activated-on-press` (a navigation, new
+  window, dialog, focus move or DOM change, `style` excluded, followed) and
+  `press-only-listener` (a press listener but no release or click listener on
+  the element itself, and no visible change; read through CDP). On a page that
+  changes its DOM on its own, DOM changes are not used (`details.domObservation`);
+  delegation roots and press listeners on `window` / `document` become
+  page-level manual-check nodes (`incomplete`);
+  a handler that never returns is cut off after 5 s, the context is closed and
+  the element is reported as untested. New `PointerCancellation*` types, schema
+  and `./test-entries/pointer-cancellation-check`. Known limitations: the events
+  are synthetic (`isTrusted` handlers do not react, `touchstart` is not sent);
+  pages that submit or save on the down-event really do so; an earlier press can
+  influence a later one; changes after 300 ms are missed; listeners need
+  Chromium; iframes and closed shadow roots are not examined; at most 100
+  elements within a 60 s budget.
 
 ### Fixed
 

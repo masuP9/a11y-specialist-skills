@@ -49,7 +49,7 @@ Methods are labeled as Automated/Interactive/Manual/Content and can be combined.
 | 2.4.11 | Automated + Interactive | `focus-indicator-check` **[CLI]** + screenshots | Fail if focus is entirely hidden by author-created content |
 | 2.4.12 (AAA) | Automated + Interactive | `focus-indicator-check` **[CLI]** + screenshots | Fail if focus is partially obscured |
 | 2.5.1 | Interactive + automated candidates | `pointer-gesture-check` **[CLI]** + logs | Fail if complex gestures required |
-| 2.5.2 | Interactive | logs | Fail if cancellation unavailable |
+| 2.5.2 | Interactive + automated candidates | `pointer-cancellation-check` **[CLI]** + logs | Fail if cancellation unavailable |
 | 2.5.3 | Automated + Manual | a11y name diff (axe `label-content-name-mismatch` is experimental and not run by default) | Fail if label text not in accessible name |
 | 2.5.4 | Interactive + automated candidates | `motion-actuation-check` **[CLI]** + logs | Fail if motion-only activation |
 | 2.5.7 | Interactive + automated candidates | `pointer-gesture-check` **[CLI]** + logs | Fail if dragging required |
@@ -99,6 +99,7 @@ The following criteria can be automatically checked via the `a11y-audit` CLI (se
 | 2.4.7, 2.4.11, 2.4.12 (AAA), 3.2.1 | `focus-indicator-check` | `focus-indicator-result.json`, `focus-indicators.png` |
 | 2.5.4 | `motion-actuation-check` | `motion-actuation-result.json` |
 | 2.5.1, 2.5.7 | `pointer-gesture-check` | `pointer-gesture-result.json` |
+| 2.5.2 | `pointer-cancellation-check` | `pointer-cancellation-result.json` |
 | 3.2.2 | `change-on-input-check` | `change-on-input-result.json` |
 | 2.5.5, 2.5.8 | `target-size-check` | `target-size-result.json`, `target-size-screenshot.png` |
 | 3.3.7 | `redundant-entry-check` | `redundant-entry-result.json` |
