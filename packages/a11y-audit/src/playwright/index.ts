@@ -79,6 +79,10 @@ export {
   runFocusOrderCheck,
   type RunFocusOrderCheckOptions,
 } from './runFocusOrderCheck.js';
+export {
+  runNonTextContrastCheck,
+  type RunNonTextContrastCheckOptions,
+} from './runNonTextContrastCheck.js';
 
 export {
   resolveOutputPath,

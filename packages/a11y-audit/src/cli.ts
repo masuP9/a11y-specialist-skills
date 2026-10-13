@@ -280,6 +280,18 @@ const CHECK_REGISTRY: CheckEntry[] = [
       })) as AuditResultEnvelope;
     },
   },
+  {
+    name: 'non-text-contrast-check',
+    kind: 'page',
+    async run({ page, outputDir }) {
+      const { runNonTextContrastCheck } =
+        await import('./playwright/runNonTextContrastCheck.js');
+      return (await runNonTextContrastCheck({
+        page,
+        outputDir,
+      })) as AuditResultEnvelope;
+    },
+  },
 ];
 
 // ---------------------------------------------------------------------------

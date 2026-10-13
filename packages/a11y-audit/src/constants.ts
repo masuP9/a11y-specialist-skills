@@ -973,3 +973,31 @@ export const FOCUS_ORDER_DIALOG_CLOSE_SELECTOR =
 export const FOCUS_ORDER_DIALOG_CLOSE_NAME_PATTERN =
   /^(close|dismiss|cancel|×|✕|x|閉じる|キャンセル)$/i;
 export const DEFAULT_FOCUS_ORDER_RESULT_FILE = 'focus-order-result.json';
+
+// ---------------------------------------------------------------------------
+// Non-text contrast (WCAG 1.4.11)
+// ---------------------------------------------------------------------------
+/** WCAG 1.4.11: minimum contrast ratio for UI component boundaries and icons. */
+export const NON_TEXT_CONTRAST_MIN_RATIO = 3;
+export const NON_TEXT_CONTRAST_SELECTOR =
+  'input, textarea, select, button, [role="switch"], [role="checkbox"], [role="radio"], [role="textbox"], [role="searchbox"], [role="combobox"], [role="button"]';
+export const NON_TEXT_CONTRAST_TEXT_INPUT_TYPES: readonly string[] = [
+  'text',
+  'email',
+  'password',
+  'search',
+  'tel',
+  'url',
+  'number',
+  'date',
+  'datetime-local',
+  'month',
+  'time',
+  'week',
+];
+/** Components measured per page; the rest are counted in componentCounts.found only. */
+export const NON_TEXT_CONTRAST_MAX_COMPONENTS = 300;
+/** Elements inside one icon-only button that are examined for icon colors. */
+export const NON_TEXT_CONTRAST_MAX_ICON_PARTS = 20;
+export const DEFAULT_NON_TEXT_CONTRAST_RESULT_FILE =
+  'non-text-contrast-result.json';
