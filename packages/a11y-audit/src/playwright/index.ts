@@ -79,6 +79,10 @@ export {
   runFocusOrderCheck,
   type RunFocusOrderCheckOptions,
 } from './runFocusOrderCheck.js';
+export {
+  runPointerCancellationCheck,
+  type RunPointerCancellationCheckOptions,
+} from './runPointerCancellationCheck.js';
 
 export {
   resolveOutputPath,

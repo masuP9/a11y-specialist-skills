@@ -1,7 +1,7 @@
 {
   "name": "@a11y-skills/audit",
   "version": "0.13.0",
-  "description": "Playwright + axe-core based WCAG 2.2 accessibility audit functions (axe, focus indicator, keyboard trap, keyboard reachability, reflow, target size, text spacing, zoom, orientation, autocomplete, time limit, auto-play, redundant entry, motion actuation, change on input, accessible authentication, pointer gestures, focus order).",
+  "description": "Playwright + axe-core based WCAG 2.2 accessibility audit functions (axe, focus indicator, keyboard trap, keyboard reachability, reflow, target size, text spacing, zoom, orientation, autocomplete, time limit, auto-play, redundant entry, motion actuation, change on input, accessible authentication, pointer gestures, focus order, pointer cancellation).",
   "type": "module",
   "license": "MIT",
   "author": {
@@ -116,6 +116,10 @@
     "./test-entries/focus-order-check": {
       "types": "./dist/test-entries/focus-order-check.d.ts",
       "import": "./dist/test-entries/focus-order-check.js"
+    },
+    "./test-entries/pointer-cancellation-check": {
+      "types": "./dist/test-entries/pointer-cancellation-check.d.ts",
+      "import": "./dist/test-entries/pointer-cancellation-check.js"
     }
   },
   "files": [

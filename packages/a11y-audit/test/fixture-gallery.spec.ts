@@ -1,5 +1,5 @@
 /**
- * Fixture Gallery: manifest-driven integration tests for all 18 checks.
+ * Fixture Gallery: manifest-driven integration tests for all 19 checks.
  *
  * Each manifest entry:
  * - Serves an HTML fixture from test/fixtures/pages/ via a worker-scoped
@@ -10,7 +10,7 @@
  * - For 'passes' expectations: also guards against silent inapplicable pass.
  * - Validates the result envelope against RESULT_SCHEMAS[check] via Ajv.
  *
- * Coverage: all 32 custom finding-capable rules from rule-registry.ts
+ * Coverage: all 33 custom finding-capable rules from rule-registry.ts
  * (auto-play and auto-play-audio live in their own specs).
  * axe-audit: representative rule (image-alt); full rule coverage is out of
  * scope for axe (hundreds of external rules).
@@ -464,6 +464,27 @@ const MANIFEST: ManifestEntry[] = [
     fixture: 'focus-order/dialog-good.html',
     expectRules: {
       'a11y-skills/focus-order-dialog': 'passes',
+    },
+  },
+
+  // =========================================================================
+  // pointer-cancellation-check
+  // Rule: a11y-skills/pointer-cancellation (incomplete)
+  // =========================================================================
+  {
+    check: 'pointer-cancellation-check',
+    scenario: 'finding: pointer-cancellation (a button navigates on mousedown)',
+    fixture: 'pointer-cancellation/mousedown-navigates.html',
+    expectRules: {
+      'a11y-skills/pointer-cancellation': 'incomplete',
+    },
+  },
+  {
+    check: 'pointer-cancellation-check',
+    scenario: 'clear: pointer-cancellation (controls act on click only)',
+    fixture: 'pointer-cancellation/click-only.html',
+    expectRules: {
+      'a11y-skills/pointer-cancellation': 'passes',
     },
   },
 

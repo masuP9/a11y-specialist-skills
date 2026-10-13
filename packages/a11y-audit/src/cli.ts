@@ -280,6 +280,19 @@ const CHECK_REGISTRY: CheckEntry[] = [
       })) as AuditResultEnvelope;
     },
   },
+  {
+    name: 'pointer-cancellation-check',
+    kind: 'browser',
+    async run({ browser, outputDir, url }) {
+      const { runPointerCancellationCheck } =
+        await import('./playwright/runPointerCancellationCheck.js');
+      return (await runPointerCancellationCheck({
+        browser,
+        targetUrl: url,
+        outputDir,
+      })) as AuditResultEnvelope;
+    },
+  },
 ];
 
 // ---------------------------------------------------------------------------

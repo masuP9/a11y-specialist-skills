@@ -1,0 +1,34 @@
+<!doctype html>
+<!--
+  1001 divs, each with a mousedown listener. The first 1000 do nothing; the
+  last one (role="button") adds an element.
+  Expected: listenerNodesTruncated true (more than 1000 nodes with press
+  listeners); rule: incomplete. The last div is an activated-on-press finding
+  whose target.listeners is null (its listeners were not examined).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Many listeners</title>
+  </head>
+  <body>
+    <script>
+      for (let i = 0; i < 1001; i += 1) {
+        const div = document.createElement('div');
+        div.id = `d${i}`;
+        div.textContent = `Item ${i}`;
+        if (i < 1000) {
+          div.addEventListener('mousedown', () => {});
+        } else {
+          // The last node falls beyond the 1000-node cap, so it is found only
+          // as an interactive element, and it reacts to a press.
+          div.setAttribute('role', 'button');
+          div.addEventListener('mousedown', () => {
+            document.body.append(document.createElement('p'));
+          });
+        }
+        document.body.append(div);
+      }
+    </script>
+  </body>
+</html>

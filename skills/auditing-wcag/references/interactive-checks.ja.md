@@ -105,6 +105,7 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks focus-order-check
 | 基準 | 操作 | 証跡 | Fail条件 |
 |---|---|---|---|
 | 2.5.1 | ピンチ・スワイプなど複数の指や軌跡の操作に、1 点の操作の代わりがあるか | 操作ログ | 複数の指・軌跡でしか操作できない |
+| 2.5.2 | 押し下げだけで機能が実行されない（離したときに実行する・途中でやめられる・取り消せる） | 操作ログ + `pointer-cancellation-check` | 押し下げだけで実行され、中止も取り消しもできない |
 | 2.5.4 | 振る・傾ける操作に画面の部品の代わりがあり、動きでの起動を止められるか | 操作ログ | 動きでしか操作できない、または止められない |
 | 2.5.7 | ドラッグ以外の操作手段を提供 | 操作ログ | ドラッグ必須で代替なし |
 | 2.5.8 | ターゲットサイズを測定 | スクショ/計測 | 最低サイズを満たさない |
@@ -126,6 +127,15 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks focus-order-check
 - 候補にしないもの: 動かす listener だけの要素（hover 効果など）、20 種類以上の listener を持つ委譲先の要素（React の根など）。後者はルールごとに 1 つのページ単位の「手で確かめて」node になる。委譲で作られたドラッグ・ジェスチャは listener からは拾えない。
 - 候補はすべて `incomplete`。1 点の操作（ボタンやクリック）で同じことができるか、必須の操作という例外に当たるかは、候補ごとに人が確かめる。実際にドラッグ・スワイプして動くかは確かめない。
 - 実行: `npx -y @a11y-skills/audit --url "<url>" --checks pointer-gesture-check`
+
+### `pointer-cancellation-check` CLIチェック
+
+`pointer-cancellation-check` で、押し下げだけで動く部品を `incomplete` の候補として報告します（`a11y-skills/pointer-cancellation`）。
+
+- 操作できる要素ごとに押し下げのイベント（`pointerdown` と `mousedown`）だけを合成して送り、離さない。ページの移動・新しいウィンドウ・ダイアログ・フォーカスの移動（押した要素自身へのものを除く）・DOM の変化（`style` 属性を除く）が起きたら候補。確認のあとは `pointercancel` を送る。ページが何もしなくても DOM を変えているときは、DOM の変化を根拠にしない。
+- 押す listener（`pointerdown` / `mousedown` / `touchstart`）だけを持ち、離す・クリックの listener を要素自身に持たず、押しても変化が見えなかった要素も、見えない処理をしている根拠として候補に出す（CDP は Chromium のみ。それ以外では listener の根拠が付かず、手で確かめる node が付く）。委譲先の要素（20 種類以上の listener）や `window` / `document` の押す listener があるときも、要素に帰属できず、役割やインラインの属性を持たない要素は押していないので、ページ単位の「手で確かめて」node が付く。
+- 候補はすべて `incomplete`。離したときに実行されるか、途中でやめられるか、取り消せるか、押し下げでの実行が必須という例外に当たるかは、候補ごとに人が確かめる。合成イベントなので `isTrusted` を確かめる処理は反応しない。送信や保存を押し下げで行うページでは実際に実行される。
+- 実行: `npx -y @a11y-skills/audit --url "<url>" --checks pointer-cancellation-check`
 
 ### `target-size-check` CLIチェック
 

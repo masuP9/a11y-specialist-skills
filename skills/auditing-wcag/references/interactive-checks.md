@@ -105,6 +105,7 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks focus-order-check
 | Criterion | Action | Evidence | Fail rule |
 |---|---|---|---|
 | 2.5.1 | Pinch, swipe and other multipoint / path-based gestures have a single-pointer alternative | logs | Operable only by multipoint or path-based gestures |
+| 2.5.2 | A function is not completed on the down-event alone (it runs on release, can be aborted, or can be undone) | logs + `pointer-cancellation-check` | Completes on the down-event with no way to abort or undo |
 | 2.5.4 | Shaking / tilting has a UI-component alternative and motion actuation can be turned off | logs | Operable only by motion, or cannot be turned off |
 | 2.5.7 | Provide alternative to dragging | logs | Dragging is required with no alternative |
 | 2.5.8 | Measure target size | screenshots/measurement | Minimum target size not met |
@@ -126,6 +127,15 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks focus-order-check
 - Not candidates: elements with only a move listener (hover effects), and delegation roots with listeners for 20 or more event types (e.g. a React root); the latter become one page-level manual-check node per rule. Gestures built on delegation cannot be found from listeners.
 - Every candidate is `incomplete`. A human verifies, per candidate, that a single-pointer alternative (buttons or clicks) exists, or that the essential exception applies. Nothing is dragged or swiped to see whether something moves.
 - Run: `npx -y @a11y-skills/audit --url "<url>" --checks pointer-gesture-check`
+
+### `pointer-cancellation-check` CLI Check
+
+`pointer-cancellation-check` reports components that act on the down-event alone as `incomplete` candidates (`a11y-skills/pointer-cancellation`).
+
+- For each operable element it sends only synthetic down-events (`pointerdown`, then `mousedown`) and never releases. A navigation, new window, dialog, focus move (other than to the pressed element itself) or DOM change (excluding the `style` attribute) makes it a candidate. After observing it sends `pointercancel`. When the page changes its DOM on its own, DOM changes are not used as evidence.
+- Elements that have a press listener (`pointerdown` / `mousedown` / `touchstart`) but no release or click listener of their own, and showed no visible change, are also reported as candidates (they may do something invisible on press). CDP is Chromium-only; elsewhere there is no listener evidence and a manual-check node is added. Delegation roots (listeners for 20 or more event types) and press listeners on `window` / `document` cannot be attributed to elements, and elements without an interactive role or inline handler are not pressed, so a page-level manual-check node is added.
+- All candidates are `incomplete`. Whether the function runs on release, can be aborted, can be undone, or falls under the essential exception is checked by a human per candidate. The events are synthetic, so handlers that check `isTrusted` do not react. Pages that submit or save on the down-event really do so.
+- Run: `npx -y @a11y-skills/audit --url "<url>" --checks pointer-cancellation-check`
 
 ### `target-size-check` CLI Check
 

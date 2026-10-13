@@ -1,0 +1,26 @@
+<!doctype html>
+<!--
+  A pointercancel handler never returns (the check sends pointercancel after
+  observing a press). pointerdown does nothing.
+  Expected: the check returns without throwing; the press of #hang-cancel was
+  already observed (tested, no finding, not untested); only the cancel hangs,
+  so the hung context is closed (nothing is left to press, so no restart is
+  needed) and the check returns. Run with a short
+  stepTimeoutMs.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Hang pointercancel</title>
+  </head>
+  <body>
+    <button type="button" id="hang-cancel">Hang on cancel</button>
+    <script>
+      document
+        .getElementById('hang-cancel')
+        .addEventListener('pointercancel', () => {
+          while (true) {}
+        });
+    </script>
+  </body>
+</html>

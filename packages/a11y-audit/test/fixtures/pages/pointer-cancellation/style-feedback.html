@@ -1,0 +1,24 @@
+<!doctype html>
+<!--
+  A button scales down on pointerdown (visual feedback only). It also has a
+  click listener, so it is not a press-only listener.
+  Expected: no findings (style attribute changes are not counted); rule:
+  passes.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Style feedback</title>
+  </head>
+  <body>
+    <button type="button" id="sf">Press</button>
+    <script>
+      const button = document.getElementById('sf');
+      button.addEventListener('pointerdown', function () {
+        this.style.transform = 'scale(0.95)';
+      });
+      // A click listener keeps the button from being a press-only listener.
+      button.addEventListener('click', () => {});
+    </script>
+  </body>
+</html>
