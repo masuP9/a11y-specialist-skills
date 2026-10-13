@@ -255,6 +255,19 @@ const CHECK_REGISTRY: CheckEntry[] = [
       })) as AuditResultEnvelope;
     },
   },
+  {
+    name: 'focus-order-check',
+    kind: 'browser',
+    async run({ browser, outputDir, url }) {
+      const { runFocusOrderCheck } =
+        await import('./playwright/runFocusOrderCheck.js');
+      return (await runFocusOrderCheck({
+        browser,
+        targetUrl: url,
+        outputDir,
+      })) as AuditResultEnvelope;
+    },
+  },
 ];
 
 // ---------------------------------------------------------------------------

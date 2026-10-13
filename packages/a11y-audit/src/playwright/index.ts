@@ -71,6 +71,10 @@ export {
   runAccessibleAuthenticationCheck,
   type RunAccessibleAuthenticationCheckOptions,
 } from './runAccessibleAuthenticationCheck.js';
+export {
+  runFocusOrderCheck,
+  type RunFocusOrderCheckOptions,
+} from './runFocusOrderCheck.js';
 
 export {
   resolveOutputPath,
