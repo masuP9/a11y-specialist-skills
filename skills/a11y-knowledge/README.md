@@ -33,10 +33,6 @@ It does not restate the definitions of success criteria, the ARIA specification,
 | auditing-wcag                      | Sort automated check results with `checks-*`, then read "Judgment lines" and "When checking" for the criteria that need review |
 | implementing-a11y                  | From the component about to be written, look it up in `index-by-component` and read "Judgment lines" and "When building" |
 
-## Where it comes from
-
-Many of the judgment lines and "When checking" sections were decided in [a11y-guild](https://github.com/masuP9/a11y-guild) (a management tool for AI-driven accessibility testing) while measuring verdicts against practice pages with known answers and against real sites. The measurement numbers are not included; only the patterns of misjudgment are.
-
 ## File structure
 
 ```
