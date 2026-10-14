@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Accessibility Knowledge Base'
+  short_description: 'Per-criterion judgment rules, build guidance, check reading'
+  default_prompt: 'Use $a11y-knowledge to look up the WCAG success criterion or component in question and apply its rationale, judgment lines, build guidance, and automated-check reading rules.'
