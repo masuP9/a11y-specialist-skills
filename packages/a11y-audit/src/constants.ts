@@ -1078,3 +1078,8 @@ export const CHARACTER_KEY_MUTATION_MARGIN = 3;
 export const CHARACTER_KEY_BASELINE_WINDOWS = 10;
 export const DEFAULT_CHARACTER_KEY_SHORTCUT_RESULT_FILE =
   'character-key-shortcut-result.json';
+
+// page-snapshot (material for 2.4.1 / 2.4.2 / 3.1.1 / 3.2.3 / 3.2.4 / 3.2.6)
+export const DEFAULT_PAGE_SNAPSHOT_RESULT_FILE = 'page-snapshot-result.json';
+/** Per-iframe wait, so an iframe that never finishes does not stall the check. */
+export const PAGE_SNAPSHOT_FRAME_TIMEOUT_MS = 5_000;

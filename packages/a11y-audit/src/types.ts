@@ -39,7 +39,8 @@ export type CheckSource =
   | 'focus-order-check'
   | 'pointer-cancellation-check'
   | 'non-text-contrast-check'
-  | 'character-key-shortcut-check';
+  | 'character-key-shortcut-check'
+  | 'page-snapshot';
 
 export type NormalizedImpact = 'critical' | 'serious' | 'moderate' | 'minor';
 
@@ -1704,3 +1705,48 @@ export interface CharacterKeyShortcutCheckDetails {
 
 export type CharacterKeyShortcutCheckResult =
   AuditCheckResult<CharacterKeyShortcutCheckDetails>;
+
+// =============================================================================
+// page-snapshot (material only, no verdict)
+// =============================================================================
+
+/**
+ * One iframe that appears as a `- iframe` line in a snapshot. Frames are
+ * listed depth-first in document order (open shadow roots expanded), so the
+ * frames with `parentIndex: null` match the `- iframe` lines of the page's
+ * `snapshot` in order, and the frames with `parentIndex: k` match the lines of
+ * `frames[k].snapshot`.
+ */
+export interface PageSnapshotFrame {
+  /** Position in `frames`. */
+  index: number;
+  /** `index` of the frame this iframe is in; null when it is in the page itself. */
+  parentIndex: number | null;
+  /** The iframe element's `title` attribute; null when absent. */
+  title: string | null;
+  /** The frame's URL, or the `src` attribute when the frame could not be reached. */
+  url: string;
+  /** `ariaSnapshot()` of the frame's body, unmodified; null when it could not be read. */
+  snapshot: string | null;
+  /** Why `snapshot` is null; null when it was read. */
+  error: string | null;
+}
+
+export interface PageSnapshotDetails {
+  /** The URL passed as `targetUrl`; null when the caller navigated the page. */
+  requestedUrl: string | null;
+  /** The URL the page ended up on (after redirects). */
+  finalUrl: string;
+  /** `document.title`. */
+  title: string;
+  /** The `lang` attribute of `<html>`: null when absent, '' when empty. */
+  lang: string | null;
+  viewport: { width: number; height: number };
+  /** `page.locator('body').ariaSnapshot()`, unmodified and never truncated. */
+  snapshot: string;
+  /** `snapshot.length`, so a reader can decide whether to load it whole. */
+  snapshotLength: number;
+  frames: PageSnapshotFrame[];
+}
+
+export type PageSnapshotResult = AuditCheckResult<PageSnapshotDetails>;

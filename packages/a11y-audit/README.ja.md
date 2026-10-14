@@ -3,7 +3,8 @@
 Playwright + axe-core ベースの WCAG 2.2 アクセシビリティ検査関数。
 
 本パッケージは [`auditing-wcag`](https://github.com/masuP9/a11y-specialist-skills)
-Claude Code skill から機能本体を切り出したものです。21 個の検査を関数として提供し、
+Claude Code skill から機能本体を切り出したものです。21 個の検査と、判定を補う材料
+（アクセシビリティツリーなど）を書き出す `runPageSnapshot` を関数として提供し、
 すぐ実行できる Playwright 用の互換 test entry も同梱します。
 
 > **English: see [README.md](./README.md).**
@@ -35,6 +36,7 @@ Claude Code skill から機能本体を切り出したものです。21 個の�
 | `runPointerCancellationCheck` | 2.5.2 ポインタのキャンセル（押し下げだけで動く部品。候補として報告） |
 | `runNonTextContrastCheck` | 1.4.11 非テキストのコントラスト（入力欄などの枠・塗り、アイコンだけのボタンのアイコン。候補として報告） |
 | `runCharacterKeyShortcutCheck` | 2.1.4 文字キーのショートカット（本文にフォーカスを置いて 1 文字ずつ押し、反応したキー。候補として報告） |
+| `runPageSnapshot` | 判定はしない。2.4.1 / 2.4.2 / 3.1.1 / 3.2.3 / 3.2.4 / 3.2.6 を判定する材料（aria snapshot・タイトル・lang・URL・iframe ごとの aria snapshot） |
 
 多くの検査は遷移済みの `page` を受けます。一部は navigation を所有し `targetUrl`
 （または `TEST_PAGE`）を受けます: `runOrientationCheck` と `runTimeLimitDetector`
@@ -222,6 +224,26 @@ CDP は **Chromium のみ**で、それ以外では listener の根拠が付か�
 最初の操作のあとで付く listener は取り出せません。ページが自分で DOM を書き換え続けると小さな変化を見落とします。
 **実際にキーを押す**ので、ショートカットが削除・送信などをするページでは副作用があります。
 
+`runPageSnapshot`（判定はしない）は `page` を受け、`targetUrl` を渡すとそのページを自分で開きます
+（渡さなければ開いてあるページをそのまま撮ります）。ページの構造が要る基準（2.4.1 の見出し・
+ランドマーク、2.4.2 のタイトル、3.1.1 の lang、複数ページを見比べる 3.2.3 / 3.2.4 / 3.2.6）を
+エージェントや人が判定する材料として、次を `page-snapshot-result.json` に書きます。4 区分は常に空で
+summary は全部 0 なので、CLI の終了コードは変わりません。
+
+- `snapshot`: `page.locator('body').ariaSnapshot()` の文字列。加工も切り詰めもしません（長さは
+  `snapshotLength`）。開いた shadow root の中は含み、iframe は `- iframe` の 1 行だけです。
+- `title`（`document.title`）、`lang`（`<html>` の `lang` 属性。無ければ `null`、`lang=""` は `""`）、
+  `requestedUrl`（`targetUrl`。渡さなければ `null`）と `finalUrl`（リダイレクトの後）、`viewport`（幅と高さ）。
+- `frames`: snapshot に `- iframe` 行として出る iframe ごとの `{ index, parentIndex, title, url, snapshot, error }`。
+  shadow root を展開した文書の順に並べ、入れ子の iframe は親の直後に続けます。`parentIndex` が `null`
+  の frame は本文の `snapshot` の `- iframe` 行に、`parentIndex` が `k` の frame は `frames[k].snapshot`
+  の `- iframe` 行に、前から順に対応します。別オリジンの iframe も読みます。中を読めなかった iframe は
+  `snapshot: null` で `error` に理由を入れ、その中の iframe はたどりません（1 つにつき 5 秒で諦めます）。
+  `display: none` や `aria-hidden` の中など snapshot に出ない iframe は入りません（大きさ 0 の iframe は
+  snapshot に出るので入ります）。
+
+複数のページを比べるときは、ページごとに `--output-dir`（関数なら `outputFile` / `outputPath`）を分けてください。
+
 ## インストール
 
 ```sh
@@ -291,6 +313,7 @@ focus-order-check
 pointer-cancellation-check
 non-text-contrast-check
 character-key-shortcut-check
+page-snapshot
 ```
 
 ### 終了コード
@@ -545,7 +568,7 @@ import "@a11y-skills/audit/test-entries/target-size-check";
 // redundant-entry-check, motion-actuation-check, change-on-input-check,
 // accessible-authentication-check, pointer-gesture-check, focus-order-check,
 // pointer-cancellation-check, non-text-contrast-check,
-// character-key-shortcut-check
+// character-key-shortcut-check, page-snapshot
 import "@a11y-skills/audit/test-entries/text-spacing-check";
 ```
 

@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Cross-origin frame</title>
+  </head>
+  <body>
+    <main>
+      <iframe title="Other origin"></iframe>
+    </main>
+    <script>
+      // The test passes the other origin's URL in the fragment, because the
+      // static server's port is only known at run time.
+      document.querySelector('iframe').src = decodeURIComponent(
+        location.hash.slice(1),
+      );
+    </script>
+  </body>
+</html>
