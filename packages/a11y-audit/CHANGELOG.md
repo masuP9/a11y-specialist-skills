@@ -7,6 +7,21 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- `page-snapshot` (no verdict): new `runPageSnapshot` (takes a `page`; opens
+  `targetUrl` itself when given) and the CLI check name `page-snapshot`. Writes
+  material for an agent or a person to judge 2.4.1 / 2.4.2 / 3.1.1 and, across
+  pages, 3.2.3 / 3.2.4 / 3.2.6: the body's `ariaSnapshot()` string unmodified
+  and untruncated (`snapshot`, `snapshotLength`), `title`, `lang` (`null` when
+  the attribute is absent, `""` when empty), `requestedUrl` / `finalUrl`,
+  `viewport`, and `frames` — one `{ index, parentIndex, title, url, snapshot,
+  error }` per iframe the snapshot shows as a `- iframe` line, in document order
+  with shadow roots expanded, nested frames right after their parent, so frames
+  line up with the `- iframe` lines. Cross-origin iframes are read; an iframe
+  that cannot be read gets `snapshot: null` and an `error` (5 s per iframe).
+  All buckets stay empty and the summary counts are 0, so the CLI exit code is
+  unaffected. New `PageSnapshot*` types, schema and
+  `./test-entries/page-snapshot`.
+
 - `pointer-cancellation-check` (WCAG 2.5.2): new check, `runPointerCancellationCheck`
   (takes a `browser`; owns its contexts and restarts after a navigation) and the
   CLI check name `pointer-cancellation-check`. Rule

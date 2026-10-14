@@ -111,6 +111,9 @@ export type {
   CharacterKeyResult,
   CharacterKeyShortcutCheckDetails,
   CharacterKeyShortcutCheckResult,
+  PageSnapshotFrame,
+  PageSnapshotDetails,
+  PageSnapshotResult,
 } from '../types.js';
 
 /** Minimal JSON Schema object shape (Draft 2020-12 compatible subset). */
@@ -2106,6 +2109,63 @@ export const CHARACTER_KEY_SHORTCUT_CHECK_RESULT_SCHEMA: JsonSchema =
     },
   });
 
+export const PAGE_SNAPSHOT_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
+  id: 'page-snapshot-result',
+  title: 'PageSnapshotResult',
+  source: 'page-snapshot',
+  details: {
+    type: 'object',
+    required: [
+      'requestedUrl',
+      'finalUrl',
+      'title',
+      'lang',
+      'viewport',
+      'snapshot',
+      'snapshotLength',
+      'frames',
+    ],
+    properties: {
+      requestedUrl: { type: ['string', 'null'] },
+      finalUrl: { type: 'string' },
+      title: { type: 'string' },
+      lang: { type: ['string', 'null'] },
+      viewport: {
+        type: 'object',
+        required: ['width', 'height'],
+        properties: {
+          width: { type: 'number' },
+          height: { type: 'number' },
+        },
+      },
+      snapshot: { type: 'string' },
+      snapshotLength: { type: 'number' },
+      frames: {
+        type: 'array',
+        items: {
+          type: 'object',
+          required: [
+            'index',
+            'parentIndex',
+            'title',
+            'url',
+            'snapshot',
+            'error',
+          ],
+          properties: {
+            index: { type: 'number' },
+            parentIndex: { type: ['number', 'null'] },
+            title: { type: ['string', 'null'] },
+            url: { type: 'string' },
+            snapshot: { type: ['string', 'null'] },
+            error: { type: ['string', 'null'] },
+          },
+        },
+      },
+    },
+  },
+});
+
 /** All result schemas keyed by check id. */
 export const RESULT_SCHEMAS = {
   'axe-audit': AXE_AUDIT_RESULT_SCHEMA,
@@ -2130,4 +2190,5 @@ export const RESULT_SCHEMAS = {
   'pointer-cancellation-check': POINTER_CANCELLATION_CHECK_RESULT_SCHEMA,
   'non-text-contrast-check': NON_TEXT_CONTRAST_CHECK_RESULT_SCHEMA,
   'character-key-shortcut-check': CHARACTER_KEY_SHORTCUT_CHECK_RESULT_SCHEMA,
+  'page-snapshot': PAGE_SNAPSHOT_RESULT_SCHEMA,
 } as const;

@@ -4,8 +4,9 @@ Playwright + axe-core based WCAG 2.2 accessibility audit functions.
 
 This package is the functional core extracted from the
 [`auditing-wcag`](https://github.com/masuP9/a11y-specialist-skills) Claude Code
-skill. It ships 21 checks as plain functions plus ready-to-run Playwright
-test entries.
+skill. It ships 21 checks, plus `runPageSnapshot`, which writes material
+(the accessibility tree and more) for judging what the checks do not, as plain
+functions plus ready-to-run Playwright test entries.
 
 > **日本語版は [README.ja.md](./README.ja.md) を参照してください。**
 
@@ -36,6 +37,7 @@ test entries.
 | `runPointerCancellationCheck` | 2.5.2 Pointer Cancellation (components that act on the down-event alone, reported as candidates) |
 | `runNonTextContrastCheck` | 1.4.11 Non-text Contrast (border / fill of inputs and similar, icons in icon-only buttons, reported as candidates) |
 | `runCharacterKeyShortcutCheck` | 2.1.4 Character Key Shortcuts (keys that react when pressed one at a time with focus on the page body, reported as candidates) |
+| `runPageSnapshot` | No verdict. Material for judging 2.4.1 / 2.4.2 / 3.1.1 / 3.2.3 / 3.2.4 / 3.2.6 (aria snapshot, title, lang, URLs, an aria snapshot per iframe) |
 
 Most checks take an already-navigated `page`. A few own navigation and take a
 `targetUrl` instead (or `TEST_PAGE`): `runOrientationCheck` and
@@ -304,6 +306,28 @@ that work only while a component has focus (an exception of 2.1.4) and a keydown
 rewriting its own DOM can hide small changes. Pages whose shortcuts delete or submit may have side effects
 because real keys are pressed.
 
+`runPageSnapshot` (no verdict) takes a `page` and, when given a `targetUrl`, opens it itself (without one,
+the page is taken as it is). As material for an agent or a person judging the criteria that need the
+page's structure (2.4.1 headings and landmarks, 2.4.2 title, 3.1.1 lang, and 3.2.3 / 3.2.4 / 3.2.6 by
+comparing pages), it writes the following to `page-snapshot-result.json`. The four buckets are always
+empty and the summary counts are 0, so the CLI exit code does not change.
+
+- `snapshot`: the string from `page.locator('body').ariaSnapshot()`, neither modified nor truncated (its
+  length is `snapshotLength`). Open shadow roots are included; an iframe is just a `- iframe` line.
+- `title` (`document.title`), `lang` (the `lang` attribute of `<html>`: `null` when absent, `""` for
+  `lang=""`), `requestedUrl` (the `targetUrl`, or `null` without one) and `finalUrl` (after redirects),
+  and `viewport` (width and height).
+- `frames`: `{ index, parentIndex, title, url, snapshot, error }` for each iframe the snapshot shows as a
+  `- iframe` line, in document order with shadow roots expanded, each nested iframe right after its
+  parent. Frames with `parentIndex: null` match the `- iframe` lines of the page's `snapshot` in order,
+  and frames with `parentIndex: k` match those of `frames[k].snapshot`. Cross-origin iframes are read
+  too. An iframe whose content cannot be read has `snapshot: null` and the reason in `error`, and its
+  own iframes are not followed (each iframe is given 5 s). Iframes the snapshot does not show
+  (`display: none`, inside `aria-hidden`, ...) are left out; a zero-size iframe is shown, so it is in.
+
+To compare several pages, use a separate `--output-dir` per page (or `outputFile` / `outputPath` with
+the function).
+
 ## Install
 
 ```sh
@@ -373,6 +397,7 @@ focus-order-check
 pointer-cancellation-check
 non-text-contrast-check
 character-key-shortcut-check
+page-snapshot
 ```
 
 ### Exit codes
@@ -662,7 +687,7 @@ import "@a11y-skills/audit/test-entries/target-size-check";
 // redundant-entry-check, motion-actuation-check, change-on-input-check,
 // accessible-authentication-check, pointer-gesture-check, focus-order-check,
 // pointer-cancellation-check, non-text-contrast-check,
-// character-key-shortcut-check
+// character-key-shortcut-check, page-snapshot
 import "@a11y-skills/audit/test-entries/text-spacing-check";
 ```
 

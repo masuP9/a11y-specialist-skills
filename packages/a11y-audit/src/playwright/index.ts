@@ -91,6 +91,10 @@ export {
   runCharacterKeyShortcutCheck,
   type RunCharacterKeyShortcutCheckOptions,
 } from './runCharacterKeyShortcutCheck.js';
+export {
+  runPageSnapshot,
+  type RunPageSnapshotOptions,
+} from './runPageSnapshot.js';
 
 export {
   resolveOutputPath,

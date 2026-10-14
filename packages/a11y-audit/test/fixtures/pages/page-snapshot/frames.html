@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>Frames | Example</title>
+  </head>
+  <body>
+    <header><a href="/">Example</a></header>
+    <main>
+      <h1>Frames</h1>
+      <iframe title="Outer" src="frame-outer.html"></iframe>
+      <iframe
+        title="Not shown"
+        src="frame-leaf.html"
+        style="display: none"
+      ></iframe>
+      <div aria-hidden="true">
+        <iframe title="Hidden by parent" src="frame-leaf.html"></iframe>
+      </div>
+      <!-- The shadow root's iframe comes before "Zero size" in the snapshot
+           even though a light-DOM query would list it last. -->
+      <shadow-frame></shadow-frame>
+      <iframe
+        title="Zero size"
+        src="frame-leaf.html"
+        width="0"
+        height="0"
+      ></iframe>
+    </main>
+    <script>
+      customElements.define(
+        'shadow-frame',
+        class extends HTMLElement {
+          constructor() {
+            super();
+            this.attachShadow({ mode: 'open' }).innerHTML =
+              '<iframe title="In shadow" src="frame-leaf.html"></iframe>';
+          }
+        },
+      );
+    </script>
+  </body>
+</html>

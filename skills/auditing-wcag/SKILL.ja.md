@@ -130,5 +130,6 @@ npx -y @a11y-skills/audit --url "https://example.com" --output-dir ./results
 | `pointer-cancellation-check` | 2.5.2 | 押し下げただけで動く部品（ページの移動・新しいウィンドウ・ダイアログ・DOM の変化）と、押す listener だけを持つ要素（候補。要確認） |
 | `non-text-contrast-check` | 1.4.11 | 入力欄・チェックボックス・ラジオ・スイッチの枠や塗りと外側の色の比、アイコンだけのボタンのアイコンの比（3:1 未満と測れないものを候補に。要確認） |
 | `character-key-shortcut-check` | 2.1.4 | 本文にフォーカスを置いて 1 文字ずつ押し、ページの移動・新しいウィンドウ・ダイアログ・フォーカスの移動・DOM の変化・スクロール・`preventDefault()` が起きたキー（候補。要確認） |
+| `page-snapshot` | 2.4.1 / 2.4.2 / 3.1.1 / 3.2.3 / 3.2.4 / 3.2.6 の材料 | 判定はしない。body の aria snapshot・タイトル・`<html>` の lang・URL・iframe ごとの aria snapshot を書き出す（読んで判定する。複数ページはページごとに `--output-dir` を分けて見比べる） |
 
 詳細は [`@a11y-skills/audit` README](https://www.npmjs.com/package/@a11y-skills/audit) を参照してください。
