@@ -4,7 +4,7 @@ Playwright + axe-core based WCAG 2.2 accessibility audit functions.
 
 This package is the functional core extracted from the
 [`auditing-wcag`](https://github.com/masuP9/a11y-specialist-skills) Claude Code
-skill. It ships 20 checks as plain functions plus ready-to-run Playwright
+skill. It ships 21 checks as plain functions plus ready-to-run Playwright
 test entries.
 
 > **日本語版は [README.ja.md](./README.ja.md) を参照してください。**
@@ -35,11 +35,12 @@ test entries.
 | `runFocusOrderCheck` | 2.4.3 Focus Order (Tab order vs. visual order, focus in modal dialogs, reported as candidates) |
 | `runPointerCancellationCheck` | 2.5.2 Pointer Cancellation (components that act on the down-event alone, reported as candidates) |
 | `runNonTextContrastCheck` | 1.4.11 Non-text Contrast (border / fill of inputs and similar, icons in icon-only buttons, reported as candidates) |
+| `runCharacterKeyShortcutCheck` | 2.1.4 Character Key Shortcuts (keys that react when pressed one at a time with focus on the page body, reported as candidates) |
 
 Most checks take an already-navigated `page`. A few own navigation and take a
 `targetUrl` instead (or `TEST_PAGE`): `runOrientationCheck` and
 `runTimeLimitDetector` (and `runZoomCheck` when a URL is given).
-`runFocusIndicatorCheck`, `runKeyboardReachabilityCheck`, `runChangeOnInputCheck`, `runFocusOrderCheck` and `runPointerCancellationCheck` take a `browser`. `runAutoPlayDetection` needs the
+`runFocusIndicatorCheck`, `runKeyboardReachabilityCheck`, `runChangeOnInputCheck`, `runFocusOrderCheck`, `runPointerCancellationCheck` and `runCharacterKeyShortcutCheck` take a `browser`. `runAutoPlayDetection` needs the
 optional `pixelmatch` + `pngjs` deps (see Install).
 
 `runRedundantEntryCheck` (3.3.7, `a11y-skills/redundant-entry`) takes an
@@ -285,6 +286,24 @@ added. The color helpers `contrastRatio`, `compositeOver`, `compositeLayers`,
 `relativeLuminance`, `floorRatio` and `toHexColor` (arguments are `{ r, g, b }`
 with 0-255 channels) are exported too.
 
+`runCharacterKeyShortcutCheck` (2.1.4, `a11y-skills/character-key-shortcut`) takes a `browser` and
+creates its own contexts. It puts focus on `<body>`, **actually presses** the 94 printable ASCII characters
+(space excluded) one at a time (characters that need Shift on a US layout, `A`-`Z` and the shifted symbols, are sent with Shift held, so `e.code` and `e.shiftKey` match), and reports the keys that cause a navigation, a new window, a dialog, focus
+moving, a DOM change, scrolling or `preventDefault()` as `incomplete` candidates (`details.reacted`). A DOM
+change counts only when it is at least twice the largest amount counted over ten windows of the same length with no key pressed
+(`baselineDomMutations`, about a second) plus 3. Whether the shortcut can be turned off or remapped, or works only while a
+component has focus, is for a human to verify. The key listeners on `window` / `document` / `<html>` / `<body>`
+(the only objects a key event from `<body>` reaches) are read first through CDP (`details.listeners`); when there
+is none, no key is sent and the rule is inapplicable (`keyProbe: 'skipped-no-listeners'`). CDP is
+**Chromium only**: elsewhere there is no listener evidence and every key is pressed. After a key that reacted,
+the remaining keys are pressed in a fresh context (at most `maxReloads` times, default 30; a navigation that commits after `settleMs` is noticed before the next key and recorded on the previous key; a same-document `history.replaceState()` is not a navigation; a page that takes focus back after `blur()` leaves its keys untested as `focus-not-on-body`; `preventDefault()` is seen on keydown, keypress and keyup; a bare
+`preventDefault()` does not reload). `keys` narrows what is pressed; `timeBudgetMs` (default 60 s) and `settleMs`
+(default 100 ms) are accepted. Known limitations: keys are pressed only with focus on `<body>`, so shortcuts
+that work only while a component has focus (an exception of 2.1.4) and a keydown on a wrapper of the whole app
+(React 17+ `#root`, ...) are missed; a reload happens only after a visible reaction, so a key that changes only internal state (silently disabling shortcuts, say) leaves the next keys pressed in that state and their reactions can be missed, and the second key of a two-stroke shortcut (`g` then `i`) can be reported as a shortcut of its own (an extra candidate for a human); pass a single key in `keys` to check a suspect one alone (reloading per key is not done: it costs 0.6 s or more each, and 94 keys exceed the time budget); listeners added after the first action are not found; a page that keeps
+rewriting its own DOM can hide small changes. Pages whose shortcuts delete or submit may have side effects
+because real keys are pressed.
+
 ## Install
 
 ```sh
@@ -306,7 +325,7 @@ npm install -D pixelmatch pngjs   # only if you use runAutoPlayDetection
 
 ## CLI
 
-Run all 20 checks against a URL with a single command — no test runner needed.
+Run all 21 checks against a URL with a single command — no test runner needed.
 
 ```sh
 npx -y @a11y-skills/audit --url https://example.com
@@ -353,6 +372,7 @@ pointer-gesture-check
 focus-order-check
 pointer-cancellation-check
 non-text-contrast-check
+character-key-shortcut-check
 ```
 
 ### Exit codes
@@ -475,7 +495,7 @@ test("focus indicators", async ({ browser }, testInfo) => {
 ```
 
 `runFocusIndicatorCheck`, `runKeyboardReachabilityCheck`,
-`runKeyboardTrapCheck` and `runChangeOnInputCheck` accept `createContext` instead of `browser`. Use it to
+`runKeyboardTrapCheck`, `runChangeOnInputCheck` and `runCharacterKeyShortcutCheck` accept `createContext` instead of `browser`. Use it to
 attach your own guards (such as a `context.route` URL check) to every context
 the check uses:
 
@@ -641,8 +661,8 @@ import "@a11y-skills/audit/test-entries/target-size-check";
 // autocomplete-audit, time-limit-detector, auto-play-detection,
 // redundant-entry-check, motion-actuation-check, change-on-input-check,
 // accessible-authentication-check, pointer-gesture-check, focus-order-check,
-// pointer-cancellation-check
-// non-text-contrast-check
+// pointer-cancellation-check, non-text-contrast-check,
+// character-key-shortcut-check
 import "@a11y-skills/audit/test-entries/text-spacing-check";
 ```
 

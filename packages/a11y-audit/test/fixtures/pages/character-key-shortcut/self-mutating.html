@@ -1,0 +1,28 @@
+<!doctype html>
+<!--
+  A clock rewrites its text every 50 ms. The only key listener reacts to
+  Escape.
+  Expected (keys a, b, c): no key is reported (the page's own DOM changes are
+  not a reaction); baselineDomMutations > 0.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Self mutating</title>
+  </head>
+  <body>
+    <main>
+      <p id="clock">0</p>
+    </main>
+    <script>
+      let n = 0;
+      setInterval(() => {
+        n += 1;
+        document.getElementById('clock').textContent = String(n);
+      }, 50);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') document.getElementById('clock').remove();
+      });
+    </script>
+  </body>
+</html>

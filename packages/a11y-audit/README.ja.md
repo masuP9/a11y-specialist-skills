@@ -3,7 +3,7 @@
 Playwright + axe-core ベースの WCAG 2.2 アクセシビリティ検査関数。
 
 本パッケージは [`auditing-wcag`](https://github.com/masuP9/a11y-specialist-skills)
-Claude Code skill から機能本体を切り出したものです。20 個の検査を関数として提供し、
+Claude Code skill から機能本体を切り出したものです。21 個の検査を関数として提供し、
 すぐ実行できる Playwright 用の互換 test entry も同梱します。
 
 > **English: see [README.md](./README.md).**
@@ -34,11 +34,12 @@ Claude Code skill から機能本体を切り出したものです。20 個の�
 | `runFocusOrderCheck` | 2.4.3 フォーカス順序（Tab の順と見た目の並びのずれ・モーダルのフォーカス。候補として報告） |
 | `runPointerCancellationCheck` | 2.5.2 ポインタのキャンセル（押し下げだけで動く部品。候補として報告） |
 | `runNonTextContrastCheck` | 1.4.11 非テキストのコントラスト（入力欄などの枠・塗り、アイコンだけのボタンのアイコン。候補として報告） |
+| `runCharacterKeyShortcutCheck` | 2.1.4 文字キーのショートカット（本文にフォーカスを置いて 1 文字ずつ押し、反応したキー。候補として報告） |
 
 多くの検査は遷移済みの `page` を受けます。一部は navigation を所有し `targetUrl`
 （または `TEST_PAGE`）を受けます: `runOrientationCheck` と `runTimeLimitDetector`
 （`runZoomCheck` は URL 指定時）。`runFocusIndicatorCheck`・
-`runKeyboardReachabilityCheck`・`runChangeOnInputCheck`・`runFocusOrderCheck`・`runPointerCancellationCheck` は `browser` を受けます。
+`runKeyboardReachabilityCheck`・`runChangeOnInputCheck`・`runFocusOrderCheck`・`runPointerCancellationCheck`・`runCharacterKeyShortcutCheck` は `browser` を受けます。
 `runAutoPlayDetection` は optional 依存 `pixelmatch` + `pngjs` が必要です（インストール参照）。
 
 `runRedundantEntryCheck`（3.3.7、`a11y-skills/redundant-entry`）は遷移済みの `page` を受けます。
@@ -204,6 +205,23 @@ iframe の中・closed shadow root は見ません。押すのは 100 要素ま�
 色の純粋関数 `contrastRatio`・`compositeOver`・`compositeLayers`・`relativeLuminance`・`floorRatio`・
 `toHexColor`（引数は 0〜255 の `{ r, g, b }`）も export しています。
 
+`runCharacterKeyShortcutCheck`（2.1.4、`a11y-skills/character-key-shortcut`）は `browser` を受けて自前の
+context を作ります。`<body>` にフォーカスを置き、印字できる ASCII の 94 文字（空白を除く）を 1 文字ずつ
+（US 配列で Shift が要る `A`-`Z` と記号は Shift を押しながら）**実際に押して**、ページの移動・新しいウィンドウ・ダイアログ・フォーカスの移動・DOM の変化・スクロール・
+`preventDefault()` が起きたキーを `incomplete` の候補にします（`details.reacted`）。DOM の変化は、何も押さずに
+同じ時間（`settleMs`）を 10 回測った最大の量（`baselineDomMutations`、約 1 秒）の 2 倍に 3 を足した数以上のときだけ反応とみなします。
+止める・変える設定があるか、フォーカスがある部品の中だけで効くかは人が確かめます。キー入力が届く
+`window` / `document` / `<html>` / `<body>` の `keydown` / `keypress` / `keyup` の listener を CDP で先に取り出し
+（`details.listeners`）、1 つも無ければキーを送らずに inapplicable にします（`keyProbe: 'skipped-no-listeners'`）。
+CDP は **Chromium のみ**で、それ以外では listener の根拠が付かず、全部のキーを押します。反応したキーのあとは
+新しい context で読み込み直して続きのキーを押します。`settleMs` のあとに確定した遷移は、次のキーを押す前に気づいて直前のキーの反応に記録します。同じ URL での `history.replaceState()` などは遷移とみなしません。`blur()` してもフォーカスを戻すページのキーは `focus-not-on-body` の未検査になります。`preventDefault()` は keydown・keypress・keyup のどれでも見ます（読み込み直しは `maxReloads`、既定 30 回まで。`preventDefault()`
+だけのときは読み込み直しません）。`keys` で押すキーを絞れ、`timeBudgetMs`（既定 60 秒）と `settleMs`（既定 100ms）を
+受け取ります。既知の制限: フォーカスが `<body>` にあるときだけ押すので、部品にフォーカスがあるときだけ効くショートカット
+（2.1.4 の例外）と、アプリ全体を包む要素に付けた keydown（React 17 以降の `#root` など）は見落とします。
+開き直すのは目に見える反応があったときだけなので、画面に出ない内部の状態だけを変えるキー（黙ってショートカットを無効にするなど）の後は、その状態のまま次のキーを押し、後のキーの反応を見落とすことがあります。2 回押すショートカット（`g` → `i`）の 2 つ目が単独のショートカットとして報告されること（人が確かめる候補が余分に出る）もあります。疑わしいときは `keys` を 1 文字にして個別に確かめられます。キーごとに開き直さないのは、1 回 0.6 秒以上かかり、94 キーで時間の上限を超えるためです。
+最初の操作のあとで付く listener は取り出せません。ページが自分で DOM を書き換え続けると小さな変化を見落とします。
+**実際にキーを押す**ので、ショートカットが削除・送信などをするページでは副作用があります。
+
 ## インストール
 
 ```sh
@@ -272,6 +290,7 @@ pointer-gesture-check
 focus-order-check
 pointer-cancellation-check
 non-text-contrast-check
+character-key-shortcut-check
 ```
 
 ### 終了コード
@@ -387,7 +406,7 @@ test("focus indicators", async ({ browser }, testInfo) => {
 });
 ```
 
-`runFocusIndicatorCheck` / `runKeyboardReachabilityCheck` / `runKeyboardTrapCheck` / `runChangeOnInputCheck` は、
+`runFocusIndicatorCheck` / `runKeyboardReachabilityCheck` / `runKeyboardTrapCheck` / `runChangeOnInputCheck` / `runCharacterKeyShortcutCheck` は、
 `browser` の代わりに `createContext` を渡せます。`context.route` による URL 検査のような
 呼び出し側の守りを、検査が使うすべての context に付けたいときに使います。
 
@@ -525,8 +544,8 @@ import "@a11y-skills/audit/test-entries/target-size-check";
 // autocomplete-audit, time-limit-detector, auto-play-detection,
 // redundant-entry-check, motion-actuation-check, change-on-input-check,
 // accessible-authentication-check, pointer-gesture-check, focus-order-check,
-// pointer-cancellation-check
-// non-text-contrast-check
+// pointer-cancellation-check, non-text-contrast-check,
+// character-key-shortcut-check
 import "@a11y-skills/audit/test-entries/text-spacing-check";
 ```
 

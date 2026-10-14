@@ -1,0 +1,30 @@
+<!doctype html>
+<!--
+  Shortcuts matched on e.code together with e.shiftKey, not on e.key:
+  Shift+Slash ("?") shows help, Shift+KeyA ("A") shows an about panel.
+  Expected (keys ?, A, /, a): "?" and "A" react because they are sent with
+  Shift held; "/" and "a" are sent without it and do not react.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Shift and code</title>
+  </head>
+  <body>
+    <main>
+      <p>Press ? for help.</p>
+      <div id="help" hidden>Help</div>
+      <div id="about" hidden>About</div>
+    </main>
+    <script>
+      document.addEventListener('keydown', (e) => {
+        if (e.code === 'Slash' && e.shiftKey) {
+          document.getElementById('help').hidden = false;
+        }
+        if (e.code === 'KeyA' && e.shiftKey) {
+          document.getElementById('about').hidden = false;
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,25 @@
+<!doctype html>
+<!--
+  "?" shows help; the capital "A" shows another element. Lowercase "a" does
+  nothing.
+  Expected (keys ?, A, a): "?" and "A" react, "a" does not.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Question mark</title>
+  </head>
+  <body>
+    <main>
+      <p>Press ? for help.</p>
+      <div id="help" hidden>Help</div>
+      <div id="about" hidden>About</div>
+    </main>
+    <script>
+      document.addEventListener('keydown', (e) => {
+        if (e.key === '?') document.getElementById('help').hidden = false;
+        if (e.key === 'A') document.getElementById('about').hidden = false;
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,22 @@
+<!doctype html>
+<!--
+  The only keydown listener is on <body>.
+  Expected (key k): one listener with target 'body'; "k" reacts.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Body listener</title>
+  </head>
+  <body>
+    <main>
+      <p>Press k.</p>
+      <div id="panel" hidden>Panel</div>
+    </main>
+    <script>
+      document.body.addEventListener('keydown', (e) => {
+        if (e.key === 'k') document.getElementById('panel').hidden = false;
+      });
+    </script>
+  </body>
+</html>

@@ -129,5 +129,6 @@ npx -y @a11y-skills/audit --url "https://example.com" --output-dir ./results
 | `focus-order-check` | 2.4.3 | Tab order vs. visual order (moving back up, backwards on a row, detours) and focus on opening / closing modal dialogs (candidates; needs review) |
 | `pointer-cancellation-check` | 2.5.2 | Components that act on the down-event alone (navigation, new window, dialog, DOM change) and elements with only press listeners (candidates; needs review) |
 | `non-text-contrast-check` | 1.4.11 | Contrast of input, checkbox, radio and switch borders or fills against the surrounding color, and of icons in icon-only buttons (below 3:1 or not measurable; needs review) |
+| `character-key-shortcut-check` | 2.1.4 | Keys that cause a navigation, new window, dialog, focus move, DOM change, scroll or `preventDefault()` when pressed one at a time with focus on the page body (candidates; needs review) |
 
 See the [`@a11y-skills/audit` README](https://www.npmjs.com/package/@a11y-skills/audit) for detailed documentation.

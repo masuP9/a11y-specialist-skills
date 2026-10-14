@@ -1,0 +1,22 @@
+<!doctype html>
+<!--
+  A document keypress listener calls preventDefault() for "s" and does nothing
+  visible. keydown is left alone.
+  Expected (key s): reactions [{ kind: 'default-prevented' }].
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Prevent keypress</title>
+  </head>
+  <body>
+    <main>
+      <p>A page that swallows s on keypress.</p>
+    </main>
+    <script>
+      document.addEventListener('keypress', (e) => {
+        if (e.key === 's') e.preventDefault();
+      });
+    </script>
+  </body>
+</html>

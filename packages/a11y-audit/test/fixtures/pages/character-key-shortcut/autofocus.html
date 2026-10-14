@@ -1,0 +1,26 @@
+<!doctype html>
+<!--
+  An autofocused input holds focus at load. The "k" shortcut works only when
+  the key comes from <body>.
+  Expected (key k): the runner blurs the input first, so "k" reacts.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Autofocus</title>
+  </head>
+  <body>
+    <main>
+      <label for="q">Query</label>
+      <input type="text" id="q" autofocus />
+      <div id="panel" hidden>Panel</div>
+    </main>
+    <script>
+      document.addEventListener('keydown', (e) => {
+        if (e.target === document.body && e.key === 'k') {
+          document.getElementById('panel').hidden = false;
+        }
+      });
+    </script>
+  </body>
+</html>

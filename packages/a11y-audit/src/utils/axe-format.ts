@@ -25,6 +25,8 @@ import type {
   FocusOrderCheckDetails,
   FocusOrderStop,
   FocusVisualDiff,
+  CharacterKeyReaction,
+  CharacterKeyShortcutCheckDetails,
   KeyboardReachabilityCheckDetails,
   KeyboardTrapCheckDetails,
   MediaPlaybackRecord,
@@ -1759,6 +1761,81 @@ export function normalizeNonTextContrastCheck(
     );
   }
 
+  return buckets;
+}
+
+function describeCharacterKeyReaction(reaction: CharacterKeyReaction): string {
+  switch (reaction.kind) {
+    case 'navigation':
+      return `navigated to ${reaction.toUrl}`;
+    case 'new-window':
+      return `opened a new window (${reaction.url})`;
+    case 'dialog':
+      return `opened a ${reaction.dialogType} dialog`;
+    case 'focus-moved':
+      return `moved focus to ${reaction.toSelector}`;
+    case 'dom-change':
+      return `changed the DOM (${reaction.mutations} mutations)`;
+    case 'scroll':
+      return `scrolled the page (${reaction.dx}, ${reaction.dy})`;
+    case 'default-prevented':
+      return 'called preventDefault() without a visible change';
+  }
+}
+
+const CHARACTER_KEY_LISTENERS_SHOWN = 5;
+const CHARACTER_KEY_UNTESTED_KEYS_SHOWN = 20;
+
+/**
+ * Every key that reacted gets a page node, and so do the keys that were not
+ * tried. A page whose keys all stayed quiet passes; a page with no key listener
+ * on the four objects <body> events reach is not applicable (no key was sent).
+ */
+export function normalizeCharacterKeyShortcutCheck(
+  details: CharacterKeyShortcutCheckDetails,
+): NormalizedBuckets {
+  const buckets = emptyBuckets();
+  if (details.keyProbe === 'skipped-no-listeners') {
+    bucketize(buckets, 'character-key-shortcut', [], false);
+    return buckets;
+  }
+
+  let evidence: string;
+  if (details.listenerInspection === 'unsupported') {
+    evidence =
+      'Key listeners could not be inspected (CDP is only available in Chromium).';
+  } else {
+    const shown = details.listeners
+      .slice(0, CHARACTER_KEY_LISTENERS_SHOWN)
+      .map(
+        (l) =>
+          `${l.target} "${l.type}" (script ${l.scriptId}, line ${l.lineNumber + 1}:${l.columnNumber + 1})`,
+      );
+    const more = details.listeners.length - shown.length;
+    evidence = `Key listeners: ${shown.join(', ')}${more > 0 ? `, and ${more} more` : ''}.`;
+  }
+
+  const nodes: NormalizedNode[] = details.reacted.map((r) =>
+    pageNode(
+      `Pressing "${r.key}" with focus on the page body ${r.reactions.map(describeCharacterKeyReaction).join('; ')}. ${evidence} Verify that this shortcut can be turned off or remapped to use a modifier key, or is active only while a component has focus.`,
+    ),
+  );
+  if (details.untested.length > 0) {
+    const reasons = [...new Set(details.untested.map((u) => u.reason))].join(
+      ', ',
+    );
+    const keys = details.untested.map((u) => u.key).join('');
+    const clipped =
+      keys.length > CHARACTER_KEY_UNTESTED_KEYS_SHOWN
+        ? `${keys.slice(0, CHARACTER_KEY_UNTESTED_KEYS_SHOWN)}…`
+        : keys;
+    nodes.push(
+      pageNode(
+        `${details.untested.length} key(s) were not tried (${reasons}): ${clipped}. Check them manually.`,
+      ),
+    );
+  }
+  bucketize(buckets, 'character-key-shortcut', nodes, true);
   return buckets;
 }
 

@@ -1,0 +1,25 @@
+<!doctype html>
+<!--
+  "/" moves focus to the search field and prevents the default.
+  Expected (key /): focus-moved to #search.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Focus search</title>
+  </head>
+  <body>
+    <main>
+      <label for="search">Search</label>
+      <input type="search" id="search" />
+    </main>
+    <script>
+      document.addEventListener('keydown', (e) => {
+        if (e.key === '/') {
+          e.preventDefault();
+          document.getElementById('search').focus();
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -280,6 +280,28 @@
 
 ---
 
+### 2.1.4 Character Key Shortcuts - **部分実装** ✅
+**概要**: 1 文字のキーだけで動くショートカットは、止める・変える・フォーカスがあるときだけ有効にする、のいずれかができる
+
+**実装**: `character-key-shortcut-check`（`runCharacterKeyShortcutCheck.ts`）
+- `<body>` にフォーカスを置き、印字できる ASCII の 94 文字を 1 文字ずつ実際に押して、移動・新しいウィンドウ・
+  ダイアログ・フォーカスの移動・DOM の変化（何も押さずに約 1 秒測った最大量を超えるもの）・スクロール・`preventDefault()` が
+  起きたキーを `a11y-skills/character-key-shortcut`（`incomplete`）で報告
+- `window` / `document` / `<html>` / `<body>` の keydown / keypress / keyup の listener を CDP で先に取り出し、
+  1 つも無ければキーを送らず inapplicable。反応したキーのあとは新しい context で読み込み直して続ける。`settleMs` のあとに確定した遷移は直前のキーに記録する
+
+**残る制限**:
+- フォーカスが `<body>` にあるときだけ押す。部品にフォーカスがあるときだけ効くショートカット（例外）と、
+  アプリ全体を包む要素に付けた keydown（React 17 以降の `#root` など）は見ない。listener の取り出しは Chromium のみ
+- 印字できる ASCII 94 文字だけ。Space・IME・修飾キー付き・2 打鍵のショートカットは押さない
+- canvas にだけ描く・音だけ鳴らす・`settleMs` より後に起きる反応は拾えない。自分で DOM を書き換え続けるページでは小さな変化を見落とす
+- 実際にキーを押すので、削除・送信をするショートカットのあるページでは副作用がある
+- 開き直すのは目に見える反応があったときだけ。画面に出ない内部の状態だけを変えるキー（黙ってショートカットを無効にするなど）の後は、その状態のまま次のキーを押し、後のキーの反応を見落とす。2 回押すショートカット（`g` → `i`）の 2 つ目が単独のものとして余分に報告されることもある。`keys` を 1 文字にして個別に確かめられる。キーごとに開き直さないのは 1 回 0.6 秒以上かかり、94 キーで時間の上限を超えるため
+- `blur()` してもフォーカスを戻すページは、そのキーを未検査（`focus-not-on-body`）にする
+- 止める・変える設定があるか、フォーカスがあるときだけ有効かは人手で確認する
+
+---
+
 ### 2.1.2 No Keyboard Trap
 **概要**: フォーカスがキーボードトラップに陥らない
 
@@ -329,6 +351,7 @@
 |---------|---------|
 | 2.1.1 Keyboard | `keyboard-reachability-check`（部分） ✅ |
 | 1.4.11 Non-text Contrast | `non-text-contrast-check`（部分） ✅ |
+| 2.1.4 Character Key Shortcuts | `character-key-shortcut-check`（部分） ✅ |
 | 2.4.3 Focus Order | `focus-order-check`（部分） ✅ |
 | 2.4.1 Bypass Blocks | `automated-checks.md` |
 | 2.4.11 Focus Not Obscured (Minimum) / 2.4.12 (Enhanced) | `focus-indicator-check.ts` ✅ |

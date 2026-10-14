@@ -133,6 +133,11 @@ const FINDING_EXPECTATIONS: Array<{
     ruleId: 'a11y-skills/non-text-contrast-icon',
     expectedBucket: 'incomplete',
   },
+  // character-key-shortcut-check
+  {
+    ruleId: 'a11y-skills/character-key-shortcut',
+    expectedBucket: 'incomplete',
+  },
 ];
 
 /**
@@ -164,14 +169,14 @@ test('all manifest finding expectations agree with rule-registry classification'
   }
 });
 
-test('all 35 custom finding rules have a manifest entry', () => {
+test('all 36 custom finding rules have a manifest entry', () => {
   const manifestRuleIds = new Set(FINDING_EXPECTATIONS.map((e) => e.ruleId));
 
   const registryRuleIds = Object.values(RULES).map((r) => r.id);
   expect(
     registryRuleIds.length,
-    'rule-registry should have 35 custom rules',
-  ).toBe(35);
+    'rule-registry should have 36 custom rules',
+  ).toBe(36);
 
   for (const ruleId of registryRuleIds) {
     expect(

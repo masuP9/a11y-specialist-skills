@@ -1,0 +1,29 @@
+<!doctype html>
+<!--
+  A clock rewrites its text once a second. The only key listener reacts to
+  Escape.
+  Expected (ten letters): no key is reported (the page's own slow DOM changes
+  are not a reaction); baselineDomMutations > 0, because the baseline lasts
+  long enough to include a tick.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Slow ticker</title>
+  </head>
+  <body>
+    <main>
+      <p id="clock">0</p>
+    </main>
+    <script>
+      let n = 0;
+      setInterval(() => {
+        n += 1;
+        document.getElementById('clock').textContent = String(n);
+      }, 1000);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') document.getElementById('clock').remove();
+      });
+    </script>
+  </body>
+</html>

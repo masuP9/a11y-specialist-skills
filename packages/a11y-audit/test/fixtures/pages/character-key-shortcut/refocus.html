@@ -1,0 +1,28 @@
+<!doctype html>
+<!--
+  An autofocused input takes focus back right after it is blurred. The only
+  key listener reacts to Escape.
+  Expected: focus cannot be put on <body>, so no key is pressed: reacted is
+  empty and every key is untested with reason 'focus-not-on-body'.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Refocus</title>
+  </head>
+  <body>
+    <main>
+      <label for="q">Query</label>
+      <input type="text" id="q" autofocus />
+    </main>
+    <script>
+      const input = document.getElementById('q');
+      input.addEventListener('blur', () => {
+        setTimeout(() => input.focus(), 0);
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') input.remove();
+      });
+    </script>
+  </body>
+</html>

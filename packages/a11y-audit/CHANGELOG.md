@@ -53,6 +53,27 @@ adheres to [Semantic Versioning](https://semver.org/).
   hover / focus / checked states); the outer color comes from ancestor
   backgrounds only; `box-shadow` / `outline` borders are not measured; parts
   inside a component, charts, iframes and shadow roots are not examined.
+- `character-key-shortcut-check` (WCAG 2.1.4): new check,
+  `runCharacterKeyShortcutCheck` (takes a `browser`; owns its contexts and
+  continues in a fresh one after a reaction) and the CLI check name
+  `character-key-shortcut-check`. Rule `a11y-skills/character-key-shortcut`
+  (tags `wcag21a`, `wcag214`); always `incomplete`, because turning the shortcut
+  off or remapping it, or limiting it to focus, needs a human. Puts focus on
+  `<body>` and really presses the 94 printable ASCII characters (no space) one at
+  a time (with Shift held for the characters that need it on a US layout); a baseline measurement interrupted by a redirect or reload is repeated in a fresh context; a key that causes a navigation, new window, dialog, focus move, DOM
+  change clearly above the page's own (`baselineDomMutations`: the largest of ten
+  windows, about a second), scroll or `preventDefault()` (on keydown, keypress or
+  keyup) is reported. A navigation that commits after the settle wait is recorded
+  on the key before it; same-document history updates are not navigations; keys
+  that cannot be given body focus (the page takes it back) are untested. The key listeners on `window`, `document`,
+  `<html>` and `<body>` are read through CDP first, and with none no key is sent
+  (inapplicable). New `CharacterKey*` types, schema and
+  `./test-entries/character-key-shortcut-check`. Known limitations: only focus on
+  `<body>` (shortcuts that work only on a focused component, and a keydown on an
+  app-wide wrapper such as React 17+ `#root`, are missed); listeners need
+  Chromium and later-added ones are not found; a page that rewrites its own DOM
+  can hide small changes; a reload happens only after a visible reaction, so a key that changes only internal state can hide the reactions of later keys, and the second key of a two-stroke shortcut can be reported on its own (use a single key in `keys` to check one alone; reloading per key costs 0.6 s or more each and 94 keys exceed the time budget); real keys are pressed, so shortcuts that delete or
+  submit have side effects (narrow them with `keys`).
 
 ## 0.13.0 — 2026-10-13
 

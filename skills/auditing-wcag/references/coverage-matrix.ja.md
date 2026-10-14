@@ -35,7 +35,7 @@
 |---|---|---|---|
 | 2.1.1 | 自動+インタラクティブ | `keyboard-reachability-check` **[CLI]** + 操作ログ | キーボード不可でFail |
 | 2.1.2 | 自動+インタラクティブ | `keyboard-trap-check` **[CLI]** + 操作ログ | トラップでFail |
-| 2.1.4 | インタラクティブ | 操作ログ | 単一キー回避不可でFail |
+| 2.1.4 | インタラクティブ+自動の候補 | `character-key-shortcut-check` **[CLI]** + 操作ログ | 単一キー回避不可でFail |
 | 2.2.1 | 自動+手動 | `time-limit-detector` **[CLI]** + 操作ログ | 延長/解除不可でFail |
 | 2.2.2 | 自動+インタラクティブ | `auto-play-detection` **[CLI]** + 操作ログ | 停止/一時停止不可でFail |
 | 2.3.1 | 手動 | 動画 | 点滅閾値超でFail |
@@ -95,6 +95,7 @@
 | 1.4.12 | `text-spacing-check` | `text-spacing-result.json` |
 | 2.1.1 | `keyboard-reachability-check` | `keyboard-reachability-result.json` |
 | 2.1.2 | `keyboard-trap-check` | `keyboard-trap-result.json` |
+| 2.1.4 | `character-key-shortcut-check` | `character-key-shortcut-result.json` |
 | 2.2.1 | `time-limit-detector` | `time-limit-result.json` |
 | 2.4.3 | `focus-order-check` | `focus-order-result.json` |
 | 2.4.7, 2.4.11, 2.4.12 (AAA), 3.2.1 | `focus-indicator-check` | `focus-indicator-result.json`, `focus-indicators.png` |
