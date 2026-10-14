@@ -14,6 +14,7 @@ Provides accessibility review skills based on WCAG 2.2 & WAI-ARIA APG.
 | [auditing-wcag](./skills/auditing-wcag/) | Systematic WCAG 2.2 AA conformance auditing with automated test scripts |
 | [planning-wcag-audit](./skills/planning-wcag-audit/) | WCAG audit planning based on WAIC guidelines (page selection, test methods) |
 | [planning-a11y-improvement](./skills/planning-a11y-improvement/) | Accessibility improvement planning with maturity assessment, roadmap, KPI design |
+| [implementing-a11y](./skills/implementing-a11y/) | Entry point for implementing UI components and pages after looking up "Judgment lines" and "When building" in a11y-knowledge |
 | [a11y-knowledge](./skills/a11y-knowledge/) | Per-criterion knowledge base: rationale, judgment lines, build guidance, and how to read automated checks (referenced by the other skills) |
 
 ## Installation

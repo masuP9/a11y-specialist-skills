@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Accessible Implementation'
+  short_description: 'Implement UI with a11y-knowledge build guidance'
+  default_prompt: 'Use $implementing-a11y to look up the success criteria for the component being implemented, read the judgment lines and build guidance, then implement it and list what needs visual verification.'

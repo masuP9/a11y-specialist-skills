@@ -45,6 +45,13 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 - CLIも実行できない場合は、利用可能なWeb取得手段でHTMLを取得し、判定可能な範囲のみ実施する。
 - `references/coverage-matrix.ja.md`でカバレッジを確認する。
 
+**知識ベース（[a11y-knowledge](../a11y-knowledge/SKILL.ja.md)）で結果を仕分ける:**
+- `@a11y-skills/audit` 0.14.0 以降の `page-snapshot` も走らせる（`--checks` を絞るときも含める）。判定はしないが、2.4.1 / 2.4.2 / 3.1.1 と複数ページの見比べの材料になる。
+- 結果は [checks-axe.ja.md](../a11y-knowledge/references/checks-axe.ja.md) と [checks-audit.ja.md](../a11y-knowledge/references/checks-audit.ja.md) の規則で「確定 / 要確認」に仕分ける。axe の pass を適合（Pass）に数えてよい規則は、そこに列挙したものだけ。それ以外の pass は、その規則が見る範囲で問題が無かった以上の意味を持たない。
+- 要確認になった達成基準は、`../a11y-knowledge/references/criteria/<番号>.ja.md` の「線引き」と「確かめるとき」を読んで判定する。「言い切らない」に当たるものは NT にとどめ、何を確かめれば決まるかを書く。
+- 複数ページを監査するときは、先に [cross-page.ja.md](../a11y-knowledge/references/cross-page.ja.md) の共通の判定のきまりを読む。
+- `references/automated-checks.ja.md` と重なる項目は知識ベースの規則を優先する。知識ベースは `../a11y-knowledge/` の相対パスで引く（プラグインとして入れていれば届く。スキルのディレクトリ単位のシンボリックリンクで入れているときは `a11y-knowledge` も一緒にリンクする）。
+
 ### 4. インタラクティブチェック
 - キーボード操作・フォーカス確認を実施する。
 - `references/interactive-checks.ja.md`に従う。
@@ -75,6 +82,7 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 - `references/content-checks.ja.md`
 - `references/output-format.ja.md`
 - `references/coverage-matrix.ja.md`
+- 知識ベース（`../a11y-knowledge/`）: `references/checks-axe.ja.md`、`references/checks-audit.ja.md`、`references/cross-page.ja.md`、`references/criteria/<番号>.ja.md`
 
 ## 自動チェックCLI
 
@@ -92,8 +100,10 @@ npx -y @a11y-skills/audit --url "https://example.com"
 
 **特定のチェックのみ実行:**
 ```bash
-npx -y @a11y-skills/audit --url "https://example.com" --checks axe-audit,focus-indicator-check
+npx -y @a11y-skills/audit --url "https://example.com" --checks axe-audit,focus-indicator-check,page-snapshot
 ```
+
+`page-snapshot`（0.14.0 以降）は、`--checks` を絞るときも含める。2.4.1 / 2.4.2 / 3.1.1 と複数ページの見比べの材料になる。
 
 **アノテーション付きスクリーンショット（focus-indicator）:**
 ```bash
