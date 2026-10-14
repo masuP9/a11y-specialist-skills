@@ -19,7 +19,7 @@
 
 ## Status
 
-- **Codex plan review**: 未実施
+- **Codex plan review**: 通過(2 巡目、2026-10-14、見送った low 0 件)
 
 - **Priority**: P3（`TODO-COVERAGE.md` の優先度「低」。ただし下流で未評価の達成基準として挙がった）
 - **Effort**: M〜L（3〜4 日相当。context の作り直し・遷移の記録は `runCharacterKeyShortcutCheck.ts` の写し、
