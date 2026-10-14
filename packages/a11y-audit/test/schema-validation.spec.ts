@@ -14,6 +14,7 @@ import {
   normalizeAxeResults,
   normalizeChangeOnInputCheck,
   normalizeCharacterKeyShortcutCheck,
+  normalizeContentOnHoverCheck,
   normalizeFocusCheck,
   normalizeFocusOrderCheck,
   normalizeKeyboardReachabilityCheck,
@@ -30,6 +31,7 @@ import type {
   PointerGestureCheckDetails,
   ChangeOnInputCheckDetails,
   CharacterKeyShortcutCheckDetails,
+  ContentOnHoverCheckDetails,
   FocusCheckDetails,
   FocusOrderCheckDetails,
   FocusOrderStop,
@@ -1269,6 +1271,128 @@ test('character-key-shortcut-check envelope with a reaction of unknown kind is r
   });
   const validate = ajv.compile(RESULT_SCHEMAS['character-key-shortcut-check']);
   expect(validate(result)).toBe(false);
+});
+
+test('content-on-hover-check envelope with two triggers, delegation roots, every result state, an untested pair and an abort validates against its schema', () => {
+  const rect = { x: 0, y: 20, width: 100, height: 30 };
+  const details: ContentOnHoverCheckDetails = {
+    listenerInspection: 'cdp',
+    delegationRoots: [
+      {
+        selector: 'document',
+        shadowHosts: [],
+        eventTypeCount: 2,
+        types: ['mouseover', 'focusin'],
+      },
+      {
+        selector: '#root',
+        shadowHosts: [],
+        eventTypeCount: 24,
+        types: ['mouseover'],
+      },
+    ],
+    listenerNodesTruncated: true,
+    triggers: [
+      {
+        selector: '#a',
+        sources: ['css', 'listener'],
+        focusTarget: '#a',
+        html: '<button id="a">A</button>',
+        htmlTruncated: false,
+      },
+      {
+        selector: '.menu',
+        sources: ['css'],
+        focusTarget: null,
+        html: '<div class="menu">',
+        htmlTruncated: true,
+      },
+    ],
+    triggersTruncated: 3,
+    cssRulesUnreadable: 1,
+    shadowTriggersSkipped: 2,
+    results: [
+      {
+        trigger: '#a',
+        method: 'hover',
+        content: [
+          {
+            selector: '#tip',
+            rect,
+            html: '<div id="tip">Tip</div>',
+            htmlTruncated: false,
+            text: 'Tip',
+          },
+        ],
+        persistent: 'stayed',
+        dismissible: 'dismissed',
+        escapeMovedFocus: true,
+        hoverable: 'disappeared',
+      },
+      {
+        trigger: '#a',
+        method: 'focus',
+        content: [],
+        persistent: 'disappeared',
+        dismissible: 'not-tested',
+        escapeMovedFocus: false,
+        hoverable: 'not-applicable',
+      },
+      {
+        trigger: '.menu',
+        method: 'hover',
+        content: [],
+        persistent: 'stayed',
+        dismissible: 'stayed',
+        escapeMovedFocus: false,
+        hoverable: 'stayed',
+      },
+      {
+        trigger: '.menu',
+        method: 'hover',
+        content: [],
+        persistent: 'stayed',
+        dismissible: 'stayed',
+        escapeMovedFocus: false,
+        hoverable: 'not-tested',
+      },
+    ],
+    noContent: 2,
+    untested: [{ trigger: '#a', method: 'focus', reason: 'navigated' }],
+    reloads: 1,
+    aborted: { reason: 'timeout', url: 'about:blank' },
+  };
+  const result = buildAuditResult({
+    source: 'content-on-hover-check',
+    url: 'about:blank',
+    details,
+    buckets: normalizeContentOnHoverCheck(details),
+  });
+  expectValid('content-on-hover-check', result);
+});
+
+test('content-on-hover-check envelope without CDP and without an abort validates against its schema', () => {
+  const details: ContentOnHoverCheckDetails = {
+    listenerInspection: 'unsupported',
+    delegationRoots: [],
+    listenerNodesTruncated: false,
+    triggers: [],
+    triggersTruncated: 0,
+    cssRulesUnreadable: 0,
+    shadowTriggersSkipped: 0,
+    results: [],
+    noContent: 0,
+    untested: [],
+    reloads: 0,
+    aborted: null,
+  };
+  const result = buildAuditResult({
+    source: 'content-on-hover-check',
+    url: 'about:blank',
+    details,
+    buckets: normalizeContentOnHoverCheck(details),
+  });
+  expectValid('content-on-hover-check', result);
 });
 
 test('the pre-0.3.0 flat result shape is rejected', () => {

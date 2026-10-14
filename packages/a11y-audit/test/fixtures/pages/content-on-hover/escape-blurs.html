@@ -1,0 +1,32 @@
+<!doctype html>
+<!--
+  A tip shown on focus and hidden on blur. Escape only blurs the active
+  element, so the tip disappears because focus moved.
+  Expected: trigger #btn (listener). Focus result: dismissible "dismissed" with
+  escapeMovedFocus true. The dismissible rule is incomplete ("moved focus").
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Escape blurs</title>
+  </head>
+  <body>
+    <main>
+      <button id="btn" type="button">Info</button>
+      <div id="tip" role="tooltip" hidden>Helpful tip</div>
+    </main>
+    <script>
+      const btn = document.getElementById('btn');
+      const tip = document.getElementById('tip');
+      btn.addEventListener('focus', () => {
+        tip.hidden = false;
+      });
+      btn.addEventListener('blur', () => {
+        tip.hidden = true;
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') document.activeElement.blur();
+      });
+    </script>
+  </body>
+</html>

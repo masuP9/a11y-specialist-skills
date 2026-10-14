@@ -1,0 +1,53 @@
+<!doctype html>
+<!--
+  A tooltip carrying aria-hidden="true" is still visible to sighted users, so
+  it is content shown on hover or focus. Escape does not dismiss it; mouseleave
+  and blur do.
+  Expected: one trigger (#btn). Hover and focus results contain #tip; the
+  dismissible rule is incomplete.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>aria-hidden tooltip</title>
+    <style>
+      .wrap {
+        position: relative;
+        display: inline-block;
+      }
+      .tip {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 140px;
+        padding: 8px;
+        background: #222;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <span id="wrap" class="wrap">
+        <button id="btn" type="button">Info</button>
+        <div id="tip" class="tip" aria-hidden="true" hidden>
+          Visual-only tip
+        </div>
+      </span>
+    </main>
+    <script>
+      const btn = document.getElementById('btn');
+      const tip = document.getElementById('tip');
+      const show = () => {
+        tip.hidden = false;
+      };
+      const hide = () => {
+        tip.hidden = true;
+      };
+      btn.addEventListener('mouseenter', show);
+      btn.addEventListener('focus', show);
+      document.getElementById('wrap').addEventListener('mouseleave', hide);
+      btn.addEventListener('blur', hide);
+    </script>
+  </body>
+</html>

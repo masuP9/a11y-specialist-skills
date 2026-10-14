@@ -1,0 +1,30 @@
+<!doctype html>
+<!--
+  A hint shown while focus is inside a group: .group:focus-within > .hint.
+  The group itself is not focusable; its input is. Escape does nothing.
+  Expected: trigger .group (css) whose focusTarget is the input's selector.
+  One focus result (content .hint), dismissible "stayed". The dismissible rule
+  is incomplete.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Focus within</title>
+    <style>
+      .hint {
+        display: none;
+      }
+      .group:focus-within > .hint {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div id="group" class="group">
+        <input id="email" type="text" aria-label="Email" />
+        <div class="hint">We never share your email</div>
+      </div>
+    </main>
+  </body>
+</html>

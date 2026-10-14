@@ -1,0 +1,71 @@
+<!doctype html>
+<!--
+  A fixed "back to top" link that appears once the page has scrolled down, and a
+  compliant tooltip button far below the fold. Scrolling the button into view
+  makes the link appear; that is not content shown by the button.
+  Expected: one trigger (#btn). No result's content includes #back-to-top and
+  the page is never reloaded.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Scroll reveal</title>
+    <style>
+      .spacer {
+        height: 2500px;
+      }
+      #back-to-top {
+        position: fixed;
+        right: 10px;
+        bottom: 10px;
+        padding: 8px;
+        background: #eee;
+      }
+      .wrap {
+        position: relative;
+        display: inline-block;
+      }
+      .tip {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 140px;
+        padding: 8px;
+        background: #222;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <a id="back-to-top" href="#top" hidden>Back to top</a>
+    <main>
+      <div class="spacer"></div>
+      <span id="wrap" class="wrap">
+        <button id="btn" type="button">Info</button>
+        <div id="tip" class="tip" role="tooltip" hidden>Helpful tip</div>
+      </span>
+      <div class="spacer"></div>
+    </main>
+    <script>
+      const btn = document.getElementById('btn');
+      const tip = document.getElementById('tip');
+      const show = () => {
+        tip.hidden = false;
+      };
+      const hide = () => {
+        tip.hidden = true;
+      };
+      btn.addEventListener('mouseenter', show);
+      btn.addEventListener('focus', show);
+      btn.addEventListener('blur', hide);
+      document.getElementById('wrap').addEventListener('mouseleave', hide);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') hide();
+      });
+      const backToTop = document.getElementById('back-to-top');
+      window.addEventListener('scroll', () => {
+        backToTop.hidden = window.scrollY < 200;
+      });
+    </script>
+  </body>
+</html>

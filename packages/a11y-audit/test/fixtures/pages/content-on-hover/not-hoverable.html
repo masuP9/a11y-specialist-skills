@@ -1,0 +1,54 @@
+<!doctype html>
+<!--
+  The tooltip is hidden by the button's own mouseleave and sits 8px away from
+  the button, so moving the pointer onto it hides it. Escape dismisses it.
+  Expected: one trigger (#btn). Hover result: hoverable "disappeared";
+  dismissible "dismissed"; persistent "stayed". Only the hoverable rule is
+  incomplete.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Not hoverable</title>
+    <style>
+      .wrap {
+        position: relative;
+        display: inline-block;
+      }
+      .tip {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        width: 140px;
+        padding: 8px;
+        background: #222;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <span class="wrap">
+        <button id="btn" type="button">Info</button>
+        <div id="tip" class="tip" role="tooltip" hidden>Helpful tip</div>
+      </span>
+    </main>
+    <script>
+      const btn = document.getElementById('btn');
+      const tip = document.getElementById('tip');
+      const show = () => {
+        tip.hidden = false;
+      };
+      const hide = () => {
+        tip.hidden = true;
+      };
+      btn.addEventListener('mouseenter', show);
+      btn.addEventListener('focus', show);
+      btn.addEventListener('mouseleave', hide);
+      btn.addEventListener('blur', hide);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') hide();
+      });
+    </script>
+  </body>
+</html>

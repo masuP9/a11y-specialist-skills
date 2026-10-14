@@ -1,0 +1,53 @@
+<!doctype html>
+<!--
+  A focus listener on window (like revalidate-on-focus in a data library) that
+  cannot reach the page's controls, plus a compliant tooltip button.
+  Expected: delegationRoots is empty; #btn is tried normally (hover and focus).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Window focus</title>
+    <style>
+      .wrap {
+        position: relative;
+        display: inline-block;
+      }
+      .tip {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 140px;
+        padding: 8px;
+        background: #222;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <span id="wrap" class="wrap">
+        <button id="btn" type="button">Info</button>
+        <div id="tip" class="tip" role="tooltip" hidden>Helpful tip</div>
+      </span>
+    </main>
+    <script>
+      window.addEventListener('focus', () => {});
+      const btn = document.getElementById('btn');
+      const tip = document.getElementById('tip');
+      const show = () => {
+        tip.hidden = false;
+      };
+      const hide = () => {
+        tip.hidden = true;
+      };
+      btn.addEventListener('mouseenter', show);
+      btn.addEventListener('focus', show);
+      btn.addEventListener('blur', hide);
+      document.getElementById('wrap').addEventListener('mouseleave', hide);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') hide();
+      });
+    </script>
+  </body>
+</html>

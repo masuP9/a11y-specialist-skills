@@ -1,0 +1,22 @@
+<!doctype html>
+<!--
+  A link whose focus listener navigates away (a 3.2.1 failure).
+  Expected: trigger #link. Hover shows nothing; the focus pair is recorded in
+  `untested` with reason "navigated"; no exception; result.url is this page.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Focus navigates</title>
+  </head>
+  <body>
+    <main>
+      <a id="link" href="none.html">Go</a>
+    </main>
+    <script>
+      document.getElementById('link').addEventListener('focus', () => {
+        location.assign('none.html');
+      });
+    </script>
+  </body>
+</html>

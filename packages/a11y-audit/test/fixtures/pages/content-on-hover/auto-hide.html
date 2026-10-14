@@ -1,0 +1,28 @@
+<!doctype html>
+<!--
+  A tip shown on mouseenter that hides itself 700ms later.
+  Expected: one trigger (#btn). Hover result: persistent "disappeared",
+  dismissible "not-tested", hoverable "not-tested". Only the persistent rule is
+  incomplete.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Auto hide</title>
+  </head>
+  <body>
+    <main>
+      <button id="btn" type="button">Info</button>
+      <div id="tip" role="tooltip" hidden>Gone soon</div>
+    </main>
+    <script>
+      const tip = document.getElementById('tip');
+      document.getElementById('btn').addEventListener('mouseenter', () => {
+        tip.hidden = false;
+        setTimeout(() => {
+          tip.hidden = true;
+        }, 700);
+      });
+    </script>
+  </body>
+</html>

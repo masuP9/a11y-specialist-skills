@@ -1,0 +1,63 @@
+<!doctype html>
+<!--
+  Two buttons. #b1 shows a tip on mouseenter that nothing ever hides (no
+  mouseleave, no Escape), so the page cannot be put back by moving the pointer
+  away. #b2 is like compliant-tooltip.html.
+  Expected: two triggers (#b1, #b2). One reload after #b1's hover result (the
+  check reloads because #b1's tip stays visible). #b2 has the same results as
+  compliant-tooltip.html (hover and focus, nothing flagged); #b1's tip is not
+  mistaken for #b2's content.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Stuck</title>
+    <style>
+      .wrap {
+        position: relative;
+        display: inline-block;
+      }
+      .tip {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 140px;
+        padding: 8px;
+        background: #222;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <button id="b1" type="button">First</button>
+      <div id="stuck-tip" role="tooltip" hidden>Stuck tip</div>
+      <div>
+        <span id="wrap2" class="wrap">
+          <button id="b2" type="button">Second</button>
+          <div id="tip2" class="tip" role="tooltip" hidden>Second tip</div>
+        </span>
+      </div>
+    </main>
+    <script>
+      document.getElementById('b1').addEventListener('mouseenter', () => {
+        document.getElementById('stuck-tip').hidden = false;
+      });
+      const b2 = document.getElementById('b2');
+      const tip2 = document.getElementById('tip2');
+      const show = () => {
+        tip2.hidden = false;
+      };
+      const hide = () => {
+        tip2.hidden = true;
+      };
+      b2.addEventListener('mouseenter', show);
+      b2.addEventListener('focus', show);
+      b2.addEventListener('blur', hide);
+      document.getElementById('wrap2').addEventListener('mouseleave', hide);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') hide();
+      });
+    </script>
+  </body>
+</html>

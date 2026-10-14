@@ -1,0 +1,49 @@
+<!doctype html>
+<!--
+  A root element with listeners for 24 event types, including mouseover and
+  focusin (like the root of a framework that delegates events). The button
+  inside has no listener of its own.
+  Expected: delegationRoots contains #root (eventTypeCount >= 20); #root is not
+  a trigger; no triggers; all three rules incomplete.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Root delegation</title>
+  </head>
+  <body>
+    <div id="root">
+      <button type="button">Open</button>
+    </div>
+    <script>
+      const types = [
+        'click',
+        'dblclick',
+        'mousedown',
+        'mouseup',
+        'mousemove',
+        'mouseover',
+        'mouseout',
+        'keydown',
+        'keyup',
+        'keypress',
+        'focusin',
+        'focusout',
+        'input',
+        'change',
+        'submit',
+        'touchstart',
+        'touchend',
+        'touchmove',
+        'pointerdown',
+        'pointerup',
+        'pointermove',
+        'contextmenu',
+        'wheel',
+        'dragstart',
+      ];
+      const root = document.getElementById('root');
+      for (const type of types) root.addEventListener(type, () => {});
+    </script>
+  </body>
+</html>

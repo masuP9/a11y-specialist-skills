@@ -1,0 +1,29 @@
+<!doctype html>
+<!--
+  A div with tabindex="-1" (focusable by script, not by keyboard) that shows a
+  hint on :focus-within, with no focusable descendant.
+  Expected: trigger .box (css) with focusTarget null; only hover is tried and
+  shows nothing, so there is no focus result.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Tabindex -1</title>
+    <style>
+      .hint {
+        display: none;
+      }
+      .box:focus-within > .hint {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div id="box" class="box" tabindex="-1">
+        Box
+        <div class="hint">Hint</div>
+      </div>
+    </main>
+  </body>
+</html>

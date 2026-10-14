@@ -1,0 +1,24 @@
+<!doctype html>
+<!--
+  A button inside an open shadow root with a mouseenter listener.
+  Expected: triggers is empty, shadowTriggersSkipped is 1, and the three rules
+  are incomplete with one page node ("inside shadow roots").
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Shadow button</title>
+  </head>
+  <body>
+    <main>
+      <div id="host"></div>
+    </main>
+    <script>
+      const root = document
+        .getElementById('host')
+        .attachShadow({ mode: 'open' });
+      root.innerHTML = '<button type="button">Info</button>';
+      root.querySelector('button').addEventListener('mouseenter', () => {});
+    </script>
+  </body>
+</html>

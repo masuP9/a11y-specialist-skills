@@ -1,0 +1,20 @@
+<!doctype html>
+<!--
+  A mouseenter listener on an element that is display: none.
+  Expected: no triggers (hidden elements are not candidates).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Hidden trigger</title>
+  </head>
+  <body>
+    <main>
+      <p>Visible text.</p>
+      <div id="ghost" style="display: none">Hidden</div>
+    </main>
+    <script>
+      document.getElementById('ghost').addEventListener('mouseenter', () => {});
+    </script>
+  </body>
+</html>
