@@ -256,7 +256,9 @@ exit code 1 と `Errors: 0` を要求する。`cli-smoke.html` は `<h1>`・`<im
    2. **戻す**（`resetState`）: `page.mouse.move(0, 0)`、ブラウザ内で `document.activeElement?.blur()`、
       `page.keyboard.press('Escape')`、`settleMs` 待つ。
    3. 見えている要素をすべて印付け（ブラウザ内関数 `markVisible(stateKey)`。`WeakSet` を `window[stateKey].seen` に）。
-   4. **出す**: `hover` は要素を `scrollIntoView({ block: 'center' })` してから中心座標へ `page.mouse.move(x, y, { steps: 5 })`。
+   4. **出す**: `hover` は要素を `scrollIntoView({ block: 'center' })` してから中心座標へ `page.mouse.move(x, y, { steps: 1 })`
+      （途中を通らずに直接載せる。少しずつ動かすと隅から来る経路上の別のきっかけに触れ、その中身をこの組の中身と
+      取り違えるため。`stuck.html` で確認済み）。
       `focus` は `focusTarget` の要素を `locator.focus()`（`:focus-within` のように、きっかけ自身ではなく子孫に
       フォーカスして出す形があるため。設計 C）。要素が見つからない・大きさ 0 なら、その組を `untested` に
       `reason: 'trigger-not-found'` で入れて次へ。`settleMs` 待つ。
@@ -273,7 +275,8 @@ exit code 1 と `Errors: 0` を要求する。`cli-smoke.html` は `<h1>`・`<im
       押す前と後で `document.activeElement` が変わっていたら `escapeMovedFocus: true`。
       **`'dismissed'` でも `escapeMovedFocus` なら dismissible の外れとして扱う**（Escape で blur して、その blur で
       消しているだけかもしれず、「フォーカスを動かさずに消せる」ことを確かめられていないため。設計 B）。
-   9. **ポインタを載せられるか**（`hover` のときだけ。`focus` は `'not-applicable'`）: 手順 2〜4 をやり直して
+   9. **ポインタを載せられるか**（`hover` のときだけ。`focus` は `'not-applicable'`。`persistent === 'disappeared'` のときは
+      測れないので `'not-tested'`）: 手順 2〜4 をやり直して
       もう一度出し、roots のうち最大の rect の中心へ `page.mouse.move(x, y, { steps: 10 })`、`settleMs` 待ち、
       すべて見えていれば `'stayed'`、消えていれば `'disappeared'`。出し直しで中身が出なければ `'not-tested'`。
       rect がビューポートの外なら `'not-tested'`。
@@ -711,7 +714,7 @@ ALL must hold:
   - 自分で消えないかは `persistMs`（既定 3 秒）だけ見る。それより後に消える中身は拾えない。
   - ポインタは、きっかけの中心から中身の最大の部分の中心へまっすぐ動かす。別の経路なら載せられる中身も外れとして出る。
   - きっかけと方法の組ごとに戻す（ポインタを隅へ・フォーカスを外す・Escape）。戻せない中身があるときだけ読み込み直す。
-  - iframe の中、closed shadow root の中、タッチ操作は見ない。クリックで開く中身は 1.4.13 の対象外なので見ない。
+  - iframe の中、shadow root の中（open も closed も。候補にしない）、タッチ操作は見ない。クリックで開く中身は 1.4.13 の対象外なので見ない。
   - フォーカスするので、フォーカスで遷移するページでは遷移が起きる（`untested` に `navigated` で残る）。
   - ページのスクリプトが戻らない（無限ループ）場合は打ち切れない（`keyboard-reachability-check` と同じ）。
 - **待ち時間の調整**: `CONTENT_ON_HOVER_SETTLE_MS`・`CONTENT_ON_HOVER_PERSIST_MS` は実際のサイトで見落とし・
