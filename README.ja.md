@@ -14,6 +14,7 @@ WCAG 2.2 & WAI-ARIA APG に基づいたアクセシビリティレビューを�
 | [auditing-wcag](./skills/auditing-wcag/) | WCAG 2.2 AA準拠の体系的な監査（自動テストスクリプト付き） |
 | [planning-wcag-audit](./skills/planning-wcag-audit/) | WAICガイドラインに基づくWCAG監査計画（対象ページ選定、試験方法） |
 | [planning-a11y-improvement](./skills/planning-a11y-improvement/) | 成熟度評価、ロードマップ、KPI設計によるアクセシビリティ改善計画 |
+| [implementing-a11y](./skills/implementing-a11y/) | UI の部品やページを実装するときに、a11y-knowledge の「線引き」と「作るとき」を引いてから書く入口 |
 | [a11y-knowledge](./skills/a11y-knowledge/) | 達成基準ごとの判断の根拠・線引き・作り方・自動チェックの読み方をまとめた知識ベース（他のスキルから参照する） |
 
 ## インストール

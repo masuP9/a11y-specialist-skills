@@ -52,7 +52,18 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 どれをレビューしますか？
 ```
 
-## ステップ2: 参照ガイドの読み込みとレビュー
+## ステップ2: 知識ベースで線引きを引く
+
+対象を特定したら、コードやページを見る前に、[a11y-knowledge](../a11y-knowledge/SKILL.ja.md) で指摘の線引きをそろえます。
+
+1. 対象に出てくる部品を ARIA の役割（button、dialog、combobox など）で挙げる。
+2. [index-by-component.ja.md](../a11y-knowledge/references/index-by-component.ja.md) で、役割ごとに問われる達成基準を引く。レイアウトやページ全体を見るときは [index-by-criterion.ja.md](../a11y-knowledge/references/index-by-criterion.ja.md) の「ページ全体」「複数ページ」も引く。
+3. 引いた達成基準ごとに `../a11y-knowledge/references/criteria/<番号>.ja.md` の「線引き」と「作るとき」を読んでから、指摘を書く。「線引き」で適用しないとされているものを指摘しない。
+4. **[独自]** の線引き（運用上の解釈）に基づいて指摘するときは、指摘にその旨を書き添える（例:「[独自] の線引き。プロジェクトの判断で上書き可」）。**[解説書]** の線引きは書き添え不要。
+
+知識ベースは `../a11y-knowledge/` の相対パスで引きます。プラグインとして入れていれば届きます。スキルのディレクトリ単位のシンボリックリンクで入れているときは `a11y-knowledge` も一緒にリンクしてください。届かないときはこのステップを飛ばし、レポートに「知識ベース未参照」と書きます。
+
+## ステップ3: 参照ガイドの読み込みとレビュー
 
 対象を特定したら、ユーザーの言語に合う参照ガイドを読み、その手順をこのエージェントが直接実行します。
 
@@ -90,7 +101,7 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 - すべての結果を待って重複を整理し、単一のレポートとして返す。
 - サブエージェント機能がない環境では、このエージェントが順番にレビューする。
 
-## ステップ3: 結果の返却
+## ステップ4: 結果の返却
 
 レビューが完了したら：
 1. 発見事項をユーザーに提示
@@ -111,9 +122,10 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 ユーザー: 「https://example.com のアクセシビリティをレビューして」
 
 1. 特定: これはWebページ（URL提供）
-2. 読み込み: references/page-review.ja.md
-3. 実行: ガイドに従ってページを調査
-4. 返却: 発見事項を提示
+2. 線引き: index-by-component で達成基準を引き「線引き」「作るとき」を読む
+3. 読み込み: references/page-review.ja.md
+4. 実行: ガイドに従ってページを調査
+5. 返却: 発見事項を提示
 ```
 
 ### 例2: ユーザーがファイルパスを提供
@@ -121,9 +133,10 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 ユーザー: 「src/components/Button.tsx のa11y問題をチェックして」
 
 1. 特定: これはコード（ファイルパス提供）
-2. 読み込み: references/code-review.ja.md
-3. 実行: ガイドに従って対象と関連コードを調査
-4. 返却: 発見事項を提示
+2. 線引き: index-by-component で達成基準を引き「線引き」「作るとき」を読む
+3. 読み込み: references/code-review.ja.md
+4. 実行: ガイドに従って対象と関連コードを調査
+5. 返却: 発見事項を提示
 ```
 
 ### 例3: ユーザーがFigma URLを提供
@@ -131,9 +144,10 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 ユーザー: 「このデザインをレビューして: https://figma.com/file/abc123」
 
 1. 特定: これはデザイン（Figma URL）
-2. 読み込み: references/design-review.ja.md
-3. 実行: ガイドに従ってデザインを調査
-4. 返却: 発見事項を提示
+2. 線引き: index-by-component で達成基準を引き「線引き」「作るとき」を読む
+3. 読み込み: references/design-review.ja.md
+4. 実行: ガイドに従ってデザインを調査
+5. 返却: 発見事項を提示
 ```
 
 ## WCAG & 標準リファレンス
