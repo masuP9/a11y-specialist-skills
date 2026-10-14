@@ -1,0 +1,40 @@
+<!doctype html>
+<!--
+  Like css-hover-menu.html, but the rule uses CSS nesting:
+  .menu { &:hover > .sub { display: block } }
+  Expected: one trigger (.menu) with sources ["css"] and a hover result.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>CSS nested menu</title>
+    <style>
+      .sub {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 140px;
+        padding: 8px;
+        background: #eee;
+      }
+      .menu {
+        position: relative;
+        display: inline-block;
+        padding: 8px;
+        border: 1px solid #333;
+        &:hover > .sub {
+          display: block;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="menu">
+        Products
+        <div class="sub">Sub item one</div>
+      </div>
+    </main>
+  </body>
+</html>

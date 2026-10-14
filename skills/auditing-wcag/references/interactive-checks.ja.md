@@ -209,7 +209,20 @@ spacing 例外の幾何判定は他のヒューリスティック例外より優
 ## ホバー/フォーカス表示
 | 基準 | 操作 | 証跡 | Fail条件 |
 |---|---|---|---|
-| 1.4.13 | ホバー/フォーカスで出るコンテンツを閉じ/保持可能 | 操作ログ/動画 | 逃げ場なし、意図せず消える |
+| 1.4.13 | ホバー/フォーカスで出るコンテンツを閉じ/保持可能 | 操作ログ/動画 + `content-on-hover-check` | 逃げ場なし、意図せず消える |
+
+### `content-on-hover-check` CLIチェック
+
+CSS の `:hover` / `:focus` 規則（後ろに結合子があるもの）と、要素自身に付いた mouseenter / mouseover / focus などの listener から、中身を出しそうな要素を探してホバー・フォーカスし、新しく見えた要素が (1) 数秒たっても見えているか (2) Escape で消えるか（フォーカスを動かさずに）(3) ホバーのとき、ポインタを載せても消えないか、を測ります。
+
+```bash
+npx -y @a11y-skills/audit --url "https://example.com" --checks content-on-hover-check
+```
+
+- 外れた条件は常に incomplete です。入力エラーを伝える中身と、ほかの中身を隠さない・置き換えない中身は消せなくてよいので、例外に当たるかは人手で確認します。Escape 以外の消し方があるか、`persistMs`（既定 3 秒）より長く出ていれば足りる中身かも確認します。
+- 候補は CSS と listener の 2 つだけから集めます。`title` / `aria-describedby` / `aria-haspopup` だけの要素、別オリジンの CSS から出る中身、iframe の中は見落とします。shadow root の中の listener は試さず、数えて 3 ルールに page node で知らせます（`details.shadowTriggersSkipped`）。listener の取り出しは Chromium のみです。
+- `document` やフレームワークのルート要素にまとめて付いた listener は、どの要素に反応するか分からないので試さず、`content-on-hover-result.json` の `details.delegationRoots` に記録して 3 ルールに page node を出します。このページでは、ボタンやリンクに実際にホバー・フォーカスして確かめます。
+- **実際にフォーカスする**ので、フォーカスで遷移するページでは遷移が起きます（`details.untested` に `navigated`）。クリックはしません。
 
 ## エラー処理
 | 基準 | 操作 | 証跡 | Fail条件 |

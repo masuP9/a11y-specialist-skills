@@ -140,6 +140,7 @@ npx -y @a11y-skills/audit --url "https://example.com" --output-dir ./results
 | `pointer-cancellation-check` | 2.5.2 | Components that act on the down-event alone (navigation, new window, dialog, DOM change) and elements with only press listeners (candidates; needs review) |
 | `non-text-contrast-check` | 1.4.11 | Contrast of input, checkbox, radio and switch borders or fills against the surrounding color, and of icons in icon-only buttons (below 3:1 or not measurable; needs review) |
 | `character-key-shortcut-check` | 2.1.4 | Keys that cause a navigation, new window, dialog, focus move, DOM change, scroll or `preventDefault()` when pressed one at a time with focus on the page body (candidates; needs review) |
+| `content-on-hover-check` | 1.4.13 | Content shown on hover or focus (found from CSS :hover / :focus rules and listeners) that Escape does not dismiss, that disappears when the pointer moves onto it, or that disappears on its own (candidates; needs review). Delegated listeners are reported only |
 | `page-snapshot` | Material for 2.4.1 / 2.4.2 / 3.1.1 / 3.2.3 / 3.2.4 / 3.2.6 | No verdict. Writes the body's aria snapshot, the title, the `lang` of `<html>`, the URLs and an aria snapshot per iframe (read it to judge; for several pages, use a separate `--output-dir` per page and compare) |
 
 See the [`@a11y-skills/audit` README](https://www.npmjs.com/package/@a11y-skills/audit) for detailed documentation.

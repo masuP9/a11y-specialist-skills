@@ -209,7 +209,20 @@ The geometric spacing result takes precedence over the heuristic exceptions. Tar
 ## Hover/Focus Content
 | Criterion | Action | Evidence | Fail rule |
 |---|---|---|---|
-| 1.4.13 | Hover/focus content can be dismissed/hovered/persistent | logs/video | Cannot dismiss or content disappears unexpectedly |
+| 1.4.13 | Hover/focus content can be dismissed/hovered/persistent | logs/video + `content-on-hover-check` | Cannot dismiss or content disappears unexpectedly |
+
+### `content-on-hover-check` CLI Check
+
+Finds elements that may show content on hover or focus from CSS `:hover` / `:focus` rules (with a combinator after the pseudo-class) and from mouseenter / mouseover / focus and similar listeners on the element itself, hovers and focuses them, and measures whether the newly visible elements (1) are still visible after a few seconds, (2) disappear on Escape (without moving focus), and (3) for hover, stay visible when the pointer moves onto them.
+
+```bash
+npx -y @a11y-skills/audit --url "https://example.com" --checks content-on-hover-check
+```
+
+- Failed conditions are always incomplete. Content that reports an input error, or that does not obscure or replace other content, need not be dismissible, so verify manually whether an exception applies. Also check whether another way to dismiss exists besides Escape, and whether content that was visible longer than `persistMs` (default 3 s) is enough.
+- Triggers come only from CSS and listeners. Elements with only `title` / `aria-describedby` / `aria-haspopup`, content shown by cross-origin CSS, and anything inside iframes are missed. Listeners inside shadow roots are not tried; they are counted and reported as a page node on all three rules (`details.shadowTriggersSkipped`). Listener inspection is Chromium only.
+- Listeners attached to `document` or a framework root element cannot be attributed to elements, so they are not tried: they are recorded in `details.delegationRoots` in `content-on-hover-result.json` and each of the three rules gets a page node. On such pages, hover over and focus the buttons and links yourself.
+- It **really focuses elements**: a page that navigates on focus does so (recorded as `navigated` in `details.untested`). It does not click.
 
 ## Error Handling
 | Criterion | Action | Evidence | Fail rule |

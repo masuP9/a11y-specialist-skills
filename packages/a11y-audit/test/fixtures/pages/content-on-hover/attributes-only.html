@@ -1,0 +1,23 @@
+<!doctype html>
+<!--
+  Attributes that hint at hover or popup content but no :hover rule and no
+  hover or focus listener: a title, an aria-describedby pointing at text that
+  is always visible, and aria-haspopup (opened by click).
+  Expected: no triggers (attributes alone are not candidates); all three rules
+  inapplicable.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Attributes only</title>
+  </head>
+  <body>
+    <main>
+      <a href="#top" title="Back to the top">Top</a>
+      <label for="pw">Password</label>
+      <input id="pw" type="password" aria-describedby="pw-help" />
+      <p id="pw-help">At least 8 characters.</p>
+      <button type="button" aria-haspopup="menu">Actions</button>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,28 @@
+<!doctype html>
+<!--
+  A hint shown below an input while it has focus: input:focus + .hint.
+  Escape does nothing.
+  Expected: trigger #name (css). Hover shows nothing (noContent 1). Focus
+  result: hoverable "not-applicable", dismissible "stayed". The dismissible
+  rule is incomplete.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Focus only</title>
+    <style>
+      .hint {
+        display: none;
+      }
+      input:focus + .hint {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <input id="name" type="text" aria-label="Name" />
+      <div class="hint">Enter your full name</div>
+    </main>
+  </body>
+</html>

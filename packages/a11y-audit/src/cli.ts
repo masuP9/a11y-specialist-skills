@@ -319,6 +319,19 @@ const CHECK_REGISTRY: CheckEntry[] = [
     },
   },
   {
+    name: 'content-on-hover-check',
+    kind: 'browser',
+    async run({ browser, outputDir, url }) {
+      const { runContentOnHoverCheck } =
+        await import('./playwright/runContentOnHoverCheck.js');
+      return (await runContentOnHoverCheck({
+        browser,
+        targetUrl: url,
+        outputDir,
+      })) as AuditResultEnvelope;
+    },
+  },
+  {
     // Material only (no verdict). Navigates itself so the result records the
     // requested URL next to the final one.
     name: 'page-snapshot',

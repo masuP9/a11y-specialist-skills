@@ -1,5 +1,5 @@
 /**
- * Fixture Gallery: manifest-driven integration tests for all 21 checks.
+ * Fixture Gallery: manifest-driven integration tests for all 22 checks.
  *
  * Each manifest entry:
  * - Serves an HTML fixture from test/fixtures/pages/ via a worker-scoped
@@ -10,7 +10,7 @@
  * - For 'passes' expectations: also guards against silent inapplicable pass.
  * - Validates the result envelope against RESULT_SCHEMAS[check] via Ajv.
  *
- * Coverage: all 36 custom finding-capable rules from rule-registry.ts
+ * Coverage: all 39 custom finding-capable rules from rule-registry.ts
  * (auto-play and auto-play-audio live in their own specs).
  * axe-audit: representative rule (image-alt); full rule coverage is out of
  * scope for axe (hundreds of external rules).
@@ -560,6 +560,65 @@ const MANIFEST: ManifestEntry[] = [
     fixture: 'character-key-shortcut/none.html',
     expectRules: {
       'a11y-skills/character-key-shortcut': 'inapplicable',
+    },
+  },
+
+  // =========================================================================
+  // content-on-hover-check
+  // Rules: a11y-skills/content-on-hover-{dismissible,hoverable,persistent} (incomplete)
+  // =========================================================================
+  {
+    check: 'content-on-hover-check',
+    scenario: 'finding: content-on-hover-dismissible (Escape does nothing)',
+    fixture: 'content-on-hover/no-escape.html',
+    expectRules: {
+      'a11y-skills/content-on-hover-dismissible': 'incomplete',
+    },
+  },
+  {
+    check: 'content-on-hover-check',
+    scenario: 'finding: content-on-hover-hoverable (hides on pointer move)',
+    fixture: 'content-on-hover/not-hoverable.html',
+    expectRules: {
+      'a11y-skills/content-on-hover-hoverable': 'incomplete',
+    },
+  },
+  {
+    check: 'content-on-hover-check',
+    scenario: 'finding: content-on-hover-persistent (hides by itself)',
+    fixture: 'content-on-hover/auto-hide.html',
+    expectRules: {
+      'a11y-skills/content-on-hover-persistent': 'incomplete',
+    },
+  },
+  {
+    check: 'content-on-hover-check',
+    scenario: 'clear: compliant tooltip',
+    fixture: 'content-on-hover/compliant-tooltip.html',
+    expectRules: {
+      'a11y-skills/content-on-hover-dismissible': 'passes',
+      'a11y-skills/content-on-hover-hoverable': 'passes',
+      'a11y-skills/content-on-hover-persistent': 'passes',
+    },
+  },
+  {
+    check: 'content-on-hover-check',
+    scenario: 'delegated listener on document (reported, not tried)',
+    fixture: 'content-on-hover/document-delegation.html',
+    expectRules: {
+      'a11y-skills/content-on-hover-dismissible': 'incomplete',
+      'a11y-skills/content-on-hover-hoverable': 'incomplete',
+      'a11y-skills/content-on-hover-persistent': 'incomplete',
+    },
+  },
+  {
+    check: 'content-on-hover-check',
+    scenario: 'not applicable: nothing shown on hover or focus',
+    fixture: 'content-on-hover/none.html',
+    expectRules: {
+      'a11y-skills/content-on-hover-dismissible': 'inapplicable',
+      'a11y-skills/content-on-hover-hoverable': 'inapplicable',
+      'a11y-skills/content-on-hover-persistent': 'inapplicable',
     },
   },
 

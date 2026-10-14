@@ -64,6 +64,7 @@ async function buildRunnerRegistry(): Promise<Record<string, RunnerEntry>> {
     runPointerCancellationCheck,
     runNonTextContrastCheck,
     runCharacterKeyShortcutCheck,
+    runContentOnHoverCheck,
   } = await import('../../dist/playwright/index.js');
 
   return {
@@ -150,6 +151,10 @@ async function buildRunnerRegistry(): Promise<Record<string, RunnerEntry>> {
     'character-key-shortcut-check': {
       kind: 'browser-navigating',
       run: (opts) => runCharacterKeyShortcutCheck(opts),
+    },
+    'content-on-hover-check': {
+      kind: 'browser-navigating',
+      run: (opts) => runContentOnHoverCheck(opts),
     },
   };
 }

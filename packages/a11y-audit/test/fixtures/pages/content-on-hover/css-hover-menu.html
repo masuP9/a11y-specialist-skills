@@ -1,0 +1,43 @@
+<!doctype html>
+<!--
+  A menu opened by CSS only: .menu:hover > .sub { display: block }. The
+  submenu is a child of .menu, so the pointer can move onto it. Escape does
+  nothing.
+  Expected: trigger .menu with sources ["css"]; the menu is not focusable and
+  has no focusable descendant, so only hover is tried. Hover result:
+  persistent "stayed", dismissible "stayed", hoverable "stayed".
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>CSS hover menu</title>
+    <style>
+      .menu {
+        position: relative;
+        display: inline-block;
+        padding: 8px;
+        border: 1px solid #333;
+      }
+      .sub {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 140px;
+        padding: 8px;
+        background: #eee;
+      }
+      .menu:hover > .sub {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="menu">
+        Products
+        <div class="sub">Sub item one</div>
+      </div>
+    </main>
+  </body>
+</html>

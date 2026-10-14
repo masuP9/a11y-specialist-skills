@@ -3,7 +3,7 @@
 Playwright + axe-core ベースの WCAG 2.2 アクセシビリティ検査関数。
 
 本パッケージは [`auditing-wcag`](https://github.com/masuP9/a11y-specialist-skills)
-Claude Code skill から機能本体を切り出したものです。21 個の検査と、判定を補う材料
+Claude Code skill から機能本体を切り出したものです。22 個の検査と、判定を補う材料
 （アクセシビリティツリーなど）を書き出す `runPageSnapshot` を関数として提供し、
 すぐ実行できる Playwright 用の互換 test entry も同梱します。
 
@@ -36,12 +36,13 @@ Claude Code skill から機能本体を切り出したものです。21 個の�
 | `runPointerCancellationCheck` | 2.5.2 ポインタのキャンセル（押し下げだけで動く部品。候補として報告） |
 | `runNonTextContrastCheck` | 1.4.11 非テキストのコントラスト（入力欄などの枠・塗り、アイコンだけのボタンのアイコン。候補として報告） |
 | `runCharacterKeyShortcutCheck` | 2.1.4 文字キーのショートカット（本文にフォーカスを置いて 1 文字ずつ押し、反応したキー。候補として報告） |
+| `runContentOnHoverCheck` | 1.4.13 ホバー又はフォーカスで表示されるコンテンツ（CSS の規則と listener から出しそうな要素を探してホバー・フォーカスし、消せない・載せられない・自分で消える中身。候補として報告） |
 | `runPageSnapshot` | 判定はしない。2.4.1 / 2.4.2 / 3.1.1 / 3.2.3 / 3.2.4 / 3.2.6 を判定する材料（aria snapshot・タイトル・lang・URL・iframe ごとの aria snapshot） |
 
 多くの検査は遷移済みの `page` を受けます。一部は navigation を所有し `targetUrl`
 （または `TEST_PAGE`）を受けます: `runOrientationCheck` と `runTimeLimitDetector`
 （`runZoomCheck` は URL 指定時）。`runFocusIndicatorCheck`・
-`runKeyboardReachabilityCheck`・`runChangeOnInputCheck`・`runFocusOrderCheck`・`runPointerCancellationCheck`・`runCharacterKeyShortcutCheck` は `browser` を受けます。
+`runKeyboardReachabilityCheck`・`runChangeOnInputCheck`・`runFocusOrderCheck`・`runPointerCancellationCheck`・`runCharacterKeyShortcutCheck`・`runContentOnHoverCheck` は `browser` を受けます。
 `runAutoPlayDetection` は optional 依存 `pixelmatch` + `pngjs` が必要です（インストール参照）。
 
 `runRedundantEntryCheck`（3.3.7、`a11y-skills/redundant-entry`）は遷移済みの `page` を受けます。
@@ -224,6 +225,34 @@ CDP は **Chromium のみ**で、それ以外では listener の根拠が付か�
 最初の操作のあとで付く listener は取り出せません。ページが自分で DOM を書き換え続けると小さな変化を見落とします。
 **実際にキーを押す**ので、ショートカットが削除・送信などをするページでは副作用があります。
 
+`runContentOnHoverCheck`（1.4.13、`a11y-skills/content-on-hover-dismissible` / `-hoverable` / `-persistent`）は
+`browser` を受けて自前の context を作ります。中身を出しそうな要素（きっかけ）を 2 つの出どころだけから集めます。
+(1) CSS の `:hover` / `:focus` / `:focus-within` / `:focus-visible` を含み、その後ろに結合子があるセレクタ
+（`.menu:hover > .sub`。自分の色を変えるだけの `.btn:hover` は除く）、(2) `mouseenter` / `mouseover` /
+`pointerenter` / `pointerover` / `focus` / `focusin` の listener が**その要素自身に**付いた要素（CDP で取り出すので
+**Chromium のみ**）。`title` / `aria-describedby` / `aria-haspopup` だけの要素は候補にしません。
+`window` / `document` / `<html>` / `<body>` や、20 種類以上の listener を持つ要素（React などのルート）にまとめて付いた
+listener は、どの子要素に反応するか分からないので試さず、`details.delegationRoots` に記録して 3 ルールそれぞれに
+ページ全体の node を 1 つ出します（人がボタンやリンクに実際にホバー・フォーカスして確かめる）。きっかけも
+まとめて受けている要素も無ければ、何も操作せず inapplicable にします。
+きっかけごとにホバーとフォーカス（きっかけ自身が、無ければ最初のフォーカスできる子孫が対象）を試し、操作の前後で
+見えている要素を比べて「新しく見えた最も外側の要素」を中身とします。中身が出たら、(1) `persistMs`（既定 3 秒）待って
+まだ見えているか、(2) ポインタもフォーカスも動かさずに Escape を押して見えなくなるか（消えてもフォーカスが動いたら
+外れとして扱う）、(3) ホバーのときは出し直してポインタを中身の中心へ動かしてもまだ見えているか、を測ります。
+外れた条件は `incomplete` です（入力エラーを伝える中身、ほかの中身を隠さない・置き換えない中身は消せなくてよいので、
+例外かどうかは人が確かめます）。きっかけごとにポインタを隅へ動かし、フォーカスを外し、Escape を押して戻し、
+それでも中身が見えたままのときだけ新しい context で読み込み直します（`maxReloads`、既定 10 回）。
+`settleMs`（既定 400ms）・`persistMs`・`maxTriggers`（既定 30）・`timeBudgetMs`（既定 120 秒）を受け取ります。
+別オリジンのスタイルシート・候補や listener の上限・Chromium 以外で調べきれなかったことは、候補が 0 件でも
+3 ルールとも `incomplete` の page node で知らせます。
+既知の制限: 属性だけの要素は候補にならない／別オリジンの CSS の規則から出る中身は見落とす／iframe の中は見ない／
+shadow root の中で hover・focus の listener を持つ見えている要素は試さず、数えて報告する（`shadowTriggersSkipped`）／まとめて受けている listener で出す中身は測らない／
+もとから見えていた要素の中身の書き換えだけ、`opacity` や `transform` だけの出し入れ、canvas は拾えない／
+消せるかは Escape だけで測る（Escape で消えてもフォーカスが動いた場合も外れとして出す）／フォーカスできない
+きっかけは最初のフォーカスできる子孫 1 つだけを試す／自分で消えないかは `persistMs` だけ見る／ポインタはきっかけの
+中心から中身の最大の部分の中心へまっすぐ動かす／自分で消えた中身は、ポインタを載せられるかを測らない／**実際にフォーカスする**のでフォーカスで遷移するページでは
+遷移が起きる（`untested` に `navigated` で残る）。クリックはしません。
+
 `runPageSnapshot`（判定はしない）は `page` を受け、`targetUrl` を渡すとそのページを自分で開きます
 （渡さなければ開いてあるページをそのまま撮ります）。ページの構造が要る基準（2.4.1 の見出し・
 ランドマーク、2.4.2 のタイトル、3.1.1 の lang、複数ページを見比べる 3.2.3 / 3.2.4 / 3.2.6）を
@@ -313,6 +342,7 @@ focus-order-check
 pointer-cancellation-check
 non-text-contrast-check
 character-key-shortcut-check
+content-on-hover-check
 page-snapshot
 ```
 
@@ -429,7 +459,7 @@ test("focus indicators", async ({ browser }, testInfo) => {
 });
 ```
 
-`runFocusIndicatorCheck` / `runKeyboardReachabilityCheck` / `runKeyboardTrapCheck` / `runChangeOnInputCheck` / `runCharacterKeyShortcutCheck` は、
+`runFocusIndicatorCheck` / `runKeyboardReachabilityCheck` / `runKeyboardTrapCheck` / `runChangeOnInputCheck` / `runCharacterKeyShortcutCheck` / `runContentOnHoverCheck` は、
 `browser` の代わりに `createContext` を渡せます。`context.route` による URL 検査のような
 呼び出し側の守りを、検査が使うすべての context に付けたいときに使います。
 
@@ -568,7 +598,7 @@ import "@a11y-skills/audit/test-entries/target-size-check";
 // redundant-entry-check, motion-actuation-check, change-on-input-check,
 // accessible-authentication-check, pointer-gesture-check, focus-order-check,
 // pointer-cancellation-check, non-text-contrast-check,
-// character-key-shortcut-check, page-snapshot
+// character-key-shortcut-check, content-on-hover-check, page-snapshot
 import "@a11y-skills/audit/test-entries/text-spacing-check";
 ```
 

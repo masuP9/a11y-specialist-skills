@@ -1,0 +1,59 @@
+<!doctype html>
+<!--
+  The first button's hover inserts a tooltip element right after it, and that
+  element stays in the DOM (hidden) afterwards. The second button has no id, so
+  its path selector changes once the element is inserted.
+  Expected: the second button (the second trigger) is found again and its
+  results have its own content (#tip2).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Inserts sibling</title>
+  </head>
+  <body>
+    <main>
+      <button id="b1" type="button">First</button>
+      <button class="second" type="button">Second</button>
+      <div id="tip2" role="tooltip" hidden>Second tip</div>
+    </main>
+    <script>
+      const b1 = document.getElementById('b1');
+      let tip1 = null;
+      b1.addEventListener('mouseenter', () => {
+        if (!tip1) {
+          tip1 = document.createElement('div');
+          tip1.id = 'tip1';
+          tip1.setAttribute('role', 'tooltip');
+          tip1.textContent = 'First tip';
+          b1.insertAdjacentElement('afterend', tip1);
+        }
+        tip1.hidden = false;
+      });
+      b1.addEventListener('mouseleave', () => {
+        if (tip1) tip1.hidden = true;
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          if (tip1) tip1.hidden = true;
+          document.getElementById('tip2').hidden = true;
+        }
+      });
+
+      const second = document.querySelector('.second');
+      const tip2 = document.getElementById('tip2');
+      second.addEventListener('mouseenter', () => {
+        tip2.hidden = false;
+      });
+      second.addEventListener('focus', () => {
+        tip2.hidden = false;
+      });
+      second.addEventListener('mouseleave', () => {
+        tip2.hidden = true;
+      });
+      second.addEventListener('blur', () => {
+        tip2.hidden = true;
+      });
+    </script>
+  </body>
+</html>

@@ -92,6 +92,10 @@ export {
   type RunCharacterKeyShortcutCheckOptions,
 } from './runCharacterKeyShortcutCheck.js';
 export {
+  runContentOnHoverCheck,
+  type RunContentOnHoverCheckOptions,
+} from './runContentOnHoverCheck.js';
+export {
   runPageSnapshot,
   type RunPageSnapshotOptions,
 } from './runPageSnapshot.js';

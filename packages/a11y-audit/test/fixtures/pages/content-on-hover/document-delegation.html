@@ -1,0 +1,28 @@
+<!doctype html>
+<!--
+  One mouseover listener on document shows a bubble for [data-tip] elements.
+  The elements themselves have no listener.
+  Expected: delegationRoots [{ selector: "document", types: ["mouseover"] }],
+  no triggers; all three rules incomplete with one page node ("delegated to
+  document").
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Document delegation</title>
+  </head>
+  <body>
+    <main>
+      <button id="b" type="button" data-tip="Hello">Hover me</button>
+      <div id="bubble" hidden></div>
+    </main>
+    <script>
+      const bubble = document.getElementById('bubble');
+      document.addEventListener('mouseover', (e) => {
+        const target = e.target.closest('[data-tip]');
+        bubble.hidden = !target;
+        if (target) bubble.textContent = target.dataset.tip;
+      });
+    </script>
+  </body>
+</html>

@@ -3,6 +3,30 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Added
+
+- `content-on-hover-check` (WCAG 1.4.13): new check, `runContentOnHoverCheck`
+  (takes a `browser`; owns its contexts), the CLI check name
+  `content-on-hover-check`, rules
+  `a11y-skills/content-on-hover-dismissible` / `-hoverable` / `-persistent`
+  (all `incomplete`), `ContentOnHover*` / `Hover*` types, schema and
+  `./test-entries/content-on-hover-check`. Finds elements that may show content
+  from CSS `:hover` / `:focus` rules (with a combinator after the pseudo-class)
+  and from hover or focus listeners on the element itself (CDP, Chromium
+  only), hovers and focuses them, and measures whether the newly visible
+  content stays for `persistMs`, is dismissed by Escape without moving focus,
+  and (hover) survives the pointer moving onto it. Listeners on
+  `window` / `document` / `<html>` / `<body>` or on an element with 20 or more
+  event types are reported as `delegationRoots` and not tried. Known
+  limitations: attribute-only elements, cross-origin style sheets, iframes are not
+  looked at, and visible elements inside shadow roots that have hover or focus
+  listeners are counted and reported (`shadowTriggersSkipped`) but not tried; content changed inside an
+  already visible element or shown with `opacity` / `transform` alone is not
+  found; only Escape is tried; exceptions need a human. It really focuses
+  elements and runs with `--checks all`.
+
 ## 0.14.0 — 2026-10-14
 
 **Heads-up** — `pointer-cancellation-check` dispatches press events (without

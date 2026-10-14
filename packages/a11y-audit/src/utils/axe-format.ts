@@ -27,6 +27,8 @@ import type {
   FocusVisualDiff,
   CharacterKeyReaction,
   CharacterKeyShortcutCheckDetails,
+  ContentOnHoverCheckDetails,
+  HoverContentResult,
   KeyboardReachabilityCheckDetails,
   KeyboardTrapCheckDetails,
   MediaPlaybackRecord,
@@ -59,6 +61,7 @@ import type {
 import {
   AUDIT_DISCLAIMER,
   AUTH_EXPECTED_AUTOCOMPLETE,
+  CONTENT_ON_HOVER_MAX_LISTENER_NODES,
   HTML_SNIPPET_MAX_LENGTH,
   MOTION_MUTATION_MARGIN,
   NON_TEXT_CONTRAST_MAX_COMPONENTS,
@@ -1836,6 +1839,180 @@ export function normalizeCharacterKeyShortcutCheck(
     );
   }
   bucketize(buckets, 'character-key-shortcut', nodes, true);
+  return buckets;
+}
+
+// =============================================================================
+// Content on Hover or Focus Check (WCAG 1.4.13)
+// =============================================================================
+
+const CONTENT_ON_HOVER_SELECTORS_SHOWN = 3;
+const CONTENT_ON_HOVER_TEXT_SHOWN = 80;
+const CONTENT_ON_HOVER_UNTESTED_SHOWN = 10;
+
+function describeHoverContent(result: HoverContentResult): string {
+  const selectors = result.content.map((c) => c.selector);
+  const shown = selectors.slice(0, CONTENT_ON_HOVER_SELECTORS_SHOWN).join(', ');
+  const more = selectors.length - CONTENT_ON_HOVER_SELECTORS_SHOWN;
+  const text = result.content
+    .map((c) => c.text)
+    .join(' ')
+    .trim()
+    .slice(0, CONTENT_ON_HOVER_TEXT_SHOWN);
+  return `${shown}${more > 0 ? `, and ${more} more` : ''}${text ? `; Text: "${text}"` : ''}`;
+}
+
+/**
+ * Every failed condition gets an element node on the trigger. What could not be
+ * examined (no CDP, unreadable style sheets, truncated candidates or listeners,
+ * delegated listeners, pairs not tried) is handed over as a page node on all
+ * three rules, so a page is never reported as passing on partial evidence. No
+ * candidate and nothing left unexamined is not applicable.
+ */
+export function normalizeContentOnHoverCheck(
+  details: ContentOnHoverCheckDetails,
+): NormalizedBuckets {
+  const buckets = emptyBuckets();
+  buckets.checkedNodes = details.triggers.length;
+
+  const pageNotes: string[] = [];
+  if (details.listenerInspection === 'unsupported') {
+    pageNotes.push(
+      "Event listeners could not be inspected (unsupported). CDP is only available in Chromium. Triggers come only from CSS rules; hover over and focus the page's controls to check content shown by scripts manually.",
+    );
+  }
+  if (details.cssRulesUnreadable > 0) {
+    pageNotes.push(
+      `${details.cssRulesUnreadable} style sheet(s) could not be read (cross-origin); content shown by their :hover / :focus rules was not tried. Check it manually.`,
+    );
+  }
+  if (details.triggersTruncated > 0) {
+    pageNotes.push(
+      `Only the first ${details.triggers.length} of ${details.triggers.length + details.triggersTruncated} triggers were tried (maxTriggers); check the rest of the page manually.`,
+    );
+  }
+  if (details.listenerNodesTruncated) {
+    pageNotes.push(
+      `Listeners on more than ${CONTENT_ON_HOVER_MAX_LISTENER_NODES} elements were found; elements beyond that were not tried. Check them manually.`,
+    );
+  }
+  if (details.delegationRoots.length > 0) {
+    const roots = details.delegationRoots
+      .map((r) => [...r.shadowHosts, r.selector].join(' >>> '))
+      .join(', ');
+    const types = [
+      ...new Set(details.delegationRoots.flatMap((r) => r.types)),
+    ].join(', ');
+    pageNotes.push(
+      `Hover or focus listeners are delegated to ${roots} (${types}); content shown through them was not tried. Hover over and focus the page's controls to check them manually.`,
+    );
+  }
+  if (details.untested.length > 0) {
+    const reasons = [...new Set(details.untested.map((u) => u.reason))].join(
+      ', ',
+    );
+    const selectors = [...new Set(details.untested.map((u) => u.trigger))];
+    const shown = selectors
+      .slice(0, CONTENT_ON_HOVER_UNTESTED_SHOWN)
+      .join(', ');
+    const clipped =
+      selectors.length > CONTENT_ON_HOVER_UNTESTED_SHOWN ? `${shown}…` : shown;
+    pageNotes.push(
+      `${details.untested.length} trigger and method pair(s) on ${selectors.length} trigger(s) were not tried (${reasons}): ${clipped}. Check them manually.`,
+    );
+  }
+  if (details.shadowTriggersSkipped > 0) {
+    pageNotes.push(
+      `${details.shadowTriggersSkipped} element(s) inside shadow roots have hover or focus listeners and were not tried. Check them manually.`,
+    );
+  }
+
+  // A rule that no result measured is not applicable: it must not pass on a
+  // condition nobody looked at. Page notes and failures make it applicable.
+  const measured = {
+    dismissible: details.results.some(
+      (r) => r.dismissible === 'dismissed' || r.dismissible === 'stayed',
+    ),
+    hoverable: details.results.some(
+      (r) => r.hoverable === 'stayed' || r.hoverable === 'disappeared',
+    ),
+    persistent: details.results.length > 0,
+  };
+
+  const elementNode = (result: HoverContentResult, summary: string) => {
+    const trigger = details.triggers.find((t) => t.selector === result.trigger);
+    return toNode(
+      {
+        selector: result.trigger,
+        ...(trigger && {
+          html: trigger.html,
+          htmlTruncated: trigger.htmlTruncated,
+        }),
+      },
+      summary,
+    );
+  };
+
+  const dismissible: NormalizedNode[] = [];
+  const hoverable: NormalizedNode[] = [];
+  const persistent: NormalizedNode[] = [];
+  for (const result of details.results) {
+    const content = describeHoverContent(result);
+    const { method } = result;
+    if (result.persistent === 'disappeared') {
+      persistent.push(
+        elementNode(
+          result,
+          `Content shown on ${method} of this element (${content}) disappeared within the wait while the ${method === 'hover' ? 'pointer' : 'focus'} stayed on it. Verify that it stays until dismissed, or that the information is no longer valid.`,
+        ),
+      );
+    }
+    if (result.dismissible === 'stayed') {
+      dismissible.push(
+        elementNode(
+          result,
+          `Content shown on ${method} of this element (${content}) stayed visible after pressing Escape.${result.escapeMovedFocus ? ' Escape also moved focus.' : ''} Verify that it can be dismissed without moving the pointer or focus, unless it reports an input error or does not obscure or replace other content.`,
+        ),
+      );
+    } else if (result.dismissible === 'dismissed' && result.escapeMovedFocus) {
+      dismissible.push(
+        elementNode(
+          result,
+          `Content shown on ${method} of this element (${content}) disappeared after pressing Escape, but Escape also moved focus. Verify that it can be dismissed without moving the pointer or focus.`,
+        ),
+      );
+    }
+    if (result.hoverable === 'disappeared') {
+      hoverable.push(
+        elementNode(
+          result,
+          `Content shown on hover of this element (${content}) disappeared when the pointer moved onto it. Verify that the pointer can move over the content without it disappearing.`,
+        ),
+      );
+    }
+    if (
+      method === 'hover' &&
+      result.persistent === 'stayed' &&
+      result.hoverable === 'not-tested'
+    ) {
+      hoverable.push(
+        elementNode(
+          result,
+          `Content shown on hover of this element (${content}) could not be reached with the pointer (it did not show again, or it lies outside the viewport). Verify that the pointer can move over it.`,
+        ),
+      );
+    }
+  }
+
+  const rules = [
+    ['content-on-hover-dismissible', dismissible, measured.dismissible],
+    ['content-on-hover-hoverable', hoverable, measured.hoverable],
+    ['content-on-hover-persistent', persistent, measured.persistent],
+  ] as const;
+  for (const [key, elementNodes, wasMeasured] of rules) {
+    const nodes = [...elementNodes, ...pageNotes.map((note) => pageNode(note))];
+    bucketize(buckets, key, nodes, wasMeasured || nodes.length > 0);
+  }
   return buckets;
 }
 

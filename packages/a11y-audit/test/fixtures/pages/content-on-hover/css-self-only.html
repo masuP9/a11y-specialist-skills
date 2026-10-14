@@ -1,0 +1,21 @@
+<!doctype html>
+<!--
+  A :hover rule that only changes the element itself (no combinator after it).
+  Expected: no triggers (not a candidate); all three rules inapplicable.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>CSS self only</title>
+    <style>
+      .btn:hover {
+        color: red;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <button class="btn" type="button">Press</button>
+    </main>
+  </body>
+</html>
