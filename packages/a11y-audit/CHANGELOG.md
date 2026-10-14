@@ -3,7 +3,12 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 0.14.0 — 2026-10-14
+
+**Heads-up** — `pointer-cancellation-check` dispatches press events (without
+release) on operable elements, and `character-key-shortcut-check` presses real
+keys on the live page, so pages that act on a press or a shortcut (submit,
+save, delete) may do so (see README). Both run with `--checks all`.
 
 ### Added
 
