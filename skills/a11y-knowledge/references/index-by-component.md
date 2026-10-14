@@ -42,4 +42,4 @@ When writing or reviewing code, look up, from the component type, the success cr
 | alert / status / log     | alert, status, log                                                 | 4.1.3                                                                           |
 | progress                 | progressbar                                                        | 4.1.2, 4.1.3                                                                    |
 
-This table is copied from a11y-guild's `COMPONENT_CRITERIA_MAP`. It is narrowed to the success criteria "worth asking" per component, so it is not a mapping of every WCAG criterion (for example, link has no 1.1.1 because the alternative text of an image-only link is checked on the image inside it. See [1.1.1](./criteria/1.1.1.md)).
+This table is narrowed to the success criteria "worth asking" per component, so it is not a mapping of every WCAG criterion (for example, link has no 1.1.1 because the alternative text of an image-only link is checked on the image inside it. See [1.1.1](./criteria/1.1.1.md)).
