@@ -52,7 +52,18 @@ I can review accessibility for:
 Which would you like me to review?
 ```
 
-## Step 2: Load the Guide and Review
+## Step 2: Look Up the Judgment Lines in the Knowledge Base
+
+Once you identify the target, and before looking at the code or page, align your findings with [a11y-knowledge](../a11y-knowledge/SKILL.md).
+
+1. List the components that appear in the target by ARIA role (button, dialog, combobox, and so on).
+2. Use [index-by-component.md](../a11y-knowledge/references/index-by-component.md) to find the success criteria that apply to each role. When reviewing a layout or a whole page, also pick the "Whole page" and "Multiple pages" criteria from [index-by-criterion.md](../a11y-knowledge/references/index-by-criterion.md).
+3. For each criterion found, read "Judgment lines" and "When building" in `../a11y-knowledge/references/criteria/<number>.md` before writing a finding. Do not report what the "Judgment lines" say does not apply.
+4. When a finding is based on an **[Our interpretation]** judgment line (an operational interpretation), say so in the finding (for example, "[Our interpretation] judgment line; the project may override it"). **[Understanding]** judgment lines need no such note.
+
+The knowledge base is referenced by the relative path `../a11y-knowledge/`. It resolves when installed as a plugin. When installed by symlinking individual skill directories, link `a11y-knowledge` as well. If it does not resolve, skip this step and write "knowledge base not consulted" in the report.
+
+## Step 3: Load the Guide and Review
 
 Once you identify the target, read the reference guide matching the user's language and execute its process directly.
 
@@ -90,7 +101,7 @@ Follow the guide using available image, document, or Figma retrieval capabilitie
 - Wait for every result, remove duplicates, and return one consolidated report.
 - If sub-agents are unavailable, review the targets sequentially in this agent.
 
-## Step 3: Return Results
+## Step 4: Return Results
 
 When the review completes:
 1. Present the findings to the user
@@ -111,9 +122,10 @@ When the review completes:
 User: "Review https://example.com for accessibility"
 
 1. Identify: This is a web page (URL provided)
-2. Read: references/page-review.md
-3. Execute: Inspect the page by following the guide
-4. Return: Present findings
+2. Look up: find the criteria in index-by-component and read "Judgment lines" and "When building"
+3. Read: references/page-review.md
+4. Execute: Inspect the page by following the guide
+5. Return: Present findings
 ```
 
 ### Example 2: User provides file path
@@ -121,9 +133,10 @@ User: "Review https://example.com for accessibility"
 User: "Check src/components/Button.tsx for a11y issues"
 
 1. Identify: This is code (file path provided)
-2. Read: references/code-review.md
-3. Execute: Inspect the target and related code by following the guide
-4. Return: Present findings
+2. Look up: find the criteria in index-by-component and read "Judgment lines" and "When building"
+3. Read: references/code-review.md
+4. Execute: Inspect the target and related code by following the guide
+5. Return: Present findings
 ```
 
 ### Example 3: User provides Figma URL
@@ -131,9 +144,10 @@ User: "Check src/components/Button.tsx for a11y issues"
 User: "Review this design: https://figma.com/file/abc123"
 
 1. Identify: This is a design (Figma URL)
-2. Read: references/design-review.md
-3. Execute: Inspect the design by following the guide
-4. Return: Present findings
+2. Look up: find the criteria in index-by-component and read "Judgment lines" and "When building"
+3. Read: references/design-review.md
+4. Execute: Inspect the design by following the guide
+5. Return: Present findings
 ```
 
 ## WCAG & Standards Reference

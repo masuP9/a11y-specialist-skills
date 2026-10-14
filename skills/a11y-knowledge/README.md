@@ -31,7 +31,7 @@ It does not restate the definitions of success criteria, the ARIA specification,
 | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | reviewing-a11y                     | From the components in the diff or on screen, look up success criteria in `index-by-component` and read "Judgment lines" and "When building" |
 | auditing-wcag                      | Sort automated check results with `checks-*`, then read "Judgment lines" and "When checking" for the criteria that need review |
-| (implementation skill, to be added) | From the component about to be written, look it up in `index-by-component` and read "When building"                     |
+| implementing-a11y                  | From the component about to be written, look it up in `index-by-component` and read "Judgment lines" and "When building" |
 
 ## Where it comes from
 

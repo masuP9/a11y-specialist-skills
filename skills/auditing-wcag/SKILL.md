@@ -45,6 +45,13 @@ Confirm and get agreement on:
 - If the CLI also cannot run, retrieve HTML with the available web capability and limit judgments accordingly.
 - Use `references/coverage-matrix.md` to ensure A/AA coverage.
 
+**Sort the results with the knowledge base ([a11y-knowledge](../a11y-knowledge/SKILL.md)):**
+- Also run `page-snapshot` from `@a11y-skills/audit` 0.14.0 or later (include it even when narrowing `--checks`). It gives no verdict, but it is the material for 2.4.1 / 2.4.2 / 3.1.1 and for comparing multiple pages.
+- Sort the results into "settled / needs review" by the rules in [checks-axe.md](../a11y-knowledge/references/checks-axe.md) and [checks-audit.md](../a11y-knowledge/references/checks-audit.md). The only axe rules whose passes may be counted as conformant (Pass) are the ones listed there. Any other pass means no more than "no problem within what that rule looks at".
+- For criteria that need review, read "Judgment lines" and "When checking" in `../a11y-knowledge/references/criteria/<number>.md` before deciding. Anything under "do not assert" stays NT, with a note on what would settle it.
+- When auditing multiple pages, first read the shared judgment rules in [cross-page.md](../a11y-knowledge/references/cross-page.md).
+- Where an item overlaps with `references/automated-checks.md`, the knowledge base rules take precedence. The knowledge base is referenced by the relative path `../a11y-knowledge/` (it resolves when installed as a plugin; when installed by symlinking individual skill directories, link `a11y-knowledge` as well).
+
 ### 4. Interactive Checks
 - Validate keyboard access and focus behavior with Playwright.
 - Follow `references/interactive-checks.md`.
@@ -75,6 +82,7 @@ Confirm and get agreement on:
 - `references/content-checks.md`
 - `references/output-format.md`
 - `references/coverage-matrix.md`
+- Knowledge base (`../a11y-knowledge/`): `references/checks-axe.md`, `references/checks-audit.md`, `references/cross-page.md`, `references/criteria/<number>.md`
 
 ## Automated Checks CLI
 
@@ -92,8 +100,10 @@ npx -y @a11y-skills/audit --url "https://example.com"
 
 **Run specific checks:**
 ```bash
-npx -y @a11y-skills/audit --url "https://example.com" --checks axe-audit,focus-indicator-check
+npx -y @a11y-skills/audit --url "https://example.com" --checks axe-audit,focus-indicator-check,page-snapshot
 ```
+
+Include `page-snapshot` (0.14.0 or later) even when narrowing `--checks`. It is the material for 2.4.1 / 2.4.2 / 3.1.1 and for comparing multiple pages.
 
 **With annotated screenshots (focus-indicator):**
 ```bash
