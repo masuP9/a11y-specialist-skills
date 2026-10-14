@@ -28,7 +28,7 @@ Methods are labeled as Automated/Interactive/Manual/Content and can be combined.
 | 1.4.10 | Automated + Manual | `reflow-check` **[CLI]** + screenshots | Fail if horizontal scroll required |
 | 1.4.11 | Automated candidates + manual | `non-text-contrast-check` **[CLI]** + screenshots | Fail if a component boundary or icon is below 3:1. States, charts and image backgrounds are manual |
 | 1.4.12 | Automated + Manual | `text-spacing-check` **[CLI]** + screenshots | Fail on text clipping/overlap |
-| 1.4.13 | Interactive | video/logs | Fail if hover/focus content cannot be dismissed/retained |
+| 1.4.13 | Interactive + automated candidates | `content-on-hover-check` **[CLI]** + video/logs | Fail if hover/focus content cannot be dismissed/retained |
 
 ## 2. Operable
 | Criterion | Test Method | Evidence | Judgment Rule |
@@ -93,6 +93,7 @@ The following criteria can be automatically checked via the `a11y-audit` CLI (se
 | 1.4.10 | `reflow-check` | `reflow-result.json` |
 | 1.4.11 | `non-text-contrast-check` | `non-text-contrast-result.json` |
 | 1.4.12 | `text-spacing-check` | `text-spacing-result.json` |
+| 1.4.13 | `content-on-hover-check` | `content-on-hover-result.json` |
 | 2.1.1 | `keyboard-reachability-check` | `keyboard-reachability-result.json` |
 | 2.1.2 | `keyboard-trap-check` | `keyboard-trap-result.json` |
 | 2.1.4 | `character-key-shortcut-check` | `character-key-shortcut-result.json` |

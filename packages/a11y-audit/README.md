@@ -4,7 +4,7 @@ Playwright + axe-core based WCAG 2.2 accessibility audit functions.
 
 This package is the functional core extracted from the
 [`auditing-wcag`](https://github.com/masuP9/a11y-specialist-skills) Claude Code
-skill. It ships 21 checks, plus `runPageSnapshot`, which writes material
+skill. It ships 22 checks, plus `runPageSnapshot`, which writes material
 (the accessibility tree and more) for judging what the checks do not, as plain
 functions plus ready-to-run Playwright test entries.
 
@@ -37,12 +37,13 @@ functions plus ready-to-run Playwright test entries.
 | `runPointerCancellationCheck` | 2.5.2 Pointer Cancellation (components that act on the down-event alone, reported as candidates) |
 | `runNonTextContrastCheck` | 1.4.11 Non-text Contrast (border / fill of inputs and similar, icons in icon-only buttons, reported as candidates) |
 | `runCharacterKeyShortcutCheck` | 2.1.4 Character Key Shortcuts (keys that react when pressed one at a time with focus on the page body, reported as candidates) |
+| `runContentOnHoverCheck` | 1.4.13 Content on Hover or Focus (finds elements that may show content from CSS rules and listeners, hovers and focuses them, and reports content that cannot be dismissed, cannot be hovered, or disappears by itself, as candidates) |
 | `runPageSnapshot` | No verdict. Material for judging 2.4.1 / 2.4.2 / 3.1.1 / 3.2.3 / 3.2.4 / 3.2.6 (aria snapshot, title, lang, URLs, an aria snapshot per iframe) |
 
 Most checks take an already-navigated `page`. A few own navigation and take a
 `targetUrl` instead (or `TEST_PAGE`): `runOrientationCheck` and
 `runTimeLimitDetector` (and `runZoomCheck` when a URL is given).
-`runFocusIndicatorCheck`, `runKeyboardReachabilityCheck`, `runChangeOnInputCheck`, `runFocusOrderCheck`, `runPointerCancellationCheck` and `runCharacterKeyShortcutCheck` take a `browser`. `runAutoPlayDetection` needs the
+`runFocusIndicatorCheck`, `runKeyboardReachabilityCheck`, `runChangeOnInputCheck`, `runFocusOrderCheck`, `runPointerCancellationCheck`, `runCharacterKeyShortcutCheck` and `runContentOnHoverCheck` take a `browser`. `runAutoPlayDetection` needs the
 optional `pixelmatch` + `pngjs` deps (see Install).
 
 `runRedundantEntryCheck` (3.3.7, `a11y-skills/redundant-entry`) takes an
@@ -306,6 +307,38 @@ that work only while a component has focus (an exception of 2.1.4) and a keydown
 rewriting its own DOM can hide small changes. Pages whose shortcuts delete or submit may have side effects
 because real keys are pressed.
 
+`runContentOnHoverCheck` (1.4.13, `a11y-skills/content-on-hover-dismissible` / `-hoverable` / `-persistent`)
+takes a `browser` and creates its own contexts. It collects the elements that may show content (triggers)
+from two sources only: (1) CSS selectors that contain `:hover` / `:focus` / `:focus-within` / `:focus-visible`
+followed by a combinator (`.menu:hover > .sub`; a rule such as `.btn:hover` that only restyles the element
+is ignored), and (2) elements that have a `mouseenter` / `mouseover` / `pointerenter` / `pointerover` /
+`focus` / `focusin` listener **on the element itself** (read through CDP, so **Chromium only**). Elements
+with only `title` / `aria-describedby` / `aria-haspopup` are not triggers. Listeners attached to `window` /
+`document` / `<html>` / `<body>`, or to an element with 20 or more event types (a framework root such as
+React's), serve elements that cannot be told apart, so they are not tried: they are recorded in
+`details.delegationRoots` and each of the three rules gets one page node (a human hovers and focuses the
+page's controls to check them). With no trigger and no delegation root nothing is operated (inapplicable).
+Each trigger is hovered and focused (the trigger itself, or its first focusable descendant), the
+visible elements before and after are compared, and the outermost newly visible elements are the content. For
+content that appears it measures (1) whether it is still visible after `persistMs` (default 3 s), (2) whether
+Escape, pressed without moving the pointer or focus, hides it (hiding it while moving focus counts as a
+failure too), and (3) for hover, whether it is still visible after showing it again and moving the pointer to
+the center of the content. A failed condition is `incomplete`: content that reports an input error, or that
+does not obscure or replace other content, need not be dismissible, so a human checks the exceptions. After
+each trigger the pointer goes to a corner, focus is blurred and Escape is pressed; the page is reloaded in a
+fresh context (at most `maxReloads` times, default 10) only when the content is still visible. It accepts
+`settleMs` (default 400 ms), `persistMs`, `maxTriggers` (default 30) and `timeBudgetMs` (default 120 s).
+What could not be examined (cross-origin style sheets, the trigger or listener limits, no CDP outside
+Chromium) is reported as a page node on all three rules, even with no trigger. Known limitations:
+attribute-only elements are not triggers; content shown by rules of cross-origin style sheets is missed;
+elements inside iframes are not looked at, and visible elements inside shadow roots that have hover or focus listeners are counted and reported (`shadowTriggersSkipped`) but not tried; content shown through
+delegated listeners is not measured; content that only changes inside an element that was already visible,
+is shown with `opacity` or `transform` alone, or is drawn on a canvas is not found; dismissal is tried with
+Escape only; when the trigger is not focusable only its first focusable descendant is focused; "stays" is
+judged over `persistMs` only; the pointer moves straight from the trigger to the center of the largest new
+element, and the pointer is not tried on content that disappeared by itself. It really focuses elements, so a
+page that navigates on focus is recorded in `untested` as `navigated`. It does not click.
+
 `runPageSnapshot` (no verdict) takes a `page` and, when given a `targetUrl`, opens it itself (without one,
 the page is taken as it is). As material for an agent or a person judging the criteria that need the
 page's structure (2.4.1 headings and landmarks, 2.4.2 title, 3.1.1 lang, and 3.2.3 / 3.2.4 / 3.2.6 by
@@ -349,7 +382,7 @@ npm install -D pixelmatch pngjs   # only if you use runAutoPlayDetection
 
 ## CLI
 
-Run all 21 checks against a URL with a single command — no test runner needed.
+Run all 22 checks against a URL with a single command — no test runner needed.
 
 ```sh
 npx -y @a11y-skills/audit --url https://example.com
@@ -397,6 +430,7 @@ focus-order-check
 pointer-cancellation-check
 non-text-contrast-check
 character-key-shortcut-check
+content-on-hover-check
 page-snapshot
 ```
 
@@ -520,7 +554,7 @@ test("focus indicators", async ({ browser }, testInfo) => {
 ```
 
 `runFocusIndicatorCheck`, `runKeyboardReachabilityCheck`,
-`runKeyboardTrapCheck`, `runChangeOnInputCheck` and `runCharacterKeyShortcutCheck` accept `createContext` instead of `browser`. Use it to
+`runKeyboardTrapCheck`, `runChangeOnInputCheck`, `runCharacterKeyShortcutCheck` and `runContentOnHoverCheck` accept `createContext` instead of `browser`. Use it to
 attach your own guards (such as a `context.route` URL check) to every context
 the check uses:
 
@@ -687,7 +721,7 @@ import "@a11y-skills/audit/test-entries/target-size-check";
 // redundant-entry-check, motion-actuation-check, change-on-input-check,
 // accessible-authentication-check, pointer-gesture-check, focus-order-check,
 // pointer-cancellation-check, non-text-contrast-check,
-// character-key-shortcut-check, page-snapshot
+// character-key-shortcut-check, content-on-hover-check, page-snapshot
 import "@a11y-skills/audit/test-entries/text-spacing-check";
 ```
 

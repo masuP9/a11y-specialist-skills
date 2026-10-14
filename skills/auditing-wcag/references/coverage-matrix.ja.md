@@ -28,7 +28,7 @@
 | 1.4.10 | 自動+手動 | `reflow-check` **[CLI]** + スクショ | 横スクロール必須でFail |
 | 1.4.11 | 自動の候補+手動 | `non-text-contrast-check` **[CLI]** + スクショ | 部品の境界・アイコンが3:1未満でFail。状態ごとの見た目・グラフ・画像の背景は手動 |
 | 1.4.12 | 自動+手動 | `text-spacing-check` **[CLI]** + スクショ | 文字欠落/重なりでFail |
-| 1.4.13 | インタラクティブ | 動画/ログ | 解除/保持不可でFail |
+| 1.4.13 | インタラクティブ+自動の候補 | `content-on-hover-check` **[CLI]** + 動画/ログ | 解除/保持不可でFail |
 
 ## 2. 操作可能
 | 基準 | テスト方法 | 証跡 | 判定ルール |
@@ -93,6 +93,7 @@
 | 1.4.10 | `reflow-check` | `reflow-result.json` |
 | 1.4.11 | `non-text-contrast-check` | `non-text-contrast-result.json` |
 | 1.4.12 | `text-spacing-check` | `text-spacing-result.json` |
+| 1.4.13 | `content-on-hover-check` | `content-on-hover-result.json` |
 | 2.1.1 | `keyboard-reachability-check` | `keyboard-reachability-result.json` |
 | 2.1.2 | `keyboard-trap-check` | `keyboard-trap-result.json` |
 | 2.1.4 | `character-key-shortcut-check` | `character-key-shortcut-result.json` |

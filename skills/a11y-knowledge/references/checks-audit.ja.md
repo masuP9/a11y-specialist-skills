@@ -32,6 +32,7 @@
 | pointer-gesture-check      | 2.5.1、2.5.7   | 複数の指・軌跡・ドラッグで操作しそうな要素の候補                     | 適合も不適合も付けない。候補が 1 件以上なら要確認、0 件なら対象外                               |
 | pointer-cancellation-check | 2.5.2          | 候補を挙げる                                                         | 判断が要る                                                                                      |
 | character-key-shortcut-check | 2.1.4        | 候補を挙げる                                                         | 判断が要る                                                                                      |
+| content-on-hover-check     | 1.4.13         | 候補を挙げる                                                         | 判断が要る                                                                                      |
 | non-text-contrast-check    | 1.4.11         | 候補を挙げる                                                         | 判断が要る                                                                                      |
 
 ## 複数ページの材料

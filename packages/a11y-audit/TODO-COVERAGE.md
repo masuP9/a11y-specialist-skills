@@ -69,22 +69,27 @@
 
 ---
 
-### 1.4.13 Content on Hover or Focus
+### 1.4.13 Content on Hover or Focus - **部分実装** ✅
 **概要**: ホバー/フォーカスで表示されるコンテンツが dismissible、hoverable、persistent であること
 
-**実装アイデア**:
-- ホバー/フォーカス前後の DOM 差分を検出
-- 新規表示要素の特定
-- Escape キーで非表示になるか検証
-- ホバーを維持したままポインタ移動可能か検証
+**実装**: `content-on-hover-check`（`runContentOnHoverCheck.ts`）
+- きっかけの要素を CSS の `:hover` / `:focus` 系の規則（後ろに結合子があるもの）と、要素自身に付いた
+  mouseenter / mouseover / pointerenter / pointerover / focus / focusin の listener（CDP）から集め、ホバーとフォーカスを試す
+- 操作の前後で見えている要素を比べ、新しく見えた最も外側の要素を中身として、
+  `a11y-skills/content-on-hover-persistent`（`persistMs` 待って消えるか）・`-dismissible`（Escape で消えるか。
+  消えてもフォーカスが動けば外れ）・`-hoverable`（ホバーのとき、ポインタを中身へ動かすと消えるか）を `incomplete` で報告
+- `window` / `document` / `<html>` / `<body>` や 20 種類以上の listener を持つ要素（フレームワークのルート）にまとめて付いた
+  listener は試さず、`delegationRoots` として 3 ルールに page node で報告。きっかけも無ければ inapplicable
+- 戻せない中身があるときだけ新しい context で読み込み直す
 
-**検出可能な問題**:
-- Escape で閉じないツールチップ
-- ホバーアウトで即座に消えるポップオーバー
+**見ているもの**: 新しく見えるようになった要素。`title` / `aria-describedby` / `aria-haspopup` だけの要素は見ない
 
-**制限**:
-- 動的コンテンツの検出タイミング
-- 「persistent」の時間判定
+**残る制限**:
+- 別オリジンの CSS の規則から出る中身、iframe の中、まとめて受けている listener で出す中身は測らない。shadow root の中の listener は試さず、数えて報告する（`shadowTriggersSkipped`）
+- もとから見えていた要素の書き換えだけ、`opacity` / `transform` だけの出し入れ、canvas は拾えない
+- 消せるかは Escape だけで測る。自分で消えないかは `persistMs`（既定 3 秒）だけ見る
+- 例外（入力エラーを伝える中身、ほかの中身を隠さない中身は消せなくてよい）は判定せず、人が確かめる
+- listener の取り出しは Chromium のみ。フォーカスで遷移するページでは遷移が起きる（`untested` に `navigated`）
 
 ---
 
@@ -343,7 +348,6 @@
 | 優先度 | 達成基準 | 理由 |
 |-------|---------|------|
 | 中 | 2.1.2 No Keyboard Trap | モーダル問題の検出 |
-| 低 | 1.4.13 Content on Hover | 実装複雑、エッジケース多い |
 
 **既存でカバー済み:**
 
@@ -352,6 +356,7 @@
 | 2.1.1 Keyboard | `keyboard-reachability-check`（部分） ✅ |
 | 1.4.11 Non-text Contrast | `non-text-contrast-check`（部分） ✅ |
 | 2.1.4 Character Key Shortcuts | `character-key-shortcut-check`（部分） ✅ |
+| 1.4.13 Content on Hover or Focus | `content-on-hover-check`（部分） ✅ |
 | 2.4.3 Focus Order | `focus-order-check`（部分） ✅ |
 | 2.4.1 Bypass Blocks | `automated-checks.md` |
 | 2.4.11 Focus Not Obscured (Minimum) / 2.4.12 (Enhanced) | `focus-indicator-check.ts` ✅ |
