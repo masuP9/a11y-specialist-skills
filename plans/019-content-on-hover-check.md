@@ -189,7 +189,7 @@ exit code 1 と `Errors: 0` を要求する。`cli-smoke.html` は `<h1>`・`<im
 
 - 新規: `src/playwright/runContentOnHoverCheck.ts`、
   `src/test-entries/content-on-hover-check.ts`、
-  `test/fixtures/pages/content-on-hover/{none,compliant-tooltip,no-escape,not-hoverable,auto-hide,css-hover-menu,css-self-only,focus-only,attributes-only,hidden-trigger,stuck,focus-navigates,document-delegation,root-delegation}.html`、
+  `test/fixtures/pages/content-on-hover/{none,compliant-tooltip,no-escape,not-hoverable,auto-hide,css-hover-menu,css-self-only,focus-only,focus-within,escape-blurs,attributes-only,hidden-trigger,stuck,focus-navigates,document-delegation,root-delegation}.html`、
   `test/content-on-hover.spec.ts`
 - 編集（追加のみ）: `src/constants.ts`、`src/types.ts`、`src/utils/rule-registry.ts`、
   `src/utils/axe-format.ts`、`src/index.ts`、`src/playwright/index.ts`、
@@ -248,16 +248,17 @@ exit code 1 と `Errors: 0` を要求する。`cli-smoke.html` は `<h1>`・`<im
       - まとめて受けている要素の `selector` / `shadowHosts` は、ブラウザ内で `getUniqueSelector` と
         `runPointerGestureCheck.ts` の `delegationRoots` と同じ作り方で決める。
    2. ブラウザ内関数 `collectTriggers({ stateKey, nodesKey, listenerIndices, maxTriggers })` を `page.evaluate`（設計 C）。
-      返り値は `{ selector, sources, focusable, html, htmlTruncated }[]`（文書順・重複なし・最大 `maxTriggers` 件）、
+      返り値は `{ selector, sources, focusTarget, html, htmlTruncated }[]`（文書順・重複なし・最大 `maxTriggers` 件）、
       `triggersTruncated`、`cssRulesUnreadable`（読めなかったスタイルシートの数）。
    3. 候補が 0 件 → context を閉じて結果を作る（`delegationRoots` があれば incomplete、無ければ inapplicable。設計 H）。
-4. **きっかけごと・方法ごとに**（`triggers` の順。方法は `hover` → `focus` の順。`focusable === false` なら `focus` は飛ばす）:
+4. **きっかけごと・方法ごとに**（`triggers` の順。方法は `hover` → `focus` の順。`focusTarget === null` なら `focus` は飛ばす）:
    1. 時間の上限を確かめる。超えていれば `abort('timeout')`（残りを `untested` に `reason: 'timeout'`）。
    2. **戻す**（`resetState`）: `page.mouse.move(0, 0)`、ブラウザ内で `document.activeElement?.blur()`、
       `page.keyboard.press('Escape')`、`settleMs` 待つ。
    3. 見えている要素をすべて印付け（ブラウザ内関数 `markVisible(stateKey)`。`WeakSet` を `window[stateKey].seen` に）。
    4. **出す**: `hover` は要素を `scrollIntoView({ block: 'center' })` してから中心座標へ `page.mouse.move(x, y, { steps: 5 })`。
-      `focus` は `locator.focus()`。要素が見つからない・大きさ 0 なら、その組を `untested` に
+      `focus` は `focusTarget` の要素を `locator.focus()`（`:focus-within` のように、きっかけ自身ではなく子孫に
+      フォーカスして出す形があるため。設計 C）。要素が見つからない・大きさ 0 なら、その組を `untested` に
       `reason: 'trigger-not-found'` で入れて次へ。`settleMs` 待つ。
    5. 遷移していたら（`framenavigated` / URL の変化 / evaluate が `NAVIGATION_ERROR`）、その組を `untested` に
       `reason: 'navigated'` で入れ、読み込み直して（手順 11 の読み込み直し）次の組へ。
@@ -269,7 +270,9 @@ exit code 1 と `Errors: 0` を要求する。`cli-smoke.html` は `<h1>`・`<im
       1 つでも消えていれば `persistent = 'disappeared'`。
    8. **消せるか**: `persistent === 'stayed'` のときだけ（消えたあとでは測れない。そうでなければ `'not-tested'`）。
       Escape を押して `settleMs` 待ち、すべて見えなくなれば `'dismissed'`、1 つでも残れば `'stayed'`。
-      押す前と後で `document.activeElement` が変わっていたら `escapeMovedFocus: true`（記録だけ）。
+      押す前と後で `document.activeElement` が変わっていたら `escapeMovedFocus: true`。
+      **`'dismissed'` でも `escapeMovedFocus` なら dismissible の外れとして扱う**（Escape で blur して、その blur で
+      消しているだけかもしれず、「フォーカスを動かさずに消せる」ことを確かめられていないため。設計 B）。
    9. **ポインタを載せられるか**（`hover` のときだけ。`focus` は `'not-applicable'`）: 手順 2〜4 をやり直して
       もう一度出し、roots のうち最大の rect の中心へ `page.mouse.move(x, y, { steps: 10 })`、`settleMs` 待ち、
       すべて見えていれば `'stayed'`、消えていれば `'disappeared'`。出し直しで中身が出なければ `'not-tested'`。
@@ -287,7 +290,7 @@ exit code 1 と `Errors: 0` を要求する。`cli-smoke.html` は `<h1>`・`<im
 | 条件 | 判定 | ルール |
 |---|---|---|
 | 自分で消えない | `persistent === 'disappeared'` | `content-on-hover-persistent` |
-| 消せる | `dismissible === 'stayed'`（Escape で消えない） | `content-on-hover-dismissible` |
+| 消せる | `dismissible === 'stayed'`（Escape で消えない）、または `escapeMovedFocus === true`（消えてもフォーカスが動いた） | `content-on-hover-dismissible` |
 | ポインタを載せられる | `hoverable === 'disappeared'` | `content-on-hover-hoverable` |
 
 どれも外れていない組は passes に数える。`'not-tested'` は外れとみなさない（理由は `untested` か node の要約に残る）。
@@ -304,8 +307,14 @@ exit code 1 と `Errors: 0` を要求する。`cli-smoke.html` は `<h1>`・`<im
     取り除いた結果が空（`:hover > .x` のような形）なら飛ばす。読めないスタイルシート
     （別オリジンで `cssRules` が `SecurityError`）は数えて `cssRulesUnreadable` に返す。
   - `'listener'`: 手順 A-3-1 で `window[nodesKey]` に入れた要素のうち `listenerIndices` のもの。
-- `focusable`: `el.tabIndex >= 0` または `el.matches('a[href], button, input, select, textarea, [tabindex], [contenteditable="true"], summary')`
-  で、`disabled` でない。
+- 「フォーカスできる」: `el.tabIndex >= 0` または `el.matches('a[href], button, input, select, textarea, [tabindex], [contenteditable="true"], summary')`
+  で、`disabled` でなく、見えている（`isVisible`）。
+- `focusTarget`（フォーカスで出すときにフォーカスする要素のセレクタ）:
+  - きっかけ自身がフォーカスできる → きっかけ自身の `selector`。
+  - そうでなければ、文書順で最初のフォーカスできる子孫の `getUniqueSelector`（`:focus-within` の規則や、
+    子孫からバブリングする `focusin` の listener で出す形のため。`.group:focus-within > .hint` なら `.group` の中の `<input>`）。
+    子孫のうち試すのは 1 つだけ（最初の 1 つで出なければ、ほかの子孫でも出ないとみなす。既知の制限に記載）。
+  - どちらも無い → `null`（キーボードで出せないので focus は試さない。hover だけ試す）。
 - 文書順に並べ、`maxTriggers` 件まで（超えた数は `triggersTruncated` に）。`selector` は `getUniqueSelector`
   （`runCharacterKeyShortcutCheck.ts:206` の写し、「Keep in sync」コメント付き）。
 
@@ -317,7 +326,8 @@ export type HoverTriggerSource = 'css' | 'listener';
 export interface HoverTrigger {
   selector: string;
   sources: HoverTriggerSource[];
-  focusable: boolean;
+  /** Element focused for the 'focus' method: the trigger itself, its first focusable descendant, or null (focus not tried). */
+  focusTarget: string | null;
   html: string;
   htmlTruncated: boolean;
 }
@@ -351,6 +361,7 @@ export interface HoverContentResult {
   persistent: 'stayed' | 'disappeared';
   /** Escape pressed without moving the pointer or focus. 'not-tested' when it had already disappeared. */
   dismissible: 'dismissed' | 'stayed' | 'not-tested';
+  /** document.activeElement changed when Escape was pressed; flagged even when the content was dismissed. */
   escapeMovedFocus: boolean;
   /** Pointer moved from the trigger onto the content. 'not-applicable' for focus. */
   hoverable: 'stayed' | 'disappeared' | 'not-tested' | 'not-applicable';
@@ -476,11 +487,20 @@ export interface RunContentOnHoverCheckOptions
 
 `checkedNodes` は既存の normalizer に合わせる。
 
-- 適用されるか: `results` が 1 件以上、または `delegationRoots` / `untested` が 1 件以上、または `aborted` がある
-  → `applicable = true`。どれも無ければ 3 ルールとも node なし、`applicable = false`（inapplicable）。
+- 適用されるか: `results` が 1 件以上、または `delegationRoots` / `untested` が 1 件以上、または `aborted` がある、
+  または下の「調べきれなかった」条件のどれかに当たる → `applicable = true`。どれも無ければ 3 ルールとも node なし、
+  `applicable = false`（inapplicable）。
+- **調べきれなかったことは必ず page node にする**（`normalizePointerGestureCheck` の `listenerInspection !== 'cdp'`・
+  候補の切り捨て・`listenerNodesTruncated` の扱い（`axe-format.ts:937-1008`）に合わせる。候補が 0 件でも inapplicable にしない）。
+  3 ルールそれぞれに、当たったものごとに 1 つ:
+  - `listenerInspection === 'unsupported'` → `` `Event listeners could not be inspected (unsupported). CDP is only available in Chromium. Triggers come only from CSS rules; hover over and focus the page's controls to check content shown by scripts manually.` ``
+  - `cssRulesUnreadable > 0` → `` `${n} style sheet(s) could not be read (cross-origin); content shown by their :hover / :focus rules was not tried. Check it manually.` ``
+  - `triggersTruncated > 0` → `` `Only the first ${triggers.length} of ${triggers.length + triggersTruncated} triggers were tried (maxTriggers); check the rest of the page manually.` ``
+  - `listenerNodesTruncated` → `` `Listeners on more than ${CONTENT_ON_HOVER_MAX_LISTENER_NODES} elements were found; elements beyond that were not tried. Check them manually.` ``
 - 外れた条件ごとに、その組のきっかけ（`trigger`）を対象にした要素 node:
   - persistent: `` `Content shown on ${method} of this element (${contentSelectors}) disappeared within ${persistMs} ms while the ${method === 'hover' ? 'pointer' : 'focus'} stayed on it. Verify that it stays until dismissed, or that the information is no longer valid.` ``
-  - dismissible: `` `Content shown on ${method} of this element (${contentSelectors}) stayed visible after pressing Escape.${escapeMovedFocus ? ' Escape also moved focus.' : ''} Verify that it can be dismissed without moving the pointer or focus, unless it reports an input error or does not obscure or replace other content.` ``
+  - dismissible（`'stayed'`）: `` `Content shown on ${method} of this element (${contentSelectors}) stayed visible after pressing Escape.${escapeMovedFocus ? ' Escape also moved focus.' : ''} Verify that it can be dismissed without moving the pointer or focus, unless it reports an input error or does not obscure or replace other content.` ``
+  - dismissible（`'dismissed'` かつ `escapeMovedFocus`）: `` `Content shown on ${method} of this element (${contentSelectors}) disappeared after pressing Escape, but Escape also moved focus. Verify that it can be dismissed without moving the pointer or focus.` ``
   - hoverable: `` `Content shown on hover of this element (${contentSelectors}) disappeared when the pointer moved onto it. Verify that the pointer can move over the content without it disappearing.` ``
   - `contentSelectors` は最大 3 件、残りは `and N more`。本文の先頭 80 文字を `Text: "..."` で添える。
   - `persistMs` は details に無いので、normalizer の引数で受けるか、要約から数値を外す（`within the wait`）。
@@ -496,6 +516,7 @@ export interface RunContentOnHoverCheckOptions
 
 `CONTENT_ON_HOVER_CHECK_RESULT_SCHEMA` を `buildEnvelopeSchema` で作る。details の `required` は型の全フィールド。
 `listenerInspection` / `sources[]` / `method` / `persistent` / `dismissible` / `hoverable` / `untested[].reason` / `aborted.reason` は `enum`。
+`focusTarget` は `string` または `null`（既存 schema の nullable の書き方に合わせる）。
 `rect` は 4 つの `number`。`delegationRoots` は `POINTER_GESTURE_CHECK_RESULT_SCHEMA` の `delegationRoots` に `types`（文字列の配列）を足した形。
 `aborted` は `CHARACTER_KEY_SHORTCUT_CHECK_RESULT_SCHEMA` の `aborted` の書き方に合わせる。
 `RESULT_SCHEMAS` に `'content-on-hover-check'` で登録。
@@ -510,8 +531,10 @@ export interface RunContentOnHoverCheckOptions
 ### Step 1: 型・定数・ルール・normalizer・schema
 
 設計 D・E・F・H・I。`src/index.ts` の axe-format export に `normalizeContentOnHoverCheck`。
-normalizer の単体テストは Step 2 のフィクスチャのテストと Step 4 の schema テストで兼ねる
-（既存の normalizer も同じ扱い）。
+normalizer の大半は Step 2 のフィクスチャのテストと Step 4 の schema テストで兼ねる。ただしフィクスチャでは
+再現しにくい「調べきれなかった」4 条件（unsupported・読めない CSS・候補の上限・listener の上限）は、
+`test/content-on-hover.spec.ts` で手組みの details を `normalizeContentOnHoverCheck`（`../dist/index.js` から import）に
+渡して確かめる（Step 2）。
 
 **Verify**: `npm run typecheck` → exit 0、build → exit 0。
 
@@ -532,6 +555,8 @@ normalizer の単体テストは Step 2 のフィクスチャのテストと Ste
 | `css-hover-menu.html` | `.menu:hover > .sub { display: block }`（JS なし、ホバー中は `.sub` が見える。`.sub` は `.menu` の子なので載せられる、Escape では消えない） | `triggers[0].sources` が `['css']`、hover で `dismissible: 'stayed'`、`hoverable: 'stayed'` |
 | `css-self-only.html` | `.btn:hover { color: red }` だけ | `triggers` が空（後ろに結合子が無い規則は候補にしない） |
 | `focus-only.html` | `<input>` の `focus` で下にヒントを出す（`input:focus + .hint`）、Escape で消えない | focus の結果だけ（hover は中身なし → `noContent` に数える）、`hoverable: 'not-applicable'`、dismissible incomplete |
+| `focus-within.html` | フォーカスできない `<div class="group">` の中に `<input>`、`.group:focus-within > .hint { display: block }`。Escape で消えない | `.group` の候補の `focusTarget` が中の `<input>` のセレクタ、focus の結果が 1 件（中身は `.hint`）、dismissible incomplete |
+| `escape-blurs.html` | ボタンの `focus` でツールチップを出し `blur` で消す。`keydown` の Escape で `document.activeElement.blur()` するだけ | focus の結果が `dismissible: 'dismissed'`・`escapeMovedFocus: true`、dismissible が incomplete（要約に `moved focus`） |
 | `attributes-only.html` | `title` 付きのリンク、ずっと見えている説明文を指す `aria-describedby` 付きの入力欄、`aria-haspopup="menu"` 付きのボタン（クリックで開く）。`:hover` 規則も hover の listener も無い | `triggers` が空、3 ルール inapplicable（属性だけでは候補にしない） |
 | `hidden-trigger.html` | `display: none` の要素に `mouseenter` の listener | `triggers` が空 |
 | `stuck.html` | 1 つ目のボタンの `mouseenter` で出した中身が消えない（`mouseleave` も Escape も聞かない）。2 つ目のボタンは compliant と同じ | `reloads === 1`、2 つ目のボタンの結果が `compliant` と同じ（1 つ目の中身を 2 つ目の中身と取り違えない） |
@@ -544,7 +569,12 @@ normalizer の単体テストは Step 2 のフィクスチャのテストと Ste
 
 - `maxReloads: 0` で `stuck.html` → `aborted.reason === 'reload-limit'`、2 つ目のボタンが `untested` に `reason: 'reload-limit'`
 - `timeBudgetMs: 1` で `compliant-tooltip.html` → `aborted.reason === 'timeout'`、`untested` が空でない、3 ルール incomplete
-- `maxTriggers: 1` で `stuck.html` → `triggers.length === 1`、`triggersTruncated === 1`
+- `maxTriggers: 1` で `stuck.html` → `triggers.length === 1`、`triggersTruncated === 1`、3 ルールとも incomplete
+  （1 つ目の結果が外れていなくても、切り捨ての page node が入るので passes にならない）
+- `normalizeContentOnHoverCheck` に手組みの details（`results`・`triggers`・`delegationRoots`・`untested` が空、`aborted: null`）を渡し、
+  次のそれぞれ 1 つだけを立てたとき 3 ルールとも incomplete（page node 1 つ、要約に該当の語）になること（1 条件 1 テスト）:
+  `listenerInspection: 'unsupported'`（`Chromium`）、`cssRulesUnreadable: 1`（`cross-origin`）、`listenerNodesTruncated: true`（`were not tried`）。
+  4 つとも立てない details では 3 ルールとも inapplicable
 - `settleMs: -1` → `Error`、`persistMs: Number.NaN` → `Error`、`maxTriggers: 0` → `Error`、`maxReloads: -1` → `Error`
 - 全ケースでエンベロープが `RESULT_SCHEMAS['content-on-hover-check']` に valid
 
@@ -628,7 +658,8 @@ grep -E "content-on-hover-check|Errors:" /tmp/claude-coh-all.log
 
 ## Test plan
 
-- **`test/content-on-hover.spec.ts`**: 14 フィクスチャで、候補の集め方（CSS・listener、属性だけの要素・見えない要素・
+- **`test/content-on-hover.spec.ts`**: 16 フィクスチャと手組み details の normalizer テストで、`:focus-within` の
+  フォーカス先の選び方、Escape でフォーカスが動いた場合、調べきれなかった場合の incomplete、候補の集め方（CSS・listener、属性だけの要素・見えない要素・
   自分だけ変わる CSS の除外）、まとめて受けている listener の報告（`document` とルート要素）、新しい中身の見分け、
   3 条件の判定、Escape・ポインタ移動・待ちの各経路、戻せない中身での読み込み直し、フォーカスで遷移するページ、
   上限・時間切れ・引数の誤りを検証。schema も確かめる。
@@ -671,6 +702,11 @@ ALL must hold:
   - 新しい中身は「見えていなかった要素が見えるようになった」ことで見つける。もとから DOM にあって見えていた要素の
     中身が書き換わるだけのもの、`opacity` や `transform` だけで出し入れするもの、canvas に描くものは拾えない。
   - 消せるかは Escape だけで測る。ほかの消し方（Ctrl キーなど）が用意されていても外れとして出る。
+    Escape で消えてもフォーカスが動いた場合も外れとして出す（フォーカスを動かさずに消せるかを確かめられないため）。
+  - きっかけ自身がフォーカスできないときは、最初のフォーカスできる子孫 1 つだけにフォーカスして試す。
+    2 つ目以降の子孫でだけ出る中身は見落とす。
+  - Chromium 以外・別オリジンの CSS・候補や listener の上限で調べきれなかったときは、候補が 0 件でも
+    3 ルールとも要確認（incomplete）の page node を出す。
   - 例外（入力エラーを伝える中身、ほかの中身を隠さない・置き換えない中身は消せなくてよい）は判定しない。
   - 自分で消えないかは `persistMs`（既定 3 秒）だけ見る。それより後に消える中身は拾えない。
   - ポインタは、きっかけの中心から中身の最大の部分の中心へまっすぐ動かす。別の経路なら載せられる中身も外れとして出る。
