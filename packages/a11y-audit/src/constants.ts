@@ -1079,6 +1079,32 @@ export const CHARACTER_KEY_BASELINE_WINDOWS = 10;
 export const DEFAULT_CHARACTER_KEY_SHORTCUT_RESULT_FILE =
   'character-key-shortcut-result.json';
 
+// ---------------------------------------------------------------------------
+// content-on-hover-check (WCAG 1.4.13)
+// ---------------------------------------------------------------------------
+
+/** Listener types that suggest an element shows something on hover or focus. */
+export const CONTENT_ON_HOVER_LISTENER_TYPES = [
+  'mouseenter',
+  'mouseover',
+  'pointerenter',
+  'pointerover',
+  'focus',
+  'focusin',
+] as const;
+/** Wait after showing, dismissing or moving the pointer (tooltip libraries delay up to a few hundred ms). */
+export const CONTENT_ON_HOVER_SETTLE_MS = 400;
+/** How long shown content must stay with the pointer or focus kept on the trigger. */
+export const CONTENT_ON_HOVER_PERSIST_MS = 3_000;
+export const CONTENT_ON_HOVER_MAX_TRIGGERS = 30;
+/** Upper bound on nodes resolved through CDP (listener nodes + delegation roots). */
+export const CONTENT_ON_HOVER_MAX_LISTENER_NODES = 500;
+export const CONTENT_ON_HOVER_TIMEOUT_MS = 120_000;
+export const CONTENT_ON_HOVER_MAX_RELOADS = 10;
+export const CONTENT_ON_HOVER_TEXT_MAX = 200;
+export const DEFAULT_CONTENT_ON_HOVER_RESULT_FILE =
+  'content-on-hover-result.json';
+
 // page-snapshot (material for 2.4.1 / 2.4.2 / 3.1.1 / 3.2.3 / 3.2.4 / 3.2.6)
 export const DEFAULT_PAGE_SNAPSHOT_RESULT_FILE = 'page-snapshot-result.json';
 /** Per-iframe wait, so an iframe that never finishes does not stall the check. */

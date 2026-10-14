@@ -64,6 +64,7 @@ export {
   normalizeAutoPlayDetection,
   normalizeChangeOnInputCheck,
   normalizeCharacterKeyShortcutCheck,
+  normalizeContentOnHoverCheck,
   normalizeFocusOrderCheck,
   normalizeFocusCheck,
   normalizeKeyboardReachabilityCheck,

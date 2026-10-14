@@ -566,6 +566,49 @@ export const RULES = {
     // off or remapped, or is active only while a component has focus, needs a human.
     classification: 'incomplete',
   },
+
+  // --- content-on-hover-check ---
+  // A failed condition can be observed, but whether an exception applies
+  // (content that reports an input error, or that does not obscure or replace
+  // other content, need not be dismissible) needs a human. Content shown
+  // through delegated listeners is not measured and is handed over as a page
+  // node.
+  'content-on-hover-dismissible': {
+    id: 'a11y-skills/content-on-hover-dismissible',
+    sc: ['1.4.13'],
+    tags: ['a11y-skills', 'wcag21aa', 'wcag1413'],
+    impact: 'serious',
+    scope: 'node',
+    description:
+      'Ensure content shown on hover or focus can be dismissed without moving pointer or focus',
+    help: 'Let users dismiss content shown on hover or focus (e.g. with Escape) without moving the pointer or focus',
+    helpUrl: `${UNDERSTANDING}/content-on-hover-or-focus.html`,
+    classification: 'incomplete',
+  },
+  'content-on-hover-hoverable': {
+    id: 'a11y-skills/content-on-hover-hoverable',
+    sc: ['1.4.13'],
+    tags: ['a11y-skills', 'wcag21aa', 'wcag1413'],
+    impact: 'serious',
+    scope: 'node',
+    description:
+      'Ensure the pointer can move over content shown on hover without it disappearing',
+    help: 'Keep content shown on hover visible while the pointer moves over it',
+    helpUrl: `${UNDERSTANDING}/content-on-hover-or-focus.html`,
+    classification: 'incomplete',
+  },
+  'content-on-hover-persistent': {
+    id: 'a11y-skills/content-on-hover-persistent',
+    sc: ['1.4.13'],
+    tags: ['a11y-skills', 'wcag21aa', 'wcag1413'],
+    impact: 'serious',
+    scope: 'node',
+    description:
+      'Ensure content shown on hover or focus stays until dismissed or no longer relevant',
+    help: 'Keep content shown on hover or focus visible until the user dismisses it or moves the pointer or focus away',
+    helpUrl: `${UNDERSTANDING}/content-on-hover-or-focus.html`,
+    classification: 'incomplete',
+  },
 } as const satisfies Record<string, RuleMeta>;
 
 export type RuleKey = keyof typeof RULES;

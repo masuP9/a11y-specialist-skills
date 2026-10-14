@@ -2109,6 +2109,175 @@ export const CHARACTER_KEY_SHORTCUT_CHECK_RESULT_SCHEMA: JsonSchema =
     },
   });
 
+const HOVER_METHOD_SCHEMA: JsonSchema = {
+  type: 'string',
+  enum: ['hover', 'focus'],
+};
+
+export const CONTENT_ON_HOVER_CHECK_RESULT_SCHEMA: JsonSchema =
+  buildEnvelopeSchema({
+    id: 'content-on-hover-check-result',
+    title: 'ContentOnHoverCheckResult',
+    source: 'content-on-hover-check',
+    details: {
+      type: 'object',
+      required: [
+        'listenerInspection',
+        'delegationRoots',
+        'listenerNodesTruncated',
+        'triggers',
+        'triggersTruncated',
+        'cssRulesUnreadable',
+        'shadowTriggersSkipped',
+        'results',
+        'noContent',
+        'untested',
+        'reloads',
+        'aborted',
+      ],
+      properties: {
+        listenerInspection: { type: 'string', enum: ['cdp', 'unsupported'] },
+        delegationRoots: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['selector', 'shadowHosts', 'eventTypeCount', 'types'],
+            properties: {
+              selector: { type: 'string' },
+              shadowHosts: { type: 'array', items: { type: 'string' } },
+              eventTypeCount: { type: 'integer' },
+              types: { type: 'array', items: { type: 'string' } },
+            },
+          },
+        },
+        listenerNodesTruncated: { type: 'boolean' },
+        triggers: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: [
+              'selector',
+              'sources',
+              'focusTarget',
+              'html',
+              'htmlTruncated',
+            ],
+            properties: {
+              selector: { type: 'string' },
+              sources: {
+                type: 'array',
+                items: { type: 'string', enum: ['css', 'listener'] },
+              },
+              focusTarget: { type: ['string', 'null'] },
+              html: { type: 'string' },
+              htmlTruncated: { type: 'boolean' },
+            },
+          },
+        },
+        triggersTruncated: { type: 'integer' },
+        cssRulesUnreadable: { type: 'integer' },
+        shadowTriggersSkipped: { type: 'integer' },
+        results: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: [
+              'trigger',
+              'method',
+              'content',
+              'persistent',
+              'dismissible',
+              'escapeMovedFocus',
+              'hoverable',
+            ],
+            properties: {
+              trigger: { type: 'string' },
+              method: HOVER_METHOD_SCHEMA,
+              content: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  required: [
+                    'selector',
+                    'rect',
+                    'html',
+                    'htmlTruncated',
+                    'text',
+                  ],
+                  properties: {
+                    selector: { type: 'string' },
+                    rect: {
+                      type: 'object',
+                      required: ['x', 'y', 'width', 'height'],
+                      properties: {
+                        x: { type: 'number' },
+                        y: { type: 'number' },
+                        width: { type: 'number' },
+                        height: { type: 'number' },
+                      },
+                    },
+                    html: { type: 'string' },
+                    htmlTruncated: { type: 'boolean' },
+                    text: { type: 'string' },
+                  },
+                },
+              },
+              persistent: { type: 'string', enum: ['stayed', 'disappeared'] },
+              dismissible: {
+                type: 'string',
+                enum: ['dismissed', 'stayed', 'not-tested'],
+              },
+              escapeMovedFocus: { type: 'boolean' },
+              hoverable: {
+                type: 'string',
+                enum: ['stayed', 'disappeared', 'not-tested', 'not-applicable'],
+              },
+            },
+          },
+        },
+        noContent: { type: 'integer' },
+        untested: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['trigger', 'method', 'reason'],
+            properties: {
+              trigger: { type: 'string' },
+              method: HOVER_METHOD_SCHEMA,
+              reason: {
+                type: 'string',
+                enum: [
+                  'timeout',
+                  'reload-limit',
+                  'reload-failed',
+                  'trigger-not-found',
+                  'navigated',
+                ],
+              },
+            },
+          },
+        },
+        reloads: { type: 'integer' },
+        aborted: {
+          oneOf: [
+            { type: 'null' },
+            {
+              type: 'object',
+              required: ['reason', 'url'],
+              properties: {
+                reason: {
+                  type: 'string',
+                  enum: ['timeout', 'reload-limit', 'reload-failed'],
+                },
+                url: { type: 'string' },
+              },
+            },
+          ],
+        },
+      },
+    },
+  });
+
 export const PAGE_SNAPSHOT_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
   id: 'page-snapshot-result',
   title: 'PageSnapshotResult',
@@ -2190,5 +2359,6 @@ export const RESULT_SCHEMAS = {
   'pointer-cancellation-check': POINTER_CANCELLATION_CHECK_RESULT_SCHEMA,
   'non-text-contrast-check': NON_TEXT_CONTRAST_CHECK_RESULT_SCHEMA,
   'character-key-shortcut-check': CHARACTER_KEY_SHORTCUT_CHECK_RESULT_SCHEMA,
+  'content-on-hover-check': CONTENT_ON_HOVER_CHECK_RESULT_SCHEMA,
   'page-snapshot': PAGE_SNAPSHOT_RESULT_SCHEMA,
 } as const;

@@ -40,6 +40,7 @@ export type CheckSource =
   | 'pointer-cancellation-check'
   | 'non-text-contrast-check'
   | 'character-key-shortcut-check'
+  | 'content-on-hover-check'
   | 'page-snapshot';
 
 export type NormalizedImpact = 'critical' | 'serious' | 'moderate' | 'minor';
@@ -1705,6 +1706,93 @@ export interface CharacterKeyShortcutCheckDetails {
 
 export type CharacterKeyShortcutCheckResult =
   AuditCheckResult<CharacterKeyShortcutCheckDetails>;
+
+// =============================================================================
+// Content on Hover or Focus Check (WCAG 1.4.13)
+// =============================================================================
+
+export type HoverTriggerSource = 'css' | 'listener';
+
+export interface HoverTrigger {
+  selector: string;
+  sources: HoverTriggerSource[];
+  /** Element focused for the 'focus' method: the trigger itself, its first focusable descendant, or null (focus not tried). */
+  focusTarget: string | null;
+  html: string;
+  htmlTruncated: boolean;
+}
+
+/** Where hover or focus listeners are delegated; the elements they serve are not tried. */
+export interface HoverDelegationRoot {
+  /** 'window', 'document', or the element's selector. */
+  selector: string;
+  /** [] for window / document and elements outside shadow DOM. */
+  shadowHosts: string[];
+  /** Number of distinct event types listened for on this target. */
+  eventTypeCount: number;
+  /** The CONTENT_ON_HOVER_LISTENER_TYPES among them. */
+  types: string[];
+}
+
+export interface HoverContentRoot {
+  selector: string;
+  rect: { x: number; y: number; width: number; height: number };
+  html: string;
+  htmlTruncated: boolean;
+  /** Visible text, trimmed to CONTENT_ON_HOVER_TEXT_MAX characters. */
+  text: string;
+}
+
+export interface HoverContentResult {
+  trigger: string;
+  method: 'hover' | 'focus';
+  content: HoverContentRoot[];
+  /** Still visible after `persistMs` with the pointer or focus kept on the trigger. */
+  persistent: 'stayed' | 'disappeared';
+  /** Escape pressed without moving the pointer or focus. 'not-tested' when it had already disappeared. */
+  dismissible: 'dismissed' | 'stayed' | 'not-tested';
+  /** document.activeElement changed when Escape was pressed; flagged even when the content was dismissed. */
+  escapeMovedFocus: boolean;
+  /** Pointer moved from the trigger onto the content. 'not-applicable' for focus. */
+  hoverable: 'stayed' | 'disappeared' | 'not-tested' | 'not-applicable';
+}
+
+export interface ContentOnHoverCheckDetails {
+  /** 'unsupported' outside Chromium: triggers come from CSS only and delegation is not detected. */
+  listenerInspection: 'cdp' | 'unsupported';
+  delegationRoots: HoverDelegationRoot[];
+  /** Listener nodes dropped by CONTENT_ON_HOVER_MAX_LISTENER_NODES. */
+  listenerNodesTruncated: boolean;
+  triggers: HoverTrigger[];
+  /** Candidates dropped by `maxTriggers`. */
+  triggersTruncated: number;
+  /** Style sheets whose rules could not be read (cross-origin). */
+  cssRulesUnreadable: number;
+  /** Visible elements inside shadow roots with hover or focus listeners; they are not tried. */
+  shadowTriggersSkipped: number;
+  /** Trigger and method pairs that showed content, in the order tried. */
+  results: HoverContentResult[];
+  /** Pairs tried that showed no new content. */
+  noContent: number;
+  untested: {
+    trigger: string;
+    method: 'hover' | 'focus';
+    reason:
+      | 'timeout'
+      | 'reload-limit'
+      | 'reload-failed'
+      | 'trigger-not-found'
+      | 'navigated';
+  }[];
+  reloads: number;
+  aborted: {
+    reason: 'timeout' | 'reload-limit' | 'reload-failed';
+    url: string;
+  } | null;
+}
+
+export type ContentOnHoverCheckResult =
+  AuditCheckResult<ContentOnHoverCheckDetails>;
 
 // =============================================================================
 // page-snapshot (material only, no verdict)
