@@ -21,6 +21,7 @@
 - **Depends on**: none
 - **Category**: perf
 - **Planned at**: commit `8ccf591`, 2026-10-16
+- **Codex plan review**: 通過(2 巡目、2026-10-16、見送った low 0 件)
 
 ## Why this matters
 
