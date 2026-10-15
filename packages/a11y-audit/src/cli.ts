@@ -12,6 +12,7 @@
  */
 
 import * as fs from 'node:fs';
+import * as os from 'node:os';
 import * as path from 'node:path';
 import { parseArgs } from 'node:util';
 import type { Browser, BrowserContext, Page } from '@playwright/test';
@@ -28,6 +29,7 @@ interface RunCheckOptions {
   outputDir: string;
   screenshot: boolean;
   url: string;
+  quiet: boolean;
 }
 
 interface AuditResultEnvelope {
@@ -44,6 +46,8 @@ interface CheckEntry {
   /** When true, the check owns its own navigation (page.goto). The main loop
    *  skips the pre-navigation step and passes a fresh un-navigated page. */
   ownsNavigation?: boolean;
+  /** Known to take several seconds per page; the pool starts these first so they do not become the tail. */
+  slow?: boolean;
   run: (opts: RunCheckOptions) => Promise<AuditResultEnvelope>;
 }
 
@@ -67,15 +71,20 @@ const CHECK_REGISTRY: CheckEntry[] = [
   {
     name: 'axe-audit',
     kind: 'page',
-    async run({ page, outputDir }) {
+    async run({ page, outputDir, quiet }) {
       const { runAxeAudit } = await import('./playwright/runAxeAudit.js');
-      return (await runAxeAudit({ page, outputDir })) as AuditResultEnvelope;
+      return (await runAxeAudit({
+        page,
+        outputDir,
+        quiet,
+      })) as AuditResultEnvelope;
     },
   },
   {
     name: 'focus-indicator-check',
+    slow: true,
     kind: 'browser',
-    async run({ browser, outputDir, screenshot, url }) {
+    async run({ browser, outputDir, screenshot, url, quiet }) {
       const { runFocusIndicatorCheck } =
         await import('./playwright/runFocusIndicatorCheck.js');
       return (await runFocusIndicatorCheck({
@@ -83,60 +92,72 @@ const CHECK_REGISTRY: CheckEntry[] = [
         targetUrl: url,
         outputDir,
         screenshot,
+        quiet,
       })) as AuditResultEnvelope;
     },
   },
   {
     name: 'reflow-check',
     kind: 'page',
-    async run({ page, outputDir }) {
+    async run({ page, outputDir, quiet }) {
       const { runReflowCheck } = await import('./playwright/runReflowCheck.js');
-      return (await runReflowCheck({ page, outputDir })) as AuditResultEnvelope;
+      return (await runReflowCheck({
+        page,
+        outputDir,
+        quiet,
+      })) as AuditResultEnvelope;
     },
   },
   {
     name: 'text-spacing-check',
     kind: 'page',
-    async run({ page, outputDir }) {
+    async run({ page, outputDir, quiet }) {
       const { runTextSpacingCheck } =
         await import('./playwright/runTextSpacingCheck.js');
       return (await runTextSpacingCheck({
         page,
         outputDir,
+        quiet,
       })) as AuditResultEnvelope;
     },
   },
   {
     name: 'zoom-200-check',
     kind: 'page',
-    async run({ page, outputDir }) {
+    async run({ page, outputDir, quiet }) {
       const { runZoomCheck } = await import('./playwright/runZoomCheck.js');
-      return (await runZoomCheck({ page, outputDir })) as AuditResultEnvelope;
+      return (await runZoomCheck({
+        page,
+        outputDir,
+        quiet,
+      })) as AuditResultEnvelope;
     },
   },
   {
     name: 'orientation-check',
     kind: 'page',
     ownsNavigation: true,
-    async run({ page, outputDir, url }) {
+    async run({ page, outputDir, url, quiet }) {
       const { runOrientationCheck } =
         await import('./playwright/runOrientationCheck.js');
       return (await runOrientationCheck({
         page,
         targetUrl: url,
         outputDir,
+        quiet,
       })) as AuditResultEnvelope;
     },
   },
   {
     name: 'autocomplete-audit',
     kind: 'page',
-    async run({ page, outputDir }) {
+    async run({ page, outputDir, quiet }) {
       const { runAutocompleteAudit } =
         await import('./playwright/runAutocompleteAudit.js');
       return (await runAutocompleteAudit({
         page,
         outputDir,
+        quiet,
       })) as AuditResultEnvelope;
     },
   },
@@ -144,44 +165,49 @@ const CHECK_REGISTRY: CheckEntry[] = [
     name: 'time-limit-detector',
     kind: 'page',
     ownsNavigation: true,
-    async run({ page, outputDir, url }) {
+    async run({ page, outputDir, url, quiet }) {
       const { runTimeLimitDetector } =
         await import('./playwright/runTimeLimitDetector.js');
       return (await runTimeLimitDetector({
         page,
         targetUrl: url,
         outputDir,
+        quiet,
       })) as AuditResultEnvelope;
     },
   },
   {
     name: 'auto-play-detection',
+    slow: true,
     kind: 'page',
-    async run({ page, outputDir }) {
+    async run({ page, outputDir, quiet }) {
       const { runAutoPlayDetection } =
         await import('./playwright/runAutoPlayDetection.js');
       return (await runAutoPlayDetection({
         page,
         outputDir: path.join(outputDir, 'auto-play-screenshots'),
+        quiet,
       })) as AuditResultEnvelope;
     },
   },
   {
     name: 'target-size-check',
     kind: 'page',
-    async run({ page, outputDir }) {
+    async run({ page, outputDir, quiet }) {
       const { runTargetSizeCheck } =
         await import('./playwright/runTargetSizeCheck.js');
       return (await runTargetSizeCheck({
         page,
         outputDir,
+        quiet,
       })) as AuditResultEnvelope;
     },
   },
   {
     name: 'keyboard-trap-check',
+    slow: true,
     kind: 'browser',
-    async run({ browser, outputDir, screenshot, url }) {
+    async run({ browser, outputDir, screenshot, url, quiet }) {
       const { runKeyboardTrapCheck } =
         await import('./playwright/runKeyboardTrapCheck.js');
       return (await runKeyboardTrapCheck({
@@ -189,13 +215,15 @@ const CHECK_REGISTRY: CheckEntry[] = [
         targetUrl: url,
         outputDir,
         screenshot,
+        quiet,
       })) as AuditResultEnvelope;
     },
   },
   {
     name: 'keyboard-reachability-check',
+    slow: true,
     kind: 'browser',
-    async run({ browser, outputDir, screenshot, url }) {
+    async run({ browser, outputDir, screenshot, url, quiet }) {
       const { runKeyboardReachabilityCheck } =
         await import('./playwright/runKeyboardReachabilityCheck.js');
       return (await runKeyboardReachabilityCheck({
@@ -203,131 +231,146 @@ const CHECK_REGISTRY: CheckEntry[] = [
         targetUrl: url,
         outputDir,
         screenshot,
+        quiet,
       })) as AuditResultEnvelope;
     },
   },
   {
     name: 'redundant-entry-check',
     kind: 'page',
-    async run({ page, outputDir }) {
+    async run({ page, outputDir, quiet }) {
       const { runRedundantEntryCheck } =
         await import('./playwright/runRedundantEntryCheck.js');
       return (await runRedundantEntryCheck({
         page,
         outputDir,
+        quiet,
       })) as AuditResultEnvelope;
     },
   },
   {
     name: 'motion-actuation-check',
     kind: 'page',
-    async run({ page, outputDir }) {
+    async run({ page, outputDir, quiet }) {
       const { runMotionActuationCheck } =
         await import('./playwright/runMotionActuationCheck.js');
       return (await runMotionActuationCheck({
         page,
         outputDir,
+        quiet,
       })) as AuditResultEnvelope;
     },
   },
   {
     name: 'change-on-input-check',
+    slow: true,
     kind: 'browser',
-    async run({ browser, outputDir, url }) {
+    async run({ browser, outputDir, url, quiet }) {
       const { runChangeOnInputCheck } =
         await import('./playwright/runChangeOnInputCheck.js');
       return (await runChangeOnInputCheck({
         browser,
         targetUrl: url,
         outputDir,
+        quiet,
       })) as AuditResultEnvelope;
     },
   },
   {
     name: 'accessible-authentication-check',
     kind: 'page',
-    async run({ page, outputDir }) {
+    async run({ page, outputDir, quiet }) {
       const { runAccessibleAuthenticationCheck } =
         await import('./playwright/runAccessibleAuthenticationCheck.js');
       return (await runAccessibleAuthenticationCheck({
         page,
         outputDir,
+        quiet,
       })) as AuditResultEnvelope;
     },
   },
   {
     name: 'pointer-gesture-check',
     kind: 'page',
-    async run({ page, outputDir }) {
+    async run({ page, outputDir, quiet }) {
       const { runPointerGestureCheck } =
         await import('./playwright/runPointerGestureCheck.js');
       return (await runPointerGestureCheck({
         page,
         outputDir,
+        quiet,
       })) as AuditResultEnvelope;
     },
   },
   {
     name: 'focus-order-check',
+    slow: true,
     kind: 'browser',
-    async run({ browser, outputDir, url }) {
+    async run({ browser, outputDir, url, quiet }) {
       const { runFocusOrderCheck } =
         await import('./playwright/runFocusOrderCheck.js');
       return (await runFocusOrderCheck({
         browser,
         targetUrl: url,
         outputDir,
+        quiet,
       })) as AuditResultEnvelope;
     },
   },
   {
     name: 'pointer-cancellation-check',
+    slow: true,
     kind: 'browser',
-    async run({ browser, outputDir, url }) {
+    async run({ browser, outputDir, url, quiet }) {
       const { runPointerCancellationCheck } =
         await import('./playwright/runPointerCancellationCheck.js');
       return (await runPointerCancellationCheck({
         browser,
         targetUrl: url,
         outputDir,
+        quiet,
       })) as AuditResultEnvelope;
     },
   },
   {
     name: 'non-text-contrast-check',
     kind: 'page',
-    async run({ page, outputDir }) {
+    async run({ page, outputDir, quiet }) {
       const { runNonTextContrastCheck } =
         await import('./playwright/runNonTextContrastCheck.js');
       return (await runNonTextContrastCheck({
         page,
         outputDir,
+        quiet,
       })) as AuditResultEnvelope;
     },
   },
   {
     name: 'character-key-shortcut-check',
     kind: 'browser',
-    async run({ browser, outputDir, url }) {
+    async run({ browser, outputDir, url, quiet }) {
       const { runCharacterKeyShortcutCheck } =
         await import('./playwright/runCharacterKeyShortcutCheck.js');
       return (await runCharacterKeyShortcutCheck({
         browser,
         targetUrl: url,
         outputDir,
+        quiet,
       })) as AuditResultEnvelope;
     },
   },
   {
     name: 'content-on-hover-check',
+    slow: true,
     kind: 'browser',
-    async run({ browser, outputDir, url }) {
+    async run({ browser, outputDir, url, quiet }) {
       const { runContentOnHoverCheck } =
         await import('./playwright/runContentOnHoverCheck.js');
       return (await runContentOnHoverCheck({
         browser,
         targetUrl: url,
         outputDir,
+        quiet,
       })) as AuditResultEnvelope;
     },
   },
@@ -337,13 +380,14 @@ const CHECK_REGISTRY: CheckEntry[] = [
     name: 'page-snapshot',
     kind: 'page',
     ownsNavigation: true,
-    async run({ page, outputDir, url }) {
+    async run({ page, outputDir, url, quiet }) {
       const { runPageSnapshot } =
         await import('./playwright/runPageSnapshot.js');
       return (await runPageSnapshot({
         page,
         targetUrl: url,
         outputDir,
+        quiet,
       })) as AuditResultEnvelope;
     },
   },
@@ -363,6 +407,9 @@ Options:
                          Use --list-checks to see available names.
   --output-dir <dir>     Directory for result JSON files (default: ./a11y-audit-results).
   --screenshot           Enable focus-indicator screenshot (default: off).
+  --concurrency <n>      How many checks run at once in the same browser
+                         (default: 4, capped at the CPU count). 1 runs them
+                         one after another, as before.
   --list-checks          Print available check names and exit.
   --version              Print version and exit.
   --help                 Print this message and exit.
@@ -430,6 +477,7 @@ async function main(): Promise<void> {
     checks?: string;
     'output-dir'?: string;
     screenshot?: boolean;
+    concurrency?: string;
     'list-checks'?: boolean;
     version?: boolean;
     help?: boolean;
@@ -444,6 +492,7 @@ async function main(): Promise<void> {
         checks: { type: 'string' as const },
         'output-dir': { type: 'string' as const },
         screenshot: { type: 'boolean' as const, default: false },
+        concurrency: { type: 'string' as const },
         'list-checks': { type: 'boolean' as const, default: false },
         version: { type: 'boolean' as const, default: false },
         help: { type: 'boolean' as const, default: false },
@@ -511,6 +560,21 @@ async function main(): Promise<void> {
   );
   const screenshot = values.screenshot === true;
 
+  // --- Resolve concurrency ---
+  // Checks mostly wait (settle/persist periods), so several can share one
+  // Chromium. Default: 4, but never more than the machine has cores.
+  const defaultConcurrency = Math.max(1, Math.min(4, os.cpus().length));
+  let concurrency = defaultConcurrency;
+  if (values.concurrency !== undefined) {
+    concurrency = Number(values.concurrency);
+    if (!Number.isInteger(concurrency) || concurrency < 1) {
+      process.stderr.write(
+        `Error: --concurrency must be a positive integer (got ${values.concurrency}).\n`,
+      );
+      process.exit(2);
+    }
+  }
+
   // --- Peer check (only before running checks) ---
   const peerError = await checkPeers();
   if (peerError) {
@@ -546,13 +610,14 @@ async function main(): Promise<void> {
     `Checks:     ${selectedChecks.map((c) => c.name).join(', ')}\n`,
   );
   process.stdout.write(`Output dir: ${outputDir}\n`);
+  process.stdout.write(`Concurrency: ${concurrency}\n`);
   process.stdout.write(`\n`);
 
   const summaries: CheckSummary[] = [];
   let hasViolations = false;
   let hasErrors = false;
 
-  for (const check of selectedChecks) {
+  const runOne = async (check: CheckEntry): Promise<void> => {
     const start = Date.now();
 
     // page-based checks get a fresh context + navigated page
@@ -578,7 +643,7 @@ async function main(): Promise<void> {
               error: msg,
             });
             hasErrors = true;
-            continue;
+            return;
           }
         }
       }
@@ -590,6 +655,7 @@ async function main(): Promise<void> {
         outputDir,
         screenshot,
         url,
+        quiet: concurrency > 1,
       });
 
       const durationMs = Date.now() - start;
@@ -658,7 +724,21 @@ async function main(): Promise<void> {
         }
       }
     }
-  }
+  };
+
+  // Stable partition: slow checks first, otherwise the --checks order.
+  const queue = [
+    ...selectedChecks.filter((c) => c.slow),
+    ...selectedChecks.filter((c) => !c.slow),
+  ];
+  const startedAt = Date.now();
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, queue.length) }, async () => {
+      for (let next = queue.shift(); next; next = queue.shift()) {
+        await runOne(next);
+      }
+    }),
+  );
 
   // --- Close browser ---
   try {
@@ -668,7 +748,7 @@ async function main(): Promise<void> {
   }
 
   // --- Summary ---
-  const totalMs = summaries.reduce((acc, s) => acc + s.durationMs, 0);
+  const totalMs = Date.now() - startedAt;
   const doneCount = summaries.filter((s) => s.status === 'DONE').length;
   const skippedCount = summaries.filter((s) => s.status === 'SKIPPED').length;
   const errorCount = summaries.filter((s) => s.status === 'ERROR').length;

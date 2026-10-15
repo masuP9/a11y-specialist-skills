@@ -27,6 +27,10 @@ adheres to [Semantic Versioning](https://semver.org/).
   found; only Escape is tried; exceptions need a human. It really focuses
   elements and runs with `--checks all`.
 
+### Changed
+
+- CLI: checks now run concurrently in the same browser (`--concurrency <n>`, default 4 capped at the CPU count; slow checks are started first). `--concurrency 1` restores the sequential behaviour. With concurrency above 1 the checks' own console summaries are suppressed (`quiet`); the CLI's `[name] DONE …` lines and the result JSON files are unchanged. The summary line now reports wall-clock time.
+
 ## 0.14.0 — 2026-10-14
 
 **Heads-up** — `pointer-cancellation-check` dispatches press events (without
