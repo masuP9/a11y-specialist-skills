@@ -403,8 +403,8 @@ Write `packages/a11y-audit/test/cli-concurrency.spec.ts`, then run:
 
 `npm test --workspace @a11y-skills/audit`
 
-**Verify**: all tests pass, including the 4 new ones; total runtime grows by
-well under 2 minutes.
+**Verify**: all tests pass, including the 6 new ones; total runtime grows by
+roughly 2–3 minutes (three fixtures × two full CLI runs).
 
 Then the full gate:
 `npm run lint && npm run format:check && npm run typecheck && npm test && npm run validate:skills` → exit 0.
@@ -425,50 +425,65 @@ and `:161-169` check.
 
 ## Test plan
 
-New file `packages/a11y-audit/test/cli-concurrency.spec.ts`, modelled on the
-`execFile` block in `test/network-busy.spec.ts:114-144`. Spawn
-`new URL('../dist/cli.js', import.meta.url).pathname` with `process.execPath`,
-capture `stdout`, `stderr`, exit code. Target URL:
-`new URL('./fixtures/index.html', import.meta.url).href` (a `file://` URL — no
-server needed; the 23-check run on it was verified during planning).
+New file `packages/a11y-audit/test/cli-concurrency.spec.ts`. Import
+`{ test, expect } from './helpers/fixtures.js'` — this `test` provides the
+worker-scoped `baseUrl` fixture, an HTTP server for `test/fixtures/pages/`
+(`test/helpers/fixtures.ts:167-185`). Spawn
+`new URL('../dist/cli.js', import.meta.url).pathname` with `process.execPath`
+asynchronously, modelled on `test/network-busy.spec.ts:114-144`; capture
+`stdout`, `stderr`, exit code. Write a small local helper
+`runCli(args, timeoutMs)` returning `{ code, stdout, stderr }`; keep inputs
+and expectations inline in each test.
 
-Write a small local helper `runCli(args, timeoutMs)` returning
-`{ code, stdout, stderr }`; keep inputs and expectations inline in each test.
+**Why these fixtures**: the parity test must actually exercise the paths that
+concurrency could disturb — `bringToFront` + clipboard in the auth check
+(only runs when the page has a paste-able password field), the 6-second
+screenshot series of auto-play, and the timer/countdown detection. The
+link-list page `test/fixtures/index.html` has none of these, so it is used
+only for timing, not for parity. The three fixtures below are served from
+`baseUrl` (relative to `test/fixtures/pages/`):
+
+| Fixture | Risky path it exercises | Precondition asserted on the **sequential** run (proves the path ran) |
+|---|---|---|
+| `accessible-authentication/paste-ok.html` | `runPasteTest` → `grantPermissions(clipboard)`, helper page, `bringToFront` (`runAccessibleAuthenticationCheck.ts:567-665`) | `accessible-authentication-result.json`: `details.pasteTest.status === 'ran'` (type at `src/types.ts:835`: `'ran' \| 'disabled' \| 'unavailable' \| 'skipped-no-targets'`) |
+| `auto-play/finding.html` | infinite CSS animation measured over `SCREENSHOT_INTERVALS` (0/2/4/6 s) | `auto-play-screenshots/detection-result.json`: `details.hasAutoPlayContent === true`, `summary.incompleteCount >= 1` (see `test/auto-play.spec.ts:29-58`) |
+| `time-limit/finding-countdown.html` | countdown wording / timers observed over `settleMs` | `time-limit-result.json`: `summary.incompleteCount >= 1` (gallery expectation `a11y-skills/time-limit-countdown: incomplete`, `test/fixture-gallery.spec.ts:647-654`) |
 
 1. `--concurrency 0 で usage エラーになり終了コード 2 で終わる`
    args: `['--url', 'file:///dev/null', '--concurrency', '0']` →
    `code === 2`, `stderr` contains `--concurrency must be a positive integer`.
 2. `--concurrency abc で usage エラーになり終了コード 2 で終わる` → same
    expectations as 1 (`'abc'`).
-3. `同じ検査群を --concurrency 1 と 4 で走らせると検査ごとの violation / incomplete / pass の数と終了コードが一致する`
-   - `test.setTimeout(180_000)`.
-   - checks: `axe-audit,focus-indicator-check,time-limit-detector,auto-play-detection,keyboard-trap-check,accessible-authentication-check,orientation-check,page-snapshot`
-     (mixes `page` / `browser` / `ownsNavigation` kinds and the two
-     timing-sensitive ones that fit in a short run).
-   - Run once with `--concurrency 1 --output-dir <testInfo.outputDir>/seq`
-     and once with `--concurrency 4 --output-dir <testInfo.outputDir>/par`.
-   - For each of the 8 result files (`axe-result.json`,
-     `focus-indicator-result.json`, `time-limit-result.json`,
-     `auto-play-screenshots/detection-result.json`, `keyboard-trap-result.json`,
-     `accessible-authentication-result.json`, `orientation-result.json`,
-     `page-snapshot-result.json`) read JSON from both dirs and
-     `expect(par.summary).toEqual(seq.summary)` (summary has
-     `violationCount` / `incompleteCount` / `passCount` and may have extra
-     per-check counters — compare the whole object).
-   - `expect(parCode).toBe(seqCode)`.
-   - If `auto-play-detection` was SKIPPED (optional deps missing — stdout
-     contains `[auto-play-detection] SKIPPED`), skip its file comparison but
-     still compare the others.
+3. One test per fixture row above (3 tests), titled
+   `<fixture> を --checks all で --concurrency 1 と 4 で走らせると検査ごとの summary と終了コードが一致する`:
+   - `test.setTimeout(300_000)` (two full 23-check runs on a small page;
+     ~25 s + ~12 s measured on the planning machine).
+   - Run `--url ${baseUrl}/<fixture> --checks all` once with
+     `--concurrency 1 --output-dir <testInfo.outputDir>/seq` and once with
+     `--concurrency 4 --output-dir <testInfo.outputDir>/par`.
+   - Assert the row's **precondition** on the `seq` result file first; if it
+     fails, the fixture no longer exercises the path — that is a STOP
+     condition, not something to patch in the test.
+   - List `seq/*.json` (plus `seq/auto-play-screenshots/detection-result.json`);
+     expect 23 result files (22 if stdout contains
+     `[auto-play-detection] SKIPPED`, optional deps missing). For every file,
+     read the JSON from both dirs and `expect(par.summary).toEqual(seq.summary)`
+     (`summary` holds `violationCount` / `incompleteCount` / `passCount` and may
+     hold extra per-check counters — compare the whole object).
+   - Additionally for `paste-ok.html`: `expect(par.details.pasteTest.status).toBe('ran')`
+     — the concurrent run must also have measured the paste, not fallen back
+     to `unavailable`.
+   - `expect(parCode).toBe(seqCode)`; both stdouts contain `Errors:       0`.
 4. `--concurrency 4 でも CLI の DONE 行と Errors 行が標準出力に出る`
-   args: `--checks axe-audit,orientation-check --concurrency 4` on the same
-   fixture → `code === 0`, stdout matches `/^\[axe-audit\] DONE in /m`,
+   args: `--url ${baseUrl}/time-limit/clear.html --checks axe-audit,orientation-check --concurrency 4`
+   → `code === 0`, stdout matches `/^\[axe-audit\] DONE in /m`,
    `/^\[orientation-check\] DONE in /m`, `/Errors: +0/`, and does **not**
-   contain the check's own summary header (`grep` the sequential run first to
-   learn the exact text the check prints, e.g. the line produced by
-   `printSummary` for axe; assert that text is absent with concurrency 4 and
-   present with concurrency 1).
+   contain the check's own summary text (run the same command with
+   `--concurrency 1` first and pick one line that only the check itself prints,
+   e.g. the header produced by `printSummary` for axe; assert it is present
+   with concurrency 1 and absent with concurrency 4).
 
-Verification: `npx playwright test -c packages/a11y-audit/playwright.config.ts packages/a11y-audit/test/cli-concurrency.spec.ts` → 4 passed.
+Verification: `npx playwright test -c packages/a11y-audit/playwright.config.ts packages/a11y-audit/test/cli-concurrency.spec.ts` → 6 passed.
 
 ## Done criteria
 
@@ -476,7 +491,7 @@ Machine-checkable. ALL must hold:
 
 - [ ] `npm run typecheck` exits 0
 - [ ] `npm run lint && npm run format:check` exits 0
-- [ ] `npm test --workspace @a11y-skills/audit` exits 0 and includes 4 tests from `test/cli-concurrency.spec.ts`
+- [ ] `npm test --workspace @a11y-skills/audit` exits 0 and includes 6 tests from `test/cli-concurrency.spec.ts` (3 of them the seq-vs-par parity runs on `paste-ok.html`, `auto-play/finding.html`, `time-limit/finding-countdown.html`)
 - [ ] `node packages/a11y-audit/dist/cli.js --help | grep -c -- '--concurrency'` ≥ 1
 - [ ] `node packages/a11y-audit/dist/cli.js --url "file://$PWD/packages/a11y-audit/test/fixtures/index.html" --checks all --output-dir /tmp/a11y-c4` exits 0 with `Checks run:   23`, `Errors:       0`, and the `--- Summary (…)` number is ≤ 30 s (sequential baseline 50.5 s on the planning machine; on a slower CI runner the relative drop is what matters: concurrent must be < 60 % of `--concurrency 1`)
 - [ ] The Step 7 CI-smoke reproduction prints `OK` and `exit 1`
@@ -490,10 +505,17 @@ Stop and report back (do not improvise) if:
 
 - The code at `src/cli.ts:555-661` does not match the "Current state" excerpt
   (drift).
-- Parity test 3 fails for any check **twice in a row** — i.e. a check's
-  verdict counts differ between `--concurrency 1` and `4`. Report which check
-  and the two summaries; do not "fix" it by excluding the check or widening a
-  wait inside `src/playwright/*`.
+- A parity test (Test plan item 3) fails **twice in a row** — i.e. a check's
+  `summary` differs between `--concurrency 1` and `4`, or the concurrent auth
+  run reports `pasteTest.status !== 'ran'`. Report which fixture, which check
+  and the two summaries; do not "fix" it by excluding the check, dropping the
+  fixture, lowering the default below 2 silently, or widening a wait inside
+  `src/playwright/*`.
+- A parity precondition fails on the **sequential** run (e.g.
+  `pasteTest.status !== 'ran'` on `paste-ok.html`, `hasAutoPlayContent !== true`
+  on `auto-play/finding.html`, `incompleteCount < 1` on
+  `finding-countdown.html`): the fixture no longer exercises the risky path and
+  the test design must be revisited by a human.
 - A concurrent run (`--checks all`) reports any `ERROR` status that the
   `--concurrency 1` run does not.
 - The concurrent `--checks all` run on `test/fixtures/index.html` is **not**
@@ -508,8 +530,9 @@ Stop and report back (do not improvise) if:
 
 - **Adding a check**: a new registry entry must forward `quiet` like the
   others, and should carry `slow: true` if it typically takes more than ~3 s
-  per page, so the pool starts it early. The parity test's check list is a
-  sample; extend it only if a new check has a reason to be timing-sensitive.
+  per page, so the pool starts it early. The parity tests run `--checks all`,
+  so a new check is covered automatically; add a fixture row only if the new
+  check has its own page-state or focus dependency (like the auth paste test).
 - **Timing-sensitive checks** (`time-limit-detector`, `auto-play-detection`,
   `motion-actuation-check`, anything with `settleMs`): under heavy host load
   the concurrent run may differ from the sequential one. The README row tells
