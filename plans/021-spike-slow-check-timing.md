@@ -150,6 +150,7 @@ content-on-hover のトリガー 1 つあたりの流れ（`runContentOnHoverChe
 | インストール | `npm ci` | exit 0 |
 | ビルド | `npm run build --workspace @a11y-skills/audit` | exit 0、`packages/a11y-audit/dist/` 更新 |
 | 計測スクリプト実行 | `node packages/a11y-audit/test-results/spike-021/measure.mjs <url> [--settle-scale 0.5]` | 標準出力に JSON 行（下記） |
+| 計測結果の比較 | `node packages/a11y-audit/test-results/spike-021/compare.mjs <基準.jsonl> <比較.jsonl>` | 検査ごとに集合差分の JSON 行 |
 | 比較用の CLI | `node packages/a11y-audit/dist/cli.js --url <url> --checks all --concurrency 1 --output-dir packages/a11y-audit/test-results/spike-021/cli-<name>` | `[name] DONE in …` 行 |
 | 整形（結果文書） | `npx prettier --write plans/021-result-slow-check-timing.md` | exit 0 |
 | 検証ゲート（src を変えていない確認） | `npm run lint && npm run format:check && npm run typecheck && npm run validate:skills` | exit 0 |
@@ -248,10 +249,36 @@ ESM。`packages/a11y-audit/dist/playwright/index.js` から各 `run*` 関数を�
    auto-play は引数で変えられないので対象外）。`k` は 0.5 と 0.25 を使う。
 6. 検査 1 つにつき JSON を 1 行出力:
    ```json
-   {"page":"w3c-bad","check":"content-on-hover-check","scale":1,"durationMs":34012,"waits":41,"waitMs":27600,"byMs":{"400":34,"3000":7},"elements":12,"aborted":null,"summary":{"violationCount":0,"incompleteCount":0,"passCount":0},"rules":{"a11y-skills/content-on-hover-dismissible":"incomplete:3"}}
+   {"page":"w3c-bad","check":"content-on-hover-check","scale":1,"durationMs":34012,"waits":41,"waitMs":27600,"byMs":{"400":34,"3000":7},"elements":12,"aborted":null,"summary":{"violationCount":0,"incompleteCount":0,"passCount":0},"rules":{"a11y-skills/content-on-hover-dismissible":"incomplete:3"},"nodes":["incomplete|a11y-skills/content-on-hover-dismissible|nav > li:nth-child(2) > a"],"targets":[{"id":"nav > li:nth-child(2) > a|hover","outcome":"stayed/dismissed/stayed"}],"untested":[{"id":"#menu > a|focus","reason":"timeout"}]}
    ```
-   `rules` は「ルール ID → どのバケットに何件か」。感度比較で使う。
+   `rules` は「ルール ID → どのバケットに何件か」の概観。**感度比較の根拠にするのは `nodes` / `targets` / `untested` の 3 つの集合**で、
+   件数だけの比較はしない（要素 A を見落として要素 B を新たに報告した場合、件数は同じでも検出は変わっている）。
+   - `nodes`: 共通の結果封筒 `violations` / `incomplete` / `passes`（`src/types.ts:91-107` の `AuditCheckResult`、
+     各 `NormalizedRuleResult.nodes[].target` は `string[]`）から、`"<バケット>|<ルール ID>|<target.join(' >> ')>"` を 1 要素とした
+     文字列の配列（重複を除き、ソート）。`target` は iframe / shadow root を含むセレクタ列なので、そのまま識別子にする。
+     8 検査すべてで同じ作り方になる。
+   - `targets`: 検査固有の「試した対象 → 判定」。`id` はセレクタ（shadow root 内なら `shadowHosts.join(' >> ') + ' >> ' + selector`）、
+     `outcome` は判定を `/` で連結した文字列。対応する項目（`src/types.ts`、行番号は commit `4358e7f`）:
+     | 検査 | `targets` の元 | `id` | `outcome` |
+     |---|---|---|---|
+     | content-on-hover | `details.results[]`（`:1746-1758`） | `trigger` + `\|` + `method` | `persistent/dismissible/hoverable`（`escapeMovedFocus` も付ける） |
+     | pointer-cancellation | `details.findings[]`（`:1512-1519`） | `target.selector`（`target.shadowHosts` 付き） | `kind` + 変化の `kind` 一覧 |
+     | change-on-input | `details.findings[]`（`:1320-1325`） | `control.selector` | `changes[].kind` 一覧（無ければ `none`） |
+     | keyboard-trap | `details.confirmedTraps[]` と `needsReview[]`（`:1151-1174`） | `selector` | `confirmed` / `needs-review` |
+     | keyboard-reachability | `details.elements[]`（`:1208-1228`） | `selector` | `reachedBy`（+ `foundIn`） |
+     | focus-order | `details.stops[]` と `dialogs[]`（`:1350-1381`, `:1412-1431`） | stop は `step` + `\|` + `selector`、dialog は `trigger.selector` | stop は `positioning/revisit/afterWrap`、dialog は `status/focusAfterOpen/focusAfterClose` |
+     | focus-indicator | `details` の要素記録（`issues` / `onFocusViolations` / `focusObscuredIssues`。項目名は `FocusIndicatorCheckDetails` を読んで確定） | 要素の `selector`（`frame` / `shadowHosts` 付き） | どの記録に入ったか |
+     | auto-play | `details.mediaElements[]` | セレクタ | 再生状態（基準計測のみ。感度実験の対象外） |
+   - `untested`: 検査が「試せなかった対象」とその理由。content-on-hover `details.untested[]`（`trigger|method`, `reason`）、
+     pointer-cancellation `details.untested[]`（`target.selector`, `reason`）、change-on-input `details.untested[]` と
+     `skipped[]`（`control.selector` / `selector`, `reason`）。Tab 系は `notEvaluatedCount` や `dialogsNotTried` のような数値しか無いので、
+     その数値を `{"id":"<項目名>","reason":"<値>"}` で入れる。
+   - `html` / `text` / `name` / `rect` は保存しない（ページ本文を結果に残さない決まり。セレクタと判定だけで比較できる）。
 7. 1 検査が 180 秒を超えたら打ち切って `"error":"timeout"` を出す。
+8. 比較用に `node packages/a11y-audit/test-results/spike-021/compare.mjs <基準.jsonl> <比較.jsonl>` を用意する
+   （`measure.mjs` と同じ場所、同じく付録に全文を載せる）。検査ごとに `nodes` / `targets` / `untested` を集合として比べ、
+   `{"check":…,"nodes":{"same":true},"targets":{"same":false,"removed":["…"],"added":["…"],"changed":[{"id":"…","from":"…","to":"…"}]},"untested":{…},"durationMs":{"base":…,"other":…}}`
+   を検査ごとに 1 行出す。結果文書の「一致/不一致」はこの出力から書く（手で数えない）。
 
 **確認**: `node packages/a11y-audit/test-results/spike-021/measure.mjs "file://$PWD/packages/a11y-audit/test/fixtures/index.html"`
 → 8 検査分の JSON 行が出て、`durationMs` の合計が Plan 020 時点の逐次実測（各検査 1〜15 秒）と
@@ -267,19 +294,27 @@ ESM。`packages/a11y-audit/dist/playwright/index.js` から各 `run*` 関数を�
 遅くしていないことの確認）。
 
 **確認**: 10 ファイル（5 ページ × 2 回）がそれぞれ 8 行。`error` 行があればページと検査を控える。
+`compare.mjs baseline-<page>-1.jsonl baseline-<page>-2.jsonl` を 5 ページ分走らせ、検査ごとに
+`nodes` / `targets` / `untested` が一致するかを控える（ステップ 4 の「元々揺れる」判定に使う）。
 
 ### ステップ 4: 感度実験（scale 0.5 と 0.25）
 
 5 ページ × 7 検査（auto-play を除く）× 2 スケール。出力 `sensitivity-<page>-<scale>.jsonl`。
 
-比較するもの（基準の 1 回目と）:
-- `rules`（ルール ID ごとのバケットと件数）が同じか
-- `elements`（試した要素数）が同じか
-- `aborted` が変わらないか（待ちを縮めて時間予算内に収まるようになった、は良い変化。逆は STOP ではないが記録）
+比較するもの（基準の 1 回目と。`compare.mjs` の出力で、要素単位に）:
+- `nodes`（バケット・ルール ID・対象セレクタの集合）が同じか。違うなら `removed` / `added` の中身
+- `targets`（試した対象ごとの判定）が同じか。違うなら `removed` / `added` / `changed` の中身
+  （`removed` と `added` が同数でも「一致」とは扱わない）
+- `untested` が同じか（待ちを縮めて時間予算内に収まり `untested` が減った、は良い変化。増えたら検出の後退）
+- `aborted` が変わらないか（同上）
 - `durationMs` がどれだけ縮んだか
 
-ばらつきの基準: 基準 2 回の間で `rules` が違う検査は「元々揺れる」として印を付け、感度の判定から外す
-（揺れの原因は結果文書に書くが、このスパイクでは追わない）。
+一致の条件: 上の 3 集合がすべて同じときだけ「検出は変わらない」と言う。
+1 つでも違えば、その検査・スケールは「検出が変わった」として扱い、何が入れ替わったかを結果文書に書く。
+
+ばらつきの基準: 基準 2 回の間で 3 集合のどれかが違う検査は「元々揺れる」として印を付ける。
+揺れが**どの対象で**起きたかを控え、感度実験でその同じ対象だけが違うなら揺れとして無視、
+それ以外の対象が違えば「縮めたせい」と判定する（揺れの原因そのものはこのスパイクでは追わない）。
 
 **確認**: 10 ファイルがそれぞれ 7 行。
 
@@ -292,18 +327,19 @@ ESM。`packages/a11y-audit/dist/playwright/index.js` から各 `run*` 関数を�
    `waits`、`elements`、要素 1 つあたりの秒数（`durationMs / elements`）、`aborted`。2 回の差も書く。
 3. **どの待ちが支配的か**: `byMs` から、検査ごとに「どの定数が合計の何 % か」。
    例: content-on-hover の `persistMs` が合計の 70% など。
-4. **感度実験の表**（検査 × スケール）: 縮んだ秒数、`rules` の一致/不一致、`elements` の一致、`aborted` の変化。
+4. **感度実験の表**（検査 × スケール）: 縮んだ秒数、`nodes` / `targets` / `untested` それぞれの一致/不一致
+   （不一致なら入れ替わった対象のセレクタと判定）、`aborted` の変化、「元々揺れる」印。
 5. **検査ごとの判断**。各検査について次の 4 つの選択肢のどれを勧めるかと根拠:
    - **早く打ち切る**（例: content-on-hover は内容が消えた時点で `persistMs` の残りを待たない。
      「残る」場合だけ全部待つ。見落としは増えない）
-   - **待ちを短くする**（感度実験で `rules` が変わらなかった範囲まで。変わったものは不可）
+   - **待ちを短くする**（感度実験で `nodes` / `targets` / `untested` がどれも変わらなかった範囲まで。1 つでも変わったものは不可）
    - **対象を絞る**（同じセレクタ・同じ listener の要素を 1 つに代表させる、上限件数。
      見落としの可能性と引き換えなので、どの条件なら代表させてよいかを書く）
    - **変えない**（auto-play の 6 秒のように待ちが検出の定義そのもの、または感度実験で検出が変わった）
    判断ごとに「縮む見込み秒数（基準ページでの実測から）」と「検出への影響（実験で確かめた範囲）」を書く。
 6. **次に書くプラン**: 価値があると判断した変更だけを、1 プラン 1 検査で列挙（優先順位つき）。
    「やらない」と判断したものも理由つきで列挙する。
-7. **付録**: `measure.mjs` の全文、生データのファイル名一覧。
+7. **付録**: `measure.mjs` と `compare.mjs` の全文、生データのファイル名一覧。
 
 **確認**: `npx prettier --check plans/021-result-slow-check-timing.md` → exit 0。
 文書中にページ本文・入力値・スクリーンショットの貼り付けが無い（`git grep -n -E '<img|data:image' -- plans/021-result-slow-check-timing.md` → 0 件）。
@@ -320,8 +356,9 @@ ESM。`packages/a11y-audit/dist/playwright/index.js` から各 `run*` 関数を�
 
 - ステップ 2 の確認: 包みを入れたスクリプトの `durationMs` が CLI の `[name] DONE in …` と ±20% で一致する
   （包みが検査を歪めていない）。
-- ステップ 3 の 2 回計測: 同じ条件で `rules` と `elements` が一致する検査だけを感度判定に使う
-  （元々揺れる検査を「待ちを縮めたせい」と誤判定しない）。
+- ステップ 3 の 2 回計測: 同じ条件で `nodes` / `targets` / `untested` が要素単位で一致する検査だけを感度判定に使う
+  （元々揺れる検査を「待ちを縮めたせい」と誤判定しない。揺れた対象が分かるので、感度実験で別の対象が変われば区別できる）。
+- 比較は `compare.mjs` の集合差分で行い、件数の一致を「検出が同じ」とは見なさない。
 
 ## 完了条件
 
@@ -329,7 +366,8 @@ ESM。`packages/a11y-audit/dist/playwright/index.js` から各 `run*` 関数を�
 
 - [ ] `plans/021-result-slow-check-timing.md` が存在し、上の 7 節を持つ
 - [ ] 結果文書の内訳表に 3 ページ以上 × 8 検査の `durationMs` / `waitMs` / `elements` がある
-- [ ] 感度表に 7 検査 × 2 スケールの `rules` 一致/不一致がある
+- [ ] 感度表に 7 検査 × 2 スケールの `nodes` / `targets` / `untested` の一致/不一致（不一致なら入れ替わった対象）がある
+- [ ] 基準 2 回の比較（`compare.mjs`）の結果が結果文書にあり、「元々揺れる」検査と揺れた対象が明記されている
 - [ ] 8 検査それぞれに「早く打ち切る / 待ちを短くする / 対象を絞る / 変えない」のいずれかの判断と根拠がある
 - [ ] `git diff --stat 4358e7f..HEAD -- packages/a11y-audit/src packages/a11y-audit/test` が空
 - [ ] `npm run lint && npm run format:check && npm run typecheck && npm run validate:skills` が exit 0
@@ -345,7 +383,9 @@ ESM。`packages/a11y-audit/dist/playwright/index.js` から各 `run*` 関数を�
 - 対象ページが 3 ページ未満しか到達できない（ネットワーク制限など）。
 - `waitForTimeout` の差し替えが効かない（`waits` が常に 0）— Playwright の実装が変わった可能性。
   別の差し替え方法を探さず報告する。
-- 基準 2 回の計測で 8 検査中 4 つ以上の `rules` が一致しない（環境が不安定で判断材料にならない）。
+- 基準 2 回の計測で 8 検査中 4 つ以上が `nodes` / `targets` / `untested` のどれかで一致しない（環境が不安定で判断材料にならない）。
+- 結果の `details` に、上の表で挙げた対象単位の項目が無い検査がある（`targets` が作れない）。その検査は `nodes` だけで比べて
+  「対象単位の比較ができなかった」と結果文書に書いて続行してよいが、報告には明記する。
 - 計測中に実ページでフォーム送信・購入などの副作用が疑われる挙動（送信後の URL への遷移など）を見た
   — そのページを候補から外し、何が起きたかを報告する。
 - スパイクの範囲を超える発見（検査のバグなど）: 結果文書の「気づき」節に書くに留め、直さない。
