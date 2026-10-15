@@ -566,14 +566,16 @@ async function main(): Promise<void> {
   const defaultConcurrency = Math.max(1, Math.min(4, os.cpus().length));
   let concurrency = defaultConcurrency;
   if (values.concurrency !== undefined) {
-    concurrency = Number(values.concurrency);
-    if (!Number.isInteger(concurrency) || concurrency < 1) {
+    if (!/^[1-9]\d*$/.test(values.concurrency)) {
       process.stderr.write(
         `Error: --concurrency must be a positive integer (got ${values.concurrency}).\n`,
       );
       process.exit(2);
     }
+    concurrency = Number(values.concurrency);
   }
+  // Nothing runs concurrently when fewer checks than workers are selected.
+  const effectiveConcurrency = Math.min(concurrency, selectedChecks.length);
 
   // --- Peer check (only before running checks) ---
   const peerError = await checkPeers();
@@ -610,7 +612,7 @@ async function main(): Promise<void> {
     `Checks:     ${selectedChecks.map((c) => c.name).join(', ')}\n`,
   );
   process.stdout.write(`Output dir: ${outputDir}\n`);
-  process.stdout.write(`Concurrency: ${concurrency}\n`);
+  process.stdout.write(`Concurrency: ${effectiveConcurrency}\n`);
   process.stdout.write(`\n`);
 
   const summaries: CheckSummary[] = [];
@@ -655,7 +657,7 @@ async function main(): Promise<void> {
         outputDir,
         screenshot,
         url,
-        quiet: concurrency > 1,
+        quiet: effectiveConcurrency > 1,
       });
 
       const durationMs = Date.now() - start;
@@ -726,14 +728,18 @@ async function main(): Promise<void> {
     }
   };
 
-  // Stable partition: slow checks first, otherwise the --checks order.
-  const queue = [
-    ...selectedChecks.filter((c) => c.slow),
-    ...selectedChecks.filter((c) => !c.slow),
-  ];
+  // Slow checks first so they do not become the tail; sequential runs keep
+  // the --checks order, as before.
+  const queue =
+    effectiveConcurrency > 1
+      ? [
+          ...selectedChecks.filter((c) => c.slow),
+          ...selectedChecks.filter((c) => !c.slow),
+        ]
+      : [...selectedChecks];
   const startedAt = Date.now();
   await Promise.all(
-    Array.from({ length: Math.min(concurrency, queue.length) }, async () => {
+    Array.from({ length: effectiveConcurrency }, async () => {
       for (let next = queue.shift(); next; next = queue.shift()) {
         await runOne(next);
       }

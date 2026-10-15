@@ -21,13 +21,22 @@ interface CliRun {
 // the fixture pages.
 function runCli(args: string[], timeoutMs: number): Promise<CliRun> {
   const cliPath = new URL('../dist/cli.js', import.meta.url).pathname;
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const child = execFile(
       process.execPath,
       [cliPath, ...args],
       { timeout: timeoutMs, maxBuffer: 64 * 1024 * 1024 },
-      (_error, stdout, stderr) =>
-        resolve({ code: child.exitCode, stdout, stderr }),
+      (error, stdout, stderr) => {
+        if (error && child.exitCode === null) {
+          reject(
+            new Error(
+              `a11y-audit CLI did not exit normally (${error.message}); stderr: ${stderr}`,
+            ),
+          );
+          return;
+        }
+        resolve({ code: child.exitCode, stdout, stderr });
+      },
     );
   });
 }
@@ -46,9 +55,33 @@ function resultFiles(dir: string): string[] {
   return fs.existsSync(path.join(dir, autoPlay)) ? [...top, autoPlay] : top;
 }
 
+/** `{ file: summary }` for every result file of a CLI run. */
+function summariesOf(dir: string): Record<string, unknown> {
+  return Object.fromEntries(
+    resultFiles(dir).map((file) => [
+      file,
+      readJson(path.join(dir, file)).summary,
+    ]),
+  );
+}
+
+/** One line per check the CLI finished or skipped. */
+function finishedCheckCount(stdout: string): number {
+  return (stdout.match(/^\[[a-z0-9-]+\] (DONE|SKIPPED)/gm) ?? []).length;
+}
+
 test('--concurrency 0 で usage エラーになり終了コード 2 で終わる', async () => {
   const { code, stderr } = await runCli(
     ['--url', 'file:///dev/null', '--concurrency', '0'],
+    30_000,
+  );
+  expect(code).toBe(2);
+  expect(stderr).toContain('--concurrency must be a positive integer');
+});
+
+test('--concurrency 1e1 で usage エラーになり終了コード 2 で終わる', async () => {
+  const { code, stderr } = await runCli(
+    ['--url', 'file:///dev/null', '--concurrency', '1e1'],
     30_000,
   );
   expect(code).toBe(2);
@@ -110,15 +143,11 @@ test('accessible-authentication/paste-ok.html を --checks all で --concurrency
   );
   expect(parAuth.details.pasteTest.status).toBe('ran');
 
-  const files = resultFiles(seqDir);
-  expect(files).toHaveLength(
-    seq.stdout.includes('[auto-play-detection] SKIPPED') ? 22 : 23,
+  const seqSummaries = summariesOf(seqDir);
+  expect(Object.keys(seqSummaries)).toHaveLength(
+    finishedCheckCount(seq.stdout),
   );
-  for (const file of files) {
-    expect(readJson(path.join(parDir, file)).summary, file).toEqual(
-      readJson(path.join(seqDir, file)).summary,
-    );
-  }
+  expect(summariesOf(parDir)).toEqual(seqSummaries);
   expect(par.code).toBe(seq.code);
   expect(seq.stdout).toContain('Errors:       0');
   expect(par.stdout).toContain('Errors:       0');
@@ -166,15 +195,11 @@ test('auto-play/finding.html を --checks all で --concurrency 1 と 4 で走�
   expect(seqAutoPlay.details.hasAutoPlayContent).toBe(true);
   expect(seqAutoPlay.summary.incompleteCount).toBeGreaterThanOrEqual(1);
 
-  const files = resultFiles(seqDir);
-  expect(files).toHaveLength(
-    seq.stdout.includes('[auto-play-detection] SKIPPED') ? 22 : 23,
+  const seqSummaries = summariesOf(seqDir);
+  expect(Object.keys(seqSummaries)).toHaveLength(
+    finishedCheckCount(seq.stdout),
   );
-  for (const file of files) {
-    expect(readJson(path.join(parDir, file)).summary, file).toEqual(
-      readJson(path.join(seqDir, file)).summary,
-    );
-  }
+  expect(summariesOf(parDir)).toEqual(seqSummaries);
   expect(par.code).toBe(seq.code);
   expect(seq.stdout).toContain('Errors:       0');
   expect(par.stdout).toContain('Errors:       0');
@@ -219,15 +244,11 @@ test('time-limit/finding-countdown.html を --checks all で --concurrency 1 と
   const seqTimeLimit = readJson(path.join(seqDir, 'time-limit-result.json'));
   expect(seqTimeLimit.summary.incompleteCount).toBeGreaterThanOrEqual(1);
 
-  const files = resultFiles(seqDir);
-  expect(files).toHaveLength(
-    seq.stdout.includes('[auto-play-detection] SKIPPED') ? 22 : 23,
+  const seqSummaries = summariesOf(seqDir);
+  expect(Object.keys(seqSummaries)).toHaveLength(
+    finishedCheckCount(seq.stdout),
   );
-  for (const file of files) {
-    expect(readJson(path.join(parDir, file)).summary, file).toEqual(
-      readJson(path.join(seqDir, file)).summary,
-    );
-  }
+  expect(summariesOf(parDir)).toEqual(seqSummaries);
   expect(par.code).toBe(seq.code);
   expect(seq.stdout).toContain('Errors:       0');
   expect(par.stdout).toContain('Errors:       0');
