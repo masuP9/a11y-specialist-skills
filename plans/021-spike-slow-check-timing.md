@@ -149,7 +149,7 @@ content-on-hover のトリガー 1 つあたりの流れ（`runContentOnHoverChe
 |---|---|---|
 | インストール | `npm ci` | exit 0 |
 | ビルド | `npm run build --workspace @a11y-skills/audit` | exit 0、`packages/a11y-audit/dist/` 更新 |
-| 計測スクリプト実行 | `node packages/a11y-audit/test-results/spike-021/measure.mjs <url> [--settle-scale 0.5]` | 標準出力に JSON 行（下記） |
+| 計測スクリプト実行 | `node packages/a11y-audit/test-results/spike-021/measure.mjs <url> [--settle-scale 0.5] [--no-record]` | 標準出力に JSON 行（下記）。既定は記録あり（`--record`） |
 | 計測結果の比較 | `node packages/a11y-audit/test-results/spike-021/compare.mjs <基準.jsonl> <比較.jsonl>` | 検査ごとに集合差分の JSON 行 |
 | 比較用の CLI | `node packages/a11y-audit/dist/cli.js --url <url> --checks all --concurrency 1 --output-dir packages/a11y-audit/test-results/spike-021/cli-<name>` | `[name] DONE in …` 行 |
 | 整形（結果文書） | `npx prettier --write plans/021-result-slow-check-timing.md` | exit 0 |
@@ -257,18 +257,42 @@ ESM。`packages/a11y-audit/dist/playwright/index.js` から各 `run*` 関数を�
      各 `NormalizedRuleResult.nodes[].target` は `string[]`）から、`"<バケット>|<ルール ID>|<target.join(' >> ')>"` を 1 要素とした
      文字列の配列（重複を除き、ソート）。`target` は iframe / shadow root を含むセレクタ列なので、そのまま識別子にする。
      8 検査すべてで同じ作り方になる。
-   - `targets`: 検査固有の「試した対象 → 判定」。`id` はセレクタ（shadow root 内なら `shadowHosts.join(' >> ') + ' >> ' + selector`）、
-     `outcome` は判定を `/` で連結した文字列。対応する項目（`src/types.ts`、行番号は commit `4358e7f`）:
-     | 検査 | `targets` の元 | `id` | `outcome` |
-     |---|---|---|---|
-     | content-on-hover | `details.results[]`（`:1746-1758`） | `trigger` + `\|` + `method` | `persistent/dismissible/hoverable`（`escapeMovedFocus` も付ける） |
-     | pointer-cancellation | `details.findings[]`（`:1512-1519`） | `target.selector`（`target.shadowHosts` 付き） | `kind` + 変化の `kind` 一覧 |
-     | change-on-input | `details.findings[]`（`:1320-1325`） | `control.selector` | `changes[].kind` 一覧（無ければ `none`） |
-     | keyboard-trap | `details.confirmedTraps[]` と `needsReview[]`（`:1151-1174`） | `selector` | `confirmed` / `needs-review` |
-     | keyboard-reachability | `details.elements[]`（`:1208-1228`） | `selector` | `reachedBy`（+ `foundIn`） |
-     | focus-order | `details.stops[]` と `dialogs[]`（`:1350-1381`, `:1412-1431`） | stop は `step` + `\|` + `selector`、dialog は `trigger.selector` | stop は `positioning/revisit/afterWrap`、dialog は `status/focusAfterOpen/focusAfterClose` |
-     | focus-indicator | `details` の要素記録（`issues` / `onFocusViolations` / `focusObscuredIssues`。項目名は `FocusIndicatorCheckDetails` を読んで確定） | 要素の `selector`（`frame` / `shadowHosts` 付き） | どの記録に入ったか |
-     | auto-play | `details.mediaElements[]` | セレクタ | 再生状態（基準計測のみ。感度実験の対象外） |
+   - `targets`: 検査固有の「試した対象 → 判定」。**問題が見つかった対象だけでなく、試して何も起きなかった正常な対象も全部入れる**
+     （正常な A が試されなくなり正常な B が代わりに試されても、問題のある対象の集合は変わらないので、`nodes` だけでは気づけない）。
+     `id` はセレクタ（shadow root 内なら `shadowHosts.join(' >> ') + ' >> ' + selector`）、`outcome` は判定を `/` で連結した文字列。
+     検査の戻り値に全対象が入っているものはそれを使い、入っていないものは計測側で記録する（下の「記録方法」）。
+     対応する項目（`src/types.ts`、行番号は commit `4358e7f`）:
+     | 検査 | 全対象が戻り値にあるか | `targets` の元 | `id` | `outcome` |
+     |---|---|---|---|---|
+     | content-on-hover | **導出できる**: `details.triggers[]`（`:1716-1723`）が候補の全一覧、`results[]`（`:1746-1758`）が内容の出た対象、`untested[]` が試せなかった対象 | `triggers` × 試す method − `untested`。method の割り当て規則（hover は常に、focus は `focusTarget` があるとき、など）は `runContentOnHoverCheck.ts:1095-1235` を読んで確定し、結果文書に書く | `trigger` + `\|` + `method` | `results` にあれば `persistent/dismissible/hoverable`（`escapeMovedFocus` も付ける）、無ければ `no-content` |
+     | pointer-cancellation | **無い**: `findings[]`（`:1512-1519`）は変化があった対象だけ。正常な対象は `targetsTested` の数にしかならない（`runPointerCancellationCheck.ts:1087-1106`） | 記録方法 B（押下は in-page の `dispatchEvent` で行う。`:387-397`, `:519`） | `target.selector`（`shadowHosts` 付き） | `findings` にあれば `kind` + 変化の `kind` 一覧、無ければ `no-change` |
+     | change-on-input | **無い**: `findings[]`（`:1320-1325`）は文脈が変わった欄だけ。値が変わって何も起きなかった欄は数にしかならない（`runChangeOnInputCheck.ts:790-795`） | 記録方法 A（欄は `locator.focus()` → `selectOption/check/click/fill` で操作する。`:676-705`） | `control.selector` | `findings` にあれば `changes[].kind` 一覧、`skipped` にあれば `skipped:<reason>`、どちらも無ければ `no-change` |
+     | keyboard-trap | **無い**: `confirmedTraps[]` / `needsReview[]`（`:1151-1174`）だけで、素通りした停止先は `totalFocusableElements` の数にしかならない | 記録方法 A | `selector` | `confirmed` / `needs-review` / `passed` |
+     | keyboard-reachability | ある: `details.elements[]`（`:1208-1228`）は操作可能要素の全一覧 | 戻り値 | `selector` | `reachedBy`（+ `foundIn`） |
+     | focus-order | ある: `details.stops[]`（`:1350-1381`）は Tab 停止先の全一覧、`dialogs[]`（`:1412-1431`）は試したトリガー全部 | 戻り値 | stop は `step` + `\|` + `selector`、dialog は `trigger.selector` | stop は `positioning/revisit/afterWrap`、dialog は `status/focusAfterOpen/focusAfterClose` |
+     | focus-indicator | ある: `details.allElements[]`（`:275`、`FocusRecord`）が記録した全要素 | 戻り値（`issues` / `onFocusViolations` / `focusObscuredIssues` で判定を付ける） | 要素の `selector`（`frame` / `shadowHosts` 付き） | どの記録に入ったか（どれにも無ければ `passed`） |
+     | auto-play | ある: `details.mediaElements[]` | 戻り値 | セレクタ | 再生状態（基準計測のみ。感度実験の対象外） |
+
+     **記録方法**（src を変えずに、計測スクリプトの `createContext` の中で行う）:
+     - **A: フォーカスの記録**（change-on-input / keyboard-trap。他の Tab 系 3 検査にも付けてよい）。
+       `context.exposeBinding('__spike021Focus', (_, selector) => tested.add(selector))` と、`context.addInitScript` で
+       `window` に capture の `focusin` リスナーを 1 つ付け、`event.target` の簡易セレクタ（tag + `:nth-child` の連鎖。`html` / `text` は送らない）を
+       バインディングに渡す。change-on-input は `locator.focus()` が `focusin` を起こすので、試した欄がすべて記録される。
+       **使ってよいのは、ページのイベントリスナーを CDP で調べない検査だけ**（`git grep -n -E 'getEventListeners|DOMDebugger|listenerInspection' -- packages/a11y-audit/src/playwright/<file>` が 0 件であることを確認してから使う）。
+       リスナーを調べる検査（pointer-cancellation / content-on-hover）に付けると `pageListeners` / `delegationRoots` が変わり、検査の対象選びが歪む。
+     - **B: in-page `dispatchEvent` の記録**（pointer-cancellation）。`context.addInitScript` で `EventTarget.prototype.dispatchEvent` を包み、
+       `event.isTrusted === false` かつ `type` が `pointerdown` / `mousedown` / `touchstart` のときに `this`（押された要素）の簡易セレクタを
+       バインディング（`__spike021Press`）に渡してから元の `dispatchEvent` を呼ぶ。リスナーは一切足さないので CDP の一覧には出ない。
+       押された要素のセレクタを `findings[].target.selector` と突き合わせる（セレクタの作り方が検査と違えば、`findings` 側のセレクタを
+       `document.querySelector` で解決して同じ要素か照合するコードを `compare.mjs` でなく `measure.mjs` 側に置く）。
+     - **記録が検査を歪めていないことの確認（ステップ 2 の確認に含める）**: `test/fixtures/index.html` と、hover / 押下の fixture
+       （`git ls-files 'packages/a11y-audit/test/fixtures/*hover*' 'packages/a11y-audit/test/fixtures/*pointer*' 'packages/a11y-audit/test/fixtures/*change*'` で探す）で、
+       記録あり（`--record`）と記録なし（`--no-record`）を 1 回ずつ走らせ、`nodes` と `details` の件数項目
+       （`targetsFound` / `targetsTested` / `controlsFound` / `controlsTested` / `triggers.length` / `delegationRoots.length` / `delegationRootCount` /
+       `pageListeners.length` / `totalFocusableElements`）が完全に一致すること。1 つでも違えば STOP（記録方法を変えて粘らない）。
+     - 記録方法 A / B で**全対象を復元できない検査**（確認で歪みが出た、`focusin` が起きない操作だった、など）は、その検査の `targets` を
+       `null` にして「対象単位の比較は判定不能」と結果文書に書く。判定不能の検査には **「待ちを短くする」を勧めてはいけない**
+       （勧められるのは「早く打ち切る」「対象を絞る」「変えない」だけ）。
    - `untested`: 検査が「試せなかった対象」とその理由。content-on-hover `details.untested[]`（`trigger|method`, `reason`）、
      pointer-cancellation `details.untested[]`（`target.selector`, `reason`）、change-on-input `details.untested[]` と
      `skipped[]`（`control.selector` / `selector`, `reason`）。Tab 系は `notEvaluatedCount` や `dialogsNotTried` のような数値しか無いので、
@@ -311,6 +335,7 @@ ESM。`packages/a11y-audit/dist/playwright/index.js` から各 `run*` 関数を�
 
 一致の条件: 上の 3 集合がすべて同じときだけ「検出は変わらない」と言う。
 1 つでも違えば、その検査・スケールは「検出が変わった」として扱い、何が入れ替わったかを結果文書に書く。
+`targets` が `null`（全対象を復元できなかった）検査は「判定不能」で、一致とも不一致とも言わない。
 
 ばらつきの基準: 基準 2 回の間で 3 集合のどれかが違う検査は「元々揺れる」として印を付ける。
 揺れが**どの対象で**起きたかを控え、感度実験でその同じ対象だけが違うなら揺れとして無視、
@@ -332,7 +357,8 @@ ESM。`packages/a11y-audit/dist/playwright/index.js` から各 `run*` 関数を�
 5. **検査ごとの判断**。各検査について次の 4 つの選択肢のどれを勧めるかと根拠:
    - **早く打ち切る**（例: content-on-hover は内容が消えた時点で `persistMs` の残りを待たない。
      「残る」場合だけ全部待つ。見落としは増えない）
-   - **待ちを短くする**（感度実験で `nodes` / `targets` / `untested` がどれも変わらなかった範囲まで。1 つでも変わったものは不可）
+   - **待ちを短くする**（感度実験で `nodes` / `targets` / `untested` がどれも変わらなかった範囲まで。1 つでも変わったもの、
+     `targets` が判定不能のものは不可）
    - **対象を絞る**（同じセレクタ・同じ listener の要素を 1 つに代表させる、上限件数。
      見落としの可能性と引き換えなので、どの条件なら代表させてよいかを書く）
    - **変えない**（auto-play の 6 秒のように待ちが検出の定義そのもの、または感度実験で検出が変わった）
@@ -359,6 +385,9 @@ ESM。`packages/a11y-audit/dist/playwright/index.js` から各 `run*` 関数を�
 - ステップ 3 の 2 回計測: 同じ条件で `nodes` / `targets` / `untested` が要素単位で一致する検査だけを感度判定に使う
   （元々揺れる検査を「待ちを縮めたせい」と誤判定しない。揺れた対象が分かるので、感度実験で別の対象が変われば区別できる）。
 - 比較は `compare.mjs` の集合差分で行い、件数の一致を「検出が同じ」とは見なさない。
+- ステップ 2 の確認で、記録あり/なしの計測が同じ `nodes` と件数項目を返す（記録が検査を歪めていない）。
+- `compare.mjs` の自己テスト: 同じ JSONL を 2 つ渡すとすべて `same: true`、`targets` の 1 要素の `id` を書き換えた
+  複製を渡すと `removed` と `added` に 1 件ずつ出る（正常な対象の入れ替わりが不一致になる）ことを、スクリプトを書いた直後に確かめる。
 
 ## 完了条件
 
@@ -368,6 +397,9 @@ ESM。`packages/a11y-audit/dist/playwright/index.js` から各 `run*` 関数を�
 - [ ] 結果文書の内訳表に 3 ページ以上 × 8 検査の `durationMs` / `waitMs` / `elements` がある
 - [ ] 感度表に 7 検査 × 2 スケールの `nodes` / `targets` / `untested` の一致/不一致（不一致なら入れ替わった対象）がある
 - [ ] 基準 2 回の比較（`compare.mjs`）の結果が結果文書にあり、「元々揺れる」検査と揺れた対象が明記されている
+- [ ] 8 検査それぞれについて「`targets` に全対象が入っている（戻り値 / 記録方法 A / 記録方法 B のどれで）」か「判定不能」かが結果文書に書かれ、
+      判定不能の検査に「待ちを短くする」が勧められていない
+- [ ] 記録あり/なしの一致確認（ステップ 2）の結果が結果文書にある
 - [ ] 8 検査それぞれに「早く打ち切る / 待ちを短くする / 対象を絞る / 変えない」のいずれかの判断と根拠がある
 - [ ] `git diff --stat 4358e7f..HEAD -- packages/a11y-audit/src packages/a11y-audit/test` が空
 - [ ] `npm run lint && npm run format:check && npm run typecheck && npm run validate:skills` が exit 0
@@ -384,8 +416,10 @@ ESM。`packages/a11y-audit/dist/playwright/index.js` から各 `run*` 関数を�
 - `waitForTimeout` の差し替えが効かない（`waits` が常に 0）— Playwright の実装が変わった可能性。
   別の差し替え方法を探さず報告する。
 - 基準 2 回の計測で 8 検査中 4 つ以上が `nodes` / `targets` / `untested` のどれかで一致しない（環境が不安定で判断材料にならない）。
-- 結果の `details` に、上の表で挙げた対象単位の項目が無い検査がある（`targets` が作れない）。その検査は `nodes` だけで比べて
-  「対象単位の比較ができなかった」と結果文書に書いて続行してよいが、報告には明記する。
+- 記録方法 A / B を付けた計測で、記録なしの計測と `nodes` や `details` の件数項目がずれる（記録が検査を歪めている）。
+  別の記録方法を探さず報告する。
+- 全対象を復元できない検査が出た場合は STOP ではないが、その検査の `targets` は `null`、感度判定は「判定不能」とし、
+  「待ちを短くする」を勧めない。`nodes` だけの一致を「検出は変わらない」と書いてはいけない。報告に明記する。
 - 計測中に実ページでフォーム送信・購入などの副作用が疑われる挙動（送信後の URL への遷移など）を見た
   — そのページを候補から外し、何が起きたかを報告する。
 - スパイクの範囲を超える発見（検査のバグなど）: 結果文書の「気づき」節に書くに留め、直さない。
