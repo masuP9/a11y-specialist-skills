@@ -403,6 +403,7 @@ npx playwright install chromium
 | `--checks <list>` | `all` | Comma-separated check names (see list below). |
 | `--output-dir <dir>` | `./a11y-audit-results` | Directory for result JSON files. |
 | `--screenshot` | off | Enable focus-indicator screenshot. |
+| `--concurrency <n>` | `4` (capped at the CPU count) | How many checks run at once in the same browser. `1` runs them one after another and each check also prints its own summary to stdout. With 2 or more, the checks' own summaries are suppressed and only the CLI's `[name] DONE …` lines and the result JSON remain. If a time-sensitive check (time-limit / auto-play / motion-actuation) gives unstable results, reproduce with `--concurrency 1`. |
 | `--list-checks` | — | Print check names and exit 0. |
 | `--version` | — | Print version and exit 0. |
 | `--help` | — | Print usage and exit 0. |

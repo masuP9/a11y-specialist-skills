@@ -315,6 +315,7 @@ npx playwright install chromium
 | `--checks <list>` | `all` | カンマ区切りのチェック名（下記一覧参照）。 |
 | `--output-dir <dir>` | `./a11y-audit-results` | 結果 JSON の出力ディレクトリ。 |
 | `--screenshot` | off | focus-indicator のスクリーンショットを有効化。 |
+| `--concurrency <n>` | `4`（CPU コア数が上限） | 同じブラウザの中で同時に走らせる検査の数。`1` にすると従来どおり 1 つずつ走り、各検査の要約も標準出力に出る。2 以上では各検査の要約は出さず、CLI の `[name] DONE …` 行と結果 JSON だけになる。時間に敏感な検査（time-limit / auto-play / motion-actuation）で結果が揺れるときは `--concurrency 1` で再現する。 |
 | `--list-checks` | — | チェック名一覧を出力して exit 0。 |
 | `--version` | — | バージョンを出力して exit 0。 |
 | `--help` | — | usage を出力して exit 0。 |
