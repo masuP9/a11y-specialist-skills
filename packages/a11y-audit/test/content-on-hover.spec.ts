@@ -14,6 +14,10 @@ import {
   type ContentOnHoverCheckDetails,
   type ContentOnHoverCheckResult,
 } from '../dist/index.js';
+import {
+  CONTENT_ON_HOVER_PERSIST_MS,
+  CONTENT_ON_HOVER_SETTLE_MS,
+} from '../dist/constants.js';
 
 const ajv = new Ajv2020({ strict: false, allowUnionTypes: true });
 const validateEnvelope = ajv.compile(RESULT_SCHEMAS['content-on-hover-check']);
@@ -41,6 +45,14 @@ async function runHover(
   ).toBe(true);
   return result;
 }
+
+test('表示や後始末の後の既定の待ちは 200ms（Plan 021 で 400ms と結果が同じで、100ms では実ページで見落とした値）', () => {
+  expect(CONTENT_ON_HOVER_SETTLE_MS).toBe(200);
+});
+
+test('内容が残り続けるかを見る既定の待ちは 3000ms のまま変えない', () => {
+  expect(CONTENT_ON_HOVER_PERSIST_MS).toBe(3_000);
+});
 
 // ---------------------------------------------------------------------------
 // Triggers and nothing to try

@@ -329,7 +329,10 @@ the center of the content. A failed condition is `incomplete`: content that repo
 does not obscure or replace other content, need not be dismissible, so a human checks the exceptions. After
 each trigger the pointer goes to a corner, focus is blurred and Escape is pressed; the page is reloaded in a
 fresh context (at most `maxReloads` times, default 10) only when the content is still visible. It accepts
-`settleMs` (default 400 ms), `persistMs`, `maxTriggers` (default 30) and `timeBudgetMs` (default 120 s).
+`settleMs` (default 200 ms), `persistMs`, `maxTriggers` (default 30) and `timeBudgetMs` (default 120 s).
+The check waits only `settleMs` after showing, dismissing or moving the pointer, so content that appears
+or disappears later (a show delay or fade-out longer than 200 ms) may be missed or misjudged as not
+dismissible or not hoverable; pass a larger `settleMs` (e.g. 400) for such pages.
 What could not be examined (cross-origin style sheets, the trigger or listener limits, no CDP outside
 Chromium) is reported as a page node on all three rules, even with no trigger. Known limitations:
 attribute-only elements are not triggers; content shown by rules of cross-origin style sheets is missed;

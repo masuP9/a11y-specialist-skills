@@ -1097,8 +1097,15 @@ export const CONTENT_ON_HOVER_LISTENER_TYPES = [
   'focus',
   'focusin',
 ] as const;
-/** Wait after showing, dismissing or moving the pointer (tooltip libraries delay up to a few hundred ms). */
-export const CONTENT_ON_HOVER_SETTLE_MS = 400;
+/**
+ * Wait after showing, dismissing or moving the pointer. 200 ms gave the same
+ * results as 400 ms on 5 public pages and 13 fixtures; 100 ms missed a
+ * focus-shown suggestion list on Wikipedia (plans/021-result-slow-check-timing.md).
+ * Content that appears, fades out or hides more than 200 ms later (a show/hide
+ * delay or a fade-out animation) may be missed or misjudged. Callers can pass
+ * `settleMs: 400` to keep the old window.
+ */
+export const CONTENT_ON_HOVER_SETTLE_MS = 200;
 /** How long shown content must stay with the pointer or focus kept on the trigger. */
 export const CONTENT_ON_HOVER_PERSIST_MS = 3_000;
 export const CONTENT_ON_HOVER_MAX_TRIGGERS = 30;
