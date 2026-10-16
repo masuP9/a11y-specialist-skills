@@ -671,7 +671,12 @@ are kept in the result JSON:
   navigation whose element could not be identified and no later attempt
   identified it (including when retries ran out or a limit stopped the walk).
   If `onFocusViolations` is empty, `a11y-skills/no-context-change-on-focus` is
-  then `incomplete` instead of `passes`.
+  then `incomplete` instead of `passes`. On Chromium, a navigation started
+  while an element's `focus` / `focusin` events are being handled is
+  attributed through the page's `navigate` event (Navigation API), which
+  records the element focused at that moment, so the element is identified
+  regardless of `navigationSettleMs` or machine load. A navigation started
+  later (e.g. by a timer) is still looked for within the settle window.
 - focus-indicator / keyboard-reachability: see "Time and Tab-press limits"
   below for what happens when a limit is hit.
 

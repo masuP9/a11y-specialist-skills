@@ -556,7 +556,7 @@ const result = await runTargetSizeCheck({
 
 - keyboard-trap: Tab の押下回数が上限に達して打ち切った場合は `details.tabWalkCapped: true`
 - focus-indicator: フォーカスによる遷移でリトライが上限に達し、未検査の要素が残った場合は `details.interrupted: true`
-- focus-indicator: フォーカスで遷移したが原因の要素を特定できず、その後のやり直しでも特定できなかった場合（やり直しの使い切りや上限での打ち切りを含む）は `details.unidentifiedNavigation: true`。`onFocusViolations` が空なら `a11y-skills/no-context-change-on-focus` は `passes` ではなく `incomplete` になる
+- focus-indicator: フォーカスで遷移したが原因の要素を特定できず、その後のやり直しでも特定できなかった場合（やり直しの使い切りや上限での打ち切りを含む）は `details.unidentifiedNavigation: true`。`onFocusViolations` が空なら `a11y-skills/no-context-change-on-focus` は `passes` ではなく `incomplete` になる。Chromium では、要素の `focus` / `focusin` の処理の中で始まった遷移は、ページの `navigate` イベント（Navigation API）でそのときフォーカスのある要素を記録するので、待ち時間（`navigationSettleMs`）や混み具合に関係なく原因の要素が分かる。タイマーなどで遅れて始まった遷移は、これまでどおり待ち時間の中で調べる
 - focus-indicator / keyboard-reachability: 上限で打ち切った場合の挙動は下の「時間と Tab 回数の上限」を参照
 
 **時間と Tab 回数の上限:**

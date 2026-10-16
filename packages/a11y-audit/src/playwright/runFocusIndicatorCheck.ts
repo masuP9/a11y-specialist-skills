@@ -402,6 +402,30 @@ export async function runFocusIndicatorCheck(
         },
       );
 
+      // The element whose focus started a navigation, from the page's
+      // `navigate` event (see createFocusTrackerScript). A CDP binding's call
+      // is handled the moment it arrives, so it survives the navigation that
+      // can drop an `exposeFunction` call. Chromium only.
+      const navigationReports: {
+        ref: FocusElementRef;
+        documentToken: string;
+      }[] = [];
+      try {
+        const cdp = await context.newCDPSession(page);
+        cdp.on('Runtime.bindingCalled', (event) => {
+          if (event.name !== 'reportFocusNavigation') return;
+          try {
+            navigationReports.push(JSON.parse(event.payload));
+          } catch {
+            // Not from the tracker script; ignore.
+          }
+        });
+        await cdp.send('Runtime.enable');
+        await cdp.send('Runtime.addBinding', { name: 'reportFocusNavigation' });
+      } catch {
+        // Not Chromium: the culprit comes from the focus reports only.
+      }
+
       // Expose function to receive focus obscured reports (WCAG 2.4.11 / 2.4.12)
       await page.exposeFunction(
         'reportFocusObscured',
@@ -527,6 +551,7 @@ export async function runFocusIndicatorCheck(
         tabPresses++;
         attemptTabPresses++;
         tabPending = true;
+        navigationReports.length = 0;
         await page.keyboard.press('Tab');
 
         // Get currently focused element IMMEDIATELY after Tab. An answer from
@@ -580,19 +605,24 @@ export async function runFocusIndicatorCheck(
           // 3.2.1 violation detected!
           navigationDetected = true;
 
-          // The focus report can be lost in the navigation, and the page it
-          // leads to can report its own focus (autofocus). Use only reports
-          // that arrived after this Tab from the documents being walked;
-          // otherwise the culprit is unknown and the attempt restarts without
-          // recording or skipping anything. Limitation: a page that delays its
-          // own reports (e.g. by wrapping reportFocus) can pass off an earlier
-          // element's report as this Tab's.
+          // The navigate-event report names the element focused when the
+          // navigation started. Without it, fall back to the focused-element
+          // answer and the focus reports, which can be lost in the navigation
+          // while the page it leads to can report its own focus (autofocus).
+          // Use only reports that arrived after this Tab from the documents
+          // being walked; otherwise the culprit is unknown and the attempt
+          // restarts without recording or skipping anything. Limitation: a
+          // page that delays its own reports (e.g. by wrapping reportFocus)
+          // can pass off an earlier element's report as this Tab's.
+          const fromWalked = (report: {
+            ref: FocusElementRef;
+            documentToken: string;
+          }) => documentTokens.has(report.documentToken);
           const culprit =
+            navigationReports.filter(fromWalked).at(-1)?.ref ??
             currentFocusedElement ??
-            focusReports
-              .slice(recordedBeforeTab)
-              .filter((report) => documentTokens.has(report.documentToken))
-              .at(-1)?.ref ??
+            focusReports.slice(recordedBeforeTab).filter(fromWalked).at(-1)
+              ?.ref ??
             null;
           unidentifiedNavigation = !culprit;
           if (!culprit) {
@@ -1435,11 +1465,7 @@ function createFocusTrackerScript(args: {
    * nothing is focused here. A child frame whose focus is elsewhere reports
    * null, as its `activeElement` stays on the last element it had.
    */
-  (
-    window as unknown as {
-      describeActiveElement: () => unknown;
-    }
-  ).describeActiveElement = () => {
+  const describeActiveElement = () => {
     if (window !== window.top && !document.hasFocus()) return null;
     let el = document.activeElement;
     while (el?.shadowRoot?.activeElement) el = el.shadowRoot.activeElement;
@@ -1454,6 +1480,54 @@ function createFocusTrackerScript(args: {
       ...getLocation(el),
     };
   };
+  (
+    window as unknown as {
+      describeActiveElement: () => unknown;
+    }
+  ).describeActiveElement = describeActiveElement;
+
+  // 3.2.1: name the element whose focus starts a main-frame navigation from
+  // the page's `navigate` event, which fires the moment the navigation starts
+  // (Navigation API; absent in some browsers). Sent through the CDP binding
+  // `reportFocusNavigation`, as Playwright drops an `exposeFunction` call when
+  // the navigation removes the page before the call is handled. Only
+  // navigations started while an element's focus / focusin events are being
+  // dispatched count: one started later (e.g. by a timer) may find focus
+  // already on a later element. The flag is cleared synchronously when focusin
+  // reaches the window; a timer would not do, as Chromium handles the next key
+  // press before an overdue timer; one only backs up a page that stops
+  // focusin from reaching the window. Limitation: a navigation started from a
+  // page's own focusin listener on the window is not reported this way.
+  if (window === window.top) {
+    let handlingFocus = false;
+    window.addEventListener(
+      'focus',
+      (e) => {
+        if (!(e.composedPath()[0] instanceof Element)) return;
+        handlingFocus = true;
+        setTimeout(() => {
+          handlingFocus = false;
+        }, 0);
+      },
+      true,
+    );
+    window.addEventListener('focusin', () => {
+      handlingFocus = false;
+    });
+    (
+      window as unknown as { navigation?: EventTarget }
+    ).navigation?.addEventListener('navigate', () => {
+      if (!handlingFocus) return;
+      const ref = describeActiveElement();
+      // Focus inside an iframe: the main frame only sees the iframe element.
+      if (!ref || ref.tag === 'IFRAME' || ref.tag === 'FRAME') return;
+      (
+        window as unknown as {
+          reportFocusNavigation?: (payload: string) => void;
+        }
+      ).reportFocusNavigation?.(JSON.stringify({ ref, documentToken }));
+    });
+  }
 
   /**
    * Handle focus events
