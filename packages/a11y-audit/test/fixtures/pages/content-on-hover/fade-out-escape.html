@@ -1,0 +1,64 @@
+<!doctype html>
+<!--
+  A tooltip that Escape fades out over 300ms (CSS opacity transition) before
+  it is removed with hidden on transitionend. The pointer can move onto it
+  (button and tooltip sit inside one wrapper); the wrapper's mouseleave and
+  blur hide it at once.
+  Expected: one trigger (#btn). Hover result: persistent "stayed",
+  dismissible "dismissed", hoverable "stayed". A wait shorter than 300ms after
+  Escape sees the tooltip still displayed.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Fade out on Escape</title>
+    <style>
+      .wrap {
+        position: relative;
+        display: inline-block;
+      }
+      .tip {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 140px;
+        padding: 8px;
+        background: #222;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <span id="wrap" class="wrap">
+        <button id="btn" type="button">Info</button>
+        <div id="tip" class="tip" role="tooltip" hidden>Helpful tip</div>
+      </span>
+    </main>
+    <script>
+      const btn = document.getElementById('btn');
+      const tip = document.getElementById('tip');
+      const show = () => {
+        tip.style.transition = 'none';
+        tip.style.opacity = '1';
+        tip.hidden = false;
+      };
+      const hide = () => {
+        tip.hidden = true;
+      };
+      const fadeOut = () => {
+        tip.style.transition = 'opacity 300ms';
+        void tip.offsetWidth;
+        tip.style.opacity = '0';
+      };
+      tip.addEventListener('transitionend', hide);
+      btn.addEventListener('mouseenter', show);
+      btn.addEventListener('focus', show);
+      btn.addEventListener('blur', hide);
+      document.getElementById('wrap').addEventListener('mouseleave', hide);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') fadeOut();
+      });
+    </script>
+  </body>
+</html>

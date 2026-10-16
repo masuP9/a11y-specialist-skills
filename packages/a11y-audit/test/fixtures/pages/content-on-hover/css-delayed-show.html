@@ -1,0 +1,44 @@
+<!doctype html>
+<!--
+  CSS only, no script. The tooltip is visibility:hidden until the wrapper is
+  hovered or contains focus, and a transition delays the change by 300ms.
+  It has no Escape handling and shows while the pointer or focus stays.
+  Expected: one trigger (#wrap). Hover result: persistent "stayed",
+  dismissible "stayed", hoverable "stayed". A wait shorter than 300ms misses
+  the tooltip and reports no content.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>CSS delayed show</title>
+    <style>
+      .wrap {
+        position: relative;
+        display: inline-block;
+      }
+      .tip {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 140px;
+        padding: 8px;
+        background: #222;
+        color: #fff;
+        visibility: hidden;
+      }
+      .wrap:hover .tip,
+      .wrap:focus-within .tip {
+        visibility: visible;
+        transition: visibility 0s 300ms;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <span id="wrap" class="wrap">
+        <button id="btn" type="button">Info</button>
+        <div id="tip" class="tip" role="tooltip">Helpful tip</div>
+      </span>
+    </main>
+  </body>
+</html>
