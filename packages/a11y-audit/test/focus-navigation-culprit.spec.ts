@@ -6,8 +6,13 @@
  * lost in the navigation, and asking the page for its focused element fails
  * because the navigation is under way. The fixture reproduces both without CPU
  * throttling by replacing the check's own page-side functions
- * (`window.reportFocus`, `window.describeActiveElement`); rename them in the
- * check and this test must follow.
+ * (`window.reportFocus`, `window.describeActiveElement`,
+ * `window.reportFocusNavigation`); rename them in the check and this test must
+ * follow.
+ *
+ * Playwright drops a page's `exposeFunction` call when the
+ * navigation removes the page before the call is handled, so the check also
+ * learns the culprit from the page's `navigate` event, sent another way.
  */
 
 import { createServer, type Server } from 'node:http';
@@ -15,9 +20,9 @@ import type { AddressInfo } from 'node:net';
 import { test, expect } from '@playwright/test';
 import { runFocusIndicatorCheck } from '../dist/playwright/index.js';
 
-// Drops the report for the navigating link and makes the focused-element
-// query throw, as when both are cut off by the navigation.
-const LOSE_REPORT_SCRIPT = `<script>
+// Drops the focus report for the navigating link and makes the
+// focused-element query throw, as when both are cut off by the navigation.
+const LOSE_FOCUS_REPORT_SCRIPT = `<script>
   var report = window.reportFocus;
   window.reportFocus = function (data) {
     if (data.tag === 'A') return;
@@ -28,12 +33,31 @@ const LOSE_REPORT_SCRIPT = `<script>
   };
 </script>`;
 
-const page = (loseReport: boolean, target = '/navigated') => `<!doctype html>
+// Also drops the navigate-event report, so nothing names the link.
+const LOSE_ALL_REPORTS_SCRIPT = `${LOSE_FOCUS_REPORT_SCRIPT}<script>
+  window.reportFocusNavigation = function () {};
+</script>`;
+
+type Lose = 'none' | 'focus-report' | 'all';
+
+const page = (lose: Lose, target = '/navigated') => `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>culprit fixture</title></head>
 <body>
   <button id="plain" style="outline: none">plain</button>
   <a id="jump" href="#" onfocus="location.href = '${target}'">jump</a>
-  ${loseReport ? LOSE_REPORT_SCRIPT : ''}
+  ${lose === 'focus-report' ? LOSE_FOCUS_REPORT_SCRIPT : ''}
+  ${lose === 'all' ? LOSE_ALL_REPORTS_SCRIPT : ''}
+</body></html>`;
+
+// The first link starts the navigation from a timer, after the check has
+// pressed Tab again and focused the next link. Both links' focus reports are
+// lost, so only the navigate-event report could name an element.
+const TIMER_NAVIGATION_HTML = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>timer navigation fixture</title></head>
+<body>
+  <a id="late" href="#" onfocus="setTimeout(function () { location.href = '/navigated'; }, 120)">late</a>
+  <a id="next" href="#">next</a>
+  ${LOSE_FOCUS_REPORT_SCRIPT}
 </body></html>`;
 
 const NAVIGATED_HTML = `<!doctype html>
@@ -87,14 +111,23 @@ test.beforeAll(async () => {
         res.end(LAZY_FRAME_HTML);
       } else if (req.url === '/lazy-frame-child') {
         res.end(LAZY_FRAME_CHILD_HTML);
+      } else if (req.url === '/timer-navigation') {
+        res.end(TIMER_NAVIGATION_HTML);
       } else if (req.url === '/always-lost') {
-        res.end(page(true));
+        res.end(page('all'));
+      } else if (req.url === '/focus-report-always-lost') {
+        res.end(page('focus-report'));
       } else if (req.url === '/to-autofocus') {
         firstAttemptRequests++;
-        res.end(page(firstAttemptRequests === 1, '/navigated-autofocus'));
+        res.end(
+          page(
+            firstAttemptRequests === 1 ? 'all' : 'none',
+            '/navigated-autofocus',
+          ),
+        );
       } else {
         firstAttemptRequests++;
-        res.end(page(firstAttemptRequests === 1));
+        res.end(page(firstAttemptRequests === 1 ? 'all' : 'none'));
       }
     });
     server.listen(0, '127.0.0.1', () => {
@@ -140,6 +173,21 @@ test('focus report lost in the navigation: the previous element is still checked
   });
 
   expect(result.details.issues.map((el) => el.selector)).toContain('#plain');
+});
+
+test('focus report and focused-element query lost on every attempt: the navigate event still names the link as the 3.2.1 culprit', async ({
+  browser,
+}, testInfo) => {
+  const result = await runFocusIndicatorCheck({
+    browser,
+    targetUrl: `http://127.0.0.1:${port}/focus-report-always-lost`,
+    outputDir: testInfo.outputDir,
+    quiet: true,
+  });
+
+  expect(
+    result.details.onFocusViolations.map((v) => v.element.selector),
+  ).toEqual(['#jump']);
 });
 
 test('focus report lost on every attempt: 3.2.1 is incomplete, not passed, and no element is blamed', async ({
@@ -215,4 +263,19 @@ test('link in an iframe loaded after the walk started navigates the parent: the 
   expect(
     result.details.onFocusViolations.map((v) => v.element.selector),
   ).toEqual(['#inner']);
+});
+
+test('navigation started by a timer after focus moved to the next link: the next link is not recorded as the 3.2.1 culprit', async ({
+  browser,
+}, testInfo) => {
+  const result = await runFocusIndicatorCheck({
+    browser,
+    targetUrl: `http://127.0.0.1:${port}/timer-navigation`,
+    outputDir: testInfo.outputDir,
+    quiet: true,
+  });
+
+  expect(
+    result.details.onFocusViolations.map((v) => v.element.selector),
+  ).not.toContain('#next');
 });

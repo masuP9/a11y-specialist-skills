@@ -39,6 +39,19 @@ adheres to [Semantic Versioning](https://semver.org/).
   navigation has a guard against this). `runPointerCancellationCheck` accepts
   `settleMs: 300` to keep the old window; the CLI always uses the default.
 
+### Fixed
+
+- `focus-indicator-check` (3.2.1): on a busy machine, a link that navigates on
+  focus could go unidentified on every attempt (`onFocusViolations` empty,
+  `details.unidentifiedNavigation: true`), because Playwright drops a page's
+  `exposeFunction` call when the navigation removes the page before the call
+  is handled. On Chromium the check now also listens to the page's `navigate`
+  event and records the element focused when a navigation starts during that
+  element's `focus` / `focusin` handling, sent through a CDP binding that is
+  handled as soon as it arrives. No option or result field changed. A
+  navigation started later (e.g. from a timer) is still attributed as before,
+  within `navigationSettleMs`.
+
 ## 0.14.0 — 2026-10-14
 
 **Heads-up** — `pointer-cancellation-check` dispatches press events (without
