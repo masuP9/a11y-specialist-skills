@@ -11,6 +11,7 @@
 
 ## ステータス
 
+- **Codex plan review**: 通過（1 巡目、2026-10-16、見送った low 0 件。medium 1 件「HTTP ステータスを確かめる手順がない」を反映）
 - **優先度**: P2
 - **工数**: S
 - **リスク**: LOW〜MED（既定の待ちが短くなり、押してから 150〜300 ms の間に起きる変化は既定では見落とす。根拠は下の計測）
@@ -166,13 +167,18 @@ npm run build --workspace @a11y-skills/audit
 | mdn | `https://developer.mozilla.org/en-US/` |
 | wikipedia | `https://en.wikipedia.org/wiki/Main_Page` |
 
-ページごとに実行する（`<name>` と `<url>` を上の表で置き換える）:
+ページごとに、まず最終の HTTP ステータスを確かめてから測る（`<name>` と `<url>` を上の表で置き換える）。
+計測スクリプトは HTTP ステータスを記録しないので、エラーページを測っても `"error"` は付かない。この確認を飛ばさない。
 
 ```bash
+curl -sIL -o /dev/null -w '%{http_code}\n' <url>
 node packages/a11y-audit/test-results/spike-021/measure.mjs <url> --page <name> --checks pointer-cancellation-check --out packages/a11y-audit/test-results/spike-021/before-<name>.jsonl
 ```
 
-**確認**: 5 ファイルとも 1 行ずつあり、`"error"` を含まない。
+**確認**:
+- 5 ページとも `curl` が `200` を出す。
+- 5 ファイルとも 1 行ずつあり、`"error"` を含まない。
+- 各行の `counts.targetsTested` が 0 より大きい（Plan 021 では 55〜100 件。0 ならページの中身が変わっているか、エラーページを測っている）。
 `node packages/a11y-audit/test-results/spike-021/compare.mjs --self-test packages/a11y-audit/test-results/spike-021/before-wikipedia.jsonl` が `PASS` を出す。
 
 ### ステップ 2: 失敗するテストを書く
@@ -214,7 +220,7 @@ test('押した後の既定の待ちは 150ms（Plan 021 で 5 ページと fixt
 
 ### ステップ 5: 変更後の実ページ結果を取り、変更前と比べる
 
-ビルドしてから、ステップ 1 と同じコマンドを `--out .../after-<name>.jsonl` で 5 ページ実行し、比べる:
+ビルドしてから、ステップ 1 と同じコマンド（`curl` によるステータスの確認を含む）を `--out .../after-<name>.jsonl` で 5 ページ実行し、比べる:
 
 ```bash
 node packages/a11y-audit/test-results/spike-021/compare.mjs packages/a11y-audit/test-results/spike-021/before-<name>.jsonl packages/a11y-audit/test-results/spike-021/after-<name>.jsonl
@@ -271,7 +277,7 @@ node packages/a11y-audit/dist/cli.js --url "file://$PWD/packages/a11y-audit/test
   `settleMs` を足して通す、待ちを延ばす、テストを消す、のどれもしない。どのテストがどう落ちたかを報告する。
 - ステップ 5 で、どれかのページの `nodes` / `targets` / `untested` / `aborted` が一致しない。
   同じページで変更前の計測をもう 1 回取り、変更前どうしでも同じ差が出るか（元々揺れるか）を確かめてから報告する。
-- 実ページに届かない（ネットワーク不可、ステータス 200 でない）。fixture だけで済ませない。
+- 実ページに届かない（ネットワーク不可、`curl` の最終ステータスが 200 でない）、または変更前の `counts.targetsTested` が 0。そのページを比較から外して合格にせず、fixture だけでも済ませない。
 
 ## 保守メモ
 
