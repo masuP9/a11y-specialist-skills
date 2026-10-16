@@ -11,6 +11,7 @@
 
 ## ステータス
 
+- **Codex plan review**: 通過（1 巡目、2026-10-16、見送った low 0 件。medium 1 件「HTTP ステータスと対象数を確かめる手順がない」を反映）
 - **優先度**: P2
 - **工数**: S
 - **リスク**: MED（×0.25 = 100 ms では実ページで検出が後退した。200 ms は計測で確かめた下限に近い）
@@ -142,14 +143,19 @@ npm run build --workspace @a11y-skills/audit
 | mdn | `https://developer.mozilla.org/en-US/` |
 | wikipedia | `https://en.wikipedia.org/wiki/Main_Page` |
 
-ページごとに実行する:
+ページごとに、まず最終の HTTP ステータスを確かめてから測る（`<name>` と `<url>` を上の表で置き換える）。
+計測スクリプトは HTTP ステータスを記録しないので、エラーページを測っても `"error"` は付かず、空の結果どうしが「一致」してしまう。この確認を飛ばさない。
 
 ```bash
+curl -sIL -o /dev/null -w '%{http_code}\n' <url>
 node packages/a11y-audit/test-results/spike-021/measure.mjs <url> --page <name> --checks content-on-hover-check --out tmp/spike-021/before-<name>.jsonl
 ```
 
-**確認**: 5 ファイルとも 1 行ずつあり、`"error"` を含まない。Wikipedia の行で `#searchInput|focus` の
-`targets` が `no-content` 以外（内容が出た組）になっている。これが ×0.25 で消えた組で、変更後も残ることを確かめる目印になる。
+**確認**:
+- 5 ページとも `curl` が `200` を出す。
+- 5 ファイルとも 1 行ずつあり、`"error"` を含まない。
+- 各行の `counts["triggers.length"]` が Plan 021 の値と同じ桁である: w3c-bad 21、w3c-good 1、w3c-wai 8、wikipedia 18 は **0 より大きい**こと。mdn は Plan 021 でも 0 件なので 0 でよい（mdn は「対象が無いページで待ちが変わっても結果が変わらない」ことの確認にしかならない。PR 本文にそう書く）。
+- Wikipedia の行で `#searchInput|focus` の `targets` が `no-content` 以外（内容が出た組）になっている。これが ×0.25 で消えた組で、変更後も残ることを確かめる目印になる。
 
 ### ステップ 2: 失敗するテストを書く
 
@@ -194,7 +200,7 @@ test('内容が残り続けるかを見る既定の待ちは 3000ms のまま変
 
 テストを実行すると Playwright が `packages/a11y-audit/test-results/` を丸ごと消すので、計測スクリプトも消えている。まずステップ 1 の `node -e` をもう一度実行してスクリプトを取り出し直す（計測結果はリポジトリ直下の `tmp/spike-021/` に書くので消えない。`/tmp` は gitignore 済み）。
 
-ビルドしてから、ステップ 1 と同じコマンドを `--out tmp/spike-021/after-<name>.jsonl` で 5 ページ実行し、比べる:
+ビルドしてから、ステップ 1 と同じコマンド（`curl` によるステータスの確認と、`triggers.length` の確認を含む）を `--out tmp/spike-021/after-<name>.jsonl` で 5 ページ実行し、比べる:
 
 ```bash
 node packages/a11y-audit/test-results/spike-021/compare.mjs tmp/spike-021/before-<name>.jsonl tmp/spike-021/after-<name>.jsonl
@@ -239,7 +245,7 @@ node packages/a11y-audit/dist/cli.js --url "file://$PWD/packages/a11y-audit/test
 - ステップ 3 の後に既存テストが落ちる。テストに `settleMs` を足して通す、待ちを延ばす、テストを消す、のどれもしない。どのテストがどう落ちたかを報告する。
 - ステップ 1 で Wikipedia の `#searchInput|focus` がすでに `no-content`（ページが変わって、目印の組が無くなった）。目印なしで進めず報告する。
 - ステップ 5 でどれかのページの集合が一致しない。同じページで変更前の計測をもう 1 回取り、変更前どうしでも同じ差が出るかを確かめてから報告する。
-- 実ページに届かない。fixture だけで済ませない。
+- 実ページに届かない（ネットワーク不可、`curl` の最終ステータスが 200 でない）、または mdn 以外のページで変更前・変更後の `counts["triggers.length"]` が 0。そのページを比較から外して合格にせず、fixture だけでも済ませない。
 
 ## 保守メモ
 
