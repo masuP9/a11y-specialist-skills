@@ -152,16 +152,24 @@ npm run build --workspace @a11y-skills/audit
 
 ### ステップ 2: 遅れを再現する fixture を 6 件作る
 
-`test/fixtures/pages/content-on-hover/` に作る。どれもきっかけは `<button id="btn">` 1 つで、`mouseenter` と `focus` で出し、Escape で消す（消し方は各行のとおり）。冒頭コメントに構成と「Expected:」（**正しい**判定。`persistent/dismissible/hoverable`）を書く。
+`test/fixtures/pages/content-on-hover/` に作る。冒頭コメントに構成と「Expected:」（**正しい**判定。`persistent/dismissible/hoverable`）を書く。
 
-| ファイル | 作り | 正しい判定（hover） |
-|---|---|---|
-| `delayed-show.html` | `mouseenter` で `setTimeout(show, 300)`、`mouseleave` で `clearTimeout` して即座に隠す。中身はボタンと隙間なく接している（ポインタを載せられる）。Escape で即座に隠す | `stayed/dismissed/stayed` |
-| `css-delayed-show.html` | 中身は `visibility: hidden` が既定で、`.wrap:hover .tip, .wrap:focus-within .tip { visibility: visible; transition: visibility 0s 300ms; }`。隙間なし。Escape では消えない（CSS だけ） | `stayed/stayed/stayed` |
-| `fade-out-escape.html` | 出すと即座に表示。Escape で `opacity` を 300 ms かけて 0 にする CSS トランジションを始め、`transitionend` で `hidden = true`。隙間なし | `stayed/dismissed/stayed` |
-| `fade-out-leave.html` | `not-hoverable.html` と同じく 8px の隙間。`mouseleave` で 300 ms のフェードアウト（CSS トランジション）を始め、`transitionend` で `hidden = true`。Escape も同じフェードで消す | `stayed/dismissed/disappeared` |
-| `delayed-hide-leave.html` | 8px の隙間。`mouseleave` で `setTimeout(hide, 300)`（中身に載っても取り消さない）。Escape は即座に隠す | `stayed/dismissed/disappeared` |
-| `raf-fade-out-leave.html` | 8px の隙間。`mouseleave` で `requestAnimationFrame` を回して 300 ms かけて `opacity` を下げ、終わったら `hidden = true`（jQuery の `fadeOut` と同じ仕組み）。Escape は即座に隠す | `stayed/dismissed/disappeared` |
+構成は 2 通りある（どちらも既存の fixture が手本）:
+- **ポインタを載せられる形**（`compliant-tooltip.html` が手本）: `<span id="wrap" class="wrap">` の中に `<button id="btn">` と中身を隙間なく置く。`#btn` の `mouseenter` と `focus` で出す。`#btn` の `blur` と、**`#wrap` の `mouseleave`** で隠す。ボタンの `mouseleave` で隠すと、ポインタを中身へ動かした時点で消えてしまうので使わない。`mouseleave` はこの検査の候補の listener に入らないので、`#wrap` はきっかけにならない。
+- **ポインタを載せられない形**（`not-hoverable.html` が手本）: 中身をボタンから 8px 離し、`#btn` の `mouseleave` と `blur` で隠す。
+
+照合する `targets` の id は、JS の fixture は `#btn|hover`、CSS だけの fixture は `#wrap|hover` である。CSS の規則から集めたきっかけは、擬似クラスが付いた要素（ここでは `.wrap`）になるため。
+
+| ファイル | 作り | 照合する id | 正しい判定（hover） |
+|---|---|---|---|
+| `delayed-show.html` | 載せられる形。`#btn` の `mouseenter` で `setTimeout(show, 300)`（focus は即座に出す）。`#wrap` の `mouseleave` と Escape では `clearTimeout` して即座に隠す | `#btn` | `stayed/dismissed/stayed` |
+| `css-delayed-show.html` | CSS だけ（script なし）。`<span id="wrap" class="wrap">` の中に `<button id="btn">` と中身を隙間なく置く。中身は `visibility: hidden` が既定で、`.wrap:hover .tip, .wrap:focus-within .tip { visibility: visible; transition: visibility 0s 300ms; }`。Escape では消えない | `#wrap` | `stayed/stayed/stayed` |
+| `fade-out-escape.html` | 載せられる形。出すと即座に表示。Escape で `opacity` を 300 ms かけて 0 にする CSS トランジションを始め、`transitionend` で `hidden = true`。`#wrap` の `mouseleave` と `blur` では即座に隠す | `#btn` | `stayed/dismissed/stayed` |
+| `fade-out-leave.html` | 載せられない形。`#btn` の `mouseleave` で 300 ms のフェードアウト（CSS トランジション）を始め、`transitionend` で `hidden = true`。Escape も同じフェードで消す | `#btn` | `stayed/dismissed/disappeared` |
+| `delayed-hide-leave.html` | 載せられない形。`#btn` の `mouseleave` で `setTimeout(hide, 300)`（中身に載っても取り消さない）。Escape は即座に隠す | `#btn` | `stayed/dismissed/disappeared` |
+| `raf-fade-out-leave.html` | 載せられない形。`#btn` の `mouseleave` で `requestAnimationFrame` を回して 300 ms かけて `opacity` を下げ、終わったら `hidden = true`（jQuery の `fadeOut` と同じ仕組み）。Escape は即座に隠す | `#btn` | `stayed/dismissed/disappeared` |
+
+どの fixture も、きっかけ（`triggers.length`）は 1 つになるようにする。
 
 `npx prettier --write` をかける。
 
@@ -171,7 +179,7 @@ npm run build --workspace @a11y-skills/audit
 node packages/a11y-audit/test-results/spike-021/measure.mjs "file://$PWD/packages/a11y-audit/test/fixtures/pages/content-on-hover/<file>.html" --page <file> --checks content-on-hover-check --out tmp/spike-029/fx-F400-<file>.jsonl
 ```
 
-各行の `targets` の `#btn|hover` が上の「正しい判定」と一致する。400 ms は 300 ms の遅れより長いので、6 件とも一致するはず。**一致しない fixture があれば作りを直す**（fixture 側の誤り）。2 回直しても一致しなければ STOP。
+各行の `counts["triggers.length"]` が 1 で、`targets` の「照合する id」`|hover` が上の「正しい判定」と一致する。400 ms は 300 ms の遅れより長いので、6 件とも一致するはず。**一致しない fixture があれば作りを直す**（fixture 側の誤り）。2 回直しても一致しなければ STOP。
 
 ### ステップ 3: 固定の待ちでどこが狂うかを表にする（試作の前）
 
