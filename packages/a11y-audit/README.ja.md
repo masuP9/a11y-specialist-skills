@@ -178,6 +178,7 @@ listener が要素自身に無く）変化も見えなかった要素を `press-
 します。**合成イベントなのでページのスクリプトが動きます**——押し下げで送信や保存をするページでは実際に
 実行されえます（`isTrusted` を確かめる処理には反応されません。`touchstart` は送りません）。listener は CDP で
 取り出すので **Chromium のみ**で、それ以外では listener の根拠が付かず、手で確かめる node を付けます。
+押した後に変化を待つ時間は `settleMs`（既定 150ms）で、これより遅れて起きる反応は見落とすか、次に押した要素の反応として報告されることがあります。
 20 種類以上の listener を持つ委譲先の要素があるとき、`window` / `document` に押す listener があるときも、
 要素に帰属できず、役割やインラインの属性を持たない要素は押していないので、ページ単位の「手で確かめて」node を
 付けて `incomplete` にします（`details.delegationRootCount`・`details.pageListeners`）。

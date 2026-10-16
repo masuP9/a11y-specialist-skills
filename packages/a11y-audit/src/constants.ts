@@ -981,6 +981,8 @@ export const DEFAULT_FOCUS_ORDER_RESULT_FILE = 'focus-order-result.json';
 /**
  * WCAG 2.5.2: wait after a press for a change to surface. 150 ms gave the same
  * results as 300 ms on 5 public pages and 17 fixtures (plans/021-result-slow-check-timing.md).
+ * None of the sampled pages had a handler reacting later than 150 ms; a later
+ * non-navigation reaction is attributed to the next target.
  */
 export const POINTER_CANCELLATION_SETTLE_MS = 150;
 /** Wall-clock budget for the whole check. */

@@ -788,6 +788,9 @@ test('settleMs より後に移動するページでも、後ろのボタンは e
   );
 
   expect(result.details.untested).toEqual([]);
+  expect(result.details.findings.map((f) => f.target.selector)).not.toContain(
+    '#after',
+  );
   expect(result.details.restarts).toBeGreaterThanOrEqual(1);
   expect(result.details.targetsTested).toBe(2);
 });

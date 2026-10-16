@@ -33,8 +33,11 @@ adheres to [Semantic Versioning](https://semver.org/).
 - `pointer-cancellation-check`: the default wait after each press
   (`settleMs`) is now 150 ms (was 300 ms). On 5 public pages and the
   pointer-cancellation fixtures the results were the same, and the check took
-  about 44% less time. Pages whose reaction to a press appears 150–300 ms later
-  can pass `settleMs: 300` to keep the old window.
+  about 44% less time. A reaction that appears 150–300 ms after a press is no
+  longer attributed to the pressed element; a DOM change, dialog, focus move or
+  new window can instead be reported on the NEXT pressed element (only a
+  navigation has a guard against this). `runPointerCancellationCheck` accepts
+  `settleMs: 300` to keep the old window; the CLI always uses the default.
 
 ## 0.14.0 — 2026-10-14
 
