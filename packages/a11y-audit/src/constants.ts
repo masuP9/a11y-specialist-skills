@@ -978,8 +978,11 @@ export const DEFAULT_FOCUS_ORDER_RESULT_FILE = 'focus-order-result.json';
 // pointer-cancellation-check (WCAG 2.5.2)
 // =============================================================================
 
-/** WCAG 2.5.2: wait after a press for a change to surface. */
-export const POINTER_CANCELLATION_SETTLE_MS = 300;
+/**
+ * WCAG 2.5.2: wait after a press for a change to surface. 150 ms gave the same
+ * results as 300 ms on 5 public pages and 17 fixtures (plans/021-result-slow-check-timing.md).
+ */
+export const POINTER_CANCELLATION_SETTLE_MS = 150;
 /** Wall-clock budget for the whole check. */
 export const POINTER_CANCELLATION_TIMEOUT_MS = 60_000;
 /** Minimum time to watch the page for changes of its own before the first press. */
