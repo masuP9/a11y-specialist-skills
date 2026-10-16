@@ -1,0 +1,63 @@
+<!doctype html>
+<!--
+  The tooltip sits 8px away from the button. The button's mouseleave hides it
+  300ms later with setTimeout, and moving onto the tooltip does not cancel
+  that. Escape and blur hide it at once.
+  Expected: one trigger (#btn). Hover result: persistent "stayed",
+  dismissible "dismissed", hoverable "disappeared". Measured: a fixed
+  200ms wait still gives "disappeared" (the 10-step pointer move and the
+  evaluate round trip add over 100ms); a fixed 100ms wait gives "stayed".
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Delayed hide on leave</title>
+    <style>
+      .wrap {
+        position: relative;
+        display: inline-block;
+      }
+      .tip {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        width: 140px;
+        padding: 8px;
+        background: #222;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <span class="wrap">
+        <button id="btn" type="button">Info</button>
+        <div id="tip" class="tip" role="tooltip" hidden>Helpful tip</div>
+      </span>
+    </main>
+    <script>
+      const btn = document.getElementById('btn');
+      const tip = document.getElementById('tip');
+      let timer = 0;
+      const show = () => {
+        clearTimeout(timer);
+        tip.hidden = false;
+      };
+      const hide = () => {
+        clearTimeout(timer);
+        tip.hidden = true;
+      };
+      btn.addEventListener('mouseenter', show);
+      btn.addEventListener('focus', show);
+      btn.addEventListener('mouseleave', () => {
+        timer = setTimeout(() => {
+          tip.hidden = true;
+        }, 300);
+      });
+      btn.addEventListener('blur', hide);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') hide();
+      });
+    </script>
+  </body>
+</html>

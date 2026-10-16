@@ -1,0 +1,61 @@
+<!doctype html>
+<!--
+  A tooltip that appears 300ms after the pointer enters the button (focus
+  shows it immediately). The pointer can move onto it (button and tooltip sit
+  inside one wrapper; the wrapper's mouseleave hides it). Escape and blur hide
+  it at once and cancel a pending show.
+  Expected: one trigger (#btn). Hover result: persistent "stayed", dismissible
+  "dismissed", hoverable "stayed". A wait shorter than 300ms misses the
+  tooltip and reports no content.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Delayed show</title>
+    <style>
+      .wrap {
+        position: relative;
+        display: inline-block;
+      }
+      .tip {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 140px;
+        padding: 8px;
+        background: #222;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <span id="wrap" class="wrap">
+        <button id="btn" type="button">Info</button>
+        <div id="tip" class="tip" role="tooltip" hidden>Helpful tip</div>
+      </span>
+    </main>
+    <script>
+      const btn = document.getElementById('btn');
+      const tip = document.getElementById('tip');
+      let timer = 0;
+      const show = () => {
+        tip.hidden = false;
+      };
+      const hide = () => {
+        clearTimeout(timer);
+        tip.hidden = true;
+      };
+      btn.addEventListener('mouseenter', () => {
+        clearTimeout(timer);
+        timer = setTimeout(show, 300);
+      });
+      btn.addEventListener('focus', show);
+      btn.addEventListener('blur', hide);
+      document.getElementById('wrap').addEventListener('mouseleave', hide);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') hide();
+      });
+    </script>
+  </body>
+</html>
