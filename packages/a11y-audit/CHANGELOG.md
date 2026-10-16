@@ -3,7 +3,11 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 0.15.0 — 2026-10-16
+
+**Heads-up** — the new `content-on-hover-check` really hovers and focuses
+elements and presses Escape on the live page, so pages that act on hover or
+focus may do so (see README). It runs with `--checks all`.
 
 ### Added
 
