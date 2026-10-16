@@ -8,6 +8,7 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import { test, expect, runFixtureCheck } from './helpers/fixtures.js';
 import { RESULT_SCHEMAS } from '../dist/schemas/index.js';
 import { normalizePointerCancellationCheck } from '../dist/index.js';
+import { POINTER_CANCELLATION_SETTLE_MS } from '../dist/constants.js';
 import type {
   PointerCancellationCheckDetails,
   PointerCancellationCheckResult,
@@ -21,6 +22,10 @@ const validateEnvelope = ajv.compile(
 );
 
 const RULE_ID = 'a11y-skills/pointer-cancellation';
+
+test('押した後の既定の待ちは 150ms（Plan 021 で 5 ページと fixture 17 件の結果が 300ms と同じだった値）', () => {
+  expect(POINTER_CANCELLATION_SETTLE_MS).toBe(150);
+});
 
 async function runCancel(
   fixture: string,
@@ -779,9 +784,13 @@ test('settleMs より後に移動するページでも、後ろのボタンは e
     'slow-navigation.html',
     { page, browser, testInfo },
     baseUrl,
+    { settleMs: 300 },
   );
 
   expect(result.details.untested).toEqual([]);
+  expect(result.details.findings.map((f) => f.target.selector)).not.toContain(
+    '#after',
+  );
   expect(result.details.restarts).toBeGreaterThanOrEqual(1);
   expect(result.details.targetsTested).toBe(2);
 });

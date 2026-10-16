@@ -242,7 +242,9 @@ per step, the context is closed and the element is reported as untested
 that submits or saves on the down-event may really do so (handlers that check
 `isTrusted` do not react, and `touchstart` is not sent). Listeners are read
 through CDP, so this is **Chromium only**; elsewhere there is no listener
-evidence and a manual-check node is added. Delegation roots (listeners for 20
+evidence and a manual-check node is added. After each press the check waits
+`settleMs` (default 150 ms) for a change; a reaction that comes later is missed
+or may be reported on the next pressed element. Delegation roots (listeners for 20
 or more event types) and press listeners on `window` / `document` cannot be
 attributed to elements, and elements without an interactive role or inline
 handler are not pressed, so each adds a page-level manual-check node and makes
