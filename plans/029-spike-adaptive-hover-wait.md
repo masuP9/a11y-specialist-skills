@@ -13,6 +13,7 @@
 
 ## ステータス
 
+- **Codex plan review**: 通過（2 巡目、2026-10-16、見送った low 0 件。1 巡目の high「delayed-show はボタンの mouseleave で隠すと hoverable が stayed にならない」と medium「CSS fixture のきっかけは #wrap」を反映）
 - **優先度**: P2
 - **工数**: M（fixture 6 件 + 試作 + 計測 + 文書。検査の本実装は別プラン）
 - **リスク**: LOW（プロダクションコードはコミットしない。実ページへは読み取りのアクセスだけ）
