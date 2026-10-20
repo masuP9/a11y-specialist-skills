@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      focus-indicator visibility: transparent wrapper shown only after focus has
+      moved to another button
+    </title>
+    <style>
+      :focus {
+        outline: 3px solid #005fcc;
+      }
+      #wrapper {
+        opacity: 0;
+      }
+      #wrapper.shown {
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="wrapper"><button id="hidden-button">Hidden</button></div>
+    <button id="other">Other</button>
+    <script>
+      document
+        .getElementById('hidden-button')
+        .addEventListener('focusin', () => {
+          setTimeout(() => {
+            document.getElementById('other').focus();
+            document.getElementById('wrapper').classList.add('shown');
+          }, 0);
+        });
+    </script>
+  </body>
+</html>

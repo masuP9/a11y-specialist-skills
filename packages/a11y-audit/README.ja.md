@@ -499,7 +499,7 @@ context でページを開くため、属性はページの読み込み時点で
 - `shadowHosts`: open な shadow root の中の要素は、外側から順に host の selector。外の要素は `[]`。
   `selector` はその shadow root の中での selector です（host ではなく、中の要素そのものを記録します）。
 - iframe の中の要素の `rect` は、主ページではなくその iframe の文書の左上が原点です。
-- `visibility`（`allElements` のみ）: フォーカスを受けた瞬間に同期的に測った「要素が画面に出ているか」。
+- `visibility`（`allElements` のみ）: フォーカスを受けた瞬間に測った「要素が画面に出ているか」（見えないと測った要素は、Tab のあとの待ちの後にもう一度測る）。
   `{ visible: boolean | null, reason }` で、`reason` は `visible` が `false` のときだけ値を持ちます
   （`ancestor-overflow`: 祖先の `overflow` が切り取る、`ancestor-opacity`: 祖先の `opacity` が 0、
   `own-opacity`: 自身の `opacity` が 0、`outside-viewport`: 文書の左か上の外）。要素か表示上の祖先が
@@ -507,8 +507,9 @@ context でページを開くため、属性はページの読み込み時点で
   `transform` で切り取りを決められない、`clip-path` / `clip` があるとき、`overflow: clip` の祖先に `overflow-clip-margin` が付いているとき、要素の大きさが 0（`scale(0)` など）のときも `null` です。右と下の外は
   ブラウザがフォーカスでスクロールするので見ません。記録だけで、2.4.7 の判定（`issues`）には使いません。
   iframe の中の要素はその文書の中だけで決め、その iframe 自身が見えるかは見ません。
-  フォーカスした瞬間に測るので、ページの JS が `focusin` の後（タイマー・次のフレームなど）で開くメニューは、
-  閉じたまま測られることがあります。`position: fixed` の要素はビューポートの 4 辺で、`dir="rtl"` では
+  見えないと測った要素は、Tab のあとの待ち（`navigationSettleMs`）の後にもう一度測ります（そのときまだ
+  フォーカスがある場合だけ）。それより遅れて出す作りは見えないと記録されうるので、そのときは
+  `navigationSettleMs` を上げてください。`position: fixed` の要素はビューポートの 4 辺で、`dir="rtl"` では
   右側を「届かない側」として判定します。`writing-mode` が `horizontal-tb` 以外のときは画面の外でも `null` です。
 - closed な shadow root の中は見えず、host として記録されます。iframe の外の固定要素が iframe の
   中の要素を隠す場合は検出しません（隠れ判定は文書ごと）。
