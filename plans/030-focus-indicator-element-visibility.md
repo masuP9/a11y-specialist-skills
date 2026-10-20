@@ -30,7 +30,7 @@
 
 ## 現状
 
-- `packages/a11y-audit/src/playwright/runFocusIndicatorCheck.ts`: Tab を押し、`navigationSettleMs` 待ってから記録する（572 行目付近）。要素の情報はページに入れたスクリプト（`createFocusTrackerScript`、819 行目〜）で作る。覆われた要素は `focusObscuredIssues`（312・433 行目）。要素ごとの記録は `details.allElements`。
+- `packages/a11y-audit/src/playwright/runFocusIndicatorCheck.ts`: 要素の記録は、ページに入れたスクリプト（`createFocusTrackerScript`）の `focusin` の処理 `onFocusIn`（1535 行目付近）の中で**同期的に**取り、`reportFocus` で Node 側へ送る。覆われた判定 `checkFocusObscured`（1288 行目〜、結果は `focusObscuredIssues`）も同じ処理の最後で同期的に呼ぶ。Node 側の `navigationSettleMs`（既定 50ms、`constants.ts`）は遷移を待つためのもので、記録の時点とは関係しない。要素ごとの記録は `details.allElements`。
 - `packages/a11y-audit/src/detectors/media-playback.ts:215-286`: 祖先の `overflow` による切り取りを確かめる先例。
   - 祖先をたどる（`assignedSlot` → 親 → shadow root の host）。`overflow` が `visible` 以外の祖先の padding box（`getBoundingClientRect` + `clientLeft/Top` + `clientWidth/Height`）と要素の矩形が重ならなければ切り取られている。
   - 決めない（`null`）とき: 切り取る祖先がスクロールできる（`auto` / `scroll`）、要素と祖先の間に `position: fixed / absolute` の要素がある、祖先のどれかに `transform` / `scale` / `rotate` / `translate` がある、`clip-path` / `clip` がある。
@@ -53,8 +53,9 @@
 ## 手順
 
 1. `allElements` の各要素に `visibility: { visible: boolean | null; reason: "ancestor-overflow" | "ancestor-opacity" | "own-opacity" | "outside-viewport" | null }` を足す（名前は合わせて決めてよい。`reason` は `visible === false` のときだけ値を持つ）。
-2. **測る時点**: 記録する時点（Tab のあと待ってから）で測る。今の `focusObscuredIssues` がどの時点で測っているかを確かめ、フォーカスで開くメニュー（`:focus-within` で 200ms の `transition`）を「見えない」と取り違えない時点にする。取り違える場合は、待ちを足すのではなく測る場所を変える。どちらでも取り違えるなら STOP。
+2. **測る時点**: 今の記録と同じく `onFocusIn` の中で同期的に測る（`checkFocusObscured` と同じ時点）。待ちは足さず、非同期の報告も作らない。フォーカスで始まる見た目の変化（`:focus-within` で 200ms の `transition` で開くメニューなど）を「見えない」と取り違えないため、次の判定の最初で「動いている途中」を `null` にする。
 3. 判定（上から順に、最初に当たったもの）:
+   - 要素自身か表示上の祖先（下の祖先のたどり方と同じ）に、`playState` が `running` の `Animation`（CSS transition / CSS animation / Web Animations。`el.getAnimations()` で取る）がある → `null`。測るのは矩形などを読んでスタイルを確定させた後にする（`focusin` の時点ではまだ transition が始まっておらず、`getAnimations()` が空になりうるため）。終わりのないアニメーションが祖先にあるページはいつも `null` になるが、それは許容する
    - 自身の `opacity` が 0 → `false` / `own-opacity`
    - `checkVisibility({ opacityProperty: true })` が偽（祖先が透明）→ `false` / `ancestor-opacity`
    - 祖先の `overflow` の切り取り: `media-playback.ts` の判定を共通の関数に出して使う（重複させない）。**平行移動だけの `transform`（`matrix(1, 0, 0, 1, x, y)`、`translate` だけ）は決めない理由にしない。** 拡大・回転・`scale` / `rotate`・3D は今までどおり決めない。確かに切り取られていれば `false` / `ancestor-overflow`、決められなければ `null`
@@ -69,7 +70,8 @@
    - `opacity: 0` の checkbox を label の上に重ねた作り → `false` / `own-opacity`
    - `left: -9999px` で、`:focus` で `left: 0` に戻るスキップリンク → `true`
    - `left: -9999px` のままのリンク → `false` / `outside-viewport`
-   - `:focus-within` で 200ms の `transition` をかけて開くメニューのリンク → `true`
+   - `:focus-within` で 200ms の `transition`（`height` / `opacity`）をかけて開くメニューのリンク → `null`（`false` にならないこと）
+   - `transition: height 200ms` を指定してあるが、フォーカスでは開かない（閉じたまま）メニューのリンク → `false` / `ancestor-overflow`（transition の指定があるだけでは `null` にしないこと）
    - `overflow: auto` の祖先の外のリンク → `null`
    - `transform: scale(0.5)` の祖先の中で切り取られたリンク → `null`
    - ふつうのボタン → `true`
@@ -86,7 +88,8 @@
 
 ## STOP 条件
 
-- 手順 2 で、どの時点で測ってもフォーカスで開くメニューを「見えない」と取り違える。
+- 手順 3 の「動いている途中」の判定を入れても、フォーカスで開くメニューのリンクが `false` になる（`getAnimations()` で transition が取れない）。
+- `onFocusIn` で `visibility` を測ると、既存のテスト（`focusObscuredIssues`・`issues`・3.2.1 など）の期待を変えないと通らない。
 - 共通にしたことで、`media-playback` の既存のテストの期待を変えないと通らない（平行移動だけの `transform` の分は除く）。
 - 差分確認で「現状」と食い違う。
 
