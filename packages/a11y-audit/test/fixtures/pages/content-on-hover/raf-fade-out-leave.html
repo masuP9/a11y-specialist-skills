@@ -1,0 +1,74 @@
+<!doctype html>
+<!--
+  The tooltip sits 8px away from the button. The button's mouseleave fades it
+  out over 300ms with a requestAnimationFrame loop (like jQuery's fadeOut,
+  not a CSS animation), then hides it. Escape and blur hide it at once.
+  Expected: one trigger (#btn). Hover result: persistent "stayed",
+  dismissible "dismissed", hoverable "disappeared". Measured: a fixed
+  200ms wait still gives "disappeared" (the 10-step pointer move and the
+  evaluate round trip add over 100ms); a fixed 100ms wait gives "stayed".
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>requestAnimationFrame fade out on leave</title>
+    <style>
+      .wrap {
+        position: relative;
+        display: inline-block;
+      }
+      .tip {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        width: 140px;
+        padding: 8px;
+        background: #222;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <span class="wrap">
+        <button id="btn" type="button">Info</button>
+        <div id="tip" class="tip" role="tooltip" hidden>Helpful tip</div>
+      </span>
+    </main>
+    <script>
+      const btn = document.getElementById('btn');
+      const tip = document.getElementById('tip');
+      let frame = 0;
+      const stop = () => {
+        cancelAnimationFrame(frame);
+      };
+      const show = () => {
+        stop();
+        tip.style.opacity = '1';
+        tip.hidden = false;
+      };
+      const hide = () => {
+        stop();
+        tip.hidden = true;
+      };
+      const fadeOut = () => {
+        stop();
+        const start = performance.now();
+        const step = (now) => {
+          const t = Math.min((now - start) / 300, 1);
+          tip.style.opacity = String(1 - t);
+          if (t < 1) frame = requestAnimationFrame(step);
+          else tip.hidden = true;
+        };
+        frame = requestAnimationFrame(step);
+      };
+      btn.addEventListener('mouseenter', show);
+      btn.addEventListener('focus', show);
+      btn.addEventListener('mouseleave', fadeOut);
+      btn.addEventListener('blur', hide);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') hide();
+      });
+    </script>
+  </body>
+</html>
