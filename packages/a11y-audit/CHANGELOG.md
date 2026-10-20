@@ -3,7 +3,7 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 0.16.0 — 2026-10-20
 
 ### Added
 
@@ -22,7 +22,11 @@ adheres to [Semantic Versioning](https://semver.org/).
   1, x, y)` or `translate`) on an ancestor no longer makes the clipping by an
   `overflow` ancestor undetermined, so a media element it cuts off is now
   `visible: false` instead of `null`. Scaling, rotating and 3D transforms still
-  leave it undetermined.
+  leave it undetermined. The clipping check (now shared with
+  `focus-indicator-check`) also looks at each axis on its own, skips the root
+  element, a `body` whose overflow goes to the viewport, `display: contents`
+  and non-replaced inline ancestors, and leaves an `overflow: clip` ancestor
+  with an `overflow-clip-margin` undetermined.
 
 ## 0.15.0 — 2026-10-16
 
