@@ -1,6 +1,7 @@
 /**
  * `allElements[].visibility` records whether the focused element is on screen,
- * measured synchronously when it receives focus.
+ * measured when it receives focus (and again after the Tab's settle wait when
+ * it was not visible).
  */
 
 import { test, expect } from './helpers/fixtures.js';
@@ -381,4 +382,55 @@ test('overflow: hidden の箱の中にある幅と高さが 0 で文字がはみ
 
   const link = result.details.allElements.find((e) => e.tag === 'A');
   expect(link?.visibility).toEqual({ visible: null, reason: null });
+});
+
+test('スクロールイベントで節を出す作りで、フォーカスのスクロールのあとに出る節の中のリンクは visible が false にならない', async ({
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runFocusIndicatorCheck({
+    browser,
+    targetUrl: `${baseUrl}/focus-indicator/visibility-scroll-reveal.html`,
+    outputDir: testInfo.outputDir,
+  });
+
+  const link = result.details.allElements.find((e) => e.tag === 'A');
+  expect(link).toBeDefined();
+  // 300ms の transition の途中か終わった後かは実行環境の速さで変わる。
+  expect([true, null]).toContain(link?.visibility.visible);
+  expect(link?.visibility.reason).toBeNull();
+});
+
+test('IntersectionObserver で節を出す作りで、フォーカスのスクロールのあとに出る節の中のリンクは visible が true になる', async ({
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runFocusIndicatorCheck({
+    browser,
+    targetUrl: `${baseUrl}/focus-indicator/visibility-reveal-observer.html`,
+    outputDir: testInfo.outputDir,
+  });
+
+  const link = result.details.allElements.find((e) => e.tag === 'A');
+  expect(link).toBeDefined();
+  expect(link?.visibility).toEqual({ visible: true, reason: null });
+});
+
+test('フォーカスが別のボタンへ移ったあとに祖先が出る作りでは、元のボタンは ancestor-opacity で見えないまま', async ({
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runFocusIndicatorCheck({
+    browser,
+    targetUrl: `${baseUrl}/focus-indicator/visibility-reveal-after-blur.html`,
+    outputDir: testInfo.outputDir,
+  });
+
+  const hidden = result.details.allElements.find((e) =>
+    e.selector.includes('hidden-button'),
+  );
+  expect(hidden?.visibility).toEqual({
+    visible: false,
+    reason: 'ancestor-opacity',
+  });
 });

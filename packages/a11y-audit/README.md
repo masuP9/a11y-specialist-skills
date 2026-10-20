@@ -602,7 +602,8 @@ The focus indicator check's element records (`allElements`, `issues`, and the
 - `rect` of an element in an iframe is relative to that iframe's document, not
   the main page.
 - `visibility` (`allElements` only): whether the element is on screen, measured
-  synchronously at the moment it received focus. `{ visible: boolean | null,
+  at the moment it received focus (an element measured as not visible is
+  measured again after the wait that follows each Tab). `{ visible: boolean | null,
   reason }`; `reason` has a value only when `visible` is `false`
   (`ancestor-overflow`: an ancestor's `overflow` cuts it off,
   `ancestor-opacity`: an ancestor has `opacity: 0`, `own-opacity`: the element
@@ -618,9 +619,10 @@ The focus indicator check's element records (`allElements`, `issues`, and the
   are not checked because the browser scrolls there on focus. This is a record
   only; it does not feed the 2.4.7 `issues`. An element in an iframe is judged
   inside its own document only; whether the iframe itself is visible is not
-  checked. It is measured at the instant of focus, so a menu that the page's
-  JS opens after `focusin` (a timer, the next frame) can be measured while
-  still closed. A `position: fixed` element is judged against all four
+  checked. An element measured as not visible is measured again after the wait
+  that follows each Tab (`navigationSettleMs`), only if it still has focus
+  then. A page that shows it later than that can still be recorded as not
+  visible; raise `navigationSettleMs` in that case. A `position: fixed` element is judged against all four
   viewport edges, and in `dir="rtl"` the right side is the unreachable one.
   With a `writing-mode` other than `horizontal-tb`, being off screen gives
   `null`.

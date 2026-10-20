@@ -376,8 +376,11 @@ export async function runFocusIndicatorCheck(
       focusObscuredIssues.length = 0;
       // One entry per focusHistory record: the element and the document that
       // reported it, used to pick the 3.2.1 culprit.
-      const focusReports: { ref: FocusElementRef; documentToken: string }[] =
-        [];
+      const focusReports: {
+        ref: FocusElementRef;
+        documentToken: string;
+        localId: number;
+      }[] = [];
       let navigationDetected = false;
       // True from a Tab press until its report window ends, so only a focusin
       // caused by that press gets a tabStep (autofocus and scripted focus get
@@ -392,8 +395,12 @@ export async function runFocusIndicatorCheck(
         'reportFocus',
         ({
           documentToken,
+          localId,
           ...reported
-        }: Omit<FocusRecord, 'id' | 'tabStep'> & { documentToken: string }) => {
+        }: Omit<FocusRecord, 'id' | 'tabStep'> & {
+          documentToken: string;
+          localId: number;
+        }) => {
           const data: FocusRecord = {
             id: focusHistory.length,
             tabStep: tabPending ? attemptTabPresses : null,
@@ -403,7 +410,11 @@ export async function runFocusIndicatorCheck(
           // Filled in after the screenshots; stays null when none could be made.
           if (screenshotDiff) data.visualDiff = null;
           focusHistory.push(data);
-          focusReports.push({ ref: toElementRef(data), documentToken });
+          focusReports.push({
+            ref: toElementRef(data),
+            documentToken,
+            localId,
+          });
         },
       );
 
@@ -664,6 +675,39 @@ export async function runFocusIndicatorCheck(
           }
           lateNavigationUrl = null;
           break;
+        }
+
+        // Measure again what was not visible at focus: the page may have shown
+        // it during the settle wait. Keeps the first record when the frame is
+        // gone, the call fails, or the element no longer has focus.
+        for (let r = recordedBeforeTab; r < focusHistory.length; r++) {
+          // focusReports is pushed in the same callback as focusHistory, so
+          // both have the same length.
+          const record = focusHistory[r]!;
+          if (record.visibility.visible !== false) continue;
+          const { documentToken, localId } = focusReports[r]!;
+          for (const frame of page.frames()) {
+            const remeasured = await frame
+              .evaluate(
+                ([token, id]) => {
+                  const w = window as unknown as {
+                    focusAuditDocumentToken?: string;
+                    __a11yRemeasureVisibility?: (
+                      id: number,
+                    ) => FocusVisibility | null;
+                  };
+                  return w.focusAuditDocumentToken === token
+                    ? (w.__a11yRemeasureVisibility?.(id) ?? null)
+                    : null;
+                },
+                [documentToken, localId] as const,
+              )
+              .catch(() => null);
+            if (remeasured) {
+              record.visibility = remeasured;
+              break;
+            }
+          }
         }
 
         const focusedRecord = focusHistory[focusHistory.length - 1];
@@ -965,6 +1009,9 @@ function createFocusTrackerScript(args: {
   const baseStyles = new Map<Element, Record<string, string>>();
   const elementSelectors = new Map<Element, string>();
   let focusId = 0;
+  // Elements measured as not visible at focus, by focusId (see
+  // remeasureVisibility).
+  const hiddenAtFocus = new Map<number, Element>();
 
   // Tells this document apart from a page reached by navigation, which runs
   // this script again (randomUUID needs a secure context).
@@ -1659,6 +1706,27 @@ function createFocusTrackerScript(args: {
   };
 
   /**
+   * Measure again an element that was measured as not visible when it got
+   * focus. Null (keep the first record) when it is unknown or no longer the
+   * focused element: a page that moved focus away has nothing to show.
+   */
+  const remeasureVisibility = (localId: number): FocusVisibility | null => {
+    const el = hiddenAtFocus.get(localId);
+    hiddenAtFocus.delete(localId);
+    if (!el || !el.isConnected || !document.hasFocus()) return null;
+    let active = document.activeElement;
+    while (active?.shadowRoot?.activeElement) {
+      active = active.shadowRoot.activeElement;
+    }
+    return active === el ? measureVisibility(el) : null;
+  };
+  (
+    window as unknown as {
+      __a11yRemeasureVisibility: typeof remeasureVisibility;
+    }
+  ).__a11yRemeasureVisibility = remeasureVisibility;
+
+  /**
    * Handle focus events
    */
   const onFocusIn = (e: FocusEvent): void => {
@@ -1708,6 +1776,12 @@ function createFocusTrackerScript(args: {
       addAnnotationBox(el, '⚠ No Focus Style', '');
     }
 
+    // A page that shows the element after focus (e.g. a scroll handler that
+    // reveals a section) is still hidden here; remember it for a re-measure
+    // once the Tab's settle wait is over.
+    const visibility = measureVisibility(el);
+    if (visibility.visible === false) hiddenAtFocus.set(id, el);
+
     // Report to test
     (window as unknown as { reportFocus: (data: unknown) => void }).reportFocus(
       {
@@ -1723,12 +1797,13 @@ function createFocusTrackerScript(args: {
           el.getAttribute('aria-label') || el.textContent?.slice(0, 30) || '',
         hasFocusStyle,
         diff,
-        visibility: measureVisibility(el),
+        visibility,
         selector: elementSelectors.get(el) || getSelector(el),
         ...getHtmlSnippet(el),
         ...getEcho(el),
         ...getLocation(el),
         documentToken,
+        localId: id,
       },
     );
 

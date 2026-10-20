@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      focus-indicator visibility: section revealed by a scroll handler after
+      focus scrolls to it
+    </title>
+    <style>
+      :focus {
+        outline: 3px solid #005fcc;
+      }
+      .spacer {
+        height: 150vh;
+      }
+      .section {
+        height: 200px;
+        opacity: 0;
+        transform: translateY(40px);
+        transition:
+          opacity 300ms,
+          transform 300ms;
+      }
+      .section.shown {
+        opacity: 1;
+        transform: none;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="first">First</button>
+    <div class="spacer"></div>
+    <div class="section" id="section">
+      <a id="more" href="#more">Read more</a>
+    </div>
+    <script>
+      // Like AOS with once: false: show the section while it is in view.
+      const section = document.getElementById('section');
+      const update = () => {
+        const top = section.getBoundingClientRect().top + window.scrollY;
+        section.classList.toggle(
+          'shown',
+          window.scrollY + window.innerHeight > top + 100,
+        );
+      };
+      window.addEventListener('scroll', update);
+      update();
+    </script>
+  </body>
+</html>

@@ -3,6 +3,16 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixed
+
+- `focus-indicator-check`: an element measured as `visible: false` is measured
+  again after the wait that follows each Tab (`navigationSettleMs`), if it still
+  has focus then. A section that a scroll handler or an IntersectionObserver
+  shows after focus has scrolled to it is no longer recorded as
+  `ancestor-opacity`.
+
 ## 0.16.0 — 2026-10-20
 
 ### Added
