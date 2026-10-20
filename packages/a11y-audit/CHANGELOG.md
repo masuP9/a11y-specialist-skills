@@ -3,7 +3,7 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 0.16.1 — 2026-10-21
 
 ### Fixed
 
