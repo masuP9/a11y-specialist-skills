@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      focus-indicator visibility: closed menu that has a transition but never
+      opens
+    </title>
+    <style>
+      :focus {
+        outline: 3px solid #005fcc;
+      }
+      .panel {
+        height: 0;
+        overflow: hidden;
+        transition: height 200ms;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="panel"><a id="inner" href="#main">Inner link</a></div>
+    <main id="main"><p>Content</p></main>
+  </body>
+</html>

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      focus-indicator visibility: link left off the right edge of an rtl page
+    </title>
+    <style>
+      :focus {
+        outline: 3px solid #005fcc;
+      }
+      .offscreen {
+        position: absolute;
+        right: -9999px;
+      }
+    </style>
+  </head>
+  <body>
+    <a id="offscreen" class="offscreen" href="#main">Hidden link</a>
+    <main id="main"><p>Content</p></main>
+  </body>
+</html>

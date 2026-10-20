@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      focus-indicator visibility: menu opening on focus with a transition
+    </title>
+    <style>
+      :focus {
+        outline: 3px solid #005fcc;
+      }
+      .panel {
+        height: 0;
+        overflow: hidden;
+        opacity: 0;
+        transition:
+          height 200ms,
+          opacity 200ms;
+      }
+      .panel:focus-within {
+        height: 60px;
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="panel"><a id="inner" href="#main">Inner link</a></div>
+    <main id="main"><p>Content</p></main>
+  </body>
+</html>

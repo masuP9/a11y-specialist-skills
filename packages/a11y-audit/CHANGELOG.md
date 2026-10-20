@@ -3,6 +3,27 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Added
+
+- `focus-indicator-check`: every `details.allElements` record has a
+  `visibility: { visible, reason }` that says whether the focused element is on
+  screen, measured synchronously when it received focus (`reason`:
+  `ancestor-overflow`, `ancestor-opacity`, `own-opacity`, `outside-viewport`).
+  `visible` is `null` while the element or an ancestor is animating or
+  transitioning a property that affects how it shows (`opacity`, size,
+  position, `transform`; outline, shadow and color transitions are ignored), or when the clipping cannot be decided. Record only: it does
+  not change `issues`.
+
+### Changed
+
+- `auto-play-detection`: a `transform` that only translates (`matrix(1, 0, 0,
+  1, x, y)` or `translate`) on an ancestor no longer makes the clipping by an
+  `overflow` ancestor undetermined, so a media element it cuts off is now
+  `visible: false` instead of `null`. Scaling, rotating and 3D transforms still
+  leave it undetermined.
+
 ## 0.15.0 — 2026-10-16
 
 **Heads-up** — the new `content-on-hover-check` really hovers and focuses

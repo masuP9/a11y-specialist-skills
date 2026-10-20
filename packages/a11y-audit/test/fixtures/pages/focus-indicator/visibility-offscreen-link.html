@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>focus-indicator visibility: link left off screen for good</title>
+    <style>
+      :focus {
+        outline: 3px solid #005fcc;
+      }
+      .offscreen {
+        position: absolute;
+        left: -9999px;
+      }
+    </style>
+  </head>
+  <body>
+    <a id="offscreen" class="offscreen" href="#main">Hidden link</a>
+    <main id="main"><p>Content</p></main>
+  </body>
+</html>

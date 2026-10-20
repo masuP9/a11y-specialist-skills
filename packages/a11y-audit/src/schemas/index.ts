@@ -410,12 +410,35 @@ export const FOCUS_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
         type: 'array',
         items: {
           type: 'object',
-          required: ['id', 'tabStep', 'rect', 'frame', 'shadowHosts'],
+          required: [
+            'id',
+            'tabStep',
+            'rect',
+            'frame',
+            'shadowHosts',
+            'visibility',
+          ],
           properties: {
             id: { type: 'number' },
             ...FOCUS_LOCATION_PROPS,
             tabStep: { type: ['number', 'null'] },
             rect: PAGE_RECT_SCHEMA,
+            visibility: {
+              type: 'object',
+              required: ['visible', 'reason'],
+              properties: {
+                visible: { type: ['boolean', 'null'] },
+                reason: {
+                  enum: [
+                    'ancestor-overflow',
+                    'ancestor-opacity',
+                    'own-opacity',
+                    'outside-viewport',
+                    null,
+                  ],
+                },
+              },
+            },
             visualDiff: FOCUS_VISUAL_DIFF_SCHEMA,
           },
         },

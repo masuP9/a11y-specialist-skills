@@ -114,6 +114,24 @@ test(
 );
 
 test(
+  '平行移動だけの transform の祖先が overflow: hidden で切り取った controls 付き audio は見えない(visible: false)と決められ、auto-play-audio が incomplete になる',
+  async ({ baseUrl, page, browser }, testInfo) => {
+    const result = await runFixtureCheck(
+      'auto-play-detection',
+      'auto-play-audio/finding-translated-clip.html',
+      baseUrl,
+      { page, browser, testInfo },
+      { quiet: true },
+    );
+
+    assertRuleBuckets(result, { 'a11y-skills/auto-play-audio': 'incomplete' });
+    const media = (result.details as AutoPlayDetectionDetails).mediaElements;
+    expect(media[0]).toMatchObject({ controls: true, visible: false });
+  },
+  { timeout: 60_000 },
+);
+
+test(
   '同じページに「ミュート」ボタンがあると、auto-play-audio は incomplete のまま controlsInFrame にそのボタンが入る',
   async ({ baseUrl, page, browser }, testInfo) => {
     const result = await runFixtureCheck(

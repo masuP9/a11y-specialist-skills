@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      focus-indicator visibility: button scrolled to inside a root with overflow
+      hidden
+    </title>
+    <style>
+      :focus {
+        outline: 3px solid #005fcc;
+      }
+      html {
+        overflow: hidden;
+      }
+      .spacer {
+        height: 1500px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="spacer"></div>
+    <button id="far">Far button</button>
+  </body>
+</html>

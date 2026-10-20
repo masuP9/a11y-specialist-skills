@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>focus-indicator visibility: button whose outline fades in</title>
+    <style>
+      button {
+        outline: 0 solid transparent;
+        transition:
+          outline-color 200ms,
+          outline-width 200ms;
+      }
+      button:focus {
+        outline: 3px solid #005fcc;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="fade">Fade</button>
+  </body>
+</html>

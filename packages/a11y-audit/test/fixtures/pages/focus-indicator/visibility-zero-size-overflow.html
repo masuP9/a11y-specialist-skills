@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      focus-indicator visibility: zero-size link whose text overflows
+    </title>
+    <style>
+      :focus {
+        outline: 3px solid #005fcc;
+      }
+      a {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 0;
+        height: 0;
+        overflow: visible;
+      }
+    </style>
+  </head>
+  <body>
+    <a id="zero" href="#main">Overflowing text</a>
+    <main id="main"><p>Content</p></main>
+  </body>
+</html>

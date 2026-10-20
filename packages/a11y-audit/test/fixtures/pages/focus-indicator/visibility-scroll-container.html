@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      focus-indicator visibility: link below the box of a scrollable ancestor
+    </title>
+    <style>
+      :focus {
+        outline: 3px solid #005fcc;
+      }
+      .box {
+        height: 40px;
+        margin-top: 150px;
+        overflow: auto;
+      }
+      .spacer {
+        height: 200px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="box">
+      <a id="inner" style="position: relative; top: -100px" href="#main"
+        >Inner link</a
+      >
+    </div>
+    <main id="main"><p>Content</p></main>
+  </body>
+</html>

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      focus-indicator visibility: clipped link inside a scaled ancestor
+    </title>
+    <style>
+      :focus {
+        outline: 3px solid #005fcc;
+      }
+      .scaled {
+        transform: scale(0.5);
+        transform-origin: top left;
+      }
+      .box {
+        height: 40px;
+        margin-top: 150px;
+        overflow: hidden;
+      }
+      .spacer {
+        height: 200px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="scaled">
+      <div class="box">
+        <a id="inner" style="position: relative; top: -100px" href="#main"
+          >Inner link</a
+        >
+      </div>
+    </div>
+    <main id="main"><p>Content</p></main>
+  </body>
+</html>

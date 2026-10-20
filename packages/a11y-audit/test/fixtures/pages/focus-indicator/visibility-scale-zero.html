@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>focus-indicator visibility: button inside a scale(0) ancestor</title>
+    <style>
+      :focus {
+        outline: 3px solid #005fcc;
+      }
+      .collapsed {
+        margin: 100px;
+        transform: scale(0);
+        transform-origin: top left;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="collapsed"><button id="tiny">Tiny</button></div>
+  </body>
+</html>

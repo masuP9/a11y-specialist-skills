@@ -127,7 +127,8 @@ URL を書きます。最後の測定から消えるまでの音は数えませ�
 大きさ・`display`・`visibility`・`opacity` と、表示上の祖先（slot に割り当てられた要素は slot 側）で
 判断します。`overflow` が `hidden`・`clip` の祖先の枠線より内側の領域と重ならなければ見えないとし、
 `clip-path`（`none` 以外）や `clip`（`auto` 以外）があるとき、重ならない祖先がスクロールできるとき、
-`fixed`・`absolute` の箱が祖先からはみ出しうるとき、`transform` などで領域の位置が決まらないときは
+`fixed`・`absolute` の箱が祖先からはみ出しうるとき、拡大・回転・`scale`・`rotate`・3D の `transform` で
+領域の位置が決まらないときは（平行移動だけの `transform` / `translate` は位置が決まるので除く）
 決めきれないとして `incomplete` にします。
 一部だけの切り取りや画面外の位置までは見ません。測るのは検査を始めてから（ページを開いた後）
 なので、それより前に鳴った音は数えません。同じ page で検査を繰り返しても、記録は検査ごとに
@@ -498,6 +499,17 @@ context でページを開くため、属性はページの読み込み時点で
 - `shadowHosts`: open な shadow root の中の要素は、外側から順に host の selector。外の要素は `[]`。
   `selector` はその shadow root の中での selector です（host ではなく、中の要素そのものを記録します）。
 - iframe の中の要素の `rect` は、主ページではなくその iframe の文書の左上が原点です。
+- `visibility`（`allElements` のみ）: フォーカスを受けた瞬間に同期的に測った「要素が画面に出ているか」。
+  `{ visible: boolean | null, reason }` で、`reason` は `visible` が `false` のときだけ値を持ちます
+  （`ancestor-overflow`: 祖先の `overflow` が切り取る、`ancestor-opacity`: 祖先の `opacity` が 0、
+  `own-opacity`: 自身の `opacity` が 0、`outside-viewport`: 文書の左か上の外）。要素か表示上の祖先が
+  見え方に関わるプロパティ（`opacity`・大きさ・位置・`transform` など）のアニメーション・transition の途中（フォーカスで開くメニューなど。`outline`・影・色だけの transition は無視）、スクロールできる祖先・拡大や回転の
+  `transform` で切り取りを決められない、`clip-path` / `clip` があるとき、`overflow: clip` の祖先に `overflow-clip-margin` が付いているとき、要素の大きさが 0（`scale(0)` など）のときも `null` です。右と下の外は
+  ブラウザがフォーカスでスクロールするので見ません。記録だけで、2.4.7 の判定（`issues`）には使いません。
+  iframe の中の要素はその文書の中だけで決め、その iframe 自身が見えるかは見ません。
+  フォーカスした瞬間に測るので、ページの JS が `focusin` の後（タイマー・次のフレームなど）で開くメニューは、
+  閉じたまま測られることがあります。`position: fixed` の要素はビューポートの 4 辺で、`dir="rtl"` では
+  右側を「届かない側」として判定します。`writing-mode` が `horizontal-tb` 以外のときは画面の外でも `null` です。
 - closed な shadow root の中は見えず、host として記録されます。iframe の外の固定要素が iframe の
   中の要素を隠す場合は検出しません（隠れ判定は文書ごと）。
 

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      focus-indicator visibility: button in the overflow-clip-margin of a
+      clipping box
+    </title>
+    <style>
+      :focus {
+        outline: 3px solid #005fcc;
+      }
+      .box {
+        margin-top: 50px;
+        height: 50px;
+        overflow: clip;
+        overflow-clip-margin: 40px;
+      }
+      .spacer {
+        height: 60px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="box">
+      <div class="spacer"></div>
+      <button id="margin">Margin</button>
+    </div>
+  </body>
+</html>

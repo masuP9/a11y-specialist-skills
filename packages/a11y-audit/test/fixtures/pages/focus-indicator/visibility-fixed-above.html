@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      focus-indicator visibility: link in a fixed header above the viewport
+    </title>
+    <style>
+      :focus {
+        outline: 3px solid #005fcc;
+      }
+      header {
+        position: fixed;
+        top: -100px;
+        left: 0;
+      }
+      .spacer {
+        height: 3000px;
+      }
+    </style>
+  </head>
+  <body>
+    <header><a id="menu-link" href="#main">Menu</a></header>
+    <div class="spacer"></div>
+    <main id="main"><p>Content</p></main>
+    <script>
+      window.scrollTo(0, 500);
+    </script>
+  </body>
+</html>

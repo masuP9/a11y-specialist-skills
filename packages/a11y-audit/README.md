@@ -169,7 +169,8 @@ DOM parent). An ancestor with overflow `hidden` / `clip` whose padding box
 (inside its border) does not overlap the element makes it invisible;
 `clip-path` (not `none`) or `clip` (not `auto`), a non-overlapping scroll
 container, a fixed / absolute box that may escape the ancestor, or a
-transform that keeps the padding box from being placed makes visibility
+scaling, rotating or 3D transform that keeps the padding box from being placed
+(a translation alone does not) makes visibility
 undetermined (`incomplete`).
 Partial clipping and off-screen position are not checked. Recording starts
 when the check starts (after the page is opened), so sound before that is not
@@ -600,6 +601,29 @@ The focus indicator check's element records (`allElements`, `issues`, and the
   shadow root (the inner element is recorded, not the host).
 - `rect` of an element in an iframe is relative to that iframe's document, not
   the main page.
+- `visibility` (`allElements` only): whether the element is on screen, measured
+  synchronously at the moment it received focus. `{ visible: boolean | null,
+  reason }`; `reason` has a value only when `visible` is `false`
+  (`ancestor-overflow`: an ancestor's `overflow` cuts it off,
+  `ancestor-opacity`: an ancestor has `opacity: 0`, `own-opacity`: the element
+  has `opacity: 0`, `outside-viewport`: outside the document's left or top
+  edge). It is `null` while the element or a rendered ancestor is
+  running an animation or transition on a property that can change how it shows
+  (`opacity`, size, position, `transform`; for example a menu that opens on
+  focus; transitions of only `outline`, shadows or colors are ignored), when a scroll
+  container or a scaling / rotating transform keeps the clipping from being
+  decided, when `clip-path` / `clip` is present, when a clipping ancestor has a non-zero
+  `overflow-clip-margin`, or when the element's size is 0 (for example under
+  `scale(0)`). The right and bottom edges
+  are not checked because the browser scrolls there on focus. This is a record
+  only; it does not feed the 2.4.7 `issues`. An element in an iframe is judged
+  inside its own document only; whether the iframe itself is visible is not
+  checked. It is measured at the instant of focus, so a menu that the page's
+  JS opens after `focusin` (a timer, the next frame) can be measured while
+  still closed. A `position: fixed` element is judged against all four
+  viewport edges, and in `dir="rtl"` the right side is the unreachable one.
+  With a `writing-mode` other than `horizontal-tb`, being off screen gives
+  `null`.
 - Closed shadow roots are not seen (the host is recorded). Fixed content outside
   an iframe is not detected as hiding an element inside it (obscuring is judged
   per document).
