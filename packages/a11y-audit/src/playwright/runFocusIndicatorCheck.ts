@@ -24,9 +24,14 @@ import type {
   FocusCheckResult,
   FocusCheckDetails,
   FocusObscuredIssue,
+  FocusVisibility,
   FocusVisualDiff,
   PageRect,
 } from '../types.js';
+import {
+  measureAncestorClip,
+  type AncestorClip,
+} from '../utils/ancestor-clip.js';
 import {
   FOCUSABLE_SELECTOR,
   FOCUS_STYLE_PROPERTIES,
@@ -433,6 +438,12 @@ export async function runFocusIndicatorCheck(
           focusObscuredIssues.push(data);
         },
       );
+
+      // The tracker is serialized on its own, so the shared clip measurement
+      // is put in the page first and read from `window`.
+      await page.addInitScript({
+        content: `window.__a11yMeasureAncestorClip = ${measureAncestorClip};`,
+      });
 
       // Inject focus tracking script with current skip list
       await page.addInitScript(createFocusTrackerScript, {
@@ -1530,6 +1541,124 @@ function createFocusTrackerScript(args: {
   }
 
   /**
+   * Whether the focused element is on screen, read synchronously like the
+   * rest of the record. Undetermined while it or a rendered ancestor is
+   * animating: a menu that opens on focus starts out clipped.
+   */
+  const measureVisibilityUnsafe = (el: Element): FocusVisibility => {
+    const renderedParent = (node: Element): Element | null =>
+      node.assignedSlot ??
+      node.parentElement ??
+      (node.parentNode instanceof ShadowRoot ? node.parentNode.host : null);
+    // Properties that only decorate (focus ring, colors, shadows). A running
+    // animation of these alone does not move or hide the element; any other
+    // property, or one not listed, counts as possibly changing visibility.
+    const decorative =
+      /^(outline|box-shadow|color|background-color|border(-[a-z]+)*-color|text-decoration|text-underline-offset|text-shadow|caret-color|fill|stroke|accent-color)(-[a-z]+)?$/;
+    const movesAppearance = (animation: Animation): boolean => {
+      if (animation.playState !== 'running') return false;
+      const properties =
+        typeof CSSTransition !== 'undefined' &&
+        animation instanceof CSSTransition
+          ? [animation.transitionProperty]
+          : (
+              (animation.effect as KeyframeEffect | null)?.getKeyframes() ?? []
+            ).flatMap((frame) =>
+              Object.keys(frame).filter(
+                (key) =>
+                  !['offset', 'computedOffset', 'easing', 'composite'].includes(
+                    key,
+                  ),
+              ),
+            );
+      // An effect without keyframes to read is not known to be decorative.
+      if (properties.length === 0) return true;
+      return !properties.every((p) => decorative.test(toKebab(p)));
+    };
+    const undetermined: FocusVisibility = { visible: null, reason: null };
+    const hidden = (reason: FocusVisibility['reason']): FocusVisibility => ({
+      visible: false,
+      reason,
+    });
+    const sharedClip = (
+      window as unknown as {
+        __a11yMeasureAncestorClip?: (el: Element) => AncestorClip;
+      }
+    ).__a11yMeasureAncestorClip;
+    // Without the shared function the clipping cannot be decided.
+    const measureClip = (target: Element): AncestorClip =>
+      typeof sharedClip === 'function'
+        ? sharedClip(target)
+        : { hidden: false, unknown: true, clip: false };
+
+    // getAnimations() brings the style up to date, so a transition started by
+    // this very focus is already listed.
+    for (let node: Element | null = el; node; node = renderedParent(node)) {
+      if (node.getAnimations().some(movesAppearance)) return undetermined;
+    }
+    if (getComputedStyle(el).opacity === '0') return hidden('own-opacity');
+    for (let node = renderedParent(el); node; node = renderedParent(node)) {
+      // display: contents makes no box, so opacity has no effect there.
+      const style = getComputedStyle(node);
+      if (style.display !== 'contents' && style.opacity === '0') {
+        return hidden('ancestor-opacity');
+      }
+    }
+    // Nothing is drawn at size 0 (scale(0) and the like), though content may
+    // overflow, so neither visible nor hidden can be said.
+    const size = el.getBoundingClientRect();
+    if (size.width === 0 || size.height === 0) return undetermined;
+
+    const clip = measureClip(el);
+    if (clip.hidden) return hidden('ancestor-overflow');
+
+    // Outside what scrolling can reach. A fixed element does not scroll, so
+    // all four edges of the viewport count; otherwise only the side that
+    // opens no scrollable area: left (right in rtl) and top. The browser
+    // scrolls to the other sides on focus.
+    // An overflow of `clip` on the root / body is treated as `hidden` once it
+    // moves to the viewport (CSS Overflow 3), so focus still scrolls there:
+    // right and bottom count as reachable whatever the viewport's overflow is.
+    const root = document.documentElement;
+    const rootStyle = getComputedStyle(root);
+    const box = el.getBoundingClientRect();
+    let fixed = false;
+    for (let node: Element | null = el; node; node = renderedParent(node)) {
+      const style = getComputedStyle(node);
+      if (style.display !== 'contents' && style.position === 'fixed') {
+        fixed = true;
+      }
+    }
+    const rtl = rootStyle.direction === 'rtl';
+    const outside = fixed
+      ? box.right <= 0 ||
+        box.bottom <= 0 ||
+        box.left >= root.clientWidth ||
+        box.top >= root.clientHeight
+      : box.bottom + window.scrollY <= 0 ||
+        (rtl
+          ? box.left + window.scrollX >= root.clientWidth
+          : box.right + window.scrollX <= 0);
+    if (outside) {
+      // Vertical writing modes scroll the other way; not worked out here.
+      return rootStyle.writingMode === 'horizontal-tb'
+        ? hidden('outside-viewport')
+        : undetermined;
+    }
+    if (clip.unknown || clip.clip) return undetermined;
+    return { visible: true, reason: null };
+  };
+
+  /** A failure here must not lose the focus record. */
+  const measureVisibility = (el: Element): FocusVisibility => {
+    try {
+      return measureVisibilityUnsafe(el);
+    } catch {
+      return { visible: null, reason: null };
+    }
+  };
+
+  /**
    * Handle focus events
    */
   const onFocusIn = (e: FocusEvent): void => {
@@ -1594,6 +1723,7 @@ function createFocusTrackerScript(args: {
           el.getAttribute('aria-label') || el.textContent?.slice(0, 30) || '',
         hasFocusStyle,
         diff,
+        visibility: measureVisibility(el),
         selector: elementSelectors.get(el) || getSelector(el),
         ...getHtmlSnippet(el),
         ...getEcho(el),

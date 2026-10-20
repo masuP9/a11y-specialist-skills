@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      focus-indicator visibility: button inside display contents wrappers
+    </title>
+    <style>
+      :focus {
+        outline: 3px solid #005fcc;
+      }
+      .wrapper {
+        display: contents;
+        opacity: 0;
+        overflow: hidden;
+        transform: scale(2);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper"><button id="inside">Inside</button></div>
+  </body>
+</html>

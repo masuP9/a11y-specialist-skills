@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      focus-indicator visibility: button inside an inline element with overflow
+      hidden
+    </title>
+    <style>
+      :focus {
+        outline: 3px solid #005fcc;
+      }
+      span {
+        overflow: hidden;
+      }
+      button {
+        margin-top: 100px;
+      }
+    </style>
+  </head>
+  <body>
+    <p>
+      <span><button id="inside">Inside</button></span>
+    </p>
+  </body>
+</html>

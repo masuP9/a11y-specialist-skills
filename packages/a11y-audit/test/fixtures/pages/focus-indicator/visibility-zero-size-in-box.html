@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      focus-indicator visibility: zero-size link inside a box with overflow
+      hidden
+    </title>
+    <style>
+      :focus {
+        outline: 3px solid #005fcc;
+      }
+      .box {
+        margin-top: 50px;
+        height: 200px;
+        overflow: hidden;
+      }
+      a {
+        display: block;
+        margin: 20px;
+        width: 0;
+        height: 0;
+        overflow: visible;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="box"><a id="zero" href="#main">Overflowing text</a></div>
+    <main id="main"><p>Content</p></main>
+  </body>
+</html>

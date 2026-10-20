@@ -177,6 +177,26 @@ export interface FocusVisualDiff {
   rect: PageRect | null;
 }
 
+/**
+ * Whether a focused element is on screen, measured when it received focus.
+ * `visible` is null when it cannot be told: the element or a rendered ancestor
+ * is running an animation or transition on a property that can change how
+ * it shows (opacity, size, position, transform; a menu that opens on focus
+ * looks hidden for the first frames), but not one that only changes
+ * outline, shadow or colors, a scroll container or a scaling / rotating transform lies
+ * on the way, or clip-path / clip is in play. `reason` has a value only when
+ * `visible` is false.
+ */
+export interface FocusVisibility {
+  visible: boolean | null;
+  reason:
+    | 'ancestor-overflow'
+    | 'ancestor-opacity'
+    | 'own-opacity'
+    | 'outside-viewport'
+    | null;
+}
+
 export interface FocusRecord extends FocusElementLocation {
   /**
    * Order in which focusin events were received (0-based), across the main
@@ -206,6 +226,12 @@ export interface FocusRecord extends FocusElementLocation {
   htmlTruncated: boolean;
   hasFocusStyle: boolean;
   diff: Record<string, string>;
+  /**
+   * Whether the element is on screen at the moment it received focus. Only
+   * the left and top edges of the document count as "outside": the browser
+   * scrolls to the right and bottom.
+   */
+  visibility: FocusVisibility;
   /**
    * Screenshot comparison around the element. Absent when the `screenshotDiff`
    * option was not passed; `null` when it was passed but no comparison could be

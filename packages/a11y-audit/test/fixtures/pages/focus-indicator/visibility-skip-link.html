@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      focus-indicator visibility: skip link moved on screen by focus
+    </title>
+    <style>
+      :focus {
+        outline: 3px solid #005fcc;
+      }
+      .skip {
+        position: absolute;
+        left: -9999px;
+      }
+      .skip:focus {
+        left: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <a id="skip" class="skip" href="#main">Skip to main</a>
+    <main id="main"><p>Content</p></main>
+  </body>
+</html>

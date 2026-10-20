@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>focus-indicator visibility: transparent checkbox over a label</title>
+    <style>
+      :focus {
+        outline: 3px solid #005fcc;
+      }
+      label {
+        position: relative;
+      }
+      input {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <label>Subscribe <input id="overlay-checkbox" type="checkbox" /></label>
+  </body>
+</html>

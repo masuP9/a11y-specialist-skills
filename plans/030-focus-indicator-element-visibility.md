@@ -95,4 +95,10 @@
 
 ## 実施結果
 
-（未）
+2026-10-20 実装。主な判断と、プランからずれた点:
+
+- **実例の前提は再現しなかった**: Chromium で Tab すると、ブラウザは `overflow: hidden` の nav の中をスクロールしてリンクを枠の中に入れる（`scrollTop` が 103 になり、リンクはヘッダーに重なって見える。一部はロゴに覆われる）。このため実例のメニューのリンクは `true` になる。同じページの、`opacity: 0` で隠した同意ダイアログのボタンは `false` / `ancestor-opacity` になる。切り取りの fixture は、スクロールでは届かない形（`overflow: clip`、高さ 0、上へのはみ出し）にした。
+- **動いている途中の判定**: outline・影・色だけを動かす transition は無視する（フォーカス枠を transition で出すサイトで、全要素が `null` になったため）。
+- **右・下の外**は判定しない（フォーカスでスクロールされる）。ルート / body の `overflow: clip` もビューポートでは `hidden` として扱われるので同じ。
+- コードレビューと Codex 実装レビューを受けて、次も扱うようにした。ルート / body の overflow、`position: fixed`、rtl、縦書き（`null`）、向きごとの切り取り、拡大・回転の下での重なり（`null`）、`overflow-clip-margin`（`null`）、大きさ 0（`null`）、`display: contents` と inline の祖先は飛ばす。
+- 直さなかったもの: ページの JS が `focusin` の後で開くメニューは閉じたまま測られうる、iframe 自身が見えるかは見ない（どちらも README に限界として記載）。祖先を何度もたどる処理はまとめていない（効果が小さいため）。

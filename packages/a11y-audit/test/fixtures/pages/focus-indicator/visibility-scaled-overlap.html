@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      focus-indicator visibility: button that looks inside a clipping box only
+      because of scaling
+    </title>
+    <style>
+      :focus {
+        outline: 3px solid #005fcc;
+      }
+      .scaled {
+        margin-top: 50px;
+        transform: scale(0.5);
+        transform-origin: top left;
+      }
+      .box {
+        height: 100px;
+        overflow: clip;
+      }
+      .spacer {
+        height: 150px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="scaled">
+      <div class="box">
+        <div class="spacer"></div>
+        <button id="below">Below</button>
+      </div>
+    </div>
+  </body>
+</html>

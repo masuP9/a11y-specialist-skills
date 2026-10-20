@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>focus-indicator visibility: closed menu with a fading outline</title>
+    <style>
+      .panel {
+        height: 0;
+        overflow: clip;
+      }
+      a {
+        outline: 0 solid transparent;
+        transition:
+          outline-color 200ms,
+          outline-width 200ms;
+      }
+      a:focus {
+        outline: 3px solid #005fcc;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="panel"><a id="inner" href="#main">Inner link</a></div>
+    <main id="main"><p>Content</p></main>
+  </body>
+</html>

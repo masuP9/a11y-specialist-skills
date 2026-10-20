@@ -45,6 +45,7 @@ import {
   AUDIO_CONTROL_KEYWORDS,
   HTML_SNIPPET_MAX_LENGTH,
 } from '../constants.js';
+import { measureAncestorClip } from '../utils/ancestor-clip.js';
 import { detectPauseControls } from './pause-control.js';
 
 /** Window property holding the current check's playback history. */
@@ -175,6 +176,16 @@ function removedMedia(args: HistoryArgs): HTMLMediaElement[] {
   return [...history.tracked].filter((el) => !el.isConnected);
 }
 
+// Playwright serializes a function alone, so the shared clip measurement is
+// put in front of `inspectElement` as source. Built with `new Function` in
+// Node (not in the page), so a page's CSP does not matter.
+const inspect = new Function(
+  'el',
+  'args',
+  `const measureAncestorClip = ${measureAncestorClip};
+  return (${inspectElement})(el, args);`,
+) as typeof inspectElement;
+
 /**
  * Runs in the browser: where an element is, whether it is visible, and its
  * playback state when it is a media element. Self-contained so Playwright can
@@ -212,66 +223,14 @@ function inspectElement(
     root = root.host.getRootNode();
   }
 
-  // Walk the rendered ancestors: a slotted element is drawn inside its slot,
-  // so follow assignedSlot before the DOM parent, and cross shadow roots.
-  const renderedParent = (node: Element): Element | null =>
-    node.assignedSlot ??
-    node.parentElement ??
-    (node.parentNode instanceof ShadowRoot ? node.parentNode.host : null);
-
   const rect = el.getBoundingClientRect();
-  // clip-path / clip can cut an element away while it still passes
-  // checkVisibility. How much is cut is not measured, so any clip on the
-  // element or a rendered ancestor leaves it undetermined.
-  let clipped = false;
-  // An ancestor whose overflow is not visible hides the element when the
-  // element does not overlap the ancestor's padding box (overflow clips
-  // there, inside the border): certainly for hidden / clip, but a scroll
-  // container can be scrolled to it, a fixed / absolute box may escape the
-  // ancestor, and under a transform the padding box cannot be placed from
-  // clientLeft / clientWidth (they ignore transforms), so those cases stay
-  // undetermined.
-  let overflowHidden = false;
-  let overflowUnknown = false;
-  let escapes = false;
-  let transformed = false;
-  for (let node: Element | null = el; node; node = renderedParent(node)) {
-    const style = getComputedStyle(node);
-    if (
-      [style.transform, style.scale, style.rotate, style.translate].some(
-        (v) => v && v !== 'none',
-      )
-    ) {
-      transformed = true;
-    }
-  }
-  for (let node: Element | null = el; node; node = renderedParent(node)) {
-    const style = getComputedStyle(node);
-    if (style.clipPath !== 'none' || style.clip !== 'auto') clipped = true;
-    if (
-      node !== el &&
-      [style.overflowX, style.overflowY].some((v) => v !== 'visible')
-    ) {
-      const box = node.getBoundingClientRect();
-      const left = box.left + node.clientLeft;
-      const top = box.top + node.clientTop;
-      const overlaps =
-        Math.min(rect.right, left + node.clientWidth) >
-          Math.max(rect.left, left) &&
-        Math.min(rect.bottom, top + node.clientHeight) >
-          Math.max(rect.top, top);
-      if (!overlaps) {
-        const scrolls = [style.overflowX, style.overflowY].some(
-          (v) => v === 'auto' || v === 'scroll',
-        );
-        if (scrolls || escapes || transformed) overflowUnknown = true;
-        else overflowHidden = true;
-      }
-    }
-    if (style.position === 'fixed' || style.position === 'absolute') {
-      escapes = true;
-    }
-  }
+  // Cut away by a rendered ancestor's overflow or clip (see ancestor-clip.ts).
+  // Injected next to this function by `inspect`.
+  const {
+    hidden: overflowHidden,
+    unknown: overflowUnknown,
+    clip: clipped,
+  } = measureAncestorClip(el);
   const shown =
     typeof el.checkVisibility === 'function'
       ? rect.width > 0 &&
@@ -381,7 +340,7 @@ async function framePathOf(
       current = parent, parent = parent.parentFrame()
     ) {
       const handle = await current.frameElement();
-      const info = await handle.evaluate(inspectElement, {
+      const info = await handle.evaluate(inspect, {
         htmlMaxLength: 0,
         history,
       });
@@ -442,10 +401,10 @@ async function measureFrame(
 
   const records: KeyedRecord[] = [];
   for (const handle of handles) {
-    const { media, visible, key, ...element } = await handle.evaluate(
-      inspectElement,
-      { htmlMaxLength: HTML_SNIPPET_MAX_LENGTH, history },
-    );
+    const { media, visible, key, ...element } = await handle.evaluate(inspect, {
+      htmlMaxLength: HTML_SNIPPET_MAX_LENGTH,
+      history,
+    });
     if (!media) continue;
     records.push({
       key,
