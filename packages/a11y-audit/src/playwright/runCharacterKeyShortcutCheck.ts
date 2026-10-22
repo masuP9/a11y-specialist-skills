@@ -489,7 +489,7 @@ export async function runCharacterKeyShortcutCheck(
     // attempt away: it is reopened in a fresh context and measured again, up to
     // the reload limit.
     await page.evaluate(installObserver, stateKey);
-    let baselineMutations: number | null = null;
+    let baselineMutations: number | null;
     for (;;) {
       baselineMutations = null;
       const urlAtStart = page.url();

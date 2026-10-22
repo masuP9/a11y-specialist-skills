@@ -947,7 +947,7 @@ function createFocusTrackerScript(args: {
     }
     let frame: { url: string; selector: string | null } | null = null;
     if (window !== window.top) {
-      let frameElement: Element | null = null;
+      let frameElement: Element | null;
       try {
         frameElement = window.frameElement;
       } catch {
@@ -964,7 +964,7 @@ function createFocusTrackerScript(args: {
   const getHtmlSnippet = (
     el: Element,
   ): { html: string; htmlTruncated: boolean } => {
-    let html = '';
+    let html: string;
     try {
       html = el.outerHTML || '';
     } catch {

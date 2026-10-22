@@ -86,7 +86,7 @@ export function collectBasicFieldInfo(args: {
     html: string;
     htmlTruncated: boolean;
   } {
-    let html = '';
+    let html: string;
     try {
       html = element.outerHTML || '';
     } catch {
