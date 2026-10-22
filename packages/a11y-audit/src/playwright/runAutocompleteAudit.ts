@@ -164,9 +164,7 @@ export function collectBasicFieldInfo(args: {
 
   elements.forEach((element, index) => {
     const el = element as
-      | HTMLInputElement
-      | HTMLSelectElement
-      | HTMLTextAreaElement;
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
 
     if (el instanceof HTMLInputElement && skipTypes.includes(el.type)) {
       return;
