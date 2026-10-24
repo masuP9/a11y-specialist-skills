@@ -1,4 +1,4 @@
-# Plan 032: 要素 id をエスケープしてセレクタを作る（10 か所）。不正なセレクタで focus-indicator-check 全体が落ちないようにする
+# Plan 032: 要素 id をエスケープしてセレクタを作る（8 ファイル 9 か所）。不正なセレクタで focus-indicator-check 全体が落ちないようにする
 
 > **実行者への指示**: このプランを上から順に実行する。各検証コマンドを実行し、
 > 期待どおりの結果を確かめてから次へ進む。「STOP 条件」に当たったら止まって報告し、
@@ -10,6 +10,7 @@
 
 ## ステータス
 
+- **Codex plan review**: 通過（1 巡目、2026-10-25、見送った low 0 件。medium 1 件「完了条件の grep が範囲外の `runContentOnHoverCheck.ts:730`（セレクタではない識別文字列）にも一致する」を反映: 対象を 8 ファイル 9 か所に限定し、完了条件からそのファイルを除いた）
 - **優先度**: P1（React の `useId` が出す id を持つページで、検査が丸ごと ERROR になる）
 - **工数**: S
 - **リスク**: LOW（変わるのは、今すでに壊れている id のセレクタ文字列だけ）
@@ -19,7 +20,7 @@
 
 ## なぜ重要か
 
-多くの検査はページの中（`page.evaluate`）で要素の CSS セレクタを作り、結果 JSON の `target` / `selector` に書く。その関数のうち 10 か所が、id をそのまま `` `#${el.id}` `` に入れている。CSS では id が数字で始まる（`#1st`）、`:` や `.` や `[` や空白を含む（React 18 以降の `useId()` が出す `:r1:`、`user.name`）とき、そのままでは不正なセレクタになる。
+多くの検査はページの中（`page.evaluate`）で要素の CSS セレクタを作り、結果 JSON の `target` / `selector` に書く。その関数のうち 8 ファイル 9 か所が、id をそのまま `` `#${el.id}` `` に入れている。CSS では id が数字で始まる（`#1st`）、`:` や `.` や `[` や空白を含む（React 18 以降の `useId()` が出す `:r1:`、`user.name`）とき、そのままでは不正なセレクタになる。
 
 実害は 2 段階ある。
 
@@ -30,7 +31,9 @@
 
 ## 現状
 
-### 直す 10 か所（すべて `packages/a11y-audit/` 配下）
+### 直す 9 か所（8 ファイル、すべて `packages/a11y-audit/` 配下）
+
+**対象外**: `src/playwright/runContentOnHoverCheck.ts:730` の `activeIdentity()` も `` `#${…id}` `` の形だが、これは CSS 検索に使わないフォーカス要素の識別文字列なので直さない。
 
 | ファイル:行 | 今のコード |
 |---|---|
@@ -127,7 +130,7 @@ test('…', async ({ browser, baseUrl }, testInfo) => {
 
 ## 方針
 
-- 10 か所すべてで `` `#${CSS.escape(id)}` `` にする。**一意性チェック（`querySelectorAll(...).length === 1`）は今回は足さない**: 一意性で経路に落ちると `target` の形が変わり、既存 fixture の期待に影響しうる。エスケープだけなら、特殊文字を含まない id の出力は 1 文字も変わらない。
+- 9 か所すべてで `` `#${CSS.escape(id)}` `` にする。**一意性チェック（`querySelectorAll(...).length === 1`）は今回は足さない**: 一意性で経路に落ちると `target` の形が変わり、既存 fixture の期待に影響しうる。エスケープだけなら、特殊文字を含まない id の出力は 1 文字も変わらない。
 - `runFocusIndicatorCheck.ts:519` の `document.querySelector(sel)` を try/catch で包み、不正なセレクタは無視する（エスケープ後は起きないはずだが、二重の守り）。
 - `pause-control.ts` の class は `split(/\s+/)` で分け、各トークンを `CSS.escape` してから `.` で結ぶ。
 - ページ内ヘルパの一本化（19 か所の `getUniqueSelector` を 1 つに）は**やらない**（別件・工数 L）。
@@ -136,7 +139,7 @@ test('…', async ({ browser, baseUrl }, testInfo) => {
 
 変更可:
 
-- 上の表の 9 ファイル（`runTextSpacingCheck.ts` は 2 か所）
+- 上の表の 8 ファイル（`runTextSpacingCheck.ts` は 2 か所）
 - `packages/a11y-audit/test/fixtures/pages/focus-indicator/finding-context-change-react-id.html`（新規）
 - `packages/a11y-audit/test/fixtures/pages/autocomplete/finding-missing-react-id.html`（新規）
 - `packages/a11y-audit/test/selector-escaping.spec.ts`（新規）
@@ -145,6 +148,7 @@ test('…', async ({ browser, baseUrl }, testInfo) => {
 範囲外:
 
 - `CSS.escape` を既に使っている 12 ファイル
+- `src/playwright/runContentOnHoverCheck.ts`（`:730` の `activeIdentity()` はセレクタではない）
 - 一意性チェックの追加、ヘルパの共通化、`isVisible` の違いの統一
 - README（出力の形は変わらないので記述の変更は不要）
 - 版を上げるリリース（マージ後に別 PR）
@@ -164,8 +168,8 @@ test('…', async ({ browser, baseUrl }, testInfo) => {
      - テスト 1「`:r1:` の id を持つリンクがフォーカスで遷移すると、検査は落ちずに 3.2.1 違反を 1 件報告し、selector は `#\\:r1\\:` になる」: `runFocusIndicatorCheck({ browser, targetUrl, outputDir })` が resolve する。`result.details.onFocusViolations` が 1 件で、`[0].element.selector` が `'#\\:r1\\:'`。`result.violations` に `a11y-skills/no-context-change-on-focus` がある。
    - `autocomplete/finding-missing-react-id.html`: `finding-missing.html` を写し、email 欄の id を `:r1:`、`<label for=":r1:">` にする（phone 欄は消してよい）。
      - テスト 2「`:r1:` の id を持つ入力欄に autocomplete が無いと、報告される target は `#\\:r1\\:` になる」: `runFixtureCheck('autocomplete-audit', 'autocomplete/finding-missing-react-id.html', baseUrl, { page, browser, testInfo })` の結果の `incomplete` から `a11y-skills/autocomplete-missing` を探し、`nodes[0].target[0]` が `'#\\:r1\\:'`。
-   - 他の 8 か所は fixture を作らず、同じ 1 行の直しなので既存テスト（fixture-gallery）が通り続けることで確かめる。
-2. **10 か所を直す。** 各箇所を `` `#${CSS.escape(el.id)}` ``（変数名は各ファイルに合わせる）にする。`runTextSpacingCheck.ts` は 2 か所とも。
+   - 他の 7 か所は fixture を作らず、同じ 1 行の直しなので既存テスト（fixture-gallery）が通り続けることで確かめる。
+2. **9 か所を直す。** 各箇所を `` `#${CSS.escape(el.id)}` ``（変数名は各ファイルに合わせる）にする。`runTextSpacingCheck.ts` は 2 か所とも。
 3. **`runFocusIndicatorCheck.ts:519` を守る。** `document.querySelector(sel)` を try/catch で包み、catch では何もしない（コメントで「不正なセレクタは飛ばす」と書く）。
 4. **`pause-control.ts` の class。** `.split(/\s+/)` → `.filter(Boolean)` → `.map((c) => CSS.escape(c))` → `.join('.')`。
 5. **CHANGELOG**（Unreleased、Fixed）に 1 項目: 「特殊文字を含む id（React `useId` の `:r1:` など）のセレクタを `CSS.escape` で作る。focus-indicator-check がそのような要素の 3.2.1 違反で落ちなくなる。」（英語で、既存項目の調子に合わせる）
@@ -173,7 +177,8 @@ test('…', async ({ browser, baseUrl }, testInfo) => {
 
 ## 完了条件
 
-- [ ] `git grep -nE '`#\$\{[a-zA-Z.]*id\}`' -- packages/a11y-audit/src` が 0 件（`CSS.escape` を通さない `#${…id}` が残っていない）。
+- [ ] 次のコマンドが 0 件（`CSS.escape` を通さない `#${…id}` が、対象外の `runContentOnHoverCheck.ts` 以外に残っていない）:
+  `git grep -nE '`#\$\{[a-zA-Z.]*id\}`' -- packages/a11y-audit/src ':!packages/a11y-audit/src/playwright/runContentOnHoverCheck.ts'`
 - [ ] `test/selector-escaping.spec.ts` の 2 テストが pass。
 - [ ] 既存の fixture-gallery・focus-* の spec の期待を変えずに全テスト pass。
 - [ ] CHANGELOG に項目があり、全検証コマンドが exit 0。
