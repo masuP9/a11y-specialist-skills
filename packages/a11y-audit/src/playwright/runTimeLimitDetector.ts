@@ -53,7 +53,7 @@ function createTimerHookScript(args: { minMs: number; maxMs: number }): void {
     const actualDelay = delay || 0;
 
     if (actualDelay >= minMs && actualDelay <= maxMs) {
-      let callStack: string | null = null;
+      let callStack: string | null;
       try {
         throw new Error();
       } catch (e) {
@@ -81,7 +81,7 @@ function createTimerHookScript(args: { minMs: number; maxMs: number }): void {
     const actualDelay = delay || 0;
 
     if (actualDelay >= minMs && actualDelay <= maxMs) {
-      let callStack: string | null = null;
+      let callStack: string | null;
       try {
         throw new Error();
       } catch (e) {
@@ -121,7 +121,7 @@ function detectTimeLimitIndicators(args: {
     html: string;
     htmlTruncated: boolean;
   } {
-    let html = '';
+    let html: string;
     try {
       html = element.outerHTML || '';
     } catch {

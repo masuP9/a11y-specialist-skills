@@ -131,6 +131,7 @@ export async function runAutoPlayDetection(
         'runAutoPlayDetection requires the optional dependencies `pixelmatch` and `pngjs`. ' +
           'Install them: `npm install pixelmatch pngjs`.\n' +
           `Original error: ${msg}`,
+        { cause: err },
       );
     }
     throw err;

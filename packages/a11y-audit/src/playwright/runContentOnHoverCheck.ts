@@ -1287,7 +1287,7 @@ export async function runContentOnHoverCheck(
 
       // Put the page back for the next trigger; reload only when content of
       // this one is still visible afterwards.
-      let stuck = false;
+      let stuck: boolean;
       try {
         await resetState();
         const left = await page.evaluate(readVisibility, {
