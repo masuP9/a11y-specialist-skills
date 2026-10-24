@@ -195,7 +195,7 @@ function collectCopyControls(args: {
     (text ?? '').replace(/\s+/g, ' ').trim().slice(0, 80);
 
   function getUniqueSelector(element: Element): string {
-    if (element.id) return `#${element.id}`;
+    if (element.id) return `#${CSS.escape(element.id)}`;
     const path: string[] = [];
     let current: Element | null = element;
     while (current && current !== document.body) {
@@ -233,13 +233,11 @@ function collectCopyControls(args: {
 
   const result: Record<string, RedundantEntryCopyControl[]> = {};
   for (const formSelector of args.formSelectors) {
-    // A form selector of the form "#id" is not escaped, so ids such as
-    // "checkout.form" or "1-step" are not valid CSS; look those up by id.
-    const formElement = !formSelector
-      ? null
-      : formSelector.startsWith('#')
-        ? document.getElementById(formSelector.slice(1))
-        : document.querySelector(formSelector);
+    // Form selectors come from getUniqueSelector() in runAutocompleteAudit.ts,
+    // which escapes ids, so they are valid CSS.
+    const formElement = formSelector
+      ? document.querySelector(formSelector)
+      : null;
     const controls: RedundantEntryCopyControl[] = [];
     if (formSelector && !formElement) {
       result[formSelector] = controls;

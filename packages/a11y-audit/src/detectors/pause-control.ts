@@ -51,12 +51,13 @@ export async function detectPauseControls(
     let hasAccessibleName = false;
 
     const getSelector = (el: HTMLElement): string => {
-      if (el.id) return `#${el.id}`;
+      if (el.id) return `#${CSS.escape(el.id)}`;
       if (el.className) {
         const classes = el.className
           .toString()
-          .split(' ')
-          .filter((c) => c)
+          .split(/\s+/)
+          .filter(Boolean)
+          .map((c) => CSS.escape(c))
           .join('.');
         if (classes) return `${el.tagName.toLowerCase()}.${classes}`;
       }

@@ -516,7 +516,12 @@ export async function runFocusIndicatorCheck(
       if (skipSelectors.length > 0) {
         await page.evaluate((selectors) => {
           selectors.forEach((sel) => {
-            const el = document.querySelector(sel);
+            let el: Element | null = null;
+            try {
+              el = document.querySelector(sel);
+            } catch {
+              // Invalid selector: skip it
+            }
             if (el) {
               el.setAttribute('data-focus-navigation-violation', '');
               (el as HTMLElement).tabIndex = -1; // Remove from tab order
@@ -1025,7 +1030,7 @@ function createFocusTrackerScript(args: {
    * shadow root that contains it
    */
   const getSelector = (el: Element): string => {
-    if (el.id) return `#${el.id}`;
+    if (el.id) return `#${CSS.escape(el.id)}`;
     const tag = el.tagName.toLowerCase();
     const parent = el.parentElement;
     // A shadow root's top-level children have no parent element
