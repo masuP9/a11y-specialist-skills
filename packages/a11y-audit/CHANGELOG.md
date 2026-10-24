@@ -3,6 +3,16 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixed
+
+- Selectors for elements with special characters in their id (such as React
+  `useId` output like `:r1:`) are now built with `CSS.escape`.
+  `focus-indicator-check` no longer fails on a 3.2.1 violation from such an
+  element. The form lookup in `redundant-entry-check` now uses
+  `querySelector` with those escaped selectors.
+
 ## 0.17.0 — 2026-10-25
 
 ### Changed
