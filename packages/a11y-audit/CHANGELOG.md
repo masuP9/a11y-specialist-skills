@@ -3,6 +3,16 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Changed
+
+- The optional dependency `pixelmatch` is now `^8.0.0`. pixelmatch 8 compares
+  colors in OKLab, so `auto-play-detection` and the focus visibility diff in
+  `focus-indicator-check` may count slightly different numbers of changed
+  pixels than with pixelmatch 7. The API and the `threshold` scale are
+  unchanged.
+
 ## 0.16.1 — 2026-10-21
 
 ### Fixed
