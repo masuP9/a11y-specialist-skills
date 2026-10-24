@@ -514,9 +514,15 @@ export async function runFocusIndicatorCheck(
 
       // Mark elements that caused navigation violations (from previous attempts)
       if (skipSelectors.length > 0) {
-        await page.evaluate((selectors) => {
+        const invalidSelectors = await page.evaluate((selectors) => {
+          const invalid: string[] = [];
           selectors.forEach((sel) => {
-            const el = document.querySelector(sel);
+            let el: Element | null = null;
+            try {
+              el = document.querySelector(sel);
+            } catch {
+              invalid.push(sel);
+            }
             if (el) {
               el.setAttribute('data-focus-navigation-violation', '');
               (el as HTMLElement).tabIndex = -1; // Remove from tab order
@@ -541,7 +547,13 @@ export async function runFocusIndicatorCheck(
               }
             }
           });
+          return invalid;
         }, skipSelectors);
+        if (invalidSelectors.length > 0) {
+          out.warn(
+            `[focus-indicator-check] Could not mark navigation culprit(s) (invalid selector): ${invalidSelectors.join(', ')}`,
+          );
+        }
       }
 
       // Reset the late-navigation flag so the initial goto and skip-element
@@ -1025,7 +1037,7 @@ function createFocusTrackerScript(args: {
    * shadow root that contains it
    */
   const getSelector = (el: Element): string => {
-    if (el.id) return `#${el.id}`;
+    if (el.id) return `#${CSS.escape(el.id)}`;
     const tag = el.tagName.toLowerCase();
     const parent = el.parentElement;
     // A shadow root's top-level children have no parent element

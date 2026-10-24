@@ -141,7 +141,7 @@ function detectTimeLimitIndicators(args: {
 
   function getUniqueSelector(element: Element, elementIndex: number): string {
     if (element.id) {
-      return `#${element.id}`;
+      return `#${CSS.escape(element.id)}`;
     }
     const path: string[] = [];
     let current: Element | null = element;
