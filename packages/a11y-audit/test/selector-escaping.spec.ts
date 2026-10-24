@@ -1,5 +1,4 @@
-import { test, expect } from './helpers/fixtures.js';
-import { runFixtureCheck } from './helpers/fixtures.js';
+import { test, expect, runFixtureCheck } from './helpers/fixtures.js';
 import { runFocusIndicatorCheck } from '../dist/playwright/index.js';
 
 test('`:r1:` の id を持つリンクがフォーカスで遷移すると、検査は落ちずに 3.2.1 違反を 1 件報告し、selector は `#\\:r1\\:` になる', async ({

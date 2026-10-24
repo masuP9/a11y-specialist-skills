@@ -514,13 +514,14 @@ export async function runFocusIndicatorCheck(
 
       // Mark elements that caused navigation violations (from previous attempts)
       if (skipSelectors.length > 0) {
-        await page.evaluate((selectors) => {
+        const invalidSelectors = await page.evaluate((selectors) => {
+          const invalid: string[] = [];
           selectors.forEach((sel) => {
             let el: Element | null = null;
             try {
               el = document.querySelector(sel);
             } catch {
-              // Invalid selector: skip it
+              invalid.push(sel);
             }
             if (el) {
               el.setAttribute('data-focus-navigation-violation', '');
@@ -546,7 +547,13 @@ export async function runFocusIndicatorCheck(
               }
             }
           });
+          return invalid;
         }, skipSelectors);
+        if (invalidSelectors.length > 0) {
+          out.warn(
+            `[focus-indicator-check] Could not mark navigation culprit(s) (invalid selector): ${invalidSelectors.join(', ')}`,
+          );
+        }
       }
 
       // Reset the late-navigation flag so the initial goto and skip-element

@@ -234,10 +234,14 @@ function collectCopyControls(args: {
   const result: Record<string, RedundantEntryCopyControl[]> = {};
   for (const formSelector of args.formSelectors) {
     // Form selectors come from getUniqueSelector() in runAutocompleteAudit.ts,
-    // which escapes ids, so they are valid CSS.
-    const formElement = formSelector
-      ? document.querySelector(formSelector)
-      : null;
+    // which escapes ids, so they are valid CSS. An invalid selector is treated
+    // as "form not found" so that the whole check does not fail.
+    let formElement: Element | null = null;
+    try {
+      formElement = formSelector ? document.querySelector(formSelector) : null;
+    } catch {
+      formElement = null;
+    }
     const controls: RedundantEntryCopyControl[] = [];
     if (formSelector && !formElement) {
       result[formSelector] = controls;
