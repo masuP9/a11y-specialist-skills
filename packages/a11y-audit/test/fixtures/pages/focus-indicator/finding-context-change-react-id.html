@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      focus-indicator finding: no-context-change-on-focus (React useId)
+    </title>
+  </head>
+  <body>
+    <h1>On-Focus Navigation</h1>
+    <!-- Same as finding-context-change.html, but the id looks like React useId() output -->
+    <a id=":r1:" href="#" onfocus="window.location.href = '/navigated'"
+      >Click or focus me</a
+    >
+    <button id="safe">Safe button</button>
+    <p>
+      Focusing the link above triggers a navigation (context change on focus).
+    </p>
+  </body>
+</html>
