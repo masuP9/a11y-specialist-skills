@@ -134,8 +134,7 @@ function scanPointerGestures(args: ScanArgs): ScanResult {
   } = args;
   const nodes =
     ((window as unknown as Record<string, unknown>)[nodesKey] as
-      | unknown[]
-      | undefined) ?? [];
+      unknown[] | undefined) ?? [];
 
   // Like getUniqueSelector() in runAccessibleAuthenticationCheck.ts, except
   // that the search scope is the document or the shadow root the element is in.

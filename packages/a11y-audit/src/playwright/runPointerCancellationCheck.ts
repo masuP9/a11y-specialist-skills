@@ -684,9 +684,11 @@ export async function runPointerCancellationCheck(
   } = options;
 
   assertWalkLimits({ timeBudgetMs });
-  if (
-    !(typeof settleMs === 'number' && Number.isFinite(settleMs) && settleMs > 0)
-  ) {
+  if (!(
+    typeof settleMs === 'number' &&
+    Number.isFinite(settleMs) &&
+    settleMs > 0
+  )) {
     throw new Error(
       `\`settleMs\` must be a positive finite number of milliseconds (got ${String(settleMs)}).`,
     );

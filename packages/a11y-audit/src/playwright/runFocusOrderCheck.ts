@@ -223,7 +223,7 @@ function describeFocus(args: { snippetMax: number }): FocusDescription | null {
   const outerHTML = el.outerHTML;
 
   let positioning: 'flow' | 'fixed' | 'sticky' = 'flow';
-  for (let node: Element | null = el; node; ) {
+  for (let node: Element | null = el; node;) {
     const position = getComputedStyle(node).position;
     if (position === 'fixed') {
       positioning = 'fixed';
@@ -428,7 +428,7 @@ function locateFocus(args: {
     ? document.querySelector(args.dialogSelector)
     : null;
   if (dialog) {
-    for (let node: Element | null = active; node; ) {
+    for (let node: Element | null = active; node;) {
       if (dialog.contains(node)) return { where: 'inside', selector: null };
       const root = node.getRootNode();
       node = root instanceof ShadowRoot ? root.host : null;
@@ -564,9 +564,11 @@ export async function runFocusOrderCheck(
   } = options;
 
   assertWalkLimits({ timeBudgetMs, maxTabPresses });
-  if (
-    !(typeof settleMs === 'number' && Number.isFinite(settleMs) && settleMs > 0)
-  ) {
+  if (!(
+    typeof settleMs === 'number' &&
+    Number.isFinite(settleMs) &&
+    settleMs > 0
+  )) {
     throw new Error(
       `\`settleMs\` must be a positive finite number of milliseconds (got ${String(settleMs)}).`,
     );
