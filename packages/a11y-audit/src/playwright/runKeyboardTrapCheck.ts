@@ -29,7 +29,7 @@ import type {
 } from '../types.js';
 import {
   FOCUSABLE_SELECTOR,
-  DEFAULT_NAVIGATION_SETTLE_MS,
+  KEYBOARD_TRAP_WALK_SETTLE_MS,
   DEFAULT_KEYBOARD_TRAP_RESULT_FILE,
   DEFAULT_KEYBOARD_TRAP_SCREENSHOT_FILE,
   KEYBOARD_TRAP_SLACK,
@@ -64,7 +64,7 @@ export interface RunKeyboardTrapCheckOptions
   screenshot?: boolean;
   /** Options forwarded to `browser.newContext()`. Ignored when `createContext` is used. */
   contextOptions?: BrowserContextOptions;
-  /** Milliseconds to wait after each Tab press (default: DEFAULT_NAVIGATION_SETTLE_MS). */
+  /** Milliseconds to wait after each Tab press (default: KEYBOARD_TRAP_WALK_SETTLE_MS). */
   walkSettleMs?: number;
 }
 
@@ -97,7 +97,7 @@ export async function runKeyboardTrapCheck(
     targetUrl: targetUrlOption,
     screenshot = false,
     contextOptions,
-    walkSettleMs = DEFAULT_NAVIGATION_SETTLE_MS,
+    walkSettleMs = KEYBOARD_TRAP_WALK_SETTLE_MS,
     ...location
   } = options;
 

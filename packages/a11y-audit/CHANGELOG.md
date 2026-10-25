@@ -18,6 +18,13 @@ adheres to [Semantic Versioning](https://semver.org/).
   rule has findings. `summary.violationCount` / `incompleteCount` count rules,
   so a rule present in both buckets is counted in both.
 
+### Changed
+
+- `keyboard-trap-check`: the default wait after each Tab press
+  (`walkSettleMs`) is now 25 ms (was 50 ms). On 5 public pages and the
+  keyboard-trap fixtures the results were the same, and the check took about
+  44% less time. Pass `walkSettleMs: 50` to keep the old wait.
+
 ## 0.17.0 — 2026-10-25
 
 ### Changed

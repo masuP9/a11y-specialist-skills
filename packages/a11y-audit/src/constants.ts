@@ -667,6 +667,11 @@ export const MAX_PARENT_LEVELS = 5;
 export const KEYBOARD_TRAP_SLACK = 10;
 /** Upper bound on Tab presses per walk (large-page guard). Exceeded count is logged. */
 export const KEYBOARD_TRAP_MAX_TAB_PRESSES = 600;
+/**
+ * Wait after each Tab press. 25 ms gave the same results as the shared 50 ms on
+ * 5 public pages and 5 fixtures (plans/021-result-slow-check-timing.md).
+ */
+export const KEYBOARD_TRAP_WALK_SETTLE_MS = 25;
 /** Wait (ms) after each escape attempt before re-reading activeElement. */
 export const KEYBOARD_TRAP_ESCAPE_SETTLE_MS = 200;
 /** Maximum escape attempts per trap candidate. */
