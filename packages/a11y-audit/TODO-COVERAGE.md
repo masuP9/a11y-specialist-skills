@@ -43,9 +43,10 @@
 ### 2.5.3 Label in Name
 **概要**: アクセシブル名に可視ラベルのテキストが含まれること
 
-**備考**: `automated-checks.md` でカバー済み（DOM text と a11y name の比較）。ただし axe の `label-content-name-mismatch` は experimental で既定では走らないため、自動では見ていない（`coverage-matrix.md`）
+**備考**: `automated-checks.md` は DOM text と a11y name の比較を手順として挙げているが、axe の `label-content-name-mismatch` は experimental で既定では走らないため、CLI の検査では自動で見ていない（`coverage-matrix.md`）
 
 **スクリプト化する場合の追加価値**:
+- 可視テキストとアクセシブル名の比較（`page-snapshot` の aria snapshot を土台にできる）
 - 全要素の網羅的スキャン
 - JSON形式での詳細レポート出力
 
@@ -313,14 +314,15 @@
 **実装**: `keyboard-trap-check`（`runKeyboardTrapCheck.ts`）
 - ページの操作可能要素の数 `count` を数え、Tab を `2 × count + 10` 回（上限 600 回）押して `activeElement` の列を記録
 - 末尾 `count + 1` 個に `(body)` が無く、要素の種類が `count` 未満なら罠候補
-- 候補には Escape → Shift+Tab → 閉じるボタン（罠の中の `button` / `role="button"` で、ラベルが close / 閉じる / dismiss のもの）をスクリプトから `click()` の順で最大 3 回脱出を試みる
+- 候補には Escape → Shift+Tab → 閉じるボタンの順に、それぞれ 1 回ずつ脱出を試みる。閉じるボタンは、罠の要素の祖先を body まで上りながら、各祖先の中で最初に見つかる `button` / `role="button"` 1 つだけを見て、そのラベルが close / 閉じる / dismiss に当たればスクリプトから `click()` する（最初のボタンが別のもの、例えば「保存」なら、その祖先では閉じるボタンを見つけられない）
 - どれでも抜けられなければ `a11y-skills/no-keyboard-trap` 違反
 - 抜けられたうち、`role="dialog"` + `aria-modal="true"` の中で Escape が効いたものは正しいモーダルとして報告しない
 - それ以外の抜け方（Shift+Tab や閉じるボタンだけ、aria-modal で無いもの）は `a11y-skills/keyboard-trap-needs-review`
 
 **残る制限**:
 - 閉じるボタンの脱出はスクリプトの `click()` で、キーボードで押せるかは確かめない
-- `aria-modal` で Escape が効くモーダルは正しい作りとみなして報告しない（他の抜け方は `needs-review` 止まり）
+- 閉じるボタンが同じ容器の中で最初のボタンでないと見つけられない
+- `role="dialog"` + `aria-modal="true"` で Escape が効くモーダルは正しい作りとみなして報告しない（他の抜け方は `needs-review` 止まり）
 - iframe・shadow DOM の中のフォーカスは最上位 document の `activeElement` でしか見ない
 - Tab 上限 600 回を超える大きなページは `tabWalkCapped` を付けて報告
 
@@ -348,7 +350,7 @@
 
 | 優先度 | 達成基準 | 理由・流用できる土台 |
 |-------|---------|------|
-| 高 | 4.1.3 Status Messages | CLI 検査なし（Automated + Interactive）。操作後の DOM 変化を静かな期間の基準線と比べる処理（`runCharacterKeyShortcutCheck.ts` / `runMotionActuationCheck.ts` の `domMutations`）、フォーム入力の `runChangeOnInputCheck.ts` を流用できる |
+| 高 | 4.1.3 Status Messages | CLI 検査なし（Automated + Interactive）。操作後の DOM 変化を静かな期間の基準線と比べる処理（`runMotionActuationCheck.ts` の `domMutations` / `baselineDomMutations`、`runCharacterKeyShortcutCheck.ts` の `baselineDomMutations`）、フォーム入力の `runChangeOnInputCheck.ts` を流用できる |
 | 中 | 3.3.1 Error Identification / 3.3.3 Error Suggestion | Interactive のみ。空で送信してから出た文字列と、その祖先の `aria-live` / `role=alert\|status` を見る（4.1.3 と同じ土台） |
 | 中 | 2.5.3 Label in Name | axe の `label-content-name-mismatch` は experimental で既定では走らない。可視テキストとアクセシブル名の比較（`page-snapshot` の aria snapshot）で足せる |
 | 低（screencast が要る・誤判定の代償が大きい） | 2.3.1 Three Flashes | Manual。`runAutoPlayDetection.ts` のスクリーンショット差分は 2 秒間隔で点滅の検出には粗すぎ、CDP screencast が必要 |
@@ -368,7 +370,6 @@
 | 2.5.1 Pointer Gestures | `pointer-gesture-check`（部分） ✅ |
 | 2.5.2 Pointer Cancellation | `pointer-cancellation-check`（部分） ✅ |
 | 2.5.7 Dragging Movements | `pointer-gesture-check`（部分） ✅ |
-| 2.5.3 Label in Name | `automated-checks.md` |
 | 2.5.4 Motion Actuation | `motion-actuation-check`（部分） ✅ |
 | 2.5.8 Target Size (Minimum) | `target-size-check.ts` ✅ |
 | 3.1.1 Language of Page | axe-core + `automated-checks.md` |

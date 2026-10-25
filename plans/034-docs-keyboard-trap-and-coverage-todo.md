@@ -108,7 +108,7 @@
 
 | 目的 | コマンド | 期待 |
 |---|---|---|
-| 一致確認 | 下の「完了条件」のシェル 1 行 | 出力なし |
+| 一致確認 | node スクリプトで登録表と README を突き合わせる（「完了条件」参照） | 出力なし |
 | 整形 | `npx prettier --write packages/a11y-audit/README.md packages/a11y-audit/README.ja.md packages/a11y-audit/TODO-COVERAGE.md` | — |
 | 全検証 | `npm run lint && npm run format:check && npm run typecheck && npm test && npm run validate:skills` | すべて exit 0 |
 
@@ -126,10 +126,9 @@
 
 ## 完了条件
 
-- [ ] 次のシェルが何も出力しない（登録表の全名が両 README の名前一覧にある）:
-  `for n in $(grep -oE "^\s+name: '[a-z0-9-]+'" packages/a11y-audit/src/cli.ts | grep -oE "[a-z0-9-]+'" | tr -d "'"); do for f in packages/a11y-audit/README.md packages/a11y-audit/README.ja.md; do grep -qx "$n" "$f" || echo "MISSING $n in $f"; done; done`
-- [ ] `grep -c runKeyboardTrapCheck packages/a11y-audit/README.md packages/a11y-audit/README.ja.md` がどちらも 3 以上（表 1 + 既存の例 2）。
-- [ ] `grep -n '新規スクリプト作成が必要なもの' packages/a11y-audit/TODO-COVERAGE.md` の直後の表に 2.1.2 が無く、4.1.3 がある。
+- [ ] 登録表（`src/cli.ts` の `name: '...'` 全件、23 件）の全名が両 README の名前一覧（コードブロック内に 1 行で、行全体がその名前）にある。確認は node スクリプト（ctx_execute）で行い、出力は missing 0 件
+- [ ] `git -C <worktree> grep -c runKeyboardTrapCheck -- packages/a11y-audit/README.md packages/a11y-audit/README.ja.md` がどちらも 3 以上（表 1 + 既存の例 2）。
+- [ ] `git -C <worktree> grep -n '新規スクリプト作成が必要なもの' -- packages/a11y-audit/TODO-COVERAGE.md` の直後の表に 2.1.2 が無く、4.1.3 がある。
 - [ ] 全検証コマンドが exit 0（`format:check` を含む）。
 
 ## STOP 条件

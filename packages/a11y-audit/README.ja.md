@@ -26,7 +26,7 @@ Claude Code skill から機能本体を切り出したものです。22 個の�
 | `runAutocompleteAudit` | 1.3.5 入力目的の特定 |
 | `runTimeLimitDetector` | 2.2.1 タイミング調整可能 |
 | `runAutoPlayDetection` | 2.2.2 一時停止、停止、非表示（画面の変化）／ 1.4.2 音声の制御（`<audio>`・`<video>` の再生状態。実際に音が聞こえるかは手で確かめる） |
-| `runKeyboardTrapCheck` | 2.1.2 キーボードトラップなし（Tab を要素数の 2 倍押して巡回を記録し、`<body>` に戻らず一部の要素に留まるものを候補に。Escape・Shift+Tab・閉じるボタンのクリックのどれでも抜けられなければ違反。`aria-modal` のダイアログで Escape が効けば報告せず、それ以外の抜け方は要確認） |
+| `runKeyboardTrapCheck` | 2.1.2 キーボードトラップなし（Tab を要素数の 2 倍 + 10 回（上限 600 回。超えたら `details.tabWalkCapped`）押して巡回を記録し、`<body>` に戻らず一部の要素に留まるものを候補に。Escape・Shift+Tab・閉じるボタンのクリックのどれでも抜けられなければ違反。`role="dialog"` + `aria-modal="true"` の中で Escape が効けば報告せず、それ以外の抜け方は要確認） |
 | `runKeyboardReachabilityCheck` | 2.1.1 キーボード（Tab・複合部品内の矢印キー・activedescendant） |
 | `runRedundantEntryCheck` | 3.3.7 冗長な入力（同じ form の中で同じ情報を求める欄の重なり。候補として報告） |
 | `runMotionActuationCheck` | 2.5.4 動きによる起動（`devicemotion` / `deviceorientation` の listener。候補として報告） |

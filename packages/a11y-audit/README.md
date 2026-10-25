@@ -27,7 +27,7 @@ functions plus ready-to-run Playwright test entries.
 | `runAutocompleteAudit` | 1.3.5 Identify Input Purpose |
 | `runTimeLimitDetector` | 2.2.1 Timing Adjustable |
 | `runAutoPlayDetection` | 2.2.2 Pause, Stop, Hide (visual changes) / 1.4.2 Audio Control (playback state of `<audio>` / `<video>`; whether sound is actually heard needs manual review) |
-| `runKeyboardTrapCheck` | 2.1.2 No Keyboard Trap (presses Tab twice the number of focusable elements and records the cycle; focus that never returns to `<body>` and stays within a subset is a candidate. A violation when neither Escape, Shift+Tab nor clicking a close button escapes. An `aria-modal` dialog that Escape closes is not reported; any other way out is needs review) |
+| `runKeyboardTrapCheck` | 2.1.2 No Keyboard Trap (presses Tab 2 × the number of focusable elements + 10 times (capped at 600; `details.tabWalkCapped` when capped) and records the cycle; focus that never returns to `<body>` and stays within a subset is a candidate. A violation when neither Escape, Shift+Tab nor clicking a close button escapes. A `role="dialog"` + `aria-modal="true"` dialog that Escape closes is not reported; any other way out is needs review) |
 | `runKeyboardReachabilityCheck` | 2.1.1 Keyboard (Tab, arrow keys in composite widgets, activedescendant) |
 | `runRedundantEntryCheck` | 3.3.7 Redundant Entry (fields in the same form asking for the same information, reported as candidates) |
 | `runMotionActuationCheck` | 2.5.4 Motion Actuation (`devicemotion` / `deviceorientation` listeners, reported as candidates) |
