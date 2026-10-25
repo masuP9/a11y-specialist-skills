@@ -4,8 +4,8 @@
  * CAPTCHA-like elements are listed as candidates (all `incomplete`).
  */
 
-import { execFile } from 'node:child_process';
 import Ajv2020 from 'ajv/dist/2020.js';
+import { runCli } from './helpers/cli.js';
 import { test, expect, runFixtureCheck } from './helpers/fixtures.js';
 import { AUTH_PASTE_FIELD_TIMEOUT_MS } from '../dist/constants.js';
 import { RESULT_SCHEMAS } from '../dist/schemas/index.js';
@@ -332,25 +332,17 @@ test('戻らない paste handler のページでも CLI は有限時間で終了
   baseUrl,
 }, testInfo) => {
   test.setTimeout(60_000);
-  const cliPath = new URL('../dist/cli.js', import.meta.url).pathname;
-  // Async on purpose: a sync spawn would block this process, which also
-  // serves the fixture page.
-  const code = await new Promise<number | null>((resolve) => {
-    const child = execFile(
-      process.execPath,
-      [
-        cliPath,
-        '--url',
-        `${baseUrl}/accessible-authentication/hangs.html`,
-        '--checks',
-        'accessible-authentication-check',
-        '--output-dir',
-        testInfo.outputDir,
-      ],
-      { timeout: 45_000 },
-      () => resolve(child.exitCode),
-    );
-  });
+  const { code } = await runCli(
+    [
+      '--url',
+      `${baseUrl}/accessible-authentication/hangs.html`,
+      '--checks',
+      'accessible-authentication-check',
+      '--output-dir',
+      testInfo.outputDir,
+    ],
+    45_000,
+  );
 
   expect([0, 1]).toContain(code);
 });
