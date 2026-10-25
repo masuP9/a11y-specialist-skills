@@ -24,6 +24,12 @@ adheres to [Semantic Versioning](https://semver.org/).
   (`walkSettleMs`) is now 25 ms (was 50 ms). On 5 public pages and the
   keyboard-trap fixtures the results were the same, and the check took about
   44% less time. Pass `walkSettleMs: 50` to keep the old wait.
+- `focus-indicator-check`: the default wait after each Tab press
+  (`navigationSettleMs`) is now 25 ms (was 50 ms). On 5 public pages and the
+  focus-indicator fixtures the results were the same, and the check took about
+  38% less time. A navigation that a focus handler starts 25–50 ms later may now
+  be missed or attributed to a neighboring element; pass `navigationSettleMs: 50`
+  (or more) for such pages.
 
 ## 0.17.0 — 2026-10-25
 

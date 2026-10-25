@@ -98,6 +98,13 @@ export const EXTRA_TAB_ITERATIONS = 10;
 /** Default ms to wait after each Tab press for a focus-triggered navigation to surface. */
 export const DEFAULT_NAVIGATION_SETTLE_MS = 50;
 
+/**
+ * focus-indicator-check: wait after each Tab press for a focus-triggered navigation
+ * to surface. 25 ms gave the same results as the shared 50 ms on 5 public pages and
+ * 8 fixtures (plans/021-result-slow-check-timing.md).
+ */
+export const FOCUS_INDICATOR_NAVIGATION_SETTLE_MS = 25;
+
 // =============================================================================
 // Focus Obscured Detection Constants (WCAG 2.4.11 / 2.4.12)
 // =============================================================================
