@@ -43,7 +43,7 @@
 ### 2.5.3 Label in Name
 **概要**: アクセシブル名に可視ラベルのテキストが含まれること
 
-**備考**: `automated-checks.md` でカバー済み（DOM text と a11y name の比較）
+**備考**: `automated-checks.md` でカバー済み（DOM text と a11y name の比較）。ただし axe の `label-content-name-mismatch` は experimental で既定では走らないため、自動では見ていない（`coverage-matrix.md`）
 
 **スクリプト化する場合の追加価値**:
 - 全要素の網羅的スキャン
@@ -307,21 +307,22 @@
 
 ---
 
-### 2.1.2 No Keyboard Trap
+### 2.1.2 No Keyboard Trap - **部分実装** ✅
 **概要**: フォーカスがキーボードトラップに陥らない
 
-**実装アイデア**:
-- Tab/Shift+Tab でフォーカス移動をシミュレート
-- 一定回数以内に全要素を巡回できるか確認
-- 同じ要素にフォーカスがループする場合を検出
+**実装**: `keyboard-trap-check`（`runKeyboardTrapCheck.ts`）
+- ページの操作可能要素の数 `count` を数え、Tab を `2 × count + 10` 回（上限 600 回）押して `activeElement` の列を記録
+- 末尾 `count + 1` 個に `(body)` が無く、要素の種類が `count` 未満なら罠候補
+- 候補には Escape → Shift+Tab → 閉じるボタン（罠の中の `button` / `role="button"` で、ラベルが close / 閉じる / dismiss のもの）をスクリプトから `click()` の順で最大 3 回脱出を試みる
+- どれでも抜けられなければ `a11y-skills/no-keyboard-trap` 違反
+- 抜けられたうち、`role="dialog"` + `aria-modal="true"` の中で Escape が効いたものは正しいモーダルとして報告しない
+- それ以外の抜け方（Shift+Tab や閉じるボタンだけ、aria-modal で無いもの）は `a11y-skills/keyboard-trap-needs-review`
 
-**検出可能な問題**:
-- 閉じられないモーダル
-- 無限ループするフォーカス
-
-**制限**:
-- 意図的なフォーカストラップ（モーダル内）との区別
-- Escape キーでの脱出パスの検証
+**残る制限**:
+- 閉じるボタンの脱出はスクリプトの `click()` で、キーボードで押せるかは確かめない
+- `aria-modal` で Escape が効くモーダルは正しい作りとみなして報告しない（他の抜け方は `needs-review` 止まり）
+- iframe・shadow DOM の中のフォーカスは最上位 document の `activeElement` でしか見ない
+- Tab 上限 600 回を超える大きなページは `tabWalkCapped` を付けて報告
 
 ---
 
@@ -345,15 +346,19 @@
 
 **新規スクリプト作成が必要なもの:**
 
-| 優先度 | 達成基準 | 理由 |
+| 優先度 | 達成基準 | 理由・流用できる土台 |
 |-------|---------|------|
-| 中 | 2.1.2 No Keyboard Trap | モーダル問題の検出 |
+| 高 | 4.1.3 Status Messages | CLI 検査なし（Automated + Interactive）。操作後の DOM 変化を静かな期間の基準線と比べる処理（`runCharacterKeyShortcutCheck.ts` / `runMotionActuationCheck.ts` の `domMutations`）、フォーム入力の `runChangeOnInputCheck.ts` を流用できる |
+| 中 | 3.3.1 Error Identification / 3.3.3 Error Suggestion | Interactive のみ。空で送信してから出た文字列と、その祖先の `aria-live` / `role=alert\|status` を見る（4.1.3 と同じ土台） |
+| 中 | 2.5.3 Label in Name | axe の `label-content-name-mismatch` は experimental で既定では走らない。可視テキストとアクセシブル名の比較（`page-snapshot` の aria snapshot）で足せる |
+| 低（screencast が要る・誤判定の代償が大きい） | 2.3.1 Three Flashes | Manual。`runAutoPlayDetection.ts` のスクリーンショット差分は 2 秒間隔で点滅の検出には粗すぎ、CDP screencast が必要 |
 
 **既存でカバー済み:**
 
 | 達成基準 | カバー元 |
 |---------|---------|
 | 2.1.1 Keyboard | `keyboard-reachability-check`（部分） ✅ |
+| 2.1.2 No Keyboard Trap | `keyboard-trap-check`（部分） ✅ |
 | 1.4.11 Non-text Contrast | `non-text-contrast-check`（部分） ✅ |
 | 2.1.4 Character Key Shortcuts | `character-key-shortcut-check`（部分） ✅ |
 | 1.4.13 Content on Hover or Focus | `content-on-hover-check`（部分） ✅ |
