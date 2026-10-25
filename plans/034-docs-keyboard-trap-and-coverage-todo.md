@@ -10,6 +10,7 @@
 
 ## ステータス
 
+- **Codex plan review**: 通過（1 巡目、2026-10-25、見送った low 0 件。medium 1 件「脱出操作と分類が実装とずれている」を反映）
 - **優先度**: P2（公開パッケージの参照文書が間違っている）
 - **工数**: S
 - **リスク**: LOW（文書のみ）
@@ -53,7 +54,7 @@
 ### 検査の中身（表の説明に使う）
 
 - ルール: `a11y-skills/no-keyboard-trap`（violation）と `a11y-skills/keyboard-trap-needs-review`（incomplete）（`src/utils/rule-registry.ts:450-472`）。
-- 動き（`src/playwright/runKeyboardTrapCheck.ts`、定数は `src/constants.ts:663-673`）: ページの操作可能要素の数 `count` を数え、Tab を `2 × count + 10` 回（上限 600 回）押して `activeElement` の列を記録。末尾 `count + 1` 個に `(body)` が無く、要素の種類が `count` 未満なら罠候補。候補には Escape → Shift+Tab → Enter の順で最大 3 回脱出を試み、抜けられれば `needs-review`（意図的なモーダルの可能性）、抜けられなければ `no-keyboard-trap` 違反。
+- 動き（`src/playwright/runKeyboardTrapCheck.ts`、定数は `src/constants.ts:663-673`）: ページの操作可能要素の数 `count` を数え、Tab を `2 × count + 10` 回（上限 600 回）押して `activeElement` の列を記録。末尾 `count + 1` 個に `(body)` が無く、要素の種類が `count` 未満なら罠候補。候補には Escape → Shift+Tab → 閉じるボタン（罠の中にある `button` / `role="button"` で、ラベルが close / 閉じる / dismiss のもの）をスクリプトから `click()` の順で最大 3 回脱出を試みる（`:360-403`）。どれでも抜けられなければ `no-keyboard-trap` 違反。抜けられたうち、`role="dialog"` + `aria-modal="true"` の中で Escape が効いたものは正しいモーダルとして報告しない（`:497-505`）。それ以外の抜け方（Shift+Tab や閉じるボタンだけ、aria-modal で無いもの）は `keyboard-trap-needs-review`。
 - 既存の文書での言い方: `skills/auditing-wcag/references/coverage-matrix.ja.md:37` 「| 2.1.2 | 自動+インタラクティブ | `keyboard-trap-check` **[CLI]** + 操作ログ | トラップでFail |」。
 
 ### TODO-COVERAGE.md
@@ -114,10 +115,10 @@
 ## 手順
 
 1. **README.ja.md 関数表**: `runAutoPlayDetection` の行の直後に 1 行足す:
-   `| \`runKeyboardTrapCheck\` | 2.1.2 キーボードトラップなし（Tab を要素数の 2 倍押して巡回を記録し、`<body>` に戻らず一部の要素に留まるものを候補に。Escape・Shift+Tab・Enter で抜けられれば要確認、抜けられなければ違反） |`
+   `| \`runKeyboardTrapCheck\` | 2.1.2 キーボードトラップなし（Tab を要素数の 2 倍押して巡回を記録し、`<body>` に戻らず一部の要素に留まるものを候補に。Escape・Shift+Tab・閉じるボタンのクリックのどれでも抜けられなければ違反。`aria-modal` のダイアログで Escape が効けば報告せず、それ以外の抜け方は要確認） |`
 2. **README.ja.md チェック名一覧**: `target-size-check` の次の行に `keyboard-trap-check` を足す（登録順）。
-3. **README.md**: 同じ 2 か所に英語で。関数表: `| \`runKeyboardTrapCheck\` | 2.1.2 No Keyboard Trap (presses Tab twice the number of focusable elements and records the cycle; focus that never returns to \`<body>\` and stays within a subset is a candidate. Escaping with Escape / Shift+Tab / Enter → needs review, otherwise a violation) |`。名前一覧も同じ位置。
-4. **TODO-COVERAGE.md 2.1.2 の項**（`:310-326`）を部分実装の形に書き換える: 見出し `### 2.1.2 No Keyboard Trap - **部分実装** ✅`、`**実装**: \`keyboard-trap-check\`（\`runKeyboardTrapCheck.ts\`）` に上の「検査の中身」を箇条書き、`**残る制限**` に「意図的な罠（モーダル）は脱出できれば `needs-review` 止まり。iframe・shadow DOM の中のフォーカスは最上位 document の `activeElement` でしか見ない。Tab 上限 600 回を超える大きなページは `tabWalkCapped` を付けて報告」。
+3. **README.md**: 同じ 2 か所に英語で。関数表: `| \`runKeyboardTrapCheck\` | 2.1.2 No Keyboard Trap (presses Tab twice the number of focusable elements and records the cycle; focus that never returns to \`<body>\` and stays within a subset is a candidate. A violation when neither Escape, Shift+Tab nor clicking a close button escapes. An \`aria-modal\` dialog that Escape closes is not reported; any other way out is needs review) |`。名前一覧も同じ位置。
+4. **TODO-COVERAGE.md 2.1.2 の項**（`:310-326`）を部分実装の形に書き換える: 見出し `### 2.1.2 No Keyboard Trap - **部分実装** ✅`、`**実装**: \`keyboard-trap-check\`（\`runKeyboardTrapCheck.ts\`）` に上の「検査の中身」を箇条書き、`**残る制限**` に「閉じるボタンの脱出はスクリプトの `click()` で、キーボードで押せるかは確かめない。`aria-modal` で Escape が効くモーダルは正しい作りとみなして報告しない（他の抜け方は `needs-review` 止まり）。iframe・shadow DOM の中のフォーカスは最上位 document の `activeElement` でしか見ない。Tab 上限 600 回を超える大きなページは `tabWalkCapped` を付けて報告」。
 5. **TODO-COVERAGE.md 実装優先度の表**（`:346-350`）を、上の「残っている空白」の 4 行に置き換える（列は「優先度 | 達成基準 | 理由・流用できる土台」。優先度は 4.1.3 を「高」、3.3.1/3.3.3 を「中」、2.5.3 を「中」、2.3.1 を「低（screencast が要る・誤判定の代償が大きい）」）。
 6. **TODO-COVERAGE.md 既存でカバー済みの表**（`:352-374`）に `| 2.1.2 No Keyboard Trap | \`keyboard-trap-check\`（部分） ✅ |` を足す（2.1.1 の行の次）。
 7. **TODO-COVERAGE.md 2.5.3 の項**（`:43-50`）の備考に 1 文足す: 「axe の `label-content-name-mismatch` は experimental で既定では走らないため、自動では見ていない（`coverage-matrix.md`）」。
