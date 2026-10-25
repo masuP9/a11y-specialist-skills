@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>reflow visually-hidden fixture</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 1rem;
+        max-width: 100%;
+      }
+      /*
+       * Text hidden from sighted users on purpose. Its clipping is intended,
+       * so it is not "clipped text" for 1.4.10.
+       */
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+        border: 0;
+      }
+      .clip-only {
+        position: absolute;
+        width: 40px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+      }
+      .clip-path-only {
+        width: 40px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+      .tiny-box {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+      .tiny-box > span {
+        display: block;
+        width: 40px;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Reflow — Visually Hidden</h1>
+    <table>
+      <thead>
+        <tr>
+          <th scope="col"><span class="visually-hidden">Select</span></th>
+          <th scope="col">Name</th>
+        </tr>
+      </thead>
+    </table>
+    <span class="clip-only">Hidden with clip rect only</span>
+    <div class="clip-path-only">Hidden with clip-path inset only</div>
+    <div class="tiny-box">
+      <span>Clipped child inside a 1px by 1px box</span>
+    </div>
+  </body>
+</html>
