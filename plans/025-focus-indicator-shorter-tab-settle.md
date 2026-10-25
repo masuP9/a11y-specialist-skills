@@ -9,6 +9,8 @@
 > `git diff --stat 143e564..HEAD -- packages/a11y-audit/src/constants.ts packages/a11y-audit/src/playwright/runFocusIndicatorCheck.ts packages/a11y-audit/test/focus-navigation.spec.ts packages/a11y-audit/CHANGELOG.md`
 > 差分があれば「現状」の抜粋と実コードを見比べ、食い違えば STOP 条件として扱う。
 > 同じ系列のプラン（024 / 026 / 027）が先に入って `DEFAULT_NAVIGATION_SETTLE_MS` の使われ方が変わっているのは想定内。
+> **024〜027 をまとめて実施する手順は 024 の「024〜027 をまとめて実施するとき」にある。**
+> **計画後の変更（2026-10-25 追記）**: `runFocusIndicatorCheck.ts` は Plan 030（フォーカスした要素が画面に出ているかを `allElements[].visibility` に記録）、031（見えないと測った要素を、この Tab の待ちの後にもう一度測る）、032（id のエスケープ）で変わった。既定値は今 `:269`、説明は `:212`、Tab ごとの待ちは `:631`。031 の測り直しはこの待ちの後に行うので、待ちを縮めると visibility の結果が変わりうる。021 の計測は visibility を比べていないため、ステップ 5b で別に比べる。
 
 ## ステータス
 
@@ -193,6 +195,23 @@ node packages/a11y-audit/test-results/spike-021/compare.mjs tmp/spike-021/before
 - 5 ページとも `nodes.same` / `targets.same` / `untested.same` / `aborted.same` が `true`。
 - `durationMs` の合計が変更前より短い（目安は 5 ページ合計で 4 割弱短い）。
 
+### ステップ 5b: visibility の結果を 50 ms と 25 ms で比べる
+
+021 の `measure.mjs` は `allElements[].visibility` を残さないので、これだけは別に比べる。変更後のビルドで、`runFocusIndicatorCheck` に `navigationSettleMs` を渡して既定値（25）と 50 を同じビルドで比べる（ソースは変えない）。
+
+1. 使い捨てのスクリプトを `packages/a11y-audit/test-results/visibility-025/compare-visibility.mjs` に書く（gitignore 済み。コミットしない）。`../../dist/index.js` の `runFocusIndicatorCheck` を、同じ URL に対して `navigationSettleMs: 50` で 2 回、指定なし（既定の 25）で 1 回実行する。各回の `allElements` から、キーを `` `${frame ?? ''}|${tabStep}|${selector}` ``、値を `` `${visibility.visible}|${visibility.reason}` `` にした対応表を作り、次を JSON 1 行で出す:
+   - `worse`: 50 ms の 2 回とも `visible` が `true` か `null` なのに、25 ms で `false` になったキー（悪くなったもの）
+   - `changed`: 値が変わったキーすべて
+   - `flake`: 50 ms の 2 回どうしで値が違うキー（もともと揺れるもの）
+   - `onlyIn50` / `onlyIn25`: 片方にしか無いキーの数
+   引数の形や `frame` の持ち方が上と違えば、実際の型（`src/types.ts` の `FocusRecord` / `FocusVisibility`）に合わせる。
+2. 実ページ 5 つ（ステップ 1 の表）と、visibility の fixture（`test/fixtures/pages/focus-indicator/visibility-*.html` の全件。`file://` の URL で渡す）で実行する。
+
+**確認**:
+- 実ページと fixture のすべてで、`worse` のうち `flake` に入っていないものが 0 件。
+- `changed` から `flake` を除いたものが 0 件でなければ、その内容を PR 本文に載せる（`worse` でないなら、悪くなったわけではない）。
+- 既存の `test/focus-visibility.spec.ts` はステップ 4 で通っていること（既定値 25 ms で fixture の期待値どおり）。
+
 ### ステップ 6: CHANGELOG
 
 `## Unreleased` の `### Changed` に書く:
@@ -228,6 +247,7 @@ node packages/a11y-audit/dist/cli.js --url "file://$PWD/packages/a11y-audit/test
 - [ ] `git grep -n 'DEFAULT_NAVIGATION_SETTLE_MS' -- packages/a11y-audit/src/playwright/runFocusIndicatorCheck.ts` が 0 行
 - [ ] `git grep -n 'default: 50' -- packages/a11y-audit/src/playwright/runFocusIndicatorCheck.ts` が 0 行
 - [ ] ステップ 5 で 5 ページとも一致し、PR 本文に 5 ページの変更前後の秒数を表で載せる
+- [ ] ステップ 5b で、実ページ 5 つと visibility の fixture 全件の `worse`（`flake` を除く）が 0 件。PR 本文に件数を載せる
 - [ ] ステップ 7 で `Errors:       0`
 - [ ] `git status --porcelain` に範囲内のファイルしか出ない
 - [ ] `plans/README.md` の 025 の行を更新
@@ -238,6 +258,8 @@ node packages/a11y-audit/dist/cli.js --url "file://$PWD/packages/a11y-audit/test
 - ステップ 2 の新しいテストが、値の不一致以外の理由で落ちる。
 - ステップ 3 の後に既存テストが落ちる。特に、フォーカスで起きる遷移を既定値のまま確かめているテストが落ちたら、それはこの変更で見落としが増えた証拠なので、テストに `navigationSettleMs` を足して通さない。どのテストがどう落ちたかを報告する。
 - ステップ 5 でどれかのページの集合が一致しない。同じページで変更前の計測をもう 1 回取り、変更前どうしでも同じ差が出るかを確かめてから報告する。
+- ステップ 5b で、`flake` に入っていない `worse` が 1 件でもある（待ちを縮めたせいで「見えない」が増えた）。focus-indicator-check の既定値は 50 のまま据え置くか、031 の測り直しの待ちを Tab の待ちと分けるかは masuP9 が決めるので、該当の URL・キー・値を添えて報告する。024 / 026 / 027 だけ先に進めることもしない。
+- `test/focus-visibility.spec.ts` が既定値 25 ms で落ちる。テストに `navigationSettleMs` を足して通さない。
 - 実ページに届かない。fixture だけで済ませない。
 
 ## 保守メモ

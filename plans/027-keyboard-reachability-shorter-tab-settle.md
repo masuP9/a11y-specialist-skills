@@ -9,6 +9,7 @@
 > `git diff --stat 143e564..HEAD -- packages/a11y-audit/src/constants.ts packages/a11y-audit/src/playwright/runKeyboardReachabilityCheck.ts packages/a11y-audit/test/keyboard-reachability.spec.ts packages/a11y-audit/CHANGELOG.md`
 > 差分があれば「現状」の抜粋と実コードを見比べ、食い違えば STOP 条件として扱う。
 > 同じ系列のプラン（024〜026）が先に入って `DEFAULT_NAVIGATION_SETTLE_MS` の使われ方が変わっているのは想定内。
+> **024〜027 をまとめて実施する手順は 024 の「024〜027 をまとめて実施するとき」にある。**
 
 ## ステータス
 
