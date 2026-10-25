@@ -30,6 +30,11 @@ adheres to [Semantic Versioning](https://semver.org/).
   38% less time. A navigation that a focus handler starts 25–50 ms later may now
   be missed or attributed to a neighboring element; pass `navigationSettleMs: 50`
   (or more) for such pages.
+- `focus-order-check`: the default wait after each Tab press (`settleMs`) is
+  now 25 ms (was 50 ms). On 5 public pages and the focus-order fixtures the
+  results were the same, and the check took about 36% less time. The 300 ms
+  wait after opening or closing a dialog is unchanged. Pass `settleMs: 50` to
+  keep the old wait.
 
 ## 0.17.0 — 2026-10-25
 

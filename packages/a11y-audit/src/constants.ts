@@ -965,6 +965,11 @@ export const FOCUS_ORDER_DETOUR_NEAR_RATIO = 0.25;
 export const FOCUS_ORDER_MAX_DIALOG_TRIGGERS = 10;
 /** Wait after opening / closing a dialog, for transitions and focus scripts. */
 export const FOCUS_ORDER_DIALOG_SETTLE_MS = 300;
+/**
+ * Wait after each Tab press. 25 ms gave the same results as the shared 50 ms on
+ * 5 public pages and 13 fixtures (plans/021-result-slow-check-timing.md).
+ */
+export const FOCUS_ORDER_SETTLE_MS = 25;
 export const FOCUS_ORDER_DIALOG_SELECTOR =
   'dialog[open], [role="dialog"], [role="alertdialog"], [aria-modal="true"]';
 /**

@@ -8,6 +8,7 @@
 
 import Ajv2020 from 'ajv/dist/2020.js';
 import { test, expect, runFixtureCheck } from './helpers/fixtures.js';
+import { FOCUS_ORDER_SETTLE_MS } from '../dist/constants.js';
 import type { FocusOrderCheckDetails } from '../dist/index.js';
 import { RESULT_SCHEMAS } from '../dist/schemas/index.js';
 
@@ -541,4 +542,8 @@ test.describe('Dialogs', () => {
     expect(nodesOf(DIALOG)).toHaveLength(1);
     expect(nodesOf(DIALOG)[0]?.failureSummary).toContain('maxDialogTriggers');
   });
+});
+
+test('focus-order-check の Tab ごとの既定の待ちは 25ms（Plan 021 で 5 ページと fixture 13 件の結果が 50ms と同じだった値）', () => {
+  expect(FOCUS_ORDER_SETTLE_MS).toBe(25);
 });

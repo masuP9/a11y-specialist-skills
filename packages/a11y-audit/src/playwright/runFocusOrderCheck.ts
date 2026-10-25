@@ -54,7 +54,7 @@ import type {
 } from '../types.js';
 import {
   DEFAULT_FOCUS_ORDER_RESULT_FILE,
-  DEFAULT_NAVIGATION_SETTLE_MS,
+  FOCUS_ORDER_SETTLE_MS,
   FOCUSABLE_SELECTOR,
   FOCUS_ORDER_DIALOG_CLOSE_NAME_PATTERN,
   FOCUS_ORDER_DIALOG_CLOSE_SELECTOR,
@@ -90,7 +90,7 @@ export interface RunFocusOrderCheckOptions
   targetUrl?: string;
   /** Options forwarded to `browser.newContext()`. Ignored when `createContext` is used. */
   contextOptions?: BrowserContextOptions;
-  /** Wait after each Tab press (default: DEFAULT_NAVIGATION_SETTLE_MS). */
+  /** Wait after each Tab press (default: FOCUS_ORDER_SETTLE_MS). */
   settleMs?: number;
   /** Wall-clock budget for the whole check (default: FOCUS_ORDER_TIMEOUT_MS). */
   timeBudgetMs?: number;
@@ -556,7 +556,7 @@ export async function runFocusOrderCheck(
     createContext,
     targetUrl: targetUrlOption,
     contextOptions,
-    settleMs = DEFAULT_NAVIGATION_SETTLE_MS,
+    settleMs = FOCUS_ORDER_SETTLE_MS,
     timeBudgetMs = FOCUS_ORDER_TIMEOUT_MS,
     maxTabPresses = FOCUS_ORDER_MAX_TAB_PRESSES,
     maxDialogTriggers = FOCUS_ORDER_MAX_DIALOG_TRIGGERS,
