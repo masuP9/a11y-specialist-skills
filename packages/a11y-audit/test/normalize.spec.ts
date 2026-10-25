@@ -1141,61 +1141,114 @@ test('mergeNormalizedResults rejects URL mismatches', () => {
   expect(() => mergeNormalizedResults([a, b])).toThrow(/URL mismatch/);
 });
 
-test('mergeNormalizedResults dedupes nodes and applies bucket priority', () => {
-  const mkRule = (nodes: Array<{ sel: string; summary: string }>) => ({
-    id: 'a11y-skills/text-spacing',
-    impact: 'moderate' as const,
-    description: 'd',
-    help: 'h',
-    helpUrl: 'u',
-    tags: ['a11y-skills'],
-    nodes: nodes.map((n) => ({
-      target: [n.sel],
-      html: '<div>',
-      htmlTruncated: false,
-      failureSummary: n.summary,
-    })),
-  });
-  const base = {
-    url: 'https://example.com/',
-    details: {},
-    summary: { violationCount: 0, incompleteCount: 0, passCount: 0 },
-    disclaimer: { message: '', messageEn: '', coverage: '', moreInfo: '' },
-  };
+const mergeMkRule = (nodes: Array<{ sel: string; summary: string }>) => ({
+  id: 'a11y-skills/text-spacing',
+  impact: 'moderate' as const,
+  description: 'd',
+  help: 'h',
+  helpUrl: 'u',
+  tags: ['a11y-skills'],
+  nodes: nodes.map((n) => ({
+    target: [n.sel],
+    html: '<div>',
+    htmlTruncated: false,
+    failureSummary: n.summary,
+  })),
+});
+const mergeBase = {
+  url: 'https://example.com/',
+  details: {},
+  summary: { violationCount: 0, incompleteCount: 0, passCount: 0 },
+  disclaimer: { message: '', messageEn: '', coverage: '', moreInfo: '' },
+  source: 'text-spacing-check' as const,
+  timestamp: '2026-01-01T00:00:00.000Z',
+  violations: [] as ReturnType<typeof mergeMkRule>[],
+  incomplete: [] as ReturnType<typeof mergeMkRule>[],
+  passes: [] as ReturnType<typeof mergeMkRule>[],
+  inapplicable: [] as ReturnType<typeof mergeMkRule>[],
+};
+
+test('同じルールが incomplete と violations にあると、それぞれのバケットに自分の node だけで残る', () => {
   const first = {
-    ...base,
-    source: 'text-spacing-check' as const,
+    ...mergeBase,
     timestamp: '2026-01-01T00:00:00.000Z',
-    violations: [],
-    incomplete: [mkRule([{ sel: '.a', summary: 's1' }])],
-    passes: [],
-    inapplicable: [],
+    incomplete: [mergeMkRule([{ sel: '.a', summary: 's1' }])],
   };
   const second = {
-    ...base,
-    source: 'text-spacing-check' as const,
+    ...mergeBase,
     timestamp: '2026-01-02T00:00:00.000Z',
     violations: [
-      mkRule([
-        { sel: '.a', summary: 's1' }, // duplicate of first's node
+      mergeMkRule([
+        { sel: '.a', summary: 's1' },
         { sel: '.b', summary: 's2' },
       ]),
     ],
-    incomplete: [],
-    passes: [],
-    inapplicable: [],
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const merged = mergeNormalizedResults([first, second] as any);
 
-  // priority: the rule ends up in violations, not incomplete
-  expect(merged.incomplete).toEqual([]);
   expect(merged.violations).toHaveLength(1);
-  // node '.a'/'s1' deduplicated across results
-  expect(merged.violations[0].nodes.map((n) => n.target[0]).sort()).toEqual([
+  expect(merged.violations[0].nodes.map((n) => n.target[0])).toEqual([
     '.a',
     '.b',
   ]);
+  expect(merged.incomplete).toHaveLength(1);
+  expect(merged.incomplete[0].nodes.map((n) => n.target[0])).toEqual(['.a']);
   expect(merged.timestamp).toBe('2026-01-02T00:00:00.000Z');
+});
+
+test('同じルールが violations と passes にあると、passes からは消え、violations の node は増えない', () => {
+  const first = {
+    ...mergeBase,
+    violations: [mergeMkRule([{ sel: '.a', summary: 's1' }])],
+  };
+  const second = {
+    ...mergeBase,
+    passes: [mergeMkRule([{ sel: '.c', summary: 's3' }])],
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const merged = mergeNormalizedResults([first, second] as any);
+
+  expect(merged.passes).toEqual([]);
+  expect(merged.violations).toHaveLength(1);
+  expect(merged.violations[0].nodes.map((n) => n.target[0])).toEqual(['.a']);
+  expect(merged.violations[0].nodes.map((n) => n.target[0])).not.toContain(
+    '.c',
+  );
+});
+
+test('同じバケットの同じルールは id で 1 つにまとまり、node の重複は除かれる', () => {
+  const first = {
+    ...mergeBase,
+    violations: [mergeMkRule([{ sel: '.a', summary: 's1' }])],
+  };
+  const second = {
+    ...mergeBase,
+    violations: [
+      mergeMkRule([
+        { sel: '.a', summary: 's1' },
+        { sel: '.b', summary: 's2' },
+      ]),
+    ],
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const merged = mergeNormalizedResults([first, second] as any);
+
+  expect(merged.violations).toHaveLength(1);
+  expect(merged.violations[0].nodes.map((n) => n.target[0])).toEqual([
+    '.a',
+    '.b',
+  ]);
+});
+
+test('inapplicable のルールは、他のバケットに同じルールが無ければ残る', () => {
+  const only = { ...mergeBase, inapplicable: [mergeMkRule([])] };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const merged = mergeNormalizedResults([only] as any);
+
+  expect(merged.inapplicable).toHaveLength(1);
 });
