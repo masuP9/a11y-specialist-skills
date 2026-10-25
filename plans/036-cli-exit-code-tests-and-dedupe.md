@@ -16,6 +16,7 @@
 - **依存**: なし
 - **カテゴリ**: tests
 - **計画時点**: commit `3b7d8e1`, 2026-10-25
+- **Codex plan review**: 通過(1 巡目、2026-10-25、見送った low 0 件。medium 1 件（`check-registration.spec.ts` の `execFile` と完了条件の食い違い）を反映)
 
 ## なぜ重要か
 
@@ -129,6 +130,7 @@ function runCli(args: string[], timeoutMs: number): Promise<CliRun> {
 - `cli.ts` の他の分岐・メッセージ文言・終了コードの契約
 - `README` の CLI 節（振る舞いは変わらない）
 - `ci.yml`
+- `test/check-registration.spec.ts`（`execFile` を使うが、置き換えると非 0 終了の扱いが変わるため）
 
 ## 使うコマンド
 
@@ -162,7 +164,7 @@ function runCli(args: string[], timeoutMs: number): Promise<CliRun> {
 
 ## 完了条件
 
-- [ ] `git grep -n 'execFile' -- packages/a11y-audit/test` が `test/helpers/cli.ts` だけを返す。
+- [ ] `git grep -n 'execFile' -- packages/a11y-audit/test` が `test/helpers/cli.ts` と `test/check-registration.spec.ts` だけを返す（後者は全テストで共有する `--list-checks` の 1 回の起動で、終了コードが 0 でなければ reject する `promisify(execFile)` の作り。`runCli` は非 0 でも resolve するので振る舞いが変わる。範囲外として触らない）。
 - [ ] `test/cli-args.spec.ts` の 9 テストが pass。
 - [ ] 置き換えた 4 spec の期待値が変わっていない（diff が `runCli` の呼び出しへの置き換えだけ）。
 - [ ] 全検証コマンドが exit 0。
