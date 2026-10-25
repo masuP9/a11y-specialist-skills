@@ -12,6 +12,11 @@ adheres to [Semantic Versioning](https://semver.org/).
   `focus-indicator-check` no longer fails on a 3.2.1 violation from such an
   element. The form lookup in `redundant-entry-check` now uses
   `querySelector` with those escaped selectors.
+- `mergeNormalizedResults` no longer folds a rule's `incomplete` nodes into its
+  `violations` entry; a rule found in both buckets now stays in both with its
+  own nodes. `passes` / `inapplicable` entries are still dropped when the same
+  rule has findings. `summary.violationCount` / `incompleteCount` count rules,
+  so a rule present in both buckets is counted in both.
 
 ## 0.17.0 — 2026-10-25
 

@@ -812,9 +812,12 @@ const merged = mergeNormalizedResults([axeResult, reflowResult, targetResult]);
 ```
 
 `mergeNormalizedResults` throws on URL mismatches, deduplicates nodes by
-`target` + `failureSummary`, and resolves a rule appearing in several buckets
-by priority (`violations > incomplete > passes > inapplicable`). Identical
-selectors inside different frames or shadow roots are not distinguished.
+`target` + `failureSummary` (the same rule id is merged within a bucket). A rule
+found in both `violations` and `incomplete` stays in both, each with its own
+nodes. `passes` / `inapplicable` entries are dropped when the same rule has a
+`violations` or `incomplete` entry, and `inapplicable` entries are dropped when
+the same rule is in `passes`. Identical selectors inside different frames
+or shadow roots are not distinguished.
 
 ## Result types & schemas
 

@@ -2107,11 +2107,15 @@ type BucketName = (typeof BUCKETS)[number];
  * Merge several check results for the same URL into one normalized view.
  *
  * - Results with differing URLs are rejected (throws).
- * - The same rule id is merged into one entry; nodes are deduplicated by
- *   `target` + `failureSummary`. Identical selectors inside different frames
- *   or shadow roots are NOT distinguished.
- * - A rule appearing in several buckets is placed in the highest-priority one:
- *   violations > incomplete > passes > inapplicable.
+ * - Within one bucket the same rule id is merged into one entry; nodes are
+ *   deduplicated by `target` + `failureSummary`. Identical selectors inside
+ *   different frames or shadow roots are NOT distinguished. Rule metadata
+ *   (impact / description / help) comes from the first result that has the rule
+ *   in that bucket.
+ * - A rule found in both `violations` and `incomplete` stays in both, each
+ *   with its own nodes (confirmed and needs-review nodes are never mixed).
+ * - `passes` / `inapplicable` entries are dropped when the same rule id has a
+ *   `violations` or `incomplete` entry; when both are present, `passes` wins.
  */
 export function mergeNormalizedResults(
   results: Array<AuditCheckResult<unknown>>,
@@ -2129,27 +2133,27 @@ export function mergeNormalizedResults(
   }
 
   interface MergedEntry {
-    bucketIndex: number;
+    bucket: BucketName;
     rule: NormalizedRuleResult;
     nodeKeys: Set<string>;
   }
-  const byId = new Map<string, MergedEntry>();
+  const byBucketAndId = new Map<string, MergedEntry>();
   const nodeKey = (n: NormalizedNode): string =>
     `${JSON.stringify(n.target)}|${n.failureSummary}`;
 
   for (const result of results) {
-    BUCKETS.forEach((bucket: BucketName, bucketIndex) => {
+    for (const bucket of BUCKETS) {
       for (const rule of result[bucket]) {
-        let entry = byId.get(rule.id);
+        const mapKey = `${bucket}|${rule.id}`;
+        let entry = byBucketAndId.get(mapKey);
         if (!entry) {
           entry = {
-            bucketIndex,
+            bucket,
             rule: { ...rule, nodes: [] },
             nodeKeys: new Set(),
           };
-          byId.set(rule.id, entry);
+          byBucketAndId.set(mapKey, entry);
         }
-        entry.bucketIndex = Math.min(entry.bucketIndex, bucketIndex);
         for (const node of rule.nodes) {
           const key = nodeKey(node);
           if (!entry.nodeKeys.has(key)) {
@@ -2158,7 +2162,7 @@ export function mergeNormalizedResults(
           }
         }
       }
-    });
+    }
   }
 
   const merged: Record<BucketName, NormalizedRuleResult[]> = {
@@ -2167,8 +2171,14 @@ export function mergeNormalizedResults(
     passes: [],
     inapplicable: [],
   };
-  for (const entry of byId.values()) {
-    merged[BUCKETS[entry.bucketIndex]!].push(entry.rule);
+  for (const entry of byBucketAndId.values()) {
+    const id = entry.rule.id;
+    const index = BUCKETS.indexOf(entry.bucket);
+    // passes / inapplicable lose to any higher-priority bucket with the same id.
+    const outranked =
+      index >= 2 &&
+      BUCKETS.slice(0, index).some((b) => byBucketAndId.has(`${b}|${id}`));
+    if (!outranked) merged[entry.bucket].push(entry.rule);
   }
 
   const latestTimestamp = results

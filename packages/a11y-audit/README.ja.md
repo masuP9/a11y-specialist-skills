@@ -670,8 +670,11 @@ const merged = mergeNormalizedResults([axeResult, reflowResult, targetResult]);
 ```
 
 `mergeNormalizedResults` は URL 不一致で例外を投げ、ノードを
-`target` + `failureSummary` で重複排除し、複数バケツに現れるルールは
-`violations > incomplete > passes > inapplicable` の優先順位で統合します。
+`target` + `failureSummary` で重複排除します（同じバケツ内では同じルール id を
+1 つにまとめます）。同じルールが `violations` と `incomplete` の両方にある場合は
+両方に残り、node はそれぞれのバケツのものだけです。`passes` / `inapplicable` は、
+同じルールに `violations` か `incomplete` があると取り除かれ、`inapplicable` は
+同じルールが `passes` にもあると取り除かれます。
 frame / shadow root 内の同一セレクタは区別しません。
 
 ## 結果型とスキーマ
