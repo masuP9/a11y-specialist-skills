@@ -148,6 +148,14 @@ const MANIFEST: ManifestEntry[] = [
       'a11y-skills/reflow-clipped-text': 'passes',
     },
   },
+  {
+    check: 'reflow-check',
+    scenario: 'clear: visually-hidden text is not reported as clipped',
+    fixture: 'reflow/visually-hidden.html',
+    expectRules: {
+      'a11y-skills/reflow-clipped-text': 'passes',
+    },
+  },
 
   // =========================================================================
   // text-spacing-check
@@ -169,6 +177,14 @@ const MANIFEST: ManifestEntry[] = [
       'a11y-skills/text-spacing': 'passes',
     },
   },
+  {
+    check: 'text-spacing-check',
+    scenario: 'clear: visually-hidden text is not reported as clipped',
+    fixture: 'text-spacing/visually-hidden.html',
+    expectRules: {
+      'a11y-skills/text-spacing': 'passes',
+    },
+  },
 
   // =========================================================================
   // zoom-200-check
@@ -186,6 +202,14 @@ const MANIFEST: ManifestEntry[] = [
     check: 'zoom-200-check',
     scenario: 'clear: no overflow at 200% zoom',
     fixture: 'zoom/clear.html',
+    expectRules: {
+      'a11y-skills/resize-text': 'passes',
+    },
+  },
+  {
+    check: 'zoom-200-check',
+    scenario: 'clear: visually-hidden text is not reported as clipped',
+    fixture: 'zoom/visually-hidden.html',
     expectRules: {
       'a11y-skills/resize-text': 'passes',
     },

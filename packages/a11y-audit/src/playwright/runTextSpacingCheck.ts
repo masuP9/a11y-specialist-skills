@@ -117,6 +117,41 @@ function collectElementMetrics(args: {
     );
   }
 
+  /**
+   * True when the element or an ancestor hides its text on purpose
+   * (visually-hidden / sr-only): clipped to zero area, or a box of at most
+   * 1px x 1px with hidden overflow. Such clipping is intended, not lost content.
+   * Copied to runZoomCheck.ts and utils/layout.ts; keep the copies in sync.
+   */
+  function isVisuallyHidden(element: Element): boolean {
+    for (let el: Element | null = element; el; el = el.parentElement) {
+      const style = window.getComputedStyle(el);
+      const clipRect = /^rect\((.+)\)$/.exec(style.clip)?.[1];
+      if (clipRect) {
+        const [top = NaN, right = NaN, bottom = NaN, left = NaN] = clipRect
+          .split(/[\s,]+/)
+          .map(parseFloat);
+        if (bottom <= top || right <= left) return true;
+      }
+      const inset = /^inset\(([\d.]+)%\)$/.exec(style.clipPath)?.[1];
+      if (inset && parseFloat(inset) >= 50) return true;
+      // client* ignores CSS zoom (unlike getBoundingClientRect) and is always
+      // 0 for inline boxes, where overflow does not apply.
+      const overflowHidden = [style.overflowX, style.overflowY].some(
+        (v) => v === 'hidden' || v === 'clip',
+      );
+      if (
+        overflowHidden &&
+        style.display !== 'inline' &&
+        el.clientWidth <= 1 &&
+        el.clientHeight <= 1
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   const elements = document.querySelectorAll(checkSelector);
   const metrics: ElementMetrics[] = [];
 
@@ -129,7 +164,7 @@ function collectElementMetrics(args: {
     const hasText =
       element.textContent && element.textContent.trim().length > 0;
 
-    if (hasText && hasHiddenOverflow(style)) {
+    if (hasText && hasHiddenOverflow(style) && !isVisuallyHidden(element)) {
       metrics.push({
         selector: getUniqueSelector(element, index),
         tagName: element.tagName.toLowerCase(),
@@ -148,14 +183,8 @@ function collectElementMetrics(args: {
   return metrics;
 }
 
-/** Inject text spacing CSS and re-collect metrics (browser context). */
-function injectSpacingAndCollect(args: {
-  css: string;
-  checkSelector: string;
-  htmlSnippetMaxLength: number;
-}): ElementMetrics[] {
-  const { css, checkSelector, htmlSnippetMaxLength } = args;
-
+/** Inject the text spacing CSS (browser context). */
+function injectSpacingCss(css: string): void {
   const styleEl = document.createElement('style');
   styleEl.id = 'wcag-text-spacing-override';
   styleEl.textContent = css;
@@ -163,99 +192,6 @@ function injectSpacingAndCollect(args: {
 
   // Force reflow
   void document.body.offsetHeight;
-
-  function getHtmlSnippet(element: Element): {
-    html: string;
-    htmlTruncated: boolean;
-  } {
-    let html: string;
-    try {
-      html = element.outerHTML || '';
-    } catch {
-      html = '';
-    }
-    if (!html) {
-      return {
-        html: `<${element.tagName.toLowerCase()}>`,
-        htmlTruncated: false,
-      };
-    }
-    if (html.length > htmlSnippetMaxLength) {
-      return { html: html.slice(0, htmlSnippetMaxLength), htmlTruncated: true };
-    }
-    return { html, htmlTruncated: false };
-  }
-
-  function getUniqueSelector(element: Element, elementIndex: number): string {
-    if (element.id) {
-      return `#${CSS.escape(element.id)}`;
-    }
-    const path: string[] = [];
-    let current: Element | null = element;
-    while (current && current !== document.body) {
-      let selector = current.tagName.toLowerCase();
-      const parent: Element | null = current.parentElement;
-      if (parent) {
-        const childIndex = Array.from(parent.children).indexOf(current) + 1;
-        selector += `:nth-child(${childIndex})`;
-      }
-      path.unshift(selector);
-      current = parent;
-    }
-    return path.length > 0
-      ? path.join(' > ')
-      : `[data-index="${elementIndex}"]`;
-  }
-
-  function isVisible(element: Element): boolean {
-    const style = window.getComputedStyle(element);
-    return (
-      style.display !== 'none' &&
-      style.visibility !== 'hidden' &&
-      parseFloat(style.opacity) > 0
-    );
-  }
-
-  function hasHiddenOverflow(style: CSSStyleDeclaration): boolean {
-    return (
-      style.overflow === 'hidden' ||
-      style.overflow === 'clip' ||
-      style.overflowX === 'hidden' ||
-      style.overflowX === 'clip' ||
-      style.overflowY === 'hidden' ||
-      style.overflowY === 'clip'
-    );
-  }
-
-  const elements = document.querySelectorAll(checkSelector);
-  const metrics: ElementMetrics[] = [];
-
-  elements.forEach((element, index) => {
-    if (!isVisible(element)) {
-      return;
-    }
-
-    const style = window.getComputedStyle(element);
-    const hasText =
-      element.textContent && element.textContent.trim().length > 0;
-
-    if (hasText && hasHiddenOverflow(style)) {
-      metrics.push({
-        selector: getUniqueSelector(element, index),
-        tagName: element.tagName.toLowerCase(),
-        ...getHtmlSnippet(element),
-        scrollWidth: element.scrollWidth,
-        scrollHeight: element.scrollHeight,
-        clientWidth: element.clientWidth,
-        clientHeight: element.clientHeight,
-        overflow: style.overflow,
-        overflowX: style.overflowX,
-        overflowY: style.overflowY,
-      });
-    }
-  });
-
-  return metrics;
 }
 
 function determineIssueType(
@@ -377,8 +313,9 @@ export async function runTextSpacingCheck(
     htmlSnippetMaxLength: HTML_SNIPPET_MAX_LENGTH,
   });
 
-  const afterMetrics = await page.evaluate(injectSpacingAndCollect, {
-    css: TEXT_SPACING_CSS,
+  await page.evaluate(injectSpacingCss, TEXT_SPACING_CSS);
+
+  const afterMetrics = await page.evaluate(collectElementMetrics, {
     checkSelector: TEXT_SPACING_CHECK_SELECTOR,
     htmlSnippetMaxLength: HTML_SNIPPET_MAX_LENGTH,
   });

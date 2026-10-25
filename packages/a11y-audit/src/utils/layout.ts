@@ -111,6 +111,40 @@ export function createLayoutChecker(
     );
   }
 
+  /**
+   * True when the element or an ancestor hides its text on purpose
+   * (visually-hidden / sr-only). Copied from runTextSpacingCheck.ts — browser
+   * context functions cannot share helpers; keep the copies in sync.
+   */
+  function isVisuallyHidden(element: Element): boolean {
+    for (let el: Element | null = element; el; el = el.parentElement) {
+      const style = window.getComputedStyle(el);
+      const clipRect = /^rect\((.+)\)$/.exec(style.clip)?.[1];
+      if (clipRect) {
+        const [top = NaN, right = NaN, bottom = NaN, left = NaN] = clipRect
+          .split(/[\s,]+/)
+          .map(parseFloat);
+        if (bottom <= top || right <= left) return true;
+      }
+      const inset = /^inset\(([\d.]+)%\)$/.exec(style.clipPath)?.[1];
+      if (inset && parseFloat(inset) >= 50) return true;
+      // client* ignores CSS zoom (unlike getBoundingClientRect) and is always
+      // 0 for inline boxes, where overflow does not apply.
+      const overflowHidden = [style.overflowX, style.overflowY].some(
+        (v) => v === 'hidden' || v === 'clip',
+      );
+      if (
+        overflowHidden &&
+        style.display !== 'inline' &&
+        el.clientWidth <= 1 &&
+        el.clientHeight <= 1
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   // Check document-level horizontal scroll
   const scrollEl = document.scrollingElement || document.documentElement;
   const documentScrollWidth = scrollEl.scrollWidth;
@@ -196,7 +230,7 @@ export function createLayoutChecker(
         // Only report if element has text content
         const hasText =
           element.textContent && element.textContent.trim().length > 0;
-        if (hasText) {
+        if (hasText && !isVisuallyHidden(element)) {
           seenElements.add(element);
           clippedTextElements.push({
             selector,
