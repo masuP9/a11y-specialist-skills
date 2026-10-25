@@ -35,6 +35,10 @@ adheres to [Semantic Versioning](https://semver.org/).
   results were the same, and the check took about 36% less time. The 300 ms
   wait after opening or closing a dialog is unchanged. Pass `settleMs: 50` to
   keep the old wait.
+- `keyboard-reachability-check`: the default wait after each key press
+  (`walkSettleMs`) is now 25 ms (was 50 ms). On 5 public pages and the
+  keyboard-reachability fixtures the results were the same, and the check took
+  about 38% less time. Pass `walkSettleMs: 50` to keep the old wait.
 
 ## 0.17.0 — 2026-10-25
 

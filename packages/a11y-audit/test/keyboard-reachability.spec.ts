@@ -12,6 +12,7 @@ import type {
   KeyboardReachabilityCheckDetails,
   KeyboardReachabilityElement,
 } from '../dist/index.js';
+import { KEYBOARD_REACHABILITY_WALK_SETTLE_MS } from '../dist/constants.js';
 import { RESULT_SCHEMAS } from '../dist/schemas/index.js';
 
 const ajv = new Ajv2020({ strict: false, allowUnionTypes: true });
@@ -611,4 +612,8 @@ test('popups-large page: a large menu that ignores ArrowDown yields one sample-n
   expect(s2.confidence).toBe('medium');
   expect(details.unreachableCount).toBe(1);
   expect(validate(result), JSON.stringify(validate.errors)).toBe(true);
+});
+
+test('keyboard-reachability-check のキーごとの既定の待ちは 25ms（Plan 021 で 5 ページと fixture 7 件の結果が 50ms と同じだった値）', () => {
+  expect(KEYBOARD_REACHABILITY_WALK_SETTLE_MS).toBe(25);
 });

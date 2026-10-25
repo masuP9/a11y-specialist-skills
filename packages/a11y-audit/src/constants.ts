@@ -95,9 +95,6 @@ export const FOCUSABLE_SELECTOR = `
 /** Extra tab iterations for safety margin */
 export const EXTRA_TAB_ITERATIONS = 10;
 
-/** Default ms to wait after each Tab press for a focus-triggered navigation to surface. */
-export const DEFAULT_NAVIGATION_SETTLE_MS = 50;
-
 /**
  * focus-indicator-check: wait after each Tab press for a focus-triggered navigation
  * to surface. 25 ms gave the same results as the shared 50 ms on 5 public pages and
@@ -770,6 +767,11 @@ export const KEYBOARD_REACHABILITY_MAX_ARROW_PRESSES_TOTAL = 1000;
 export const KEYBOARD_REACHABILITY_MAX_DOM_MUTATIONS = 200;
 /** Wall-clock budget for the whole check; checked before each key press. */
 export const KEYBOARD_REACHABILITY_TIMEOUT_MS = 60_000;
+/**
+ * Wait after each key press. 25 ms gave the same results as the shared 50 ms on
+ * 5 public pages and 7 fixtures (plans/021-result-slow-check-timing.md).
+ */
+export const KEYBOARD_REACHABILITY_WALK_SETTLE_MS = 25;
 export const DEFAULT_KEYBOARD_REACHABILITY_RESULT_FILE =
   'keyboard-reachability-result.json';
 export const DEFAULT_KEYBOARD_REACHABILITY_SCREENSHOT_FILE =
