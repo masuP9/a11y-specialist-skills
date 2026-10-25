@@ -787,12 +787,14 @@ for (const entry of MANIFEST) {
 
     // 3. Schema validation
     const validate = validators[entry.check];
-    if (validate) {
-      const valid = validate(result);
-      expect(
-        valid,
-        `Schema validation failed for ${entry.check}: ${JSON.stringify(validate.errors)}`,
-      ).toBe(true);
-    }
+    expect(
+      validate,
+      `RESULT_SCHEMAS has no entry for ${entry.check}`,
+    ).toBeDefined();
+    const valid = validate(result);
+    expect(
+      valid,
+      `Schema validation failed for ${entry.check}: ${JSON.stringify(validate.errors)}`,
+    ).toBe(true);
   });
 }
