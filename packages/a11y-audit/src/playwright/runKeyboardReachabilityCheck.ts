@@ -44,7 +44,7 @@ import type {
 import {
   DEFAULT_KEYBOARD_REACHABILITY_RESULT_FILE,
   DEFAULT_KEYBOARD_REACHABILITY_SCREENSHOT_FILE,
-  DEFAULT_NAVIGATION_SETTLE_MS,
+  KEYBOARD_REACHABILITY_WALK_SETTLE_MS,
   FOCUSABLE_SELECTOR,
   HTML_SNIPPET_MAX_LENGTH,
   KEYBOARD_REACHABILITY_COMPOSITE_ROLES,
@@ -88,7 +88,7 @@ export interface RunKeyboardReachabilityCheckOptions
   screenshot?: boolean;
   /** Options forwarded to `browser.newContext()`. Ignored when `createContext` is used. */
   contextOptions?: BrowserContextOptions;
-  /** Milliseconds to wait after each key press (default: DEFAULT_NAVIGATION_SETTLE_MS). */
+  /** Milliseconds to wait after each key press (default: KEYBOARD_REACHABILITY_WALK_SETTLE_MS). */
   walkSettleMs?: number;
   /**
    * Stop exploring once this many milliseconds have passed
@@ -783,7 +783,7 @@ export async function runKeyboardReachabilityCheck(
     targetUrl: targetUrlOption,
     screenshot = false,
     contextOptions,
-    walkSettleMs = DEFAULT_NAVIGATION_SETTLE_MS,
+    walkSettleMs = KEYBOARD_REACHABILITY_WALK_SETTLE_MS,
     timeBudgetMs = KEYBOARD_REACHABILITY_TIMEOUT_MS,
     maxTabPresses = KEYBOARD_REACHABILITY_MAX_TAB_PRESSES,
     ...location

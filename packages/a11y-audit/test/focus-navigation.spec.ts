@@ -1,6 +1,7 @@
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { test, expect } from '@playwright/test';
+import { FOCUS_INDICATOR_NAVIGATION_SETTLE_MS } from '../dist/constants.js';
 import { runFocusIndicatorCheck } from '../dist/playwright/index.js';
 
 const PAGE_HTML = `<!doctype html>
@@ -68,7 +69,7 @@ test('runFocusIndicatorCheck detects focus-triggered navigation delayed beyond t
   });
 
   // The delayed-nav button triggers navigation 500ms after first focus — far
-  // beyond the default 50ms settle window. The configurable navigationSettleMs
+  // beyond the default 25ms settle window. The configurable navigationSettleMs
   // (600) must cover the full delay for correct detection and attribution.
   expect(result.details.onFocusViolations.length).toBeGreaterThanOrEqual(1);
 
@@ -81,4 +82,8 @@ test('runFocusIndicatorCheck detects focus-triggered navigation delayed beyond t
     (r) => r.id === 'a11y-skills/no-context-change-on-focus',
   );
   expect(ruleResult).toBeDefined();
+});
+
+test('focus-indicator-check の Tab ごとの既定の待ちは 25ms（Plan 021 で 5 ページと fixture 8 件の結果が 50ms と同じだった値）', () => {
+  expect(FOCUS_INDICATOR_NAVIGATION_SETTLE_MS).toBe(25);
 });

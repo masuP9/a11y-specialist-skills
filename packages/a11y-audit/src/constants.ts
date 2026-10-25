@@ -95,8 +95,12 @@ export const FOCUSABLE_SELECTOR = `
 /** Extra tab iterations for safety margin */
 export const EXTRA_TAB_ITERATIONS = 10;
 
-/** Default ms to wait after each Tab press for a focus-triggered navigation to surface. */
-export const DEFAULT_NAVIGATION_SETTLE_MS = 50;
+/**
+ * focus-indicator-check: wait after each Tab press for a focus-triggered navigation
+ * to surface. 25 ms gave the same results as the shared 50 ms on 5 public pages and
+ * 8 fixtures (plans/021-result-slow-check-timing.md).
+ */
+export const FOCUS_INDICATOR_NAVIGATION_SETTLE_MS = 25;
 
 // =============================================================================
 // Focus Obscured Detection Constants (WCAG 2.4.11 / 2.4.12)
@@ -667,6 +671,11 @@ export const MAX_PARENT_LEVELS = 5;
 export const KEYBOARD_TRAP_SLACK = 10;
 /** Upper bound on Tab presses per walk (large-page guard). Exceeded count is logged. */
 export const KEYBOARD_TRAP_MAX_TAB_PRESSES = 600;
+/**
+ * Wait after each Tab press. 25 ms gave the same results as the shared 50 ms on
+ * 5 public pages and 5 fixtures (plans/021-result-slow-check-timing.md).
+ */
+export const KEYBOARD_TRAP_WALK_SETTLE_MS = 25;
 /** Wait (ms) after each escape attempt before re-reading activeElement. */
 export const KEYBOARD_TRAP_ESCAPE_SETTLE_MS = 200;
 /** Maximum escape attempts per trap candidate. */
@@ -758,6 +767,11 @@ export const KEYBOARD_REACHABILITY_MAX_ARROW_PRESSES_TOTAL = 1000;
 export const KEYBOARD_REACHABILITY_MAX_DOM_MUTATIONS = 200;
 /** Wall-clock budget for the whole check; checked before each key press. */
 export const KEYBOARD_REACHABILITY_TIMEOUT_MS = 60_000;
+/**
+ * Wait after each key press. 25 ms gave the same results as the shared 50 ms on
+ * 5 public pages and 7 fixtures (plans/021-result-slow-check-timing.md).
+ */
+export const KEYBOARD_REACHABILITY_WALK_SETTLE_MS = 25;
 export const DEFAULT_KEYBOARD_REACHABILITY_RESULT_FILE =
   'keyboard-reachability-result.json';
 export const DEFAULT_KEYBOARD_REACHABILITY_SCREENSHOT_FILE =
@@ -953,6 +967,11 @@ export const FOCUS_ORDER_DETOUR_NEAR_RATIO = 0.25;
 export const FOCUS_ORDER_MAX_DIALOG_TRIGGERS = 10;
 /** Wait after opening / closing a dialog, for transitions and focus scripts. */
 export const FOCUS_ORDER_DIALOG_SETTLE_MS = 300;
+/**
+ * Wait after each Tab press. 25 ms gave the same results as the shared 50 ms on
+ * 5 public pages and 13 fixtures (plans/021-result-slow-check-timing.md).
+ */
+export const FOCUS_ORDER_SETTLE_MS = 25;
 export const FOCUS_ORDER_DIALOG_SELECTOR =
   'dialog[open], [role="dialog"], [role="alertdialog"], [aria-modal="true"]';
 /**

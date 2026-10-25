@@ -36,7 +36,7 @@ import {
   FOCUSABLE_SELECTOR,
   FOCUS_STYLE_PROPERTIES,
   EXTRA_TAB_ITERATIONS,
-  DEFAULT_NAVIGATION_SETTLE_MS,
+  FOCUS_INDICATOR_NAVIGATION_SETTLE_MS,
   DEFAULT_FOCUS_RESULT_FILE,
   DEFAULT_FOCUS_SCREENSHOT_FILE,
   FOCUS_OBSCURED_FULL_RATIO,
@@ -209,7 +209,7 @@ export interface RunFocusIndicatorCheckOptions
   contextOptions?: BrowserContextOptions;
   /**
    * Milliseconds to wait after each Tab press for a focus-triggered navigation
-   * to surface (default: 50). A navigation that fires after this window may be
+   * to surface (default: 25). A navigation that fires after this window may be
    * missed or attributed to a neighboring element — raise this value when
    * auditing pages with debounced or otherwise delayed focus handlers.
    */
@@ -266,7 +266,7 @@ export async function runFocusIndicatorCheck(
     targetUrl: targetUrlOption,
     screenshot = false,
     contextOptions,
-    navigationSettleMs = DEFAULT_NAVIGATION_SETTLE_MS,
+    navigationSettleMs = FOCUS_INDICATOR_NAVIGATION_SETTLE_MS,
     timeBudgetMs,
     maxTabPresses,
     echoAttribute,
