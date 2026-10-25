@@ -27,10 +27,11 @@
  * - Restoring values does not undo what handlers did to the page, so an
  *   earlier control can influence the result of a later one.
  * - A change that surfaces after `settleMs` (e.g. navigation after a network
- *   round trip) is missed.
+ *   round trip) is missed. It may instead surface during the next control's
+ *   focus wait and make that control skipped as `context-change-on-focus`.
  * - Large content changes (swapping a panel) are not recorded.
- * - Each control costs `settleMs` twice: after focusing it and after changing
- *   its value.
+ * - Each control costs two waits: `settleMs` after changing its value, and the
+ *   larger of `settleMs` and `CHANGE_ON_INPUT_FOCUS_SETTLE_MS` after focusing it.
  * - Controls of type date / time / range / color / file etc. are not collected.
  * - On a page whose ids change on every load, a restart finds the controls
  *   under new selectors and tries the same control again, so the same finding
@@ -54,6 +55,7 @@ import type {
   InputContextChange,
 } from '../types.js';
 import {
+  CHANGE_ON_INPUT_FOCUS_SETTLE_MS,
   CHANGE_ON_INPUT_MAX_CONTROLS,
   CHANGE_ON_INPUT_MAX_RESTARTS,
   CHANGE_ON_INPUT_SETTLE_MS,
@@ -83,7 +85,10 @@ export interface RunChangeOnInputCheckOptions
   targetUrl?: string;
   /** Options for the contexts created from `browser` (ignored with `createContext`). */
   contextOptions?: BrowserContextOptions;
-  /** Wait after each change for a context change to surface (default: CHANGE_ON_INPUT_SETTLE_MS). */
+  /**
+   * Wait after each value change for a context change to surface (default: CHANGE_ON_INPUT_SETTLE_MS).
+   * The wait after focusing a control is never shorter than CHANGE_ON_INPUT_FOCUS_SETTLE_MS.
+   */
   settleMs?: number;
   /** Wall-clock budget for the whole check (default: CHANGE_ON_INPUT_TIMEOUT_MS). */
   timeBudgetMs?: number;
@@ -677,7 +682,9 @@ export async function runChangeOnInputCheck(
           }
           await locator.focus();
           // Let a delayed on-focus handler show itself before the value changes.
-          await page.waitForTimeout(settleMs);
+          await page.waitForTimeout(
+            Math.max(settleMs, CHANGE_ON_INPUT_FOCUS_SETTLE_MS),
+          );
           // Anything focus alone causes is On Focus (3.2.1), not On Input: leave
           // the value alone and keep it out of the findings.
           const onFocus = await probe(locator, { kind, op: 'read' });
