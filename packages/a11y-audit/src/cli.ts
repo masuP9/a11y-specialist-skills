@@ -16,6 +16,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { parseArgs } from 'node:util';
 import type { Browser, BrowserContext, Page } from '@playwright/test';
+import type { CheckSource } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -41,7 +42,7 @@ interface AuditResultEnvelope {
 }
 
 interface CheckEntry {
-  name: string;
+  name: CheckSource;
   kind: CheckKind;
   /** When true, the check owns its own navigation (page.goto). The main loop
    *  skips the pre-navigation step and passes a fresh un-navigated page. */

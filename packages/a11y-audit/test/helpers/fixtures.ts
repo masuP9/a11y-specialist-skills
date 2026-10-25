@@ -41,7 +41,9 @@ interface RunnerEntry {
 // Runner registry (derived from src/cli.ts CHECK_REGISTRY)
 // ---------------------------------------------------------------------------
 
-async function buildRunnerRegistry(): Promise<Record<string, RunnerEntry>> {
+export async function buildRunnerRegistry(): Promise<
+  Record<string, RunnerEntry>
+> {
   const {
     runAxeAudit,
     runFocusIndicatorCheck,

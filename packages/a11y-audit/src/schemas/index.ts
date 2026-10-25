@@ -12,6 +12,8 @@
  * pieces live in `$defs` and each check schema defines its own `details`.
  */
 
+import type { CheckSource } from '../types.js';
+
 export type {
   AuditCheckResult,
   AuditResultSummary,
@@ -2384,4 +2386,4 @@ export const RESULT_SCHEMAS = {
   'character-key-shortcut-check': CHARACTER_KEY_SHORTCUT_CHECK_RESULT_SCHEMA,
   'content-on-hover-check': CONTENT_ON_HOVER_CHECK_RESULT_SCHEMA,
   'page-snapshot': PAGE_SNAPSHOT_RESULT_SCHEMA,
-} as const;
+} as const satisfies Record<CheckSource, object>;
