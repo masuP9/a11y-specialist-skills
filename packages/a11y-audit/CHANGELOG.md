@@ -19,6 +19,10 @@ adheres to [Semantic Versioning](https://semver.org/).
   longer shortens the wait after focus (it stays at 500 ms). Pass
   `settleMs: 500` to keep the old behavior.
 
+### Fixed
+
+- CLI: a check named more than once in `--checks` now runs once.
+
 ## 0.18.0 — 2026-10-25
 
 ### Fixed
