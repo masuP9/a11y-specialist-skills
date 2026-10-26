@@ -5,14 +5,15 @@
 When writing or reviewing code, look up, from the component type, the success criteria that apply to that component. Component types are grouped by ARIA role. For a role not in the table, look at the closest type.
 
 - 2.5.5 is AAA. It is not asked by default, but projects with a policy of making targets 44px or larger should check it.
+- The absence of 1.1.1 for button / link / input is deliberate. For image-only buttons and links, 1.1.1 is checked on the image inside them; text input fields are not non-text content. `<input type="image">` has no image inside, so check the button's own name (alt) under 1.1.1 ([1.1.1](./criteria/1.1.1.md)).
 - The absence of 4.1.2 for `dialog` / `alertdialog` is deliberate. A dialog is a container for interactive components, not a user interface component in the sense of 4.1.2 ([4.1.2](./criteria/4.1.2.md)). Give the dialog a name as a matter of 1.3.1 and 2.4.6.
 - Whole-page and multiple-page success criteria (2.4.1, 2.4.2, 3.1.1, 1.4.1, 1.3.3, 3.2.3, 3.2.4, 3.2.6) are not attached to components. Look them up from [index-by-criterion](./index-by-criterion.md).
 
 | Component type           | Role                                                               | Success criteria that apply                                                     |
 | ------------------------ | ------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
-| button                   | button                                                             | 1.1.1 (when image-only), 1.3.1, 2.1.1, 2.4.3, 2.4.7, 2.5.5, 2.5.8, 4.1.2        |
+| button                   | button                                                             | 1.3.1, 2.1.1, 2.4.3, 2.4.7, 2.5.5, 2.5.8, 4.1.2                                 |
 | link                     | link                                                               | 1.3.1, 2.1.1, 2.4.3, 2.4.4, 2.4.7, 2.5.5, 2.5.8, 4.1.2                          |
-| input                    | textbox, searchbox, spinbutton                                     | 1.1.1, 1.3.1, 1.3.5, 2.1.1, 2.4.3, 2.4.7, 3.2.1, 3.2.2, 3.3.1, 3.3.2, 4.1.2     |
+| input                    | textbox, searchbox, spinbutton                                     | 1.3.1, 1.3.5, 2.1.1, 2.4.3, 2.4.7, 3.2.1, 3.2.2, 3.3.1, 3.3.2, 4.1.2            |
 | checkbox                 | checkbox                                                           | 1.3.1, 2.1.1, 2.4.3, 2.4.7, 2.5.8, 3.2.2, 3.3.2, 4.1.2                          |
 | radio                    | radio                                                              | 1.3.1, 2.1.1, 2.4.3, 2.4.7, 2.5.8, 3.2.2, 3.3.2, 4.1.2                          |
 | switch                   | switch                                                             | 1.3.1, 2.1.1, 2.4.3, 2.4.7, 2.5.8, 3.2.2, 3.3.2, 4.1.2                          |
