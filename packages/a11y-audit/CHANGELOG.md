@@ -5,6 +5,20 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+### Changed
+
+- `change-on-input-check`: the default wait after changing each control
+  (`settleMs`) is now 250 ms (was 500 ms). The wait after focusing each control
+  stays at 500 ms (or `settleMs` if larger), so a change that surfaces late
+  after focus is still attributed to focus, not reported as a change on input.
+  On 5 public pages and the change-on-input fixtures the results were the same.
+  A context change that surfaces 250–500 ms after a value change can now land
+  in the next control's wait after focus instead: that control is then reported
+  as skipped with `context-change-on-focus` (and not tried), and no finding is
+  recorded for the control that caused the change. A `settleMs` below 500 no
+  longer shortens the wait after focus (it stays at 500 ms). Pass
+  `settleMs: 500` to keep the old behavior.
+
 ### Fixed
 
 - CLI: a check named more than once in `--checks` now runs once.

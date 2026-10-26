@@ -808,8 +808,18 @@ export const DEFAULT_MOTION_ACTUATION_RESULT_FILE =
 // Change on Input Check Constants (WCAG 3.2.2)
 // =============================================================================
 
-/** Wait after each value change for a context change to surface. */
-export const CHANGE_ON_INPUT_SETTLE_MS = 500;
+/**
+ * Wait after each value change for a context change to surface. 250 ms gave the
+ * same results as 500 ms on 5 public pages and 12 fixtures; 125 ms changed a
+ * verdict on Wikipedia (plans/021-result-slow-check-timing.md).
+ */
+export const CHANGE_ON_INPUT_SETTLE_MS = 250;
+/**
+ * Minimum wait after focusing each control, before its value changes. Kept at
+ * 500 ms: a change that surfaces after this wait is counted as caused by the
+ * value change (3.2.2) instead of by focus (3.2.1).
+ */
+export const CHANGE_ON_INPUT_FOCUS_SETTLE_MS = 500;
 export const CHANGE_ON_INPUT_TIMEOUT_MS = 60_000;
 export const CHANGE_ON_INPUT_MAX_CONTROLS = 100;
 /** Fresh-context restarts after a value change navigated the page. */

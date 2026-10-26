@@ -1,0 +1,28 @@
+<!doctype html>
+<!--
+  Focusing the select opens an alert 300ms later: after the 250ms wait that
+  follows a value change, but inside the 500ms wait that follows focus. The
+  change event has no handler.
+  Expected: no findings; #trap is skipped with reason
+  "context-change-on-focus" (the alert is On Focus, 3.2.1, not On Input).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Dialog 300ms after focus</title>
+  </head>
+  <body>
+    <label for="trap">Trap</label>
+    <select
+      id="trap"
+      onfocus="
+        setTimeout(function () {
+          alert('later');
+        }, 300)
+      "
+    >
+      <option>A</option>
+      <option>B</option>
+    </select>
+  </body>
+</html>

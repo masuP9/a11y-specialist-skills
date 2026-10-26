@@ -8,6 +8,10 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import { test, expect, runFixtureCheck } from './helpers/fixtures.js';
 import { RESULT_SCHEMAS } from '../dist/schemas/index.js';
 import type { ChangeOnInputCheckResult } from '../dist/index.js';
+import {
+  CHANGE_ON_INPUT_FOCUS_SETTLE_MS,
+  CHANGE_ON_INPUT_SETTLE_MS,
+} from '../dist/constants.js';
 
 const ajv = new Ajv2020({ strict: false, allowUnionTypes: true });
 const validateEnvelope = ajv.compile(RESULT_SCHEMAS['change-on-input-check']);
@@ -416,6 +420,24 @@ test('onfocus で少し遅れて alert が出る select は、値の変更の fi
   });
 });
 
+test('focus の 300ms 後に alert を出す select は finding にせず context-change-on-focus で skipped にする', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runChange(
+    'focus-delayed-300.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  expect(result.details.findings).toEqual([]);
+  expect(result.details.skipped).toContainEqual({
+    selector: '#trap',
+    reason: 'context-change-on-focus',
+  });
+});
+
 test('onfocus で移動する text 欄は finding にせず skipped にして、やり直したあと残りの欄を試す', async ({
   page,
   browser,
@@ -448,6 +470,14 @@ test('change で自分を DOM から消して別の欄へ focus するページ�
   expect(result.details.findings[0]?.changes).toEqual([
     { kind: 'focus-moved', toSelector: '#next' },
   ]);
+});
+
+test('値を変えた後の既定の待ちは 250ms（Plan 021 で 500ms と結果が同じで、125ms では実ページで判定が変わった値）', () => {
+  expect(CHANGE_ON_INPUT_SETTLE_MS).toBe(250);
+});
+
+test('focus した後の待ちは 500ms のまま（縮めると focus 起因の遅い変化を入力起因の finding にしてしまう）', () => {
+  expect(CHANGE_ON_INPUT_FOCUS_SETTLE_MS).toBe(500);
 });
 
 test('settleMs に 0 を渡すと Error になる', async ({
