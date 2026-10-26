@@ -540,7 +540,7 @@ async function main(): Promise<void> {
   if (!checksArg || checksArg === 'all') {
     selectedChecks = CHECK_REGISTRY;
   } else {
-    const names = checksArg.split(',').map((n) => n.trim());
+    const names = [...new Set(checksArg.split(',').map((n) => n.trim()))];
     const unknown = names.filter(
       (n) => !CHECK_REGISTRY.some((c) => c.name === n),
     );

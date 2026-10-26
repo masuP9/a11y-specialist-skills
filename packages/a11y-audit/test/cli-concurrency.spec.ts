@@ -6,40 +6,10 @@
  * screenshot series, countdown detection).
  */
 
-import { execFile } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { runCli } from './helpers/cli.js';
 import { test, expect } from './helpers/fixtures.js';
-
-interface CliRun {
-  code: number | null;
-  stdout: string;
-  stderr: string;
-}
-
-// Async on purpose: a sync spawn would block this process, which also serves
-// the fixture pages.
-function runCli(args: string[], timeoutMs: number): Promise<CliRun> {
-  const cliPath = new URL('../dist/cli.js', import.meta.url).pathname;
-  return new Promise((resolve, reject) => {
-    const child = execFile(
-      process.execPath,
-      [cliPath, ...args],
-      { timeout: timeoutMs, maxBuffer: 64 * 1024 * 1024 },
-      (error, stdout, stderr) => {
-        if (error && child.exitCode === null) {
-          reject(
-            new Error(
-              `a11y-audit CLI did not exit normally (${error.message}); stderr: ${stderr}`,
-            ),
-          );
-          return;
-        }
-        resolve({ code: child.exitCode, stdout, stderr });
-      },
-    );
-  });
-}
 
 function readJson(file: string): {
   summary: Record<string, unknown>;

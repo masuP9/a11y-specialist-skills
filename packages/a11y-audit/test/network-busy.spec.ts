@@ -5,7 +5,7 @@
  * well before the 30s navigation timeout.
  */
 
-import { execFile } from 'node:child_process';
+import { runCli } from './helpers/cli.js';
 import { test, expect } from './helpers/fixtures.js';
 import {
   runFocusIndicatorCheck,
@@ -114,27 +114,17 @@ test('runZoomCheck with a targetUrl returns within 20s on a page whose network n
 test('the CLI audits a page whose network never goes idle without a navigation failure', async ({
   baseUrl,
 }, testInfo) => {
-  const cliPath = new URL('../dist/cli.js', import.meta.url).pathname;
-  // Async on purpose: a sync spawn would block this process, which also
-  // serves the fixture page.
-  const { code, stderr } = await new Promise<{
-    code: number | null;
-    stderr: string;
-  }>((resolve) => {
-    const child = execFile(
-      process.execPath,
-      [
-        cliPath,
-        '--url',
-        `${baseUrl}/${BUSY_PAGE}`,
-        '--checks',
-        'axe-audit',
-        '--output-dir',
-        testInfo.outputDir,
-      ],
-      (_error, _stdout, stderr) => resolve({ code: child.exitCode, stderr }),
-    );
-  });
+  const { code, stderr } = await runCli(
+    [
+      '--url',
+      `${baseUrl}/${BUSY_PAGE}`,
+      '--checks',
+      'axe-audit',
+      '--output-dir',
+      testInfo.outputDir,
+    ],
+    50_000,
+  );
   expect(stderr).not.toContain('Navigation failed');
   expect(code).not.toBe(2);
 });

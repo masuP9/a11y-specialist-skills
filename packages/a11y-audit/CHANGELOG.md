@@ -3,6 +3,12 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixed
+
+- CLI: a check named more than once in `--checks` now runs once.
+
 ## 0.18.0 — 2026-10-25
 
 ### Fixed
