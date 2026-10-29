@@ -90,13 +90,14 @@ This is a reference document for human reviewers. Supported agents are assumed t
 | Focus order issues | tabindex drastically different from visual order |
 | Unclear links/buttons | Only "click here" or "details" |
 | Table structure issues | Missing th/scope |
+| Missing page language | `<html lang>` missing or invalid (3.1.1 (A)) |
 
 ### Minor - Accessible with Room for Improvement
 | Pattern | Examples |
 |---------|----------|
-| Better element choice | button instead of div with onclick |
+| Better element choice | ARIA-built part that already meets name, role, and keyboard operation but could be a native element (`<button>`, etc.) |
 | Redundant ARIA | role duplicating native semantics |
-| Best practice deviation | Missing lang attribute, no skip link |
+| Best practice deviation | No skip link (when headings or landmarks let users bypass blocks) |
 | Minor heading hierarchy issues | Minor level inconsistencies |
 
 ## WCAG Success Criteria Reference

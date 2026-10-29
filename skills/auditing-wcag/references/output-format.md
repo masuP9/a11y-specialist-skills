@@ -104,12 +104,12 @@ Elements without focus styles are highlighted with a red outline and "⚠ No Foc
 
 Screenshots taken at intervals to detect auto-playing content. The playback state of `<audio>` / `<video>` is also measured, and audio playing for more than 3 seconds is reported as `a11y-skills/auto-play-audio` (whether sound is actually heard needs manual review).
 
-![Auto-play Detection - 0s](./auto-play-screenshots/screenshot-0.png)
-![Auto-play Detection - 3s](./auto-play-screenshots/screenshot-3.png)
+![Auto-play Detection - 0s](./auto-play-screenshots/screenshot-0s.png)
+![Auto-play Detection - 6s](./auto-play-screenshots/screenshot-6s.png)
 
 **Detection Results:**
 - Auto-play content detected: Yes/No
-- Screenshots compared: 4 (0s, 1s, 2s, 3s)
+- Screenshots compared: 4 (0s, 2s, 4s, 6s)
 - Size change percentage: X%
 - Manual verification:
   - [ ] Pause/stop controls provided

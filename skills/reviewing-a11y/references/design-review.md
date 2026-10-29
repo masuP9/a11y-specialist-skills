@@ -31,7 +31,7 @@ Analyze the design for accessibility issues. You already know WCAG visual requir
 **Examine visuals for:**
 - **Color & Contrast**: Text/background contrast, UI component contrast, color-only indicators
 - **Typography**: Font sizes, line heights, line lengths, text in images
-- **Touch Targets**: Size (44×44px minimum), spacing between interactive elements
+- **Touch Targets**: Size (AA 2.5.8 requires 24×24px or the spacing exception; 44×44px is AAA 2.5.5), spacing between interactive elements
 - **Visual Hierarchy**: Heading clarity, information grouping, icon-only elements
 - **Focus States**: Visible focus indicators, contrast requirements
 - **Form Design**: Visible labels (not just placeholders), error indication patterns
@@ -64,7 +64,7 @@ Components reviewed: Header, hero, feature cards, footer
 - **Good**: Clear visual hierarchy with large headings and generous spacing
 - **Good**: Consistent focus indicator design specified (blue outline, 3px)
 - **Good**: All form fields have visible labels above inputs
-- **Good**: Touch targets in mobile design exceed 44×44px minimum
+- **Good**: Touch targets in mobile design are at least 44×44px (meets 2.5.8's 24px and AAA 2.5.5)
 ```
 
 ### Issues by Severity
@@ -93,8 +93,8 @@ Components reviewed: Header, hero, feature cards, footer
 
 ```
 - **Location**: Body text (Typography spec)
-- **Issue**: Line height 1.3 is below 1.5 recommendation
-- **WCAG**: 1.4.12 Text Spacing (AA) - Best practice
+- **Issue**: Line height 1.3. Not a WCAG AA requirement (1.4.12 requires that content survives when users change line height; it does not constrain the authored value)
+- **WCAG**: None (best practice; AAA 1.4.8 asks for at least 1.5)
 - **Impact**: May reduce readability for users with dyslexia
 - **Recommendation**: Increase line-height to 1.5 for improved readability
 ```

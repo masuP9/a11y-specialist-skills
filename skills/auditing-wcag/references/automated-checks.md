@@ -8,7 +8,7 @@ Only machine-verifiable items from the Playwright accessibility tree are covered
 > Run via: `npx -y @a11y-skills/audit --url "<url>" --checks axe-audit`
 
 ## Common Judgment Rules
-- Source: `page.accessibility.snapshot()` / DOM attributes
+- Source: `locator.ariaSnapshot()` (e.g. `page.locator('body').ariaSnapshot()`) / DOM attributes
 - Evidence: role, name, relevant attributes, XPath/CSS selector
 - Fail rule: any element violating the rule
 
@@ -85,18 +85,21 @@ Only machine-verifiable items from the Playwright accessibility tree are covered
 >
 > axe-core's `link-in-text-block` rule covers this. Check axe results for this specific rule.
 >
-> **1.4.1 Check C - Visual state differentiation:** When screenshot shows elements of the same shape distinguished only by color, verify the a11y tree exposes the state programmatically:
+> **1.4.1 Check C - Visual state differentiation:** In the screenshot, look for items that look the same except that some differ in color, and check whether a **visible** cue other than color is present:
 >
-> | Visual pattern | Required semantics |
+> | Visual pattern | Hint that the part has the state |
 > |----------------|-------------------|
 > | Selected tab (different color) | `aria-selected="true"` |
 > | Current nav item (different color) | `aria-current="page"` |
 > | Today in calendar (different color) | `aria-current="date"` |
 > | Error field (red border) | `aria-invalid="true"` |
 > | Required field (different color) | `aria-required="true"` or `required` |
-> | Disabled button (grayed out) | `aria-disabled="true"` or `disabled` |
 >
-> **Pass if:** State is exposed in a11y tree. **Fail if:** Color is the only differentiator.
+> `aria-*` states only help identify which item is selected; they do not count as a visual cue (they belong to 4.1.2).
+>
+> **Pass if:** A visible cue (text, symbol, shape, underline, bold, border) is present, or a luminance ratio of 3:1 or more conveys only "which one differs". **Fail if:** Color is the only visual differentiator (Fail even when the state is exposed via `aria-*`).
+>
+> Follow the "Judgment lines" in [a11y-knowledge 1.4.1](../../a11y-knowledge/references/criteria/1.4.1.md) for the details.
 
 > **Note:** axe-core cannot check contrast against complex background images or gradients. Manual verification may still be needed in some cases.
 

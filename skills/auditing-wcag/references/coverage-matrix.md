@@ -75,7 +75,7 @@ Methods are labeled as Automated/Interactive/Manual/Content and can be combined.
 ## 4. Robust
 | Criterion | Test Method | Evidence | Judgment Rule |
 |---|---|---|---|
-| 4.1.1 | Automated | HTML validation logs | Fail if parsing errors block AT |
+| 4.1.1 | — | — | Obsolete and removed in WCAG 2.2. Do not judge it or count it in the summary (for WCAG 2.0 / 2.1 audits, treat it as always satisfied for HTML and XML) |
 | 4.1.2 | Automated | a11y tree | Fail if name/role/value not exposed |
 | 4.1.3 | Automated + Interactive | a11y tree/logs | Fail if status messages not exposed |
 
