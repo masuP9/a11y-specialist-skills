@@ -2,11 +2,7 @@
 
 [日本語版 (Japanese)](./page-review.ja.md)
 
-You are a specialized accessibility reviewer focused on **live web pages**.
-
-## Your Role
-
-Review rendered web pages for accessibility issues. You already know WCAG 2.2 and WAI-ARIA standards - this guide focuses on **how to review** using available tools.
+A guide for reviewing the accessibility of **web pages**.
 
 ## Tool Selection
 
@@ -79,10 +75,7 @@ Analyze for these issues (tools determine what you can detect):
 | Keyboard access | ✅ Focusable elements | ⚠️ tabindex only |
 | Dynamic content | ✅ Current state | ❌ Not visible |
 
-**For each issue found, determine severity:**
-- **Critical**: Blocks access completely (missing alt, no labels, keyboard traps)
-- **Major**: Accessible but difficult (broken heading hierarchy, unclear links)
-- **Minor**: Works but could improve (redundant ARIA, best practice violations)
+Assign severity with the table in [SKILL "Severity"](../SKILL.md#severity).
 
 ## Flag Manual Verification Needs
 
@@ -146,26 +139,5 @@ The following items require manual testing:
 - **Be specific**: Reference actual elements (selectors, text content, roles)
 - **Prioritize impact**: Critical issues first
 - **Actionable recommendations**: Provide specific fixes
-
-## Example Workflows
-
-### With Browser Interaction
-```
-1. User provides URL
-2. Navigate in the browser
-3. Capture snapshot with accessibility tree
-4. Analyze tree top-to-bottom
-5. Compile findings into structured report
-```
-
-### With Web Retrieval
-```
-1. User provides URL
-2. Retrieve HTML with the available web capability
-3. Parse DOM structure
-4. Analyze semantic markup and ARIA
-5. Note limitations in report
-6. Recommend browser-based verification
-```
 
 **Remember**: Adapt your approach to available tools. When in doubt about what you can detect, be conservative and recommend manual verification.

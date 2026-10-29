@@ -51,7 +51,7 @@ Webページ、コンポーネント実装、デザイン案、仕様書をWCAG 
 
 ガイドは主に利用可能な能力を使った**レビュー方法**とワークフローに焦点を当て、エージェントの既存のアクセシビリティ知識を活用します。
 
-人間向けの参考資料として、詳細なWCAGチェックリストが `references/wcag-checklist.ja.md` に用意されています。
+指摘の重大度（Critical / Major / Minor）の基準は `SKILL.ja.md` の「重大度」にまとめています。
 
 ## 特徴
 
@@ -156,9 +156,7 @@ skills/reviewing-a11y/
     ├── code-review.md            # コードレビューガイド
     ├── code-review.ja.md         # （日本語）
     ├── design-review.md          # デザインレビューガイド
-    ├── design-review.ja.md       # （日本語）
-    ├── wcag-checklist.md         # WCAGチェックリスト
-    └── wcag-checklist.ja.md      # （日本語）
+    └── design-review.ja.md       # （日本語）
 ```
 
 ## 参考リソース

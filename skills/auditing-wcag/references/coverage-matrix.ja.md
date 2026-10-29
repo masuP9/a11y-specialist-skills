@@ -2,73 +2,75 @@
 
 # WCAG 2.2 A/AA カバレッジマトリクス
 
-判定方法は「自動/インタラクティブ/手動/コンテンツ」を組み合わせて記載する。
+判定方法は「自動/インタラクティブ/手動/コンテンツ」を組み合わせて記載する。達成基準ごとに、どのチェックと材料を使うかの索引として使う。
+
+「判定ルール」列が **線引き** のものは、a11y-knowledge の `criteria/<番号>.ja.md` の「線引き」と「確かめるとき」で判定する。それ以外はこの列に従う。
 
 > **Note:** **[CLI]** マークの基準は `a11y-audit` CLI で自動チェック可能です（チェック名は SKILL.ja.md の表を参照）。
 
 ## 1. 知覚可能
 | 基準 | テスト方法 | 証跡 | 判定ルール |
 |---|---|---|---|
-| 1.1.1 | 自動+コンテンツ | a11y tree/画像一覧 | 情報画像が無名または代替不十分でFail |
+| 1.1.1 | 自動+コンテンツ | a11y tree/画像一覧 | [線引き](../../a11y-knowledge/references/criteria/1.1.1.ja.md) |
 | 1.2.1 | 自動+コンテンツ | DOMメディア検出 + トランスクリプトリンク | 代替がない場合Fail |
-| 1.2.2 | 自動+コンテンツ | axe video-caption + track要素 | 字幕がない場合Fail |
+| 1.2.2 | 自動+コンテンツ | axe video-caption + track要素 | [線引き](../../a11y-knowledge/references/criteria/1.2.2.ja.md) |
 | 1.2.3 | 自動+コンテンツ | track要素 + トランスクリプトリンク | 代替なしでFail |
 | 1.2.4 | コンテンツ | 画面キャプチャ | ライブ字幕なしでFail |
 | 1.2.5 | 自動+コンテンツ | track要素 | 音声解説なしでFail |
-| 1.3.1 | 自動 | a11y tree断片 | セマンティクス欠落でFail |
+| 1.3.1 | 自動 | a11y tree断片 | [線引き](../../a11y-knowledge/references/criteria/1.3.1.ja.md) |
 | 1.3.2 | 自動 | a11y tree + DOM順 | 意味順序が崩れるとFail |
-| 1.3.3 | 自動+コンテンツ | a11y treeテキスト + 文面抜粋 | 感覚依存のみでFail |
-| 1.3.4 | 自動+手動 | `orientation-check` **[CLI]** + 画面キャプチャ | 特定方向で機能不可ならFail |
-| 1.3.5 | 自動 | `autocomplete-audit` **[CLI]** | autocomplete不備でFail |
-| 1.4.1 | 自動+手動 | a11y treeテキスト + スクショ | 色のみで識別ならFail |
-| 1.4.2 | 自動+手動 | `auto-play-detection` **[CLI]**（`a11y-skills/auto-play-audio`）+ 操作ログ | 3秒超の音声を停止/調整不可でFail |
+| 1.3.3 | 自動+コンテンツ | a11y treeテキスト + 文面抜粋 | [線引き](../../a11y-knowledge/references/criteria/1.3.3.ja.md) |
+| 1.3.4 | 自動+手動 | `orientation-check` **[CLI]** + 画面キャプチャ | [線引き](../../a11y-knowledge/references/criteria/1.3.4.ja.md) |
+| 1.3.5 | 自動 | `autocomplete-audit` **[CLI]** | [線引き](../../a11y-knowledge/references/criteria/1.3.5.ja.md) |
+| 1.4.1 | 自動+手動 | a11y treeテキスト + スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.1.ja.md) |
+| 1.4.2 | 自動+手動 | `auto-play-detection` **[CLI]**（`a11y-skills/auto-play-audio`）+ 操作ログ | [線引き](../../a11y-knowledge/references/criteria/1.4.2.ja.md) |
 | 1.4.3 | 自動 | axe color-contrast | AA未満でFail |
-| 1.4.4 | 自動+手動 | `zoom-200-check` **[CLI]** + スクショ | 200%で欠落/重なりならFail |
-| 1.4.5 | 手動+コンテンツ | スクショ | テキストが画像化ならFail |
-| 1.4.10 | 自動+手動 | `reflow-check` **[CLI]** + スクショ | 横スクロール必須でFail |
+| 1.4.4 | 自動+手動 | `zoom-200-check` **[CLI]** + スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.4.ja.md) |
+| 1.4.5 | 手動+コンテンツ | スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.5.ja.md) |
+| 1.4.10 | 自動+手動 | `reflow-check` **[CLI]** + スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.10.ja.md) |
 | 1.4.11 | 自動の候補+手動 | `non-text-contrast-check` **[CLI]** + スクショ | 部品の境界・アイコンが3:1未満でFail。状態ごとの見た目・グラフ・画像の背景は手動 |
-| 1.4.12 | 自動+手動 | `text-spacing-check` **[CLI]** + スクショ | 文字欠落/重なりでFail |
+| 1.4.12 | 自動+手動 | `text-spacing-check` **[CLI]** + スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.12.ja.md) |
 | 1.4.13 | インタラクティブ+自動の候補 | `content-on-hover-check` **[CLI]** + 動画/ログ | 解除/保持不可でFail |
 
 ## 2. 操作可能
 | 基準 | テスト方法 | 証跡 | 判定ルール |
 |---|---|---|---|
-| 2.1.1 | 自動+インタラクティブ | `keyboard-reachability-check` **[CLI]** + 操作ログ | キーボード不可でFail |
+| 2.1.1 | 自動+インタラクティブ | `keyboard-reachability-check` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.1.1.ja.md) |
 | 2.1.2 | 自動+インタラクティブ | `keyboard-trap-check` **[CLI]** + 操作ログ | トラップでFail |
 | 2.1.4 | インタラクティブ+自動の候補 | `character-key-shortcut-check` **[CLI]** + 操作ログ | 単一キー回避不可でFail |
-| 2.2.1 | 自動+手動 | `time-limit-detector` **[CLI]** + 操作ログ | 延長/解除不可でFail |
-| 2.2.2 | 自動+インタラクティブ | `auto-play-detection` **[CLI]** + 操作ログ | 停止/一時停止不可でFail |
+| 2.2.1 | 自動+手動 | `time-limit-detector` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.2.1.ja.md) |
+| 2.2.2 | 自動+インタラクティブ | `auto-play-detection` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.2.2.ja.md) |
 | 2.3.1 | 手動 | 動画 | 点滅閾値超でFail |
-| 2.4.1 | 自動 | a11y tree | 回避手段なしでFail |
-| 2.4.2 | 自動 | `document.title` | タイトル空でFail |
-| 2.4.3 | インタラクティブ+自動の候補 | `focus-order-check` **[CLI]** + フォーカス順ログ | 視覚順と不一致で意味・操作が損なわれればFail |
-| 2.4.4 | 自動+コンテンツ | a11y tree + 文面抜粋 | 文脈内で不明瞭ならFail |
+| 2.4.1 | 自動 | a11y tree | [線引き](../../a11y-knowledge/references/criteria/2.4.1.ja.md) |
+| 2.4.2 | 自動 | `document.title` | [線引き](../../a11y-knowledge/references/criteria/2.4.2.ja.md) |
+| 2.4.3 | インタラクティブ+自動の候補 | `focus-order-check` **[CLI]** + フォーカス順ログ | [線引き](../../a11y-knowledge/references/criteria/2.4.3.ja.md) |
+| 2.4.4 | 自動+コンテンツ | a11y tree + 文面抜粋 | [線引き](../../a11y-knowledge/references/criteria/2.4.4.ja.md) |
 | 2.4.5 | 自動+コンテンツ | リンクグラフ + 検索/サイトマップ検出 | 複数手段なしでFail |
 | 2.4.6 | 自動+コンテンツ | a11y tree/文面 | 見出し/ラベルが不明瞭でFail |
-| 2.4.7 | インタラクティブ | スクショ | フォーカス不可視でFail |
-| 2.4.11 | 自動+インタラクティブ | `focus-indicator-check` **[CLI]** + スクショ | フォーカスが作成者のコンテンツで完全に隠れるとFail |
+| 2.4.7 | インタラクティブ | スクショ | [線引き](../../a11y-knowledge/references/criteria/2.4.7.ja.md) |
+| 2.4.11 | 自動+インタラクティブ | `focus-indicator-check` **[CLI]** + スクショ | [線引き](../../a11y-knowledge/references/criteria/2.4.11.ja.md) |
 | 2.4.12 (AAA) | 自動+インタラクティブ | `focus-indicator-check` **[CLI]** + スクショ | フォーカスが一部でも隠れるとFail |
-| 2.5.1 | インタラクティブ+自動の候補 | `pointer-gesture-check` **[CLI]** + 操作ログ | 複雑ジェスチャ必須でFail |
+| 2.5.1 | インタラクティブ+自動の候補 | `pointer-gesture-check` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.5.1.ja.md) |
 | 2.5.2 | インタラクティブ+自動の候補 | `pointer-cancellation-check` **[CLI]** + 操作ログ | 誤作動/キャンセル不可でFail |
 | 2.5.3 | 自動+手動 | a11y name比較（axe `label-content-name-mismatch` は実験的ルールのため既定では未実行） | ラベル文字列不一致でFail |
 | 2.5.4 | インタラクティブ+自動の候補 | `motion-actuation-check` **[CLI]** + 操作ログ | 動作検知のみでFail |
-| 2.5.7 | インタラクティブ+自動の候補 | `pointer-gesture-check` **[CLI]** + 操作ログ | ドラッグ必須でFail |
-| 2.5.8 | 自動 | `target-size-check` **[CLI]** | 最低サイズ未満でFail |
+| 2.5.7 | インタラクティブ+自動の候補 | `pointer-gesture-check` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.5.7.ja.md) |
+| 2.5.8 | 自動 | `target-size-check` **[CLI]** | [線引き](../../a11y-knowledge/references/criteria/2.5.8.ja.md) |
 
 ## 3. 理解可能
 | 基準 | テスト方法 | 証跡 | 判定ルール |
 |---|---|---|---|
-| 3.1.1 | 自動 | DOM属性 | lang未設定でFail |
+| 3.1.1 | 自動 | DOM属性 | [線引き](../../a11y-knowledge/references/criteria/3.1.1.ja.md) |
 | 3.1.2 | 自動+コンテンツ | axe valid-lang + テキスト分析 | 部分言語未指定でFail |
-| 3.2.1 | 自動+インタラクティブ | `focus-indicator-check` **[CLI]** + DOM差分 | フォーカスで遷移/大更新でFail |
+| 3.2.1 | 自動+インタラクティブ | `focus-indicator-check` **[CLI]** + DOM差分 | [線引き](../../a11y-knowledge/references/criteria/3.2.1.ja.md) |
 | 3.2.2 | インタラクティブ+自動の候補 | `change-on-input-check` **[CLI]** + DOM差分 | 入力のみで送信/遷移（事前の説明なし）でFail |
-| 3.2.3 | 自動 | 全ページa11y tree比較 | 一貫性欠如でFail |
-| 3.2.4 | 自動 | 全ページa11y tree比較 | 同一機能の識別が不一致でFail |
-| 3.2.6 | 自動 | 全ページa11y tree比較 | ヘルプ手段が不一致でFail |
-| 3.3.1 | インタラクティブ | スクショ | エラー識別なしでFail |
-| 3.3.2 | 自動+コンテンツ | a11y tree/文面 | ラベル/説明不足でFail |
-| 3.3.3 | インタラクティブ | スクショ | 修正提案なしでFail |
-| 3.3.4 | インタラクティブ | 操作ログ | 取消/確認不可でFail |
+| 3.2.3 | 自動 | 全ページa11y tree比較 | [線引き](../../a11y-knowledge/references/criteria/3.2.3.ja.md) |
+| 3.2.4 | 自動 | 全ページa11y tree比較 | [線引き](../../a11y-knowledge/references/criteria/3.2.4.ja.md) |
+| 3.2.6 | 自動 | 全ページa11y tree比較 | [線引き](../../a11y-knowledge/references/criteria/3.2.6.ja.md) |
+| 3.3.1 | インタラクティブ | スクショ | [線引き](../../a11y-knowledge/references/criteria/3.3.1.ja.md) |
+| 3.3.2 | 自動+コンテンツ | a11y tree/文面 | [線引き](../../a11y-knowledge/references/criteria/3.3.2.ja.md) |
+| 3.3.3 | インタラクティブ | スクショ | [線引き](../../a11y-knowledge/references/criteria/3.3.3.ja.md) |
+| 3.3.4 | インタラクティブ | 操作ログ | [線引き](../../a11y-knowledge/references/criteria/3.3.4.ja.md) |
 | 3.3.7 | 手動+自動の候補 | `redundant-entry-check` **[CLI]** + 操作ログ | 同一情報の再入力を要求でFail |
 | 3.3.8 | インタラクティブ+自動の候補 | `accessible-authentication-check` **[CLI]** + 画面キャプチャ | 貼り付けの禁止は別の手段が無ければFail、CAPTCHA・別の手段は要確認 |
 
@@ -76,7 +78,7 @@
 | 基準 | テスト方法 | 証跡 | 判定ルール |
 |---|---|---|---|
 | 4.1.1 | — | — | WCAG 2.2 で廃止。判定対象・サマリーの件数に含めない（WCAG 2.0 / 2.1 の監査では、HTML・XML は常に満たすものとして扱う） |
-| 4.1.2 | 自動 | a11y tree | 名前/ロール/値が取得不可でFail |
+| 4.1.2 | 自動 | a11y tree | [線引き](../../a11y-knowledge/references/criteria/4.1.2.ja.md) |
 | 4.1.3 | 自動+インタラクティブ | a11y tree/ログ | 状態メッセージが露出しない場合Fail |
 
 ## 利用可能なCLIチェック

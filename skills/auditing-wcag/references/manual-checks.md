@@ -2,19 +2,19 @@
 
 # Manual Checks
 
-Items requiring human judgment. Use screenshots/video/notes as evidence for visual or contextual decisions.
+Items requiring human judgment. Use screenshots/video/notes as evidence for visual or contextual decisions. When the "Fail rule" column says **Judgment lines**, judge with a11y-knowledge `criteria/<number>.md`.
 
 ## Color/Contrast
 
-> **Note:** 1.4.1 (Use of Color), 1.4.3 (Text Contrast), and 1.4.11 (Non-text Contrast) are covered in [automated-checks.md](./automated-checks.md). For 1.4.1, the agent analyzes accessible text for color references. For charts/graphs relying solely on color differentiation, manual visual inspection is still needed.
+> **Note:** The material for 1.4.1 (Use of Color), 1.4.3 (Text Contrast), and 1.4.11 (Non-text Contrast) is in [automated-checks.md](./automated-checks.md). 1.4.1 is judged by looking at screenshots, so inspect charts and graphs visually as well.
 
 ## Text/Layout
 | Criterion | Check | Evidence | Fail rule |
 |---|---|---|---|
-| 1.4.4 | No loss at 200% zoom | screenshot | Loss/overlap |
-| 1.4.5 | Avoid text in images | screenshot | Text rendered as image |
-| 1.4.10 | Reflow without horizontal scroll | screenshot | Horizontal scroll at 320px equivalent |
-| 1.4.12 | Text spacing changes do not break layout | screenshot | Text clipping/overlap |
+| 1.4.4 | No loss at 200% zoom | screenshot | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.4.md) |
+| 1.4.5 | Avoid text in images | screenshot | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.5.md) |
+| 1.4.10 | Reflow without horizontal scroll | screenshot | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.10.md) |
+| 1.4.12 | Text spacing changes do not break layout | screenshot | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.12.md) |
 
 > **CLI Checks:**
 > - `zoom-200-check` - Detects content loss/clipping at 200% zoom (1.4.4)
@@ -26,8 +26,8 @@ Items requiring human judgment. Use screenshots/video/notes as evidence for visu
 ## Timing
 | Criterion | Check | Evidence | Fail rule |
 |---|---|---|---|
-| 2.2.1 | Time limits can be extended/disabled | logs | No extension/disable |
-| 2.2.2 | Auto-updating content can be paused/stopped | logs | No pause/stop |
+| 2.2.1 | Time limits can be extended/disabled | logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.2.1.md) |
+| 2.2.2 | Auto-updating content can be paused/stopped | logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.2.2.md) |
 
 > **CLI Checks:**
 > - `time-limit-detector` - Detects meta refresh, setTimeout/setInterval, countdown indicators (2.2.1)
@@ -43,7 +43,7 @@ Items requiring human judgment. Use screenshots/video/notes as evidence for visu
 ## Orientation
 | Criterion | Check | Evidence | Fail rule |
 |---|---|---|---|
-| 1.3.4 | Works in both portrait/landscape | screenshots | Functionality blocked in one orientation |
+| 1.3.4 | Works in both portrait/landscape | screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.4.md) |
 
 > **CLI Check:** `orientation-check` - Detects orientation lock messages and content visibility differences between portrait/landscape.
 >

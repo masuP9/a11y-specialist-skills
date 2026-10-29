@@ -2,16 +2,13 @@
 
 [日本語版 (Japanese)](./design-review.ja.md)
 
-You are a specialized accessibility reviewer focused on **design mockups and specifications**.
-
-## Your Role
-
-Review visual designs, wireframes, and UI specifications before implementation. You already know WCAG 2.2 requirements for color contrast, touch targets, and visual accessibility - this guide focuses on **how to review designs** using available tools.
+A guide for finding accessibility issues in designs before implementation (mockups, wireframes, UI specifications).
 
 ## Required Capabilities
 
 - Retrieve Figma URLs, design specifications, and documentation
 - Read design documents and supported visual artifacts such as images or PDFs
+- If a way to read Figma is available (MCP, etc.), use it to get fills, variables (color tokens), dimensions, and text styles. It is more accurate than estimating from images
 
 ## Review Process
 
@@ -26,7 +23,7 @@ Review visual designs, wireframes, and UI specifications before implementation. 
 
 ### Step 2: Visual Analysis
 
-Analyze the design for accessibility issues. You already know WCAG visual requirements - apply them to this specific design:
+Look for issues from these angles:
 
 **Examine visuals for:**
 - **Color & Contrast**: Text/background contrast, UI component contrast, color-only indicators
@@ -37,15 +34,13 @@ Analyze the design for accessibility issues. You already know WCAG visual requir
 - **Form Design**: Visible labels (not just placeholders), error indication patterns
 - **Responsive**: Mobile touch targets, font scaling, layout
 
-**For each issue, determine severity:**
-- **Critical**: Will block access (no labels visible, color-only errors, too-small touch targets)
-- **Major**: Creates barriers (low contrast, icon-only buttons, unclear hierarchy)
-- **Minor**: Best practice improvements (suboptimal line heights, missing secondary indicators)
+Assign severity with the table in [SKILL "Severity"](../SKILL.md#severity).
 
 ### Step 3: Flag Questions and Manual Checks
 
-Designs require human verification:
-- **Contrast ratios**: Note color pairs, recommend tool verification
+- **Contrast ratios**: When color values (hex, etc.) are known, compute the ratio and put the result in the finding. Only when you can only estimate from an image, note the color pair and mark it for verification
+
+Designs do not decide these, so collect them as questions:
 - **Focus management**: Ask about keyboard navigation flow
 - **Dynamic behavior**: Ask about state changes, announcements
 - **Alternative content**: Ask about alt text specifications
@@ -72,21 +67,21 @@ Components reviewed: Header, hero, feature cards, footer
 **Critical** - Will create access barriers
 
 ```
-- **Location**: Mobile navigation menu (Frame 3)
-- **Issue**: Icon-only buttons without visible labels
-- **WCAG**: 2.4.6 Headings and Labels (AA)
-- **Impact**: Screen reader users and users with cognitive disabilities won't understand button purpose
-- **Recommendation**: Add visible text labels or ensure aria-label specs are documented
+- **Location**: Form error states (Frame 7)
+- **Issue**: Error indication uses only red border, no icon or text
+- **WCAG**: 1.4.1 Use of Color (A)
+- **Impact**: Users with color vision deficiencies or who are not looking at the screen cannot tell which field has the error
+- **Recommendation**: Add an error icon and a per-field message starting with "Error:"
 ```
 
 **Major** - May create difficulties
 
 ```
-- **Location**: Form error states (Frame 7)
-- **Issue**: Error indication uses only red border, no icon or text
-- **WCAG**: 1.4.1 Use of Color (A)
-- **Impact**: Colorblind users cannot distinguish error state
-- **Recommendation**: Add error icon and "Error:" text prefix to message
+- **Location**: Primary button (Frame 2, 16px regular weight)
+- **Issue**: #FFFFFF text on #0088FF has a contrast ratio of 3.52:1 (below 4.5:1)
+- **WCAG**: 1.4.3 Contrast (Minimum) (AA)
+- **Impact**: Users with low vision may struggle to read the button label
+- **Recommendation**: Darken the background to around #0066CC (5.57:1)
 ```
 
 **Minor** - Best practice improvements
@@ -103,10 +98,7 @@ Components reviewed: Header, hero, feature cards, footer
 
 ```
 1. **Focus management**: How should focus move when the modal opens/closes?
-2. **Contrast verification**: Can you confirm the color contrast ratios for:
-   - Body text: #666666 on #FFFFFF
-   - Link text: #0066CC on #FFFFFF
-   - Button text: #FFFFFF on #0088FF
+2. **Colors per state**: What are the button colors on hover, press, and disabled? (to compute contrast ratios)
 3. **Alt text**: What should the alt text be for the hero image?
 4. **Loading states**: How are loading states indicated for the "Load More" button?
 5. **Keyboard navigation**: How do users navigate through the image carousel with keyboard?
@@ -138,23 +130,10 @@ Components reviewed: Header, hero, feature cards, footer
 
 ## Key Principles
 
-- **Visual inspection**: You can't measure exact contrast - flag for verification
+- **Compute colors from values**: When color values are available, compute contrast ratios. Keep estimates from images as needs-verification
 - **Ask questions**: Designs don't show dynamic behavior - ask how it works
 - **Annotate needs**: Specify what developers need to implement (ARIA roles, alt text)
 - **Prevent issues**: Catch accessibility problems before code is written
 - **Be specific**: Reference actual frames, colors, measurements from the design
 
-## Example Workflow
-
-```
-1. User provides Figma URL or design image
-2. Fetch/read the design artifact
-3. Analyze visually:
-   - Scan for color contrast issues (note color codes)
-   - Check touch target sizes (estimate from design scale)
-   - Verify labels, error patterns, focus indicators
-4. Compile questions for unclear behavioral aspects
-5. Provide annotated recommendations for implementation
-```
-
-**Remember**: You're reviewing design intent, not implementation. You know accessibility standards - apply them to visual decisions and flag what needs specification for developers.
+**Note**: You are reviewing design intent, not implementation. Report what the visuals decide, and write out what implementation decides (ARIA, focus movement, announcements) as specifications for developers.
