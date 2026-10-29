@@ -100,12 +100,12 @@ outerHTML 証跡、`nodes[].failureSummary` は判断理由の説明。
 
 自動再生コンテンツを検出するため、一定間隔でスクリーンショットを撮影して比較。あわせて `<audio>`・`<video>` の再生状態を測り、3秒を超えて鳴る音声を `a11y-skills/auto-play-audio` として報告する（実際に音が聞こえるかは手動確認）。
 
-![自動再生検出 - 0秒](./auto-play-screenshots/screenshot-0.png)
-![自動再生検出 - 3秒](./auto-play-screenshots/screenshot-3.png)
+![自動再生検出 - 0秒](./auto-play-screenshots/screenshot-0s.png)
+![自動再生検出 - 6秒](./auto-play-screenshots/screenshot-6s.png)
 
 **検出結果:**
 - 自動再生コンテンツ検出: あり/なし
-- 比較したスクリーンショット: 4枚（0秒、1秒、2秒、3秒）
+- 比較したスクリーンショット: 4枚（0秒、2秒、4秒、6秒）
 - サイズ変化率: X%
 - 手動確認:
   - [ ] 一時停止/停止コントロールが提供されている

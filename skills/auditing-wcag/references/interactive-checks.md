@@ -281,9 +281,12 @@ await requiredInput.fill('');
 await form.locator('button[type="submit"], input[type="submit"]').click();
 
 // 3. Check for error indication
-const a11ySnapshot = await page.accessibility.snapshot();
-// Look for aria-invalid, aria-describedby in snapshot
-// Check if error message text is exposed
+// Is the error message text exposed in the tree?
+const a11ySnapshot = await form.ariaSnapshot();
+// aria-invalid and what aria-describedby / aria-errormessage point to (not in ariaSnapshot, so read the attributes)
+const invalid = await requiredInput.getAttribute('aria-invalid');
+const describedBy = await requiredInput.getAttribute('aria-describedby');
+const errorMessage = await requiredInput.getAttribute('aria-errormessage');
 ```
 
 **Pass if:**

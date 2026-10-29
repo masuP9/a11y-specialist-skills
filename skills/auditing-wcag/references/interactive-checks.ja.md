@@ -281,9 +281,12 @@ await requiredInput.fill('');
 await form.locator('button[type="submit"], input[type="submit"]').click();
 
 // 3. エラー表示を確認
-const a11ySnapshot = await page.accessibility.snapshot();
-// スナップショットでaria-invalid, aria-describedbyを確認
-// エラーメッセージテキストが公開されているか確認
+// エラーメッセージのテキストがツリーに出ているか
+const a11ySnapshot = await form.ariaSnapshot();
+// aria-invalid と、aria-describedby / aria-errormessage が指す先（ariaSnapshot には出ないので属性で読む）
+const invalid = await requiredInput.getAttribute('aria-invalid');
+const describedBy = await requiredInput.getAttribute('aria-describedby');
+const errorMessage = await requiredInput.getAttribute('aria-errormessage');
 ```
 
 **Passの条件:**
