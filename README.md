@@ -165,7 +165,7 @@ You can also invoke directly with slash command:
 
 Collects information through interview format and generates:
 
-- **Maturity Assessment**: Current level (L1-L4) with rationale
+- **Maturity Assessment**: Current level (L0-L4: Inactive / Ad hoc / Launch / Integrate / Optimize) with rationale
 - **Roadmap**: Phased initiatives with owners
 - **KPI Design**: Leading and lagging indicators
 - **Stakeholder Materials**: Business impact and ROI

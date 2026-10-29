@@ -46,7 +46,7 @@ For organizations needing urgent response to regulations or audits. Prioritizes 
 
 | Deliverable | Content |
 |-------------|---------|
-| Maturity Assessment | Current level (L1-L4) with rationale, gap analysis |
+| Maturity Assessment | Current level (L0-L4: Inactive / Ad hoc / Launch / Integrate / Optimize) with rationale, gap analysis |
 | Roadmap | Phased initiatives, owners, KPIs |
 | KPI/Metrics Design | Leading and lagging indicator proposals |
 | Stakeholder Persuasion Materials | Business impact, risks, ROI |
@@ -73,7 +73,7 @@ When the skill starts, it develops plan through:
 
 1. **Scenario Identification**: Confirm purpose
 2. **Information Gathering**: Load reference documents + interview about business, technical, organizational situation
-3. **Maturity Assessment**: Evaluate current state on 5 axes
+3. **Maturity Assessment**: Evaluate current state on 8 axes (W3C ICT Development Lifecycle + Governance)
 4. **Strategy Draft Generation**: Generate roadmap, KPIs, persuasion materials
 5. **Review and Adjustment**: Dialogue with user to refine plan
 6. **File Export**: Save final version as Markdown file
@@ -87,10 +87,12 @@ skills/planning-a11y-improvement/
 ├── README.ja.md         # README (Japanese)
 ├── README.md            # This file
 └── references/
-    ├── output-templates.ja.md    # Output templates (Japanese)
-    ├── output-templates.md       # Output templates (English)
-    ├── scenario-playbooks.ja.md  # Scenario guides (Japanese)
-    └── scenario-playbooks.md     # Scenario guides (English)
+    ├── maturity-proof-points.ja.md  # Maturity proof points (Japanese)
+    ├── maturity-proof-points.md     # Maturity proof points (English)
+    ├── output-templates.ja.md       # Output templates (Japanese)
+    ├── output-templates.md          # Output templates (English)
+    ├── scenario-playbooks.ja.md     # Scenario guides (Japanese)
+    └── scenario-playbooks.md        # Scenario guides (English)
 ```
 
 ## Related Skills

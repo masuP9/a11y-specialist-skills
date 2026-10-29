@@ -45,7 +45,7 @@
 
 | 成果物 | 内容 |
 |--------|------|
-| 成熟度評価 | 現状のレベル（L1-L4）と根拠、ギャップ分析 |
+| 成熟度評価 | 現状のレベル（L0-L4: Inactive / Ad hoc / Launch / Integrate / Optimize）と根拠、ギャップ分析 |
 | ロードマップ | フェーズ別の施策、担当、KPI |
 | KPI/指標設計 | 先行指標・遅行指標の提案 |
 | ステークホルダー説得資料 | ビジネスインパクト、リスク、投資対効果 |
@@ -72,7 +72,7 @@
 
 1. **シナリオ特定**: 利用目的を確認
 2. **情報収集**: 参考ドキュメントの読み込み + ビジネス、技術、組織の状況をヒアリング
-3. **成熟度評価**: 5つの軸で現状を評価
+3. **成熟度評価**: 8つの軸（W3C ICT Development Lifecycle + ガバナンス）で現状を評価
 4. **計画ドラフト生成**: ロードマップ、KPI、説得資料を生成
 5. **レビューと調整**: ユーザーと対話して計画を洗練
 6. **ファイル出力**: 最終版をMarkdownファイルとして保存
@@ -86,10 +86,12 @@ skills/planning-a11y-improvement/
 ├── README.ja.md         # このファイル
 ├── README.md            # README（英語）
 └── references/
-    ├── output-templates.ja.md    # 出力テンプレート（日本語）
-    ├── output-templates.md       # 出力テンプレート（英語）
-    ├── scenario-playbooks.ja.md  # シナリオ別ガイド（日本語）
-    └── scenario-playbooks.md     # シナリオ別ガイド（英語）
+    ├── maturity-proof-points.ja.md  # 成熟度プルーフポイント（日本語）
+    ├── maturity-proof-points.md     # 成熟度プルーフポイント（英語）
+    ├── output-templates.ja.md       # 出力テンプレート（日本語）
+    ├── output-templates.md          # 出力テンプレート（英語）
+    ├── scenario-playbooks.ja.md     # シナリオ別ガイド（日本語）
+    └── scenario-playbooks.md        # シナリオ別ガイド（英語）
 ```
 
 ## 関連スキル

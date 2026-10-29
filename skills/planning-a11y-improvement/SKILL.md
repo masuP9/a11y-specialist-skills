@@ -173,51 +173,63 @@ Based on collected information, assess the organization's accessibility maturity
 
 ### Maturity Levels
 
+Based on the [W3C Accessibility Maturity Model](https://www.w3.org/TR/maturity-model/) ICT Development Lifecycle dimension, supplemented with [Microsoft AEM](https://blogs.microsoft.com/accessibility/accessibility-evolution-model/) and [Level Access DAMM](https://www.levelaccess.com/blog/the-digital-accessibility-maturity-model-introduction-to-damm/).
+
 | Level | Name | Characteristics |
 |-------|------|-----------------|
-| L1 | Ad hoc | Depends on individual goodwill, no systematic initiatives |
-| L2 | Repeatable | Some reproducible practices exist, documentation lacking |
-| L3 | Managed | Processes defined, organizational ownership exists |
-| L4 | Scalable | Automation and measurement established, continuous improvement cycle running |
+| L0 | Inactive | No initiatives. Baseline for assessment |
+| L1 | Ad hoc | Sporadic efforts driven by individual goodwill or interest. No organizational support or structure |
+| L2 | Launch | Organization recognizes the need for accessibility and has started. Efforts are underway but inconsistent. New development only |
+| L3 | Integrate | Organizational approach defined and deployed. Processes embedded across the development lifecycle. Remediation of existing products begins |
+| L4 | Optimize | Standardized approach permeates the entire organization. A11y tests integrated into CI/CD. Continuous evaluation and improvement cycle operational |
 
 ### Assessment Axes
 
-Evaluate on these 5 axes:
+Evaluate on these 8 axes (W3C ICT Development Lifecycle 7 sub-dimensions + Governance):
 
-1. **Governance**: Policies, responsible parties, budget existence
-2. **Design System**: A11y-enabled component readiness
-3. **Engineering**: Coding standards, review processes
-4. **QA/Verification**: Test automation, manual verification structure
-5. **Training**: Education programs, skill assessment
+1. **User Research**: Including people with disabilities in research, participant accommodations, accessible research materials
+2. **Planning and Design**: Integrating a11y standards into design phase, checklists, design reviews, design system
+3. **Development**: Developer resources, coding standards, issue management, acceptance criteria
+4. **User Experience**: UX testing with people with disabilities, accessible test materials
+5. **Quality Review Through Release**: Manual/automated testing, bug tracking, release gates, ACR creation
+6. **ICT Development Training**: Role-specific a11y training
+7. **Goals and Metrics**: Goal setting, metric definition, progress tracking
+8. **Governance**: Executive sponsor, policy, budget, accountability
+
+**Proof Points**: See `references/maturity-proof-points.md` for detailed proof points per axis and level.
 
 ### Output Format
 
 ```markdown
 ## Maturity Assessment
 
-**Current Level**: L2 Repeatable
+**Current Level**: L2 Launch
 
 ### Assessment Rationale
 
 | Axis | Rating | Rationale |
 |------|--------|-----------|
+| User Research | L1 | No process for including people with disabilities |
+| Planning and Design | L2 | Some components have a11y guidance, design checklists started |
+| Development | L2 | Code review includes a11y but ad-hoc |
+| User Experience | L1 | No AT testing in UX process |
+| Quality Review Through Release | L1 | Manual checks only, no automated tests |
+| ICT Development Training | L1 | No systematic education program |
+| Goals and Metrics | L1 | No formal a11y goals or metrics |
 | Governance | L1 | Point of contact exists but no policy defined |
-| Design System | L2 | Some components have a11y support |
-| Engineering | L2 | Code review includes a11y but ad-hoc |
-| QA/Verification | L1 | Manual checks only, no automated tests |
-| Training | L1 | No systematic education program |
 
 ### Strengths
 - Design system foundation exists
 - Some engineers have a11y knowledge
 
 ### Gap Summary
-- No lifecycle-wide gates established
+- No lifecycle-wide quality gates established
 - Cross-organizational ownership unclear
 - Measurement mechanisms not established
+- No formal user research with people with disabilities
 
 ### Target Level
-**12-month target**: L3 Managed
+**12-month target**: L3 Integrate
 ```
 
 ## Step 4: Strategy Draft Generation
