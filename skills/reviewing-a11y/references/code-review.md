@@ -2,11 +2,7 @@
 
 [日本語版 (Japanese)](./code-review.ja.md)
 
-You are a specialized accessibility reviewer focused on **source code implementation**.
-
-## Your Role
-
-Review component code, templates, and markup through static analysis. You already know WCAG 2.2, WAI-ARIA patterns, and common accessibility anti-patterns - this guide focuses on **how to review code** using available tools.
+A guide for finding accessibility issues by statically reading component code, templates, and markup.
 
 ## Required Capabilities
 
@@ -27,7 +23,7 @@ Review component code, templates, and markup through static analysis. You alread
 
 ### Step 2: Systematic Static Analysis
 
-Analyze the code for accessibility patterns. You already know what to look for - focus on finding issues in this specific codebase:
+Look for issues in the target codebase from these angles:
 
 **Examine code for:**
 - Semantic HTML usage (proper elements, heading hierarchy)
@@ -42,10 +38,7 @@ Analyze the code for accessibility patterns. You already know what to look for -
 - **Vue**: Check `:aria-*` bindings, template refs, watchers for ARIA states
 - **Angular**: Check `[attr.aria-*]` bindings, ViewChild for focus management
 
-**For each issue, determine severity:**
-- **Critical**: Will block users (missing alt, no keyboard support, broken ARIA IDs)
-- **Major**: Creates barriers (div onClick, missing labels, wrong roles)
-- **Minor**: Best practice improvements (redundant ARIA, better element choices)
+Assign severity with the table in [SKILL "Severity"](../SKILL.md#severity).
 
 ### Step 3: Recommendations
 
@@ -86,12 +79,12 @@ Lines reviewed: 1-150
 **Major** - Creates significant barriers
 
 ```
-- **Location**: src/components/ImageGallery.tsx:23
-- **Issue**: Images missing alt text
-- **Code**: `<img src={item.url} />`
-- **WCAG**: 1.1.1 Non-text Content (A)
-- **Impact**: Screen reader users cannot understand image content
-- **Fix**: Add alt prop: `<img src={item.url} alt={item.description} />`
+- **Location**: src/components/Tabs.tsx:31
+- **Issue**: The selected tab is shown only by a CSS class; `aria-selected` is missing
+- **Code**: `<button role="tab" className={active ? 'active' : ''}>`
+- **WCAG**: 4.1.2 Name, Role, Value (A)
+- **Impact**: Screen reader users cannot tell which tab is open
+- **Fix**: Pass the state: `<button role="tab" aria-selected={active}>`
 ```
 
 **Minor** - Best practice improvements
@@ -131,16 +124,4 @@ Lines reviewed: 1-150
 - **Suggest patterns**: Reusable solutions for common issues
 - **No ARIA is better than Bad ARIA**: Incorrect WAI-ARIA is worse than no ARIA at all
 
-## Example Workflow
-
-```
-1. User provides file path: src/components/Modal.tsx
-2. Read the file
-3. Identify framework (React in this case)
-4. Analyze code line by line for accessibility issues
-5. Search for related patterns (for example, other modal usage)
-6. Compile findings grouped by severity
-7. Provide actionable fixes and recommendations
-```
-
-**Remember**: You're reviewing source code, not rendered output. Focus on what you can determine from the code itself. You know accessibility standards - apply them to this specific implementation.
+**Note**: You are reading source code, not rendered output. Send what only runtime can decide (computed accessible names, focus movement, contrast) to manual verification.

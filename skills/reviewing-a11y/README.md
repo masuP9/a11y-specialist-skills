@@ -51,7 +51,7 @@ This skill assumes Claude Code and Codex already know:
 
 The guides focus on **how to review** with available capabilities and workflows, building on the agent's existing accessibility knowledge.
 
-For human reference, detailed WCAG checklists are available in `references/wcag-checklist.md`.
+The severity criteria for findings (Critical / Major / Minor) are in the "Severity" section of `SKILL.md`.
 
 ## Features
 
@@ -156,9 +156,7 @@ skills/reviewing-a11y/
     ├── code-review.md            # Code review guide
     ├── code-review.ja.md         # (Japanese)
     ├── design-review.md          # Design review guide
-    ├── design-review.ja.md       # (Japanese)
-    ├── wcag-checklist.md         # WCAG checklist
-    └── wcag-checklist.ja.md      # (Japanese)
+    └── design-review.ja.md       # (Japanese)
 ```
 
 ## References

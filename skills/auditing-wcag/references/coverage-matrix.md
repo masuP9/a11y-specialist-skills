@@ -2,73 +2,75 @@
 
 # WCAG 2.2 A/AA Coverage Matrix
 
-Methods are labeled as Automated/Interactive/Manual/Content and can be combined.
+Methods are labeled as Automated/Interactive/Manual/Content and can be combined. Use this as an index of which checks and material each criterion uses.
+
+When the "Judgment Rule" column says **Judgment lines**, judge with the "Judgment lines" and "When checking" sections of a11y-knowledge `criteria/<number>.md`. Otherwise follow the column.
 
 > **Note:** Criteria marked with **[CLI]** can be automatically checked via the `a11y-audit` CLI. See the check names in SKILL.md for reference.
 
 ## 1. Perceivable
 | Criterion | Test Method | Evidence | Judgment Rule |
 |---|---|---|---|
-| 1.1.1 | Automated + Content | a11y tree/image list | Fail if informative images are unnamed or insufficient |
+| 1.1.1 | Automated + Content | a11y tree/image list | [Judgment lines](../../a11y-knowledge/references/criteria/1.1.1.md) |
 | 1.2.1 | Automated + Content | DOM media detection + transcript links | Fail if no alternative |
-| 1.2.2 | Automated + Content | axe video-caption + track elements | Fail if captions missing |
+| 1.2.2 | Automated + Content | axe video-caption + track elements | [Judgment lines](../../a11y-knowledge/references/criteria/1.2.2.md) |
 | 1.2.3 | Automated + Content | track elements + transcript links | Fail if no media alternative |
 | 1.2.4 | Content | capture | Fail if live captions missing |
 | 1.2.5 | Automated + Content | track elements | Fail if audio description missing |
-| 1.3.1 | Automated | a11y tree snippet | Fail on missing semantics |
+| 1.3.1 | Automated | a11y tree snippet | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.1.md) |
 | 1.3.2 | Automated | a11y tree + DOM order | Fail if meaningful order breaks |
-| 1.3.3 | Automated + Content | a11y tree text + excerpts | Fail on sensory-only instructions |
-| 1.3.4 | Automated + Manual | `orientation-check` **[CLI]** + captures | Fail if one orientation blocks function |
-| 1.3.5 | Automated | `autocomplete-audit` **[CLI]** | Fail on incorrect/missing autocomplete |
-| 1.4.1 | Automated + Manual | a11y tree text + screenshots | Fail if color-only cue |
-| 1.4.2 | Automated + Manual | `auto-play-detection` **[CLI]** (`a11y-skills/auto-play-audio`) + logs | Fail if audio over 3 seconds cannot be paused/stopped or its volume controlled |
+| 1.3.3 | Automated + Content | a11y tree text + excerpts | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.3.md) |
+| 1.3.4 | Automated + Manual | `orientation-check` **[CLI]** + captures | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.4.md) |
+| 1.3.5 | Automated | `autocomplete-audit` **[CLI]** | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.5.md) |
+| 1.4.1 | Automated + Manual | a11y tree text + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.1.md) |
+| 1.4.2 | Automated + Manual | `auto-play-detection` **[CLI]** (`a11y-skills/auto-play-audio`) + logs | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.2.md) |
 | 1.4.3 | Automated | axe color-contrast | Fail below AA |
-| 1.4.4 | Automated + Manual | `zoom-200-check` **[CLI]** + screenshots | Fail if loss/overlap at 200% |
-| 1.4.5 | Manual + Content | screenshots | Fail if text is image-based |
-| 1.4.10 | Automated + Manual | `reflow-check` **[CLI]** + screenshots | Fail if horizontal scroll required |
+| 1.4.4 | Automated + Manual | `zoom-200-check` **[CLI]** + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.4.md) |
+| 1.4.5 | Manual + Content | screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.5.md) |
+| 1.4.10 | Automated + Manual | `reflow-check` **[CLI]** + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.10.md) |
 | 1.4.11 | Automated candidates + manual | `non-text-contrast-check` **[CLI]** + screenshots | Fail if a component boundary or icon is below 3:1. States, charts and image backgrounds are manual |
-| 1.4.12 | Automated + Manual | `text-spacing-check` **[CLI]** + screenshots | Fail on text clipping/overlap |
+| 1.4.12 | Automated + Manual | `text-spacing-check` **[CLI]** + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.12.md) |
 | 1.4.13 | Interactive + automated candidates | `content-on-hover-check` **[CLI]** + video/logs | Fail if hover/focus content cannot be dismissed/retained |
 
 ## 2. Operable
 | Criterion | Test Method | Evidence | Judgment Rule |
 |---|---|---|---|
-| 2.1.1 | Automated + Interactive | `keyboard-reachability-check` **[CLI]** + logs | Fail if keyboard-only not possible |
+| 2.1.1 | Automated + Interactive | `keyboard-reachability-check` **[CLI]** + logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.1.1.md) |
 | 2.1.2 | Automated + Interactive | `keyboard-trap-check` **[CLI]** + logs | Fail on keyboard trap |
 | 2.1.4 | Interactive + automated candidates | `character-key-shortcut-check` **[CLI]** + logs | Fail if single-key shortcuts cannot be mitigated |
-| 2.2.1 | Automated + Manual | `time-limit-detector` **[CLI]** + logs | Fail if time limits cannot be extended/disabled |
-| 2.2.2 | Automated + Interactive | `auto-play-detection` **[CLI]** + logs | Fail if moving content cannot be paused/stopped |
+| 2.2.1 | Automated + Manual | `time-limit-detector` **[CLI]** + logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.2.1.md) |
+| 2.2.2 | Automated + Interactive | `auto-play-detection` **[CLI]** + logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.2.2.md) |
 | 2.3.1 | Manual | video | Fail if flashing exceeds threshold |
-| 2.4.1 | Automated | a11y tree | Fail if no bypass mechanism |
-| 2.4.2 | Automated | `document.title` | Fail if title empty |
-| 2.4.3 | Interactive + automated candidates | `focus-order-check` **[CLI]** + focus order log | Fail if the order deviates from visual order and meaning or operability is lost |
-| 2.4.4 | Automated + Content | a11y tree + excerpts | Fail if link purpose unclear in context |
+| 2.4.1 | Automated | a11y tree | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.1.md) |
+| 2.4.2 | Automated | `document.title` | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.2.md) |
+| 2.4.3 | Interactive + automated candidates | `focus-order-check` **[CLI]** + focus order log | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.3.md) |
+| 2.4.4 | Automated + Content | a11y tree + excerpts | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.4.md) |
 | 2.4.5 | Automated + Content | link graph + search/sitemap detection | Fail if only one way provided |
 | 2.4.6 | Automated + Content | a11y tree/excerpts | Fail if headings/labels are unclear |
-| 2.4.7 | Interactive | screenshots | Fail if focus not visible |
-| 2.4.11 | Automated + Interactive | `focus-indicator-check` **[CLI]** + screenshots | Fail if focus is entirely hidden by author-created content |
+| 2.4.7 | Interactive | screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.7.md) |
+| 2.4.11 | Automated + Interactive | `focus-indicator-check` **[CLI]** + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.11.md) |
 | 2.4.12 (AAA) | Automated + Interactive | `focus-indicator-check` **[CLI]** + screenshots | Fail if focus is partially obscured |
-| 2.5.1 | Interactive + automated candidates | `pointer-gesture-check` **[CLI]** + logs | Fail if complex gestures required |
+| 2.5.1 | Interactive + automated candidates | `pointer-gesture-check` **[CLI]** + logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.5.1.md) |
 | 2.5.2 | Interactive + automated candidates | `pointer-cancellation-check` **[CLI]** + logs | Fail if cancellation unavailable |
 | 2.5.3 | Automated + Manual | a11y name diff (axe `label-content-name-mismatch` is experimental and not run by default) | Fail if label text not in accessible name |
 | 2.5.4 | Interactive + automated candidates | `motion-actuation-check` **[CLI]** + logs | Fail if motion-only activation |
-| 2.5.7 | Interactive + automated candidates | `pointer-gesture-check` **[CLI]** + logs | Fail if dragging required |
-| 2.5.8 | Automated | `target-size-check` **[CLI]** | Fail below minimum target size |
+| 2.5.7 | Interactive + automated candidates | `pointer-gesture-check` **[CLI]** + logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.5.7.md) |
+| 2.5.8 | Automated | `target-size-check` **[CLI]** | [Judgment lines](../../a11y-knowledge/references/criteria/2.5.8.md) |
 
 ## 3. Understandable
 | Criterion | Test Method | Evidence | Judgment Rule |
 |---|---|---|---|
-| 3.1.1 | Automated | DOM attribute | Fail if lang missing |
+| 3.1.1 | Automated | DOM attribute | [Judgment lines](../../a11y-knowledge/references/criteria/3.1.1.md) |
 | 3.1.2 | Automated + Content | axe valid-lang + text analysis | Fail if language of parts not identified |
-| 3.2.1 | Automated + Interactive | `focus-indicator-check` **[CLI]** + DOM diff | Fail if focus triggers navigation/major update |
+| 3.2.1 | Automated + Interactive | `focus-indicator-check` **[CLI]** + DOM diff | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.1.md) |
 | 3.2.2 | Interactive + automated candidates | `change-on-input-check` **[CLI]** + DOM diff | Fail if input triggers submit/navigation without prior advice |
-| 3.2.3 | Automated | a11y tree comparison across pages | Fail if navigation inconsistent |
-| 3.2.4 | Automated | a11y tree comparison across pages | Fail if same function identified differently |
-| 3.2.6 | Automated | a11y tree comparison across pages | Fail if help mechanism inconsistent |
-| 3.3.1 | Interactive | screenshots | Fail if errors not identified |
-| 3.3.2 | Automated + Content | a11y tree/excerpts | Fail if labels/instructions missing |
-| 3.3.3 | Interactive | screenshots | Fail if no correction suggestions |
-| 3.3.4 | Interactive | logs | Fail if no confirm/reversal for critical actions |
+| 3.2.3 | Automated | a11y tree comparison across pages | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.3.md) |
+| 3.2.4 | Automated | a11y tree comparison across pages | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.4.md) |
+| 3.2.6 | Automated | a11y tree comparison across pages | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.6.md) |
+| 3.3.1 | Interactive | screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/3.3.1.md) |
+| 3.3.2 | Automated + Content | a11y tree/excerpts | [Judgment lines](../../a11y-knowledge/references/criteria/3.3.2.md) |
+| 3.3.3 | Interactive | screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/3.3.3.md) |
+| 3.3.4 | Interactive | logs | [Judgment lines](../../a11y-knowledge/references/criteria/3.3.4.md) |
 | 3.3.7 | Manual + automated candidates | `redundant-entry-check` **[CLI]** + logs | Fail if redundant entry required |
 | 3.3.8 | Interactive + automated candidates | `accessible-authentication-check` **[CLI]** + captures | Fail if pasting is blocked and no other method exists; CAPTCHAs and alternatives need review |
 
@@ -76,7 +78,7 @@ Methods are labeled as Automated/Interactive/Manual/Content and can be combined.
 | Criterion | Test Method | Evidence | Judgment Rule |
 |---|---|---|---|
 | 4.1.1 | — | — | Obsolete and removed in WCAG 2.2. Do not judge it or count it in the summary (for WCAG 2.0 / 2.1 audits, treat it as always satisfied for HTML and XML) |
-| 4.1.2 | Automated | a11y tree | Fail if name/role/value not exposed |
+| 4.1.2 | Automated | a11y tree | [Judgment lines](../../a11y-knowledge/references/criteria/4.1.2.md) |
 | 4.1.3 | Automated + Interactive | a11y tree/logs | Fail if status messages not exposed |
 
 ## Available CLI Checks

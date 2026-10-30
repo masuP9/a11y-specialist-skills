@@ -40,7 +40,7 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 
 ### 3. 自動チェック
 - Playwrightでページに遷移し、アクセシビリティツリーを取得する。
-- `references/automated-checks.ja.md`を基準に判定する。
+- `references/automated-checks.ja.md`で、達成基準ごとの材料を集める。
 - ブラウザ操作が使えない場合は、`a11y-audit` CLI でチェックを実行する（下記「自動チェックCLI」参照）。
 - CLIも実行できない場合は、利用可能なWeb取得手段でHTMLを取得し、判定可能な範囲のみ実施する。
 - `references/coverage-matrix.ja.md`でカバレッジを確認する。
@@ -50,7 +50,7 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 - 結果は [checks-axe.ja.md](../a11y-knowledge/references/checks-axe.ja.md) と [checks-audit.ja.md](../a11y-knowledge/references/checks-audit.ja.md) の規則で「確定 / 要確認」に仕分ける。axe の pass を適合（Pass）に数えてよい規則は、そこに列挙したものだけ。それ以外の pass は、その規則が見る範囲で問題が無かった以上の意味を持たない。
 - 要確認になった達成基準は、`../a11y-knowledge/references/criteria/<番号>.ja.md` の「線引き」と「確かめるとき」を読んで判定する。「言い切らない」に当たるものは NT にとどめ、何を確かめれば決まるかを書く。
 - 複数ページを監査するときは、先に [cross-page.ja.md](../a11y-knowledge/references/cross-page.ja.md) の共通の判定のきまりを読む。
-- `references/automated-checks.ja.md` と重なる項目は知識ベースの規則を優先する。知識ベースは `../a11y-knowledge/` の相対パスで引く（プラグインとして入れていれば届く。スキルのディレクトリ単位のシンボリックリンクで入れているときは `a11y-knowledge` も一緒にリンクする）。
+- 判定ルールは知識ベースにあり、参照ガイドは材料と、知識ベースにファイルが無い達成基準の判定だけを持つ。知識ベースは `../a11y-knowledge/` の相対パスで引く（プラグインとして入れていれば届く。スキルのディレクトリ単位のシンボリックリンクで入れているときは `a11y-knowledge` も一緒にリンクする）。
 
 ### 4. インタラクティブチェック
 - キーボード操作・フォーカス確認を実施する。
