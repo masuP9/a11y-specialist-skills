@@ -11,15 +11,15 @@ Items requiring human judgment. Use screenshots/video/notes as evidence for visu
 ## Text/Layout
 | Criterion | Check | Evidence | Fail rule |
 |---|---|---|---|
-| 1.4.4 | No loss at 200% zoom | screenshot | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.4.md) |
+| 1.4.4 | No information/functionality loss at the standard 200% test point; no exhaustive intermediate-scale testing | screenshot | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.4.md) |
 | 1.4.5 | Avoid text in images | screenshot | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.5.md) |
-| 1.4.10 | Reflow without horizontal scroll | screenshot | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.10.md) |
-| 1.4.12 | Text spacing changes do not break layout | screenshot | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.12.md) |
+| 1.4.10 | Read each non-excepted section in one direction; retain information/functionality | screenshot | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.10.md) |
+| 1.4.12 | Content/functionality remains available after appropriate spacing changes | screenshot | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.12.md) |
 
 > **CLI Checks:**
-> - `zoom-200-check` - Detects content loss/clipping at 200% zoom (1.4.4)
+> - `zoom-200-check` - Detects clipping and other candidates with CSS zoom 200% (distinct from actual browser zoom) (1.4.4)
 > - `reflow-check` - Detects horizontal scroll at 320px viewport (1.4.10)
-> - `text-spacing-check` - Detects clipping after WCAG text spacing overrides (1.4.12)
+> - `text-spacing-check` - Detects clipping after spacing overrides; verify override conditions and full-text access before judging (1.4.12)
 >
 > Run via: `npx -y @a11y-skills/audit --url "<url>" --checks zoom-200-check,reflow-check,text-spacing-check`
 

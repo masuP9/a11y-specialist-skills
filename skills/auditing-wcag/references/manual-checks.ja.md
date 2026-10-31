@@ -11,15 +11,15 @@
 ## テキスト/レイアウト
 | 基準 | 確認内容 | 証跡 | Fail条件 |
 |---|---|---|---|
-| 1.4.4 | 200%拡大で情報欠落なし | スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.4.ja.md) |
+| 1.4.4 | 標準確認点の200%拡大で情報・機能の損失なし（途中倍率の網羅検査は不要） | スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.4.ja.md) |
 | 1.4.5 | 画像内文字の回避 | スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.5.ja.md) |
-| 1.4.10 | リフロー時の横スクロール不要 | スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.10.ja.md) |
-| 1.4.12 | テキスト間隔変更で崩れない | スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.12.ja.md) |
+| 1.4.10 | 例外でない各領域を一方向で読め、情報・機能が利用可能 | スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.10.ja.md) |
+| 1.4.12 | 適切な間隔変更後も内容・機能が利用可能 | スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.12.ja.md) |
 
 > **CLIチェック:**
-> - `zoom-200-check` - 200%ズーム時のコンテンツ欠落/クリッピングを検出（1.4.4）
+> - `zoom-200-check` - CSS zoom 200%でクリッピング等の候補を検出（実ブラウザのズームとは区別）（1.4.4）
 > - `reflow-check` - 320pxビューポートでの水平スクロールを検出（1.4.10）
-> - `text-spacing-check` - WCAGテキストスペーシング変更後のクリッピングを検出（1.4.12）
+> - `text-spacing-check` - 間隔上書き後のクリッピングを検出。上書き条件・全文表示を確認して判定（1.4.12）
 >
 > 実行: `npx -y @a11y-skills/audit --url "<url>" --checks zoom-200-check,reflow-check,text-spacing-check`
 
