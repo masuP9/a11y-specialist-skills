@@ -27,7 +27,7 @@ allowed-tools: Read Grep Glob WebFetch Agent Bash(npx -y @a11y-skills/audit:*) B
 
 1. 対象に出てくる部品を ARIA の役割（button、dialog、combobox など）で挙げる。
 2. [index-by-component.ja.md](../a11y-knowledge/references/index-by-component.ja.md) で、役割ごとに問われる達成基準を引く。レイアウトやページ全体を見るときは [index-by-criterion.ja.md](../a11y-knowledge/references/index-by-criterion.ja.md) の「ページ全体」「複数ページ」も引く。
-3. 引いた達成基準ごとに `../a11y-knowledge/references/criteria/<番号>.ja.md` の「線引き」と「作るとき」を読んでから、指摘を書く。「線引き」で適用しないとされているものを指摘しない。
+3. 引いた達成基準ごとに `../a11y-knowledge/references/criteria/<番号>.ja.md` の「線引き」と「作るとき」を読んでから、指摘を書く。WCAGの適用対象外とする項目はWCAG違反として指摘しない。知識ベースがベストプラクティスとして扱うものは、達成基準を付けず改善候補として報告する。例: dialog自身の名前の欠落。
 4. **[独自]** の線引き（運用上の解釈）に基づいて指摘するときは、指摘にその旨を書き添える（例:「[独自] の線引き。プロジェクトの判断で上書き可」）。**[解説書]** の線引きは書き添え不要。
 
 知識ベースは `../a11y-knowledge/` の相対パスで引きます。プラグインとして入れていれば届きます。スキルのディレクトリ単位のシンボリックリンクで入れているときは `a11y-knowledge` も一緒にリンクしてください。届かないときはこのステップを飛ばし、レポートに「知識ベース未参照」と書きます。

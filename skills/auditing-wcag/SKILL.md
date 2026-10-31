@@ -56,7 +56,7 @@ Confirm and get agreement on:
 
 **Sort the results with the knowledge base ([a11y-knowledge](../a11y-knowledge/SKILL.md)):**
 - Also run `page-snapshot` from `@a11y-skills/audit` 0.14.0 or later (include it even when narrowing `--checks`). It gives no verdict, but it is the material for 2.4.1 / 2.4.2 / 3.1.1 and for comparing multiple pages.
-- Sort the results into "settled / needs review" by the rules in [checks-axe.md](../a11y-knowledge/references/checks-axe.md) and [checks-audit.md](../a11y-knowledge/references/checks-audit.md). The only axe rules whose passes may be counted as conformant (Pass) are the ones listed there. Any other pass means no more than "no problem within what that rule looks at".
+- Sort the results into "settled / needs review" by the rules in [checks-axe.md](../a11y-knowledge/references/checks-axe.md) and [checks-audit.md](../a11y-knowledge/references/checks-audit.md). Use axe passes as evidence within each rule’s scope, not as criterion-wide conformance (Pass). Check the remaining conditions in each criterion file.
 - For criteria that need review, read "Judgment lines" and "When checking" in `../a11y-knowledge/references/criteria/<number>.md` before deciding. Anything under "do not assert" stays NT, with a note on what would settle it.
 - When auditing multiple pages, first read the shared judgment rules in [cross-page.md](../a11y-knowledge/references/cross-page.md).
 - Judgment rules live in the knowledge base; the reference guides hold only the material and the judgments for criteria without a knowledge base file. The knowledge base is referenced by the relative path `../a11y-knowledge/` (it resolves when installed as a plugin; when installed by symlinking individual skill directories, link `a11y-knowledge` as well).

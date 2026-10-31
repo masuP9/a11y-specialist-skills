@@ -21,7 +21,7 @@
 | focus-order-check          | 2.4.3          | 候補を挙げる                                                         | 読む順との食い違いが意味や操作を損なうかは判断が要る                                             |
 | keyboard-reachability-check | 2.1.1         | Tab・矢印キー・activedescendant で届くかの実測                       | 届いても Enter・スペースで動くかは別。届かない要素は要確認（別の経路がありうる）                 |
 | keyboard-trap-check        | 2.1.2          | 抜けられない要素                                                     | —                                                                                              |
-| target-size-check          | 2.5.8、2.5.5   | 24px（44px）未満で例外に当たらないものは不適合。`intersections` があれば間隔の例外も使えない | `exception: "inline"` の候補は、本当に文中かを見て決める                                        |
+| target-size-check | 2.5.8、2.5.5 | 2.5.8: `exceptionAssessment: "verified"` は検出範囲内の間隔の証拠。`intersections` は間隔の例外を否定する材料 | `possible` / `not-assessed`、他の例外、未検出の対象・状態・形状は確認が要る。[2.5.8](./criteria/2.5.8.ja.md)参照。2.5.5には別の例外条件を適用し、2.5.8の間隔の例外を流用しない |
 | autocomplete-audit         | 1.3.5          | 目的を推定できた欄の無効な値は不適合。有効な値があれば適合           | `missing`（autocomplete が無い）と、目的を推定できなかった欄の無効な値は、本人の情報の欄かを見て決める |
 | reflow-check               | 1.4.10         | 候補を挙げる                                                         | すべて要確認。横スクロールが要る箇所が例外（表・地図など）に当たるかは判断が要る                 |
 | text-spacing-check         | 1.4.12         | `issueCount > 0`（切れる要素がある）は不適合                         | 0 件は適合にしてよいが、見た目の重なりは見ていないと添える                                       |
