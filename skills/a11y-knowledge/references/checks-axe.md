@@ -6,22 +6,20 @@ How to map axe-core results (`violations` / `passes` / `incomplete` / `inapplica
 
 ## Principles
 
-- **Violations may be settled as non-conformant.** The exceptions are in "Rules that stay as needs review even when violated" below.
-- **A pass may be counted as conformant only for the rules in the table below.** Any other pass means no more than "there was no problem within the range that rule looks at". Few rules look at the whole of a success criterion.
+- **Violations are evidence of failure within their applicability conditions.** Check "Rules that stay as needs review even when violated" below and the conditions and exceptions in each criterion file.
+- **Passes are evidence within a rule’s scope.** The table below does not establish criterion-wide conformance. See each criterion file for remaining checks.
 - **Incomplete stays as needs review.** Do not mark it non-conformant or conformant. Add what would need to be confirmed to decide.
 - **Inapplicable only means there was nothing for that rule to apply to.** It does not mean the success criterion is NA.
 
-## Rules whose pass may be counted as conformant
+## Evidence from passes and remaining checks
 
-| axe rule            | Criterion | Reason                                                                                                  |
-| ------------------- | --------- | ------------------------------------------------------------------------------------------------------- |
-| `button-name`       | 4.1.2     | Checks that the button has a name; for a standard HTML button, the browser conveys the role and state   |
-| `link-name`         | 4.1.2     | Same as above (links)                                                                                   |
-| `input-button-name` | 4.1.2     | Same as above (`<input type="button/submit/reset">`)                                                    |
-| `image-alt`         | 1.1.1     | Checks that alt is present. It does not check whether the content is adequate ([1.1.1](./criteria/1.1.1.md)) |
-| `input-image-alt`   | 1.1.1     | Same as above (`<input type="image">`)                                                                  |
-| `role-img-alt`      | 1.1.1     | Same as above (`role="img"`)                                                                            |
-| `target-size`       | 2.5.8     | Runs only when the WCAG 2.2 tag is enabled. Checks the 24px threshold                                   |
+| axe rule | Criterion | Evidence scope / remaining checks |
+| --- | --- | --- |
+| `button-name` / `link-name` / `input-button-name` | 4.1.2 | Naming checks. They do not settle role, required states, values, or notification of changes ([4.1.2-E01–E04](./criteria/4.1.2.md)) |
+| `image-alt` / `input-image-alt` / `role-img-alt` | 1.1.1 | Implementation checks for alternatives, names, and similar information. Adequacy, decorative treatment, and out-of-scope content remain ([1.1.1-E01–E04](./criteria/1.1.1.md)) |
+| `target-size` | 2.5.8 | Read within the measured targets and states. Check undetected targets, exceptions, and shape limitations ([2.5.8-E01–E04](./criteria/2.5.8.md)) |
+
+Use ACT evidence to understand check scope. Do not assume axe completely implements identical rules.
 
 **Examples of passes not to count as conformant** (common mistakes):
 
@@ -37,7 +35,7 @@ How to map axe-core results (`violations` / `passes` / `incomplete` / `inapplica
 | `document-title`     | 2.4.2     | `<title>` is missing or empty                                                         |
 | `html-has-lang`      | 3.1.1     | `html` has no lang or it is empty                                                     |
 | `html-lang-valid`    | 3.1.1     | The lang value is malformed                                                           |
-| `image-alt`          | 1.1.1     | `<img>` has no alt attribute at all (decorative `alt=""` is not a violation)          |
+| `image-alt`          | 1.1.1     | Confirmed absence of a valid alternative or ignorable implementation for the target image, not merely missing alt ([1.1.1-E02–E04](./criteria/1.1.1.md))          |
 | `link-in-text-block` | 1.4.1     | A link in running text is distinguished from the surrounding text by color alone      |
 
 ## Rules that stay as needs review even when violated

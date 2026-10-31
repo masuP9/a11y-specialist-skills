@@ -56,7 +56,7 @@ allowed-tools: Read Grep Glob Write WebFetch Agent Bash(npx -y @a11y-skills/audi
 
 **知識ベース（[a11y-knowledge](../a11y-knowledge/SKILL.ja.md)）で結果を仕分ける:**
 - `@a11y-skills/audit` 0.14.0 以降の `page-snapshot` も走らせる（`--checks` を絞るときも含める）。判定はしないが、2.4.1 / 2.4.2 / 3.1.1 と複数ページの見比べの材料になる。
-- 結果は [checks-axe.ja.md](../a11y-knowledge/references/checks-axe.ja.md) と [checks-audit.ja.md](../a11y-knowledge/references/checks-audit.ja.md) の規則で「確定 / 要確認」に仕分ける。axe の pass を適合（Pass）に数えてよい規則は、そこに列挙したものだけ。それ以外の pass は、その規則が見る範囲で問題が無かった以上の意味を持たない。
+- 結果は [checks-axe.ja.md](../a11y-knowledge/references/checks-axe.ja.md) と [checks-audit.ja.md](../a11y-knowledge/references/checks-audit.ja.md) の規則で「確定 / 要確認」に仕分ける。axe の pass は規則の検査範囲の証拠として使い、達成基準全体の適合（Pass）に直結させない。各達成基準のファイルにある残りの条件を確認する。
 - 要確認になった達成基準は、`../a11y-knowledge/references/criteria/<番号>.ja.md` の「線引き」と「確かめるとき」を読んで判定する。「言い切らない」に当たるものは NT にとどめ、何を確かめれば決まるかを書く。
 - 複数ページを監査するときは、先に [cross-page.ja.md](../a11y-knowledge/references/cross-page.ja.md) の共通の判定のきまりを読む。
 - 判定ルールは知識ベースにあり、参照ガイドは材料と、知識ベースにファイルが無い達成基準の判定だけを持つ。知識ベースは `../a11y-knowledge/` の相対パスで引く（プラグインとして入れていれば届く。スキルのディレクトリ単位のシンボリックリンクで入れているときは `a11y-knowledge` も一緒にリンクする）。

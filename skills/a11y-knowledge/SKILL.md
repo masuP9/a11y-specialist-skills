@@ -22,19 +22,21 @@ This skill does not do work on its own. The implementation, review, and audit sk
 
 Do not read everything at once. Read only the success criteria being asked about.
 
+When editing references, read [Editing and checking judgment evidence](./references/evidence-format.md). 2.5.8 / 1.1.1 / 4.1.2 use the pilot format with evidence IDs. Read each item’s source type, conditions, and limits and follow IDs from judgment lines. Other criteria retain the existing format.
+
 ## The four sections of each file
 
 | Section        | Who reads it                          | Contents                                                                                                                                              |
 | -------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Rationale      | All situations                        | Which parts of the Understanding document to hold onto. Links and the key points the judgment rests on (definitions of terms, intent, where exceptions come from) |
-| Judgment lines | All situations                        | How to read this criterion. What it does not apply to, exceptions, common misjudgments. Each item is marked **[Understanding]** (based on the Understanding document) or **[Our interpretation]** (operational interpretation) |
+| Rationale      | All situations                        | Sources and key points supporting judgments. The pilot format includes evidence IDs, source types, conditions, and limits |
+| Judgment lines | All situations                        | How to read this criterion. What it does not apply to, exceptions, common misjudgments. The existing format uses **[Understanding]** / **[Our interpretation]**; the pilot uses evidence IDs and marks operational interpretations |
 | When building  | Implementation and review             | How to build so the judgment lines are met, and what to avoid                                                                                          |
 | When checking  | Auditing and reviewing automated checks | What automated checks decide, what remains, and what must not be asserted (conditions for leaving it as needs review)                                 |
 
 ## Rules for use
 
 - **[Our interpretation] judgment lines are not the only way to read WCAG.** A project may override them by its own decision. If you override one, record the reason on the project side.
-- **Do not re-judge results that an automated check has already settled.** Judge only what is not settled (needs review).
+- **Preserve the scope of automated findings.** Match applicability and exceptions in the criterion file. Do not extend partial passes to criterion-wide conformance; leave unverified conditions as needs review.
 - **When you cannot decide, leave it as "needs review".** Do not mark it non-conformant or conformant by guesswork. Write down what would need to be confirmed to decide.
 - **Write the reason first, then attach the verdict that fits the reason.** Do not write only the verdict and add the reason afterwards.
 
@@ -42,5 +44,5 @@ Do not read everything at once. Read only the success criteria being asked about
 
 - Include only "what the judgment is based on". Do not copy the text of the success criteria or the full Understanding documents.
 - Limit the key points from the Understanding documents to the parts the judgment rests on (definitions of terms, intent, where exceptions come from).
-- Write judgment lines separately as those based on the Understanding document ([Understanding]) and operational interpretations ([Our interpretation]).
+- Distinguish source-backed judgment lines ([Understanding] in the existing format, evidence IDs in the pilot format) from operational interpretations ([Our interpretation]).
 - Write down the patterns of misjudgment learned from measurement. Do not write the measurement numbers.
