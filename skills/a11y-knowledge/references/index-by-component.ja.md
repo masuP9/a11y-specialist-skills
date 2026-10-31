@@ -6,7 +6,7 @@
 
 - 2.5.5 は AAA。既定では問わないが、ターゲットのサイズを 44px 以上にする方針のプロジェクトでは見る。
 - button / link / input では、画像などの非テキストコンテンツで操作を表す場合に1.1.1も確認する。親の名前と子画像の露出を区別し、同じ欠陥は報告でまとめる（[1.1.1](./criteria/1.1.1.ja.md)）。
-- `dialog` / `alertdialog` の名前と役割も確認する。4.1.2との対応付けは [4.1.2-E05](./criteria/4.1.2.ja.md) の条件と限界を参照する。
+- この知識ベースでは `dialog` / `alertdialog` 自体を4.1.2の対象から外す。名前の欠落はベストプラクティスの改善候補として確認する。レビュー・実装では表の達成基準に加えて [4.1.2-E05と独自方針](./criteria/4.1.2.ja.md) を読む。中の操作部品は各部品の基準で評価する。
 - ページ全体・複数ページの達成基準（2.4.1、2.4.2、3.1.1、1.4.1、1.3.3、3.2.3、3.2.4、3.2.6）は部品に付かない。[index-by-criterion](./index-by-criterion.ja.md) から引く。
 
 | 部品の種類           | 役割（role）                                                       | 問われる達成基準                                                               |
@@ -37,7 +37,7 @@
 | landmark             | banner、main、contentinfo、complementary、region、search           | 1.3.1、2.4.1                                                                    |
 | navigation           | navigation                                                         | 1.3.1、2.4.1、2.4.5、3.2.3（複数ページ）                                          |
 | form                 | form                                                               | 1.3.1、3.3.1、3.3.2、3.3.3、3.3.4                                               |
-| modal                | dialog、alertdialog                                                | 1.3.1、2.1.1、2.1.2、2.4.3、4.1.2 |
+| modal                | dialog、alertdialog                                                | 1.3.1、2.1.1、2.1.2、2.4.3 |
 | list                 | list                                                               | 1.3.1                                                                           |
 | article              | article                                                            | 1.3.1                                                                           |
 | alert / status / log | alert、status、log                                                 | 4.1.3                                                                           |

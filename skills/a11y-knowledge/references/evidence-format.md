@@ -16,7 +16,7 @@ Make each item a condition that changes the verdict rather than restating defini
 | Conditions / limits | Targets, exceptions, further checks, and unsupported conclusions |
 | Verification | Date checked and version; shared information can go at the top of the file. Also record ACT approval status and rule version |
 
-Reference evidence IDs from each judgment line. Mark operational decisions as `[Our interpretation: reason. Evidence: …]`. If a source cannot be retrieved or supporting text cannot be found, mark `[Unverified: missing evidence]` and do not use it to settle a verdict.
+Reference evidence IDs from each judgment line. Mark operational decisions as `[Our interpretation: reason. Evidence: …]`. Retain deliberately adopted author policies as [Our interpretation], with reasons, scope, and reporting treatment; do not present them as official interpretations. For source claims, if a source cannot be retrieved or supporting text cannot be found, mark `[Unverified: missing evidence]` and do not use it to settle a verdict.
 
 ## Handling sources
 
@@ -29,7 +29,7 @@ Reference evidence IDs from each judgment line. Mark operational decisions as `[
 ## Completion checks per criterion
 
 1. Open the relevant source sections and verify document IDs, criterion mappings, and conditions. Do not select evidence merely to justify existing judgment lines.
-2. Match each judgment line to evidence; correct, remove, or mark unsupported assertions as unverified.
+2. Match each judgment line to evidence. Correct, remove, or mark as unverified any unsupported assertion presented as an official judgment. If adopting an author policy, label it [Our interpretation] and state the reason.
 3. Check interpretation against a failure case, a case covered by an exception, and a case needing more evidence. Do not label locally created examples as W3C examples.
 4. Check consistency with automated-check mappings, component indexes, and callers. Verify tool-specific behavior in implementation and distinguish it from W3C requirements.
 5. Synchronize English IDs, sources, and conditions; check links and run `npm run validate:skills`.

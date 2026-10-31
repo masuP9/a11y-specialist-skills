@@ -6,7 +6,7 @@ When writing or reviewing code, look up, from the component type, the success cr
 
 - 2.5.5 is AAA. It is not asked by default, but projects with a policy of making targets 44px or larger should check it.
 - For button / link / input, also check 1.1.1 when non-text content such as an image conveys the action. Distinguish parent naming from child-image exposure and consolidate duplicate findings ([1.1.1](./criteria/1.1.1.md)).
-- Check names and roles of `dialog` / `alertdialog` too. For mapping to 4.1.2, see the conditions and limits in [4.1.2-E05](./criteria/4.1.2.md).
+- This knowledge base excludes dialog / alertdialog itself from 4.1.2. Check missing names as best-practice improvement candidates. For review and implementation, read [4.1.2-E05 and the author’s policy](./criteria/4.1.2.md) in addition to the criteria in the table. Evaluate controls inside under their own criteria.
 - Whole-page and multiple-page success criteria (2.4.1, 2.4.2, 3.1.1, 1.4.1, 1.3.3, 3.2.3, 3.2.4, 3.2.6) are not attached to components. Look them up from [index-by-criterion](./index-by-criterion.md).
 
 | Component type           | Role                                                               | Success criteria that apply                                                     |
@@ -37,7 +37,7 @@ When writing or reviewing code, look up, from the component type, the success cr
 | landmark                 | banner, main, contentinfo, complementary, region, search           | 1.3.1, 2.4.1                                                                    |
 | navigation               | navigation                                                         | 1.3.1, 2.4.1, 2.4.5, 3.2.3 (multiple pages)                                     |
 | form                     | form                                                               | 1.3.1, 3.3.1, 3.3.2, 3.3.3, 3.3.4                                               |
-| modal                    | dialog, alertdialog                                                | 1.3.1, 2.1.1, 2.1.2, 2.4.3, 4.1.2 |
+| modal                    | dialog, alertdialog                                                | 1.3.1, 2.1.1, 2.1.2, 2.4.3 |
 | list                     | list                                                               | 1.3.1                                                                           |
 | article                  | article                                                            | 1.3.1                                                                           |
 | alert / status / log     | alert, status, log                                                 | 4.1.3                                                                           |

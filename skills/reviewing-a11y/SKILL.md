@@ -27,7 +27,7 @@ Once you identify the target, and before looking at the code or page, align your
 
 1. List the components that appear in the target by ARIA role (button, dialog, combobox, and so on).
 2. Use [index-by-component.md](../a11y-knowledge/references/index-by-component.md) to find the success criteria that apply to each role. When reviewing a layout or a whole page, also pick the "Whole page" and "Multiple pages" criteria from [index-by-criterion.md](../a11y-knowledge/references/index-by-criterion.md).
-3. For each criterion found, read "Judgment lines" and "When building" in `../a11y-knowledge/references/criteria/<number>.md` before writing a finding. Do not report what the "Judgment lines" say does not apply.
+3. For each criterion found, read "Judgment lines" and "When building" in `../a11y-knowledge/references/criteria/<number>.md` before writing a finding. Do not report items excluded from WCAG applicability as WCAG failures. Report items the knowledge base treats as best practice as improvement candidates without assigning a success criterion, such as a missing name on the dialog itself.
 4. When a finding is based on an **[Our interpretation]** judgment line (an operational interpretation), say so in the finding (for example, "[Our interpretation] judgment line; the project may override it"). **[Understanding]** judgment lines need no such note.
 
 The knowledge base is referenced by the relative path `../a11y-knowledge/`. It resolves when installed as a plugin. When installed by symlinking individual skill directories, link `a11y-knowledge` as well. If it does not resolve, skip this step and write "knowledge base not consulted" in the report.

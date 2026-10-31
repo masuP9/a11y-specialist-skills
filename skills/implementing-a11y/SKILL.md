@@ -51,7 +51,7 @@ Alongside the implementation, add the following.
 
 ```markdown
 ### Success criteria considered for accessibility
-- dialog: 2.1.2 (focus containment), 2.4.3 (focus on open/close), 4.1.2
+- dialog: 2.1.2 (focus containment), 2.4.3 (focus on open/close). Provide a name as best practice under the [knowledge base’s author policy](../a11y-knowledge/references/criteria/4.1.2.md). Controls inside must also meet 4.1.2.
 - button: 2.5.8, 4.1.2
 
 ### Needs visual verification

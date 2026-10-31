@@ -35,6 +35,7 @@ When editing references, read [Editing and checking judgment evidence](./referen
 
 ## Rules for use
 
+- **Use this as an opinionated knowledge base.** [Our interpretation] denotes a deliberately adopted policy, distinct from [Unverified] evidence gaps. Separate source summaries from author judgments and state scope, reasons, and reporting treatment.
 - **[Our interpretation] judgment lines are not the only way to read WCAG.** A project may override them by its own decision. If you override one, record the reason on the project side.
 - **Preserve the scope of automated findings.** Match applicability and exceptions in the criterion file. Do not extend partial passes to criterion-wide conformance; leave unverified conditions as needs review.
 - **When you cannot decide, leave it as "needs review".** Do not mark it non-conformant or conformant by guesswork. Write down what would need to be confirmed to decide.

@@ -38,6 +38,10 @@ Use ACT evidence to understand check scope. Do not assume axe completely impleme
 | `image-alt`          | 1.1.1     | Confirmed absence of a valid alternative or ignorable implementation for the target image, not merely missing alt ([1.1.1-E02–E04](./criteria/1.1.1.md))          |
 | `link-in-text-block` | 1.4.1     | A link in running text is distinguished from the surrounding text by color alone      |
 
+## Rules treated as best practice
+
+- `aria-dialog-name`: report a missing name on dialog / alertdialog itself as an improvement candidate without assigning a success criterion. Do not mark 4.1.2 Fail or NT solely from this result. [Our interpretation: author’s audit policy. See [4.1.2-E05 and judgment lines](./criteria/4.1.2.md)]
+
 ## Rules that stay as needs review even when violated
 
 | axe rule            | Criterion | Reason                                                                                                                                        |
