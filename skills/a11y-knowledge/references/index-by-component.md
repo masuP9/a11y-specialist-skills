@@ -9,6 +9,8 @@ When writing or reviewing code, look up, from the component type, the success cr
 - This knowledge base excludes dialog / alertdialog itself from 4.1.2. Check missing names as best-practice improvement candidates. For review and implementation, read [4.1.2-E05 and the author’s policy](./criteria/4.1.2.md) in addition to the criteria in the table. Evaluate controls inside under their own criteria.
 - Whole-page and multiple-page success criteria (2.4.1, 2.4.2, 3.1.1, 1.4.1, 1.3.3, 3.2.3, 3.2.4, 3.2.6) are not attached to components. Look them up from [index-by-criterion](./index-by-criterion.md).
 
+- Also check [1.4.11](./criteria/1.4.11.md) for component/state cues and meaningful graphics. For components receiving focus, read [2.4.11](./criteria/2.4.11.md) and, when assessing AAA, [2.4.12](./criteria/2.4.12.md) / [2.4.13](./criteria/2.4.13.md).
+
 | Component type           | Role                                                               | Success criteria that apply                                                     |
 | ------------------------ | ------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
 | button                   | button                                                             | 1.1.1 (when non-text), 1.3.1, 2.1.1, 2.4.3, 2.4.7, 2.5.5, 2.5.8, 4.1.2 |

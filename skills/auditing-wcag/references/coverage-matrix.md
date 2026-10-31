@@ -28,7 +28,7 @@ When the "Judgment Rule" column says **Judgment lines**, judge with the "Judgmen
 | 1.4.4 | Automated + Manual | `zoom-200-check` **[CLI]** + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.4.md) |
 | 1.4.5 | Manual + Content | screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.5.md) |
 | 1.4.10 | Automated + Manual | `reflow-check` **[CLI]** + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.10.md) |
-| 1.4.11 | Automated candidates + manual | `non-text-contrast-check` **[CLI]** + screenshots | Fail if a component boundary or icon is below 3:1. States, charts and image backgrounds are manual |
+| 1.4.11 | Automated candidates + manual | `non-text-contrast-check` **[CLI]** + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.11.md); verify required cues, adjacent colors, and exceptions |
 | 1.4.12 | Automated + Manual | `text-spacing-check` **[CLI]** + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.12.md) |
 | 1.4.13 | Interactive + automated candidates | `content-on-hover-check` **[CLI]** + video/logs | Fail if hover/focus content cannot be dismissed/retained |
 
@@ -49,7 +49,8 @@ When the "Judgment Rule" column says **Judgment lines**, judge with the "Judgmen
 | 2.4.6 | Automated + Content | a11y tree/excerpts | Fail if headings/labels are unclear |
 | 2.4.7 | Interactive | screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.7.md) |
 | 2.4.11 | Automated + Interactive | `focus-indicator-check` **[CLI]** + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.11.md) |
-| 2.4.12 (AAA) | Automated + Interactive | `focus-indicator-check` **[CLI]** + screenshots | Fail if focus is partially obscured |
+| 2.4.12 (AAA) | Automated + Interactive | `focus-indicator-check` **[CLI]** + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.12.md) |
+| 2.4.13 (AAA) | Measurement + manual | Colors at identical positions before/after focus; qualifying area | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.13.md) |
 | 2.5.1 | Interactive + automated candidates | `pointer-gesture-check` **[CLI]** + logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.5.1.md) |
 | 2.5.2 | Interactive + automated candidates | `pointer-cancellation-check` **[CLI]** + logs | Fail if cancellation unavailable |
 | 2.5.3 | Automated + Manual | a11y name diff (axe `label-content-name-mismatch` is experimental and not run by default) | Fail if label text not in accessible name |
