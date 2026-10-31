@@ -2,7 +2,7 @@
 
 # Editing and checking judgment evidence
 
-Read when adding or updating criterion references. The pilots are [2.5.8](./criteria/2.5.8.md), [1.1.1](./criteria/1.1.1.md), and [4.1.2](./criteria/4.1.2.md). Other criteria retain the existing format; do not treat their evidence as reverified.
+Read when adding or updating criterion references. The pilots are [2.5.8](./criteria/2.5.8.md), [1.1.1](./criteria/1.1.1.md), and [4.1.2](./criteria/4.1.2.md). Also verified: [2.4.3](./criteria/2.4.3.md), [2.4.7](./criteria/2.4.7.md), and [2.4.11](./criteria/2.4.11.md). Other criteria retain the existing format; do not treat their evidence as reverified.
 
 ## Unit of extraction
 

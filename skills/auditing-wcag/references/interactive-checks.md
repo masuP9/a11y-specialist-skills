@@ -39,15 +39,15 @@ Criteria judged by reproducing user interaction through browser interaction: key
 ## Focus
 | Criterion | Action | Evidence | Fail condition |
 |---|---|---|---|
-| 2.4.3 | Focus order matches visual order | Focus order log + `focus-order-check` | Order is badly broken |
+| 2.4.3 | Compare actual order with content relationships | Focus order log + `focus-order-check` | Order harms meaning or operability; visual differences alone are insufficient |
 | 2.4.7 | Check that focus is visible | Screenshot/video | Focus is not visible |
-| 2.4.11 | Focus is not entirely hidden by other content | Screenshot/measurement | Fixed header/footer/modal hides focus completely |
+| 2.4.11 | Check visible portions of the focused component itself | Screenshot/measurement + covering origin and reveal interaction | Author-created content entirely hides the component and the notes do not apply |
 | 2.4.12 (AAA) | Focus is not hidden at all by other content | Screenshot/measurement | Fixed header/footer/modal hides focus even partly |
 
 ### `focus-indicator-check` (2.4.7 / 2.4.11 / 2.4.12 / 3.2.1)
 - Run: `--checks focus-indicator-check` (`--screenshot` adds an annotated full-page screenshot)
 - Side effects: moves focus to every element with Tab. On pages where focus causes navigation, the navigation happens (it is detected, the check returns to the original page and records an interruption).
-- Verify by hand: visibility for 2.4.7 (style differences cannot settle invisibility; look at the screenshot); navigation that changes only the query / hash; elements skipped because of an interruption or a limit; fixed / sticky elements and the inside of iframes.
+- Verify by hand: visibility and persistence for 2.4.7 (style differences alone cannot establish invisibility); treat 2.4.11 `fullyObscured` as a candidate and check actual complete obscuration of the component, initial positions of movable coverings, and whether user-opened coverings allow revealing it without advancing focus (see [2.4.11](../../a11y-knowledge/references/criteria/2.4.11.md)); navigation that changes only the query / hash; elements skipped because of an interruption or a limit; fixed / sticky elements and the inside of iframes.
 
 ### `change-on-input-check` (3.2.2)
 - Run: `--checks change-on-input-check`
