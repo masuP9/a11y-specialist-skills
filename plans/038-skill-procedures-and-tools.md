@@ -13,6 +13,8 @@
 
 ## ステータス
 
+- **Codex plan review**: 通過（4 巡目、2026-11-01、見送った low 0 件）
+
 - **優先度**: P2
 - **工数**: M
 - **リスク**: MEDIUM（`allowed-tools` は Claude Code での権限の確認に効く。コードの変更は無い）
