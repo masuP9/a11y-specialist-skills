@@ -2,7 +2,7 @@
 name: auditing-wcag
 description: WCAG 2.2 A/AAの正式な準拠監査を行い、全達成基準をPass/Fail/NT/NAで証跡付き判定する。問題発見と改善提案を中心とするレビューには reviewing-a11y を使用する。
 argument-hint: URL or file path to audit
-allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mcp__playwright__browser_navigate mcp__playwright__browser_click mcp__playwright__browser_type mcp__playwright__browser_press_key
+allowed-tools: Read Grep Glob Write WebFetch Agent Bash(npx -y @a11y-skills/audit:*) Bash(npx playwright install:*) mcp__playwright__browser_snapshot mcp__plugin_playwright_playwright__browser_snapshot mcp__playwright__browser_navigate mcp__plugin_playwright_playwright__browser_navigate mcp__playwright__browser_click mcp__plugin_playwright_playwright__browser_click mcp__playwright__browser_type mcp__plugin_playwright_playwright__browser_type mcp__playwright__browser_press_key mcp__plugin_playwright_playwright__browser_press_key mcp__playwright__browser_hover mcp__plugin_playwright_playwright__browser_hover mcp__playwright__browser_evaluate mcp__plugin_playwright_playwright__browser_evaluate mcp__playwright__browser_take_screenshot mcp__plugin_playwright_playwright__browser_take_screenshot mcp__playwright__browser_wait_for mcp__plugin_playwright_playwright__browser_wait_for mcp__playwright__browser_resize mcp__plugin_playwright_playwright__browser_resize
 ---
 
 [English](./SKILL.md)
@@ -35,15 +35,24 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 以下を明示し、合意を得る。
 - 対象レベル（A/AA、既定はWCAG 2.2 AA）
 - 対象ページ範囲（全ページ/代表ページ/指定URL）
-- 制限事項（AT確認は範囲外、動的挙動はPlaywright依存）
+- 対象環境（本番／検証環境）と、キー入力・値の変更・送信が起きてよいか（ユーザーに確かめる。下記「自動チェック」の `--checks` の値が決まる）
+- 制限事項（AT確認は範囲外、動的挙動はブラウザ操作に依存）
 - 出力形式（達成基準ごとのPass/Fail/NT/NA）
 
 ### 3. 自動チェック
-- Playwrightでページに遷移し、アクセシビリティツリーを取得する。
+1. シェルが使えるなら、最初に `a11y-audit` CLI を流す（下記「自動チェックCLI」参照）。`--checks` の値は、スコープ契約で副作用を許せると確かめられた場合だけ `all`。確かめられない・許せない場合は、下記「ページを操作しないチェックの許可リスト」だけを並べる（`page-snapshot` を含む）。
+2. 結果を下の知識ベースの規則で「確定 / 要確認」に仕分ける。
+3. ブラウザ操作は、要確認の候補を確かめるのと、「4. インタラクティブチェック」に使う。
+4. シェルが使えないときは、ブラウザ操作で 1 の代わりをする（ページに遷移し、アクセシビリティツリーを取得する）。カバーできなかったチェックは制限事項に書く。
+5. どちらも使えないときは、利用可能なWeb取得手段でHTMLを取得し、判定可能な範囲のみ実施する。
 - `references/automated-checks.ja.md`で、達成基準ごとの材料を集める。
-- ブラウザ操作が使えない場合は、`a11y-audit` CLI でチェックを実行する（下記「自動チェックCLI」参照）。
-- CLIも実行できない場合は、利用可能なWeb取得手段でHTMLを取得し、判定可能な範囲のみ実施する。
 - `references/coverage-matrix.ja.md`でカバレッジを確認する。
+
+**ページを操作しないチェックの許可リスト:** 「副作用」は、送信・保存・認証要求などを起こしうる**入力の操作**（キー入力・クリック・ポインター操作・値の入力・貼り付け・合成イベントの送出）を指す。次のチェックはこれを行わないので、副作用を許せると確かめられなくても流してよい。
+`--checks axe-audit,page-snapshot,reflow-check,text-spacing-check,zoom-200-check,orientation-check,autocomplete-audit,time-limit-detector,target-size-check,redundant-entry-check,pointer-gesture-check,non-text-contrast-check`
+
+- 表示の変更（スクロール・ウィンドウの大きさの変更・CSS の差し込み）は行う。`target-size-check` はスクロール、`reflow-check` `zoom-200-check` `orientation-check` はウィンドウの大きさの変更、`text-spacing-check` は CSS の差し込み。`zoom-200-check` はウィンドウの大きさの変更に加えて、ページに CSS の `zoom: 200%` を当てる。`time-limit-detector` は、読み込み前に `setTimeout` / `setInterval` を差し替えて呼び出しを記録する（ページのタイマーは通常どおり動く）。スクロールやリサイズで処理が走るページでは、利用者の判断でこれらを外す。
+- 許可リストに無いチェック（`focus-indicator-check` `keyboard-trap-check` `keyboard-reachability-check` `content-on-hover-check` `auto-play-detection` `motion-actuation-check` `change-on-input-check` `accessible-authentication-check` `focus-order-check` `pointer-cancellation-check` `character-key-shortcut-check`）は、副作用を許せると確かめられた場合だけ流す。流さなかったチェックの達成基準は、ブラウザ操作で人が確かめるか NT（未テスト）にし、制限事項に理由を書く。
 
 **知識ベース（[a11y-knowledge](../a11y-knowledge/SKILL.ja.md)）で結果を仕分ける:**
 - `@a11y-skills/audit` 0.14.0 以降の `page-snapshot` も走らせる（`--checks` を絞るときも含める）。判定はしないが、2.4.1 / 2.4.2 / 3.1.1 と複数ページの見比べの材料になる。
@@ -69,7 +78,7 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 
 ## 自動化の範囲と制限
 
-- Playwrightで取得できるのはアクセシビリティツリー（computed role/name/state）まで。
+- ブラウザ操作で取得できるのはアクセシビリティツリー（computed role/name/state）まで。
 - 自動テストの結果だけでは監査結果は保証されない。
 - スクリーンリーダーの実機確認、AT×ブラウザの組み合わせ検証は対象外。
 - 判断できない項目は推測せずNTにする。
@@ -93,26 +102,28 @@ allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mc
 npx playwright install chromium
 ```
 
-**全チェックを実行:**
+**全チェックを実行（副作用を許せると確かめられた場合のみ）:**
 ```bash
-npx -y @a11y-skills/audit --url "https://example.com"
+npx -y @a11y-skills/audit --url "https://example.com" --checks all --output-dir ./results
 ```
 
-**特定のチェックのみ実行:**
+**特定のチェックのみ実行（例は許可リストの中だけ）:**
 ```bash
-npx -y @a11y-skills/audit --url "https://example.com" --checks axe-audit,focus-indicator-check,page-snapshot
+npx -y @a11y-skills/audit --url "https://example.com" --checks axe-audit,page-snapshot --output-dir ./results
 ```
+
+**`--checks` を省くと `all` になり、副作用のあるチェックも走る。必ず `--checks <スコープ契約で決めた値>` を付ける。** `focus-indicator-check` など許可リスト外のチェックを足すのは、副作用を許せると確かめられた場合だけ。
 
 `page-snapshot`（0.14.0 以降）は、`--checks` を絞るときも含める。2.4.1 / 2.4.2 / 3.1.1 と複数ページの見比べの材料になる。
 
-**アノテーション付きスクリーンショット（focus-indicator）:**
+**アノテーション付きスクリーンショット（focus-indicator。許可リスト外なので副作用を許せる場合のみ）:**
 ```bash
-npx -y @a11y-skills/audit --url "https://example.com" --checks focus-indicator-check --screenshot
+npx -y @a11y-skills/audit --url "https://example.com" --checks focus-indicator-check --screenshot --output-dir ./results
 ```
 
 **結果JSONの出力先を指定（デフォルト: `./a11y-audit-results`）:**
 ```bash
-npx -y @a11y-skills/audit --url "https://example.com" --output-dir ./results
+npx -y @a11y-skills/audit --url "https://example.com" --checks axe-audit,page-snapshot --output-dir ./results
 ```
 
 **終了コード:** `0` = violations なし / `1` = violations あり / `2` = 実行時エラー

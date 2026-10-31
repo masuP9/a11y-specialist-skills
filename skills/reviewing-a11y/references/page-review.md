@@ -10,15 +10,24 @@ Choose your approach based on available tools:
 
 | Tool Available | Capability | Limitation |
 |----------------|------------|------------|
+| Shell (`@a11y-skills/audit` CLI) | axe-core findings, accessibility tree / title / lang (`page-snapshot`), other measured checks | Needs Node 18+ and Chromium. Checks that operate the page have side effects |
 | Browser interaction | Full accessibility tree, computed roles, visual rendering | Requires supported browser tooling or MCP |
 | Web retrieval | HTML source, DOM structure | No accessibility tree, no JS-rendered content |
-| Neither | Cannot fetch page | Ask user to paste HTML |
+| None | Cannot fetch page | Ask user to paste HTML |
 
 ### Priority Order
 
-1. **Browser interaction** (recommended): Provides the accessibility tree that assistive technologies see
-2. **Web retrieval**: Fallback for HTML analysis when browser interaction is unavailable
-3. **User-provided HTML**: Last resort when no fetch tools available
+1. **Shell (CLI)**: Run it first. It gives measurements and the settled / needs-review sorting
+2. **Browser interaction**: Verify the CLI's needs-review candidates and do what the CLI does not see (error display, multi-step forms, etc.). If the CLI cannot run, capture the accessibility tree in its place
+3. **Web retrieval**: Fallback for HTML analysis when browser interaction is also unavailable
+4. **User-provided HTML**: Last resort when no fetch tools available
+
+### Running the CLI
+
+Default to `npx -y @a11y-skills/audit --url "<url>" --checks axe-audit,page-snapshot --output-dir <dir>`. Add checks according to the page (`autocomplete-audit` if there are forms, `target-size-check` if there are many small controls, etc.).
+
+- When a check you add is not on the "allowlist of checks that do not operate the page" in the [auditing-wcag SKILL](../../auditing-wcag/SKILL.md) ("Automated Checks"), confirm with the user that side effects are acceptable before running it. If that cannot be confirmed, do not run it.
+- Sort the results into settled and needs-review with the rules in a11y-knowledge's [checks-axe](../../a11y-knowledge/references/checks-axe.md) and [checks-audit](../../a11y-knowledge/references/checks-audit.md). Do not report `incomplete` as a violation; send it to manual verification.
 
 ## Review Process
 
@@ -56,7 +65,7 @@ Note these limitations in your report and recommend browser-based testing.
 
 ### Without Fetch Tools
 
-If neither browser interaction nor web retrieval is available:
+If none of the shell, browser interaction or web retrieval is available:
 1. Inform the user that you cannot fetch the page directly
 2. Ask them to paste the HTML source or provide a screenshot
 3. Proceed with static analysis of provided content
@@ -134,7 +143,7 @@ The following items require manual testing:
 
 ## Key Principles
 
-- **Use the best available capability**: browser interaction > web retrieval > user-provided content
+- **Use the best available capability**: shell (CLI) > browser interaction > web retrieval > user-provided content
 - **Be transparent about limitations**: Note what you couldn't check
 - **Be specific**: Reference actual elements (selectors, text content, roles)
 - **Prioritize impact**: Critical issues first

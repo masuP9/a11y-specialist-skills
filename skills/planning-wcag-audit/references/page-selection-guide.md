@@ -39,32 +39,12 @@ Even for smaller sites, testing around 40 pages is recommended unless pages are 
 ### Priority
 1. **sitemap.xml** (preferred if available)
 2. **User-provided URL list** (CSV/text)
-3. **Playwright link crawling** (fallback)
+3. **Link collection with browser interaction** (fallback)
 
-### Check sitemap.xml
-```bash
-curl -s https://example.com/sitemap.xml | grep -oP '(?<=<loc>)[^<]+'
-```
-
-### Playwright Link Collection
-Crawl key listing pages and collect links.
-
-```javascript
-// Example pages to visit
-const pagesToVisit = [
-  '/',
-  '/products/',
-  '/news/',
-  '/blog/',
-];
-
-// Collect internal links from each page
-const links = await page.evaluate(() =>
-  Array.from(document.querySelectorAll('a[href^="/"]'))
-    .map(a => a.href)
-    .filter((v, i, a) => a.indexOf(v) === i)
-);
-```
+### Requirements
+- Record where the URL list came from (sitemap.xml / user-provided / link collection).
+- Read sitemap.xml with web retrieval and extract the `<loc>` URLs. For a sitemap index, read the child sitemaps too.
+- For link collection, visit the key listing pages (top, products, news, blog, etc.), collect internal links and remove duplicates.
 
 ---
 
@@ -82,11 +62,7 @@ Exclude bulk pages using the same template or pages outside audit scope.
 | `/page/[0-9]+` | Pagination |
 
 ### Execute Exclusion
-```bash
-grep -v -E '/download/[0-9]+$' urls.txt | \
-grep -v -E '/news/[0-9]+$' | \
-grep -v -E '/seminar/[0-9]+$' > filtered-urls.txt
-```
+- Record the exclusion patterns and reasons, and remove the URLs that match them from the list.
 
 ### User Confirmation Items
 - Are exclusion patterns appropriate?
@@ -157,19 +133,11 @@ esac
 
 Randomly select from the list after excluding representative pages.
 
-### Seeded Random Extraction
-```bash
-SEED="wcag-audit-$(date +%Y-%m-%d)"
-
-# Exclude representative pages
-grep -xvF -f representative-pages.txt filtered-urls.txt > sampling-pool.txt
-
-# Seeded random extraction
-shuf --random-source=<(openssl enc -aes-256-ctr -pass pass:"$SEED" -nosalt </dev/zero 2>/dev/null) \
-  -n 10 sampling-pool.txt > random-sample.txt
-```
-
-**Important**: Record the seed value for reproducibility.
+### Requirements
+- Sample from the list that excludes representative pages (the sampling pool).
+- If you use random numbers, record the seed and the means so the same result can be produced again.
+- If no tool is available, select by a fixed procedure, such as sorting the URLs lexicographically and taking every k-th one, and record that procedure.
+- **Important**: Record the seed value (or procedure) and the extraction method so anyone gets the same result.
 
 ---
 
@@ -177,19 +145,8 @@ shuf --random-source=<(openssl enc -aes-256-ctr -pass pass:"$SEED" -nosalt </dev
 
 Merge representative pages and random samples, checking for duplicates.
 
-```bash
-# Merge
-cat representative-pages.txt random-sample.txt > combined-pages.txt
-
-# Check duplicates
-DUPLICATES=$(sort combined-pages.txt | uniq -d | wc -l)
-
-# Extract additional samples if duplicates found
-if [ $DUPLICATES -gt 0 ]; then
-  grep -xvF -f combined-pages.txt sampling-pool.txt > remaining-pool.txt
-  shuf -n $DUPLICATES remaining-pool.txt >> random-sample.txt
-fi
-```
+- Merge representative pages and random samples, and remove duplicate URLs.
+- If removing duplicates leaves fewer pages than planned, extract the shortfall from the sampling pool by the same method.
 
 ---
 
@@ -202,10 +159,10 @@ Present the target page list to the user for approval.
 - [ ] Are form pages included (input/confirm/complete)?
 - [ ] Are pages with dynamic content included?
 - [ ] Are exclusion reasons recorded?
-- [ ] Is the seed value recorded?
+- [ ] Are the seed value and the extraction method recorded?
 
 ### Output Format
-```markdown
+````markdown
 ## Target Page List
 
 ### Selection Parameters
@@ -214,6 +171,7 @@ Present the target page list to the user for approval.
 - Exclusion patterns: [pattern list]
 - URLs after exclusion: Y
 - Random seed: [seed value]
+- Extraction method: [reproducible procedure]
 
 ### Representative Pages (Required)
 | No. | URL | Page type | Selection reason |
@@ -222,4 +180,10 @@ Present the target page list to the user for approval.
 ### Random Sample (Supplementary)
 | No. | URL | Page type |
 |---|---|---|
+
+### URL List to Pass to the Audit (one URL per line)
 ```
+https://example.com/
+https://example.com/products/
+```
+````

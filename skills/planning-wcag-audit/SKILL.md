@@ -2,7 +2,7 @@
 name: planning-wcag-audit
 description: Plan WCAG audits for a specific site using WAIC test guidelines, including scope, page selection, environment, and execution plan. Use planning-a11y-improvement for organization-wide, long-term improvement planning.
 argument-hint: Site URL or description (optional)
-allowed-tools: Read Grep Glob AskUserQuestion Write
+allowed-tools: Read Grep Glob AskUserQuestion Write WebFetch
 ---
 
 [日本語版 (Japanese)](./SKILL.ja.md)
@@ -59,7 +59,7 @@ Follow `references/page-selection-guide.md` to select target pages.
 
 If the user does not have a URL list, follow Steps 1-6 in the guide for URL collection and sampling:
 
-1. Collect URLs via sitemap.xml or Playwright crawling
+1. Collect URLs via sitemap.xml or browser-based link collection
 2. Apply exclusion patterns (user-specified)
 3. Identify representative pages
 4. Random sampling (excluding representative pages to avoid duplicates)
@@ -116,3 +116,4 @@ Please provide the output path (e.g., ./docs/wcag-audit-plan.md)
 - Mark unknowns as "TBD" and request follow-up input
 - Prioritize key user flows when selecting representative pages
 - Record a reproducible random sampling method (seed, steps)
+- Once the plan is ready, pass the target page list (one URL per line) to auditing-wcag to run the audit

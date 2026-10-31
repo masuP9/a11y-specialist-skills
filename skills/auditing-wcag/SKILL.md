@@ -2,7 +2,7 @@
 name: auditing-wcag
 description: Perform formal WCAG 2.2 A/AA conformance audits and assign Pass/Fail/NT/NA to every success criterion with evidence. Use reviewing-a11y instead for issue discovery and improvement feedback.
 argument-hint: URL or file path to audit
-allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mcp__playwright__browser_navigate mcp__playwright__browser_click mcp__playwright__browser_type mcp__playwright__browser_press_key
+allowed-tools: Read Grep Glob Write WebFetch Agent Bash(npx -y @a11y-skills/audit:*) Bash(npx playwright install:*) mcp__playwright__browser_snapshot mcp__plugin_playwright_playwright__browser_snapshot mcp__playwright__browser_navigate mcp__plugin_playwright_playwright__browser_navigate mcp__playwright__browser_click mcp__plugin_playwright_playwright__browser_click mcp__playwright__browser_type mcp__plugin_playwright_playwright__browser_type mcp__playwright__browser_press_key mcp__plugin_playwright_playwright__browser_press_key mcp__playwright__browser_hover mcp__plugin_playwright_playwright__browser_hover mcp__playwright__browser_evaluate mcp__plugin_playwright_playwright__browser_evaluate mcp__playwright__browser_take_screenshot mcp__plugin_playwright_playwright__browser_take_screenshot mcp__playwright__browser_wait_for mcp__plugin_playwright_playwright__browser_wait_for mcp__playwright__browser_resize mcp__plugin_playwright_playwright__browser_resize
 ---
 
 [日本語版 (Japanese)](./SKILL.ja.md)
@@ -35,15 +35,24 @@ You perform WCAG 2.2 AA conformance audits. Report Pass/Fail/NT/NA per success c
 Confirm and get agreement on:
 - Target level (A/AA, default WCAG 2.2 AA)
 - Page scope (all pages / representative pages / provided URLs)
-- Limitations (AT checks out of scope, dynamic behavior depends on Playwright)
+- Target environment (production / staging) and whether key presses, value changes and submissions may happen (confirm with the user; this decides the `--checks` value in "Automated Checks" below)
+- Limitations (AT checks out of scope, dynamic behavior depends on browser interaction)
 - Output format (Pass/Fail/NT/NA per success criterion)
 
 ### 3. Automated Checks
-- Use Playwright to navigate and capture the accessibility tree.
+1. If a shell is available, run the `a11y-audit` CLI first (see "Automated Checks CLI" below). Use `--checks all` only when the scope contract confirmed that side effects are acceptable. If that was not confirmed or side effects are not acceptable, list only the "allowlist of checks that do not operate the page" below (including `page-snapshot`).
+2. Sort the results into "settled / needs review" with the knowledge base rules below.
+3. Use browser interaction to verify candidates that need review and for "4. Interactive Checks".
+4. If no shell is available, use browser interaction in place of step 1 (navigate and capture the accessibility tree). Record the checks it could not cover under limitations.
+5. If neither is available, retrieve HTML with the available web capability and limit judgments accordingly.
 - Collect the material for each criterion with `references/automated-checks.md`.
-- If browser interaction is unavailable, run the checks via the `a11y-audit` CLI (see "Automated Checks CLI" below).
-- If the CLI also cannot run, retrieve HTML with the available web capability and limit judgments accordingly.
 - Use `references/coverage-matrix.md` to ensure A/AA coverage.
+
+**Allowlist of checks that do not operate the page:** "Side effects" means **input operations** that can cause submission, saving, authentication requests and the like (key presses, clicks, pointer operations, typing values, pasting, dispatching synthetic events). The checks below perform none of these, so they may run even when side effects are not confirmed acceptable.
+`--checks axe-audit,page-snapshot,reflow-check,text-spacing-check,zoom-200-check,orientation-check,autocomplete-audit,time-limit-detector,target-size-check,redundant-entry-check,pointer-gesture-check,non-text-contrast-check`
+
+- They do change the display (scrolling, resizing the window, injecting CSS): `target-size-check` scrolls; `reflow-check`, `zoom-200-check` and `orientation-check` resize the window; `text-spacing-check` injects CSS. `zoom-200-check` also applies CSS `zoom: 200%` to the page in addition to resizing the window. `time-limit-detector` replaces `setTimeout` / `setInterval` before load to record the calls (the page's timers still run normally). On pages that run handlers on scroll or resize, the user may drop these.
+- Checks not on the allowlist (`focus-indicator-check`, `keyboard-trap-check`, `keyboard-reachability-check`, `content-on-hover-check`, `auto-play-detection`, `motion-actuation-check`, `change-on-input-check`, `accessible-authentication-check`, `focus-order-check`, `pointer-cancellation-check`, `character-key-shortcut-check`) run only when side effects are confirmed acceptable. For criteria whose checks were not run, have a person verify with browser interaction or mark NT (not tested), and state the reason under limitations.
 
 **Sort the results with the knowledge base ([a11y-knowledge](../a11y-knowledge/SKILL.md)):**
 - Also run `page-snapshot` from `@a11y-skills/audit` 0.14.0 or later (include it even when narrowing `--checks`). It gives no verdict, but it is the material for 2.4.1 / 2.4.2 / 3.1.1 and for comparing multiple pages.
@@ -53,7 +62,7 @@ Confirm and get agreement on:
 - Judgment rules live in the knowledge base; the reference guides hold only the material and the judgments for criteria without a knowledge base file. The knowledge base is referenced by the relative path `../a11y-knowledge/` (it resolves when installed as a plugin; when installed by symlinking individual skill directories, link `a11y-knowledge` as well).
 
 ### 4. Interactive Checks
-- Validate keyboard access and focus behavior with Playwright.
+- Perform keyboard operation and focus checks.
 - Follow `references/interactive-checks.md`.
 - If execution is blocked, mark affected criteria as NT.
 
@@ -69,7 +78,7 @@ Confirm and get agreement on:
 
 ## Automation Scope and Limits
 
-- Playwright only provides computed accessibility tree signals (role/name/state).
+- Browser interaction only provides computed accessibility tree signals (role/name/state).
 - Automated test results alone do not guarantee audit outcomes.
 - Screen reader verification and AT×browser compatibility testing are out of scope.
 - Do not guess; use NT when evidence is missing.
@@ -93,26 +102,28 @@ Automated checks are run via the `a11y-audit` CLI included in the npm package [`
 npx playwright install chromium
 ```
 
-**Run all checks:**
+**Run all checks (only when side effects are confirmed acceptable):**
 ```bash
-npx -y @a11y-skills/audit --url "https://example.com"
+npx -y @a11y-skills/audit --url "https://example.com" --checks all --output-dir ./results
 ```
 
-**Run specific checks:**
+**Run specific checks (the example uses allowlist checks only):**
 ```bash
-npx -y @a11y-skills/audit --url "https://example.com" --checks axe-audit,focus-indicator-check,page-snapshot
+npx -y @a11y-skills/audit --url "https://example.com" --checks axe-audit,page-snapshot --output-dir ./results
 ```
+
+**Omitting `--checks` means `all`, which also runs the checks with side effects. Always pass `--checks <the value decided in the scope contract>`.** Add checks not on the allowlist, such as `focus-indicator-check`, only when side effects are confirmed acceptable.
 
 Include `page-snapshot` (0.14.0 or later) even when narrowing `--checks`. It is the material for 2.4.1 / 2.4.2 / 3.1.1 and for comparing multiple pages.
 
-**With annotated screenshots (focus-indicator):**
+**With annotated screenshots (focus-indicator; not on the allowlist, so only when side effects are acceptable):**
 ```bash
-npx -y @a11y-skills/audit --url "https://example.com" --checks focus-indicator-check --screenshot
+npx -y @a11y-skills/audit --url "https://example.com" --checks focus-indicator-check --screenshot --output-dir ./results
 ```
 
 **Custom output directory (default: `./a11y-audit-results`):**
 ```bash
-npx -y @a11y-skills/audit --url "https://example.com" --output-dir ./results
+npx -y @a11y-skills/audit --url "https://example.com" --checks axe-audit,page-snapshot --output-dir ./results
 ```
 
 **Exit codes:** `0` = no violations / `1` = violations found / `2` = runtime error
