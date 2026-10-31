@@ -133,7 +133,7 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks axe-audit,page-sn
 | `axe-audit` | Multiple | axe-core comprehensive check |
 | `reflow-check` | 1.4.10 | Horizontal scroll at 320px |
 | `text-spacing-check` | 1.4.12 | Text spacing override clipping |
-| `zoom-200-check` | 1.4.4 | 200% zoom content loss |
+| `zoom-200-check` | 1.4.4 | Clipping and other candidates at CSS zoom 200%; verify in the actual browser |
 | `orientation-check` | 1.3.4 | Orientation lock detection |
 | `autocomplete-audit` | 1.3.5 | Missing/invalid autocomplete |
 | `time-limit-detector` | 2.2.1 | Timer/meta refresh detection |

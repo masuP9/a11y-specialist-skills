@@ -22,7 +22,7 @@ This skill does not do work on its own. The implementation, review, and audit sk
 
 Do not read everything at once. Read only the success criteria being asked about.
 
-When editing references, read [Editing and checking judgment evidence](./references/evidence-format.md). 2.5.8 / 1.1.1 / 4.1.2 / 2.4.3 / 2.4.7 / 2.4.11 / 1.4.11 / 2.4.12 / 2.4.13 use the pilot format with evidence IDs. Read each item’s source type, conditions, and limits and follow IDs from judgment lines. Other criteria retain the existing format.
+When editing references, read [Editing and checking judgment evidence](./references/evidence-format.md). 2.5.8 / 1.1.1 / 4.1.2 / 2.4.3 / 2.4.7 / 2.4.11 / 1.4.11 / 2.4.12 / 2.4.13 / 1.4.4 / 1.4.10 / 1.4.12 use the pilot format with evidence IDs. Read each item’s source type, conditions, and limits and follow IDs from judgment lines. Other criteria retain the existing format.
 
 ## The four sections of each file
 

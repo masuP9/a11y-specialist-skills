@@ -133,7 +133,7 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks axe-audit,page-sn
 | `axe-audit` | 複数 | axe-coreによる包括的チェック |
 | `reflow-check` | 1.4.10 | 320pxでの水平スクロール検出 |
 | `text-spacing-check` | 1.4.12 | テキストスペーシング変更後のクリッピング |
-| `zoom-200-check` | 1.4.4 | 200%ズーム時のコンテンツ損失 |
+| `zoom-200-check` | 1.4.4 | CSS zoom 200%での切れ等の候補。実ブラウザで確認 |
 | `orientation-check` | 1.3.4 | 画面の向き制限の検出 |
 | `autocomplete-audit` | 1.3.5 | autocomplete属性の欠落・不正値 |
 | `time-limit-detector` | 2.2.1 | タイマー・meta refresh検出 |
