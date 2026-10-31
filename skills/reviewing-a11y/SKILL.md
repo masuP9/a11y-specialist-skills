@@ -2,7 +2,7 @@
 name: reviewing-a11y
 description: Review accessibility of web pages, code implementations, design mockups, and specifications, then report severity-ranked issues and fixes. Use auditing-wcag instead for formal conformance decisions across all success criteria.
 argument-hint: URL, file path, or Figma URL to review
-allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mcp__playwright__browser_navigate mcp__playwright__browser_click
+allowed-tools: Read Grep Glob WebFetch Agent Bash(npx -y @a11y-skills/audit:*) Bash(npx playwright install:*) mcp__playwright__browser_snapshot mcp__plugin_playwright_playwright__browser_snapshot mcp__playwright__browser_navigate mcp__plugin_playwright_playwright__browser_navigate mcp__playwright__browser_click mcp__plugin_playwright_playwright__browser_click mcp__playwright__browser_press_key mcp__plugin_playwright_playwright__browser_press_key mcp__playwright__browser_take_screenshot mcp__plugin_playwright_playwright__browser_take_screenshot
 ---
 
 [日本語版 (Japanese)](./SKILL.ja.md)

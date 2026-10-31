@@ -39,32 +39,12 @@
 ### 優先順位
 1. **sitemap.xml**（あれば最優先）
 2. **ユーザー提供のURL一覧**（CSV/テキスト）
-3. **Playwrightでリンク収集**（フォールバック）
+3. **ブラウザ操作でリンク収集**（フォールバック）
 
-### sitemap.xml の確認
-```bash
-curl -s https://example.com/sitemap.xml | grep -oP '(?<=<loc>)[^<]+'
-```
-
-### Playwrightでリンク収集
-主要な一覧ページを巡回してリンクを収集します。
-
-```javascript
-// 巡回するページ例
-const pagesToVisit = [
-  '/',
-  '/products/',
-  '/news/',
-  '/blog/',
-];
-
-// 各ページで内部リンクを収集
-const links = await page.evaluate(() =>
-  Array.from(document.querySelectorAll('a[href^="/"]'))
-    .map(a => a.href)
-    .filter((v, i, a) => a.indexOf(v) === i)
-);
-```
+### 要件
+- URL 一覧の取得元（sitemap.xml / ユーザー提供 / リンク収集）を記録する。
+- sitemap.xml は Web 取得で読み、`<loc>` の URL を取り出す。sitemap index なら子の sitemap も読む。
+- リンク収集は、主要な一覧ページ（トップ、製品、ニュース、ブログなど）を巡回し、内部リンクを集めて重複を除く。
 
 ---
 
@@ -82,11 +62,7 @@ const links = await page.evaluate(() =>
 | `/page/[0-9]+` | ページネーション |
 
 ### 除外の実行
-```bash
-grep -v -E '/download/[0-9]+$' urls.txt | \
-grep -v -E '/news/[0-9]+$' | \
-grep -v -E '/seminar/[0-9]+$' > filtered-urls.txt
-```
+- 除外パターンと理由を記録し、パターンに当たる URL を一覧から除く。
 
 ### ユーザー確認項目
 - 除外パターンは適切か
@@ -157,19 +133,11 @@ esac
 
 代表ページを除外したリストからランダム抽出します。
 
-### シード付きランダム抽出
-```bash
-SEED="wcag-audit-$(date +%Y-%m-%d)"
-
-# 代表ページを除外
-grep -xvF -f representative-pages.txt filtered-urls.txt > sampling-pool.txt
-
-# シード付きでランダム抽出
-shuf --random-source=<(openssl enc -aes-256-ctr -pass pass:"$SEED" -nosalt </dev/zero 2>/dev/null) \
-  -n 10 sampling-pool.txt > random-sample.txt
-```
-
-**重要**: シード値を記録して再現可能にします。
+### 要件
+- 代表ページを除いた一覧（抽出元）から抽出する。
+- 乱数を使うなら、シードと手段を記録し、同じ結果を出せるようにする。
+- 使える道具が無いときは、URL を辞書順に並べて k 件おきに取るなど、決まった手順で選び、その手順を記録する。
+- **重要**: 誰が行っても同じ結果になるよう、シード値（または手順）と抽出方法を記録します。
 
 ---
 
@@ -177,19 +145,8 @@ shuf --random-source=<(openssl enc -aes-256-ctr -pass pass:"$SEED" -nosalt </dev
 
 代表ページとランダムサンプルを統合し、重複を確認します。
 
-```bash
-# 統合
-cat representative-pages.txt random-sample.txt > combined-pages.txt
-
-# 重複チェック
-DUPLICATES=$(sort combined-pages.txt | uniq -d | wc -l)
-
-# 重複があれば追加抽出
-if [ $DUPLICATES -gt 0 ]; then
-  grep -xvF -f combined-pages.txt sampling-pool.txt > remaining-pool.txt
-  shuf -n $DUPLICATES remaining-pool.txt >> random-sample.txt
-fi
-```
+- 代表ページとランダムサンプルを統合し、重複する URL を除く。
+- 重複を除いて数が減ったら、抽出元から、同じ方法で不足分を追加で抽出する。
 
 ---
 
@@ -202,10 +159,10 @@ fi
 - [ ] フォームページは入力・確認・完了を含むか
 - [ ] 動的コンテンツを含むページがあるか
 - [ ] 除外理由は記録されているか
-- [ ] シード値は記録されているか
+- [ ] シード値と抽出方法は記録されているか
 
 ### 出力形式
-```markdown
+````markdown
 ## 対象ページリスト
 
 ### 選定パラメータ
@@ -214,6 +171,7 @@ fi
 - 除外パターン: [パターン一覧]
 - 除外後URL数: Y
 - ランダムシード: [シード値]
+- 抽出方法: [再現できる手順]
 
 ### 代表ページ（必須）
 | No. | URL | ページタイプ | 選定理由 |
@@ -222,4 +180,10 @@ fi
 ### ランダムサンプル（補完）
 | No. | URL | ページタイプ |
 |---|---|---|
+
+### 監査に渡す URL 一覧（1 行 1 URL）
 ```
+https://example.com/
+https://example.com/products/
+```
+````

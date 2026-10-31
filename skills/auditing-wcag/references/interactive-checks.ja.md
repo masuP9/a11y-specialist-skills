@@ -2,12 +2,17 @@
 
 # インタラクティブチェック
 
-ユーザー操作をPlaywrightで再現して判定する項目。キーボード/ポインター/エラー処理など、状態遷移が絡む基準を扱います。
+ユーザー操作をブラウザ操作で再現して判定する項目。キーボード/ポインター/エラー処理など、状態遷移が絡む基準を扱います。
 
 ## 共通手順
 - 主要フローをキーボードで通過（Tab/Shift+Tab/Enter/Space/矢印）
 - ポインター操作を模擬（click/drag/hover）
 - DOM差分とa11y treeで状態変化を記録
+
+## CLI チェックの読み方
+- 各節は「実行コマンド」「副作用」「人が確かめること」だけを書く。**副作用があるチェックは、スコープ契約で副作用を許せると確かめられた場合だけ流す**（許可リストは [SKILL](../SKILL.ja.md) の「自動チェック」）。流さなかった基準は、ブラウザ操作で人が確かめるか NT にする。
+- 結果の読み方（確定すること・要確認として残ること）は [checks-audit](../../a11y-knowledge/references/checks-audit.ja.md)。測り方・結果 JSON の項目・既知の制限は [パッケージの README](../../../packages/a11y-audit/README.ja.md)。
+- 実行コマンドの共通部分: `npx -y @a11y-skills/audit --url "<url>" --output-dir <dir> --checks <name>`
 
 ## キーボード
 | 基準 | 操作 | 証跡 | Fail条件 |
@@ -16,32 +21,20 @@
 | 2.1.2 | すべてのフォーカスを抜けられる | 操作ログ | フォーカストラップがある |
 | 2.1.4 | 文字キー単独ショートカットの無効化/再割当/フォーカス限定 | 操作ログ + `character-key-shortcut-check` | ショートカットが誤発火し回避不可 |
 
-### `keyboard-reachability-check` CLIチェック
+### `keyboard-reachability-check`（2.1.1）
+- 実行: `--checks keyboard-reachability-check`
+- 副作用: Tab・矢印キー・ArrowDown（ポップアップを開く）を実際に押す。
+- 人が確かめること: 届かない要素に別の経路（別の要素・独自ショートカット）があるか。届いても Enter / Space で動くか。2 段目以降のサブメニュー、Enter / Space で開くポップアップ、読み込み後に表示される要素、grid / treegrid、Shadow DOM / iframe。`opened-not-entered` のポップアップ。
 
-Tab キー、複合部品（tablist・toolbar・menu・listbox・ラジオ群など）の中での矢印キー、`aria-activedescendant` のいずれでも届かなかった操作可能要素を、理由と確信度（high / medium / low）付きで報告します。
+### `keyboard-trap-check`（2.1.2）
+- 実行: `--checks keyboard-trap-check`
+- 副作用: Tab を要素数の 2 倍 + 10 回（上限 600 回）押して一巡し、トラップの疑いがあれば Escape・Shift+Tab を押す。さらに、トラップ内の要素を含む親で、名前が「close / 閉じる / dismiss」に当たるボタンを DOM の `click()` で押す（実際のクリック。閉じる以外の動作を兼ねるボタンだと実行される）。
+- 人が確かめること: `role="dialog"` + `aria-modal="true"` の中で Escape が効く場合は報告されない。Escape 以外の抜け方（`needs-review`）が、案内された方法で本当に抜けられるか。`details.tabWalkCapped` で打ち切られたときの残りの範囲。iframe の中・Shadow DOM。
 
-```bash
-npx -y @a11y-skills/audit --url "https://example.com" --checks keyboard-reachability-check
-```
-
-- 候補は常に incomplete です。同じ機能を別の要素や独自ショートカットで操作できれば適合なので、人手で確認します。
-- `keyboard-reachability-result.json` の `details.elements` に、全要素の到達方法（`tab` / `arrow` / `activedescendant` / `unreachable` / `not-evaluated`）が入ります。
-- コンボボックス（`role="combobox"`）と `aria-haspopup`（`true` / `menu` / `listbox` / `tree`）の要素は ArrowDown で 1 段だけ開き、中の option / menuitem / treeitem も確かめます（`details.popups`）。項目が 10 件を超えるポップアップは、最初の候補に入れる・ArrowDown で次へ移れる・ArrowUp で戻れる、の 3 点だけを確かめます（`sampled`）。キーボードで中に入れなかったポップアップは `opened-not-entered` として記録だけ残すので、人手で確認します。
-- 機能の完全性、2 段目以降のサブメニュー、Enter / Space で開くポップアップ、その他の読み込み後に表示される要素、grid / treegrid、Shadow DOM / iframe、独自ショートカットは手動で確認します。
-
-### `character-key-shortcut-check` CLIチェック
-
-`<body>` にフォーカスを置き、印字できる ASCII の 94 文字（空白を除く）を 1 文字ずつ押して、ページの移動・新しいウィンドウ・ダイアログ・フォーカスの移動・DOM の変化・スクロール・`preventDefault()` が起きたキーを報告します。
-
-```bash
-npx -y @a11y-skills/audit --url "https://example.com" --checks character-key-shortcut-check
-```
-
-- 反応したキーは常に incomplete です。止める・変える設定があるか、フォーカスがある部品の中だけで効くか（2.1.4 の例外）は人手で確認します。
-- `character-key-shortcut-result.json` の `details.listeners` に、キー入力が届く `window` / `document` / `<html>` / `<body>` の listener が入ります（Chromium のみ）。1 つも無ければキーを送らず inapplicable です。
-- **実際にキーを押す**ので、削除・送信をするショートカットのあるページでは副作用があります。関数 API の `keys` で押すキーを絞れます。
-- フォーカスが `<body>` にあるときだけ押すため、アプリ全体を包む要素の keydown や、部品にフォーカスがあるときだけ効くショートカットは見ません。手動で確認します。
-- 開き直すのは目に見える反応があったときだけなので、画面に出ない内部の状態だけを変えるキーの後は、その状態のまま次のキーを押します。後のキーの反応を見落としたり、2 回押すショートカット（`g` → `i`）の 2 つ目が単独のものとして余分に報告されたりします。疑わしいときは `keys` を 1 文字にして個別に確かめます（キーごとの開き直しは、1 回 0.6 秒以上かかり、94 キーで時間の上限を超えるため行いません）。
+### `character-key-shortcut-check`（2.1.4）
+- 実行: `--checks character-key-shortcut-check`
+- 副作用: `<body>` にフォーカスを置いて印字できる 94 文字を実際に押す。削除・送信をするショートカットのあるページでは実行される。
+- 人が確かめること: 反応したキーに、止める・変える設定があるか。フォーカスがある部品の中だけで効くか（例外）。アプリ全体を包む要素の keydown と、部品にフォーカスがあるときだけ効くショートカット（見ない）。疑わしいキーは、関数 API の `keys` を 1 文字にして個別に確かめる（CLI には押すキーを絞る設定が無い）。
 
 ## フォーカス
 | 基準 | 操作 | 証跡 | Fail条件 |
@@ -51,178 +44,59 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks character-key-sho
 | 2.4.11 | フォーカスが他のコンテンツに完全には隠されない | スクショ/計測 | 固定ヘッダー/フッター/モーダルでフォーカスが全部隠れる |
 | 2.4.12 (AAA) | フォーカスが他のコンテンツに少しも隠されない | スクショ/計測 | 固定ヘッダー/フッター/モーダルでフォーカスが一部でも隠れる |
 
-### `focus-indicator-check` CLIチェック
+### `focus-indicator-check`（2.4.7 / 2.4.11 / 2.4.12 / 3.2.1）
+- 実行: `--checks focus-indicator-check`（`--screenshot` で注釈付きの全ページスクリーンショット）
+- 副作用: Tab で全要素にフォーカスを移す。フォーカスで遷移するページでは遷移が起きる（検出して元のページに戻り、中断として記録）。
+- 人が確かめること: 2.4.7 の可視性（スタイルの差分だけでは不可視を確定できない。スクリーンショットを見る）。query / hash だけの遷移。中断・上限で飛ばした要素。fixed / sticky と iframe の中。
 
-`focus-indicator-check` チェックを使用して、フォーカスインジケーターの有無、フォーカス遮蔽、フォーカス時のコンテキスト変更を自動検出できます。
+### `change-on-input-check`（3.2.2）
+- 実行: `--checks change-on-input-check`
+- 副作用: 欄の値を実際に変えて `change` を起こす（テキスト系は固定の値を入れて blur）。自動保存・自動送信のあるページでは通信が起きる。値はイベントなしで戻すが、ページの内部状態は戻らない。
+- 人が確かめること: 候補ごとに、変える前の説明（「選ぶとすぐ移動します」など）があるか。`details.untested` の欄。iframe・shadow root・独自部品。
 
-**WCAG カバレッジ:**
-- **2.4.7 Focus Visible** - フォーカスインジケーターがない要素を検出
-- **2.4.11 Focus Not Obscured (Minimum)** - fixed/sticky要素にフォーカスが全部隠された要素を検出（`a11y-skills/focus-not-obscured`）
-- **2.4.12 Focus Not Obscured (Enhanced, AAA)** - 一部でも隠された要素をすべて検出（`a11y-skills/focus-not-obscured-enhanced`。全部隠れた要素も含む）
-- **3.2.1 On Focus** - フォーカス時のナビゲーション/コンテキスト変更を検出
-
-**機能:**
-- ページ内のフォーカス可能な要素を自動検出
-- Tab キーで各要素にフォーカスを移動し、スタイル変化をキャプチャ
-- フォーカス時のスタイル変化を検出（outline, box-shadow, background-color, border, transform 等）
-- フォーカススタイルがない要素を赤枠と警告ラベルでマーク
-- **fixed/sticky要素によるフォーカス遮蔽を検出（2.4.11 / 2.4.12）** - `elementFromPoint()` とz-indexフォールバックを使用
-- **フォーカスによるナビゲーションを検出（3.2.1違反）**
-- ナビゲーション発生時は元のページに戻ってスクリーンショットを撮影
-- 全ページスクリーンショットで問題箇所を視覚化
-
-**使用方法:**
-```bash
-npx -y @a11y-skills/audit --url "https://example.com" --checks focus-indicator-check
-```
-
-**出力:**
-- `focus-indicator-result.json` - 完全な結果:
-  - `issues` - フォーカススタイルがない要素（2.4.7）
-  - `focusObscuredIssues` - fixed/sticky要素によるフォーカス遮蔽（一部でも隠れた要素すべて = 2.4.12。`fullyObscured: true` のものが 2.4.11）
-  - `onFocusViolations` - フォーカス時のコンテキスト変更（3.2.1）
-  - `interrupted` - ナビゲーションによりテストが中断されたかどうか
-  - `allElements` - テストした全要素とフォーカススタイルの差分。各要素に Tab の押下回数 `tabStep`（Tab 以外でフォーカスした場合は null）とフォーカス時のページ座標 `rect` を持つ（`id` は focusin を受けた順で、Tab の順とは限らない）
-- `focus-indicators.png` - 問題のある要素に警告ラベルを付けた全ページスクリーンショット（`--screenshot` フラグで有効化）
-
-**3.2.1 検出:**
-要素のフォーカスイベントがナビゲーションを引き起こした場合:
-1. 違反が記録される（要素セレクター、遷移元/先URL）
-2. テストは元のページに戻る
-3. 元のページでスクリーンショットを撮影
-4. テストは中断としてマークされる
-
-### `change-on-input-check` CLIチェック
-
-`change-on-input-check` で、欄の値を 1 つずつ変えて、変えただけで文脈が変わるか（3.2.2）を記録します。
-
-- 変える欄は主フレームの `select` / radio（グループごと）/ checkbox / テキスト系の `input` と `textarea`。disabled・readonly・見えない欄は触らない。テキスト系は固定の値を入れて blur し、`change` を起こす。
-- 記録するのは、主フレームの移動、新しいウィンドウ、フォーカスの移動、ダイアログ。移動したら新しい context でやり直し、試した欄は飛ばして残りを続ける。
-- 見つかったものは `incomplete` の候補。前もって「選ぶとすぐ移動します」等の説明があれば適合なので、説明の有無は候補ごとに人が確かめる。
-- 実ページで値を変え、`change` を起こす。値はイベントなしで戻すが、ページの内部状態は戻らない。自動保存・送信のあるページでは通信が起きうる。
-- 実行: `npx -y @a11y-skills/audit --url "<url>" --checks change-on-input-check`
-
-### `focus-order-check` CLIチェック
-
-Tab を実際に押した順に要素の位置を並べ、見た目の並びから外れた移動（上へ戻る・同じ行で逆向き・遠くへ跳んで戻る）を数値付きで報告します。あわせて、モーダルダイアログを開いたときにフォーカスが中へ移るか、閉じたときに開いたボタンへ戻るかも確かめます。
-
-```bash
-npx -y @a11y-skills/audit --url "https://example.com" --checks focus-order-check
-```
-
-- 候補は常に incomplete です。見た目の順から外れても、意味と操作が保たれていれば 2.4.3 を満たすので、人手で確認します。
-- ダイアログの確認のため、ページを読み直し、開くボタン（`aria-haspopup="dialog"` など）で Enter を、閉じるために Escape（または閉じるボタン）を押します。ボタンが送信や遷移を兼ねるとリクエストが飛ぶので、CLI は常に最大 10 件の開くボタンを試します。押したくないときは、関数 API の `runFocusOrderCheck` を `maxDialogTriggers: 0` で呼ぶ（開くボタンは集めますが押しません）か、副作用のある本番ページではこのチェックを実行しないでください。
-- `focus-order-result.json` の `details.stops` に Tab の順、`details.transitions` に隣り合う要素の比較、`details.dialogs` にダイアログごとの観察が入ります。
-- 手動で確認するもの: fixed / sticky の要素と iframe の中の順、カード型の格子・縦書き、属性の無いボタンで開くダイアログ、モーダルの中の Tab の巡回。
+### `focus-order-check`（2.4.3）
+- 実行: `--checks focus-order-check`
+- 副作用: Tab を押して一巡し、ダイアログを開くボタンで Enter、閉じるために Escape を実際に押す。ボタンが送信や遷移を兼ねるとリクエストが飛ぶ（CLI は常に最大 10 件試す）。押したくないときは関数 API を `maxDialogTriggers: 0` で呼ぶか、副作用のある本番ページでは流さない。
+- 人が確かめること: 見た目の順から外れても意味と操作が保たれているか。fixed / sticky と iframe の中の順、カード型の格子・縦書き、属性の無いボタンで開くダイアログ、モーダルの中の Tab の巡回。
 
 ## ポインター
 | 基準 | 操作 | 証跡 | Fail条件 |
 |---|---|---|---|
-| 2.5.1 | ピンチ・スワイプなど複数の指や軌跡の操作に、1 点の操作の代わりがあるか | 操作ログ | 複数の指・軌跡でしか操作できない |
+| 2.5.1 | ピンチ・スワイプなど複数の指や軌跡の操作に、1 点の操作の代わりがあるか | 操作ログ + `pointer-gesture-check` | 複数の指・軌跡でしか操作できない |
 | 2.5.2 | 押し下げだけで機能が実行されない（離したときに実行する・途中でやめられる・取り消せる） | 操作ログ + `pointer-cancellation-check` | 押し下げだけで実行され、中止も取り消しもできない |
-| 2.5.4 | 振る・傾ける操作に画面の部品の代わりがあり、動きでの起動を止められるか | 操作ログ | 動きでしか操作できない、または止められない |
-| 2.5.7 | ドラッグ以外の操作手段を提供 | 操作ログ | ドラッグ必須で代替なし |
-| 2.5.8 | ターゲットサイズを測定 | スクショ/計測 | 最低サイズを満たさない |
+| 2.5.4 | 振る・傾ける操作に画面の部品の代わりがあり、動きでの起動を止められるか | 操作ログ + `motion-actuation-check` | 動きでしか操作できない、または止められない |
+| 2.5.7 | ドラッグ以外の操作手段を提供 | 操作ログ + `pointer-gesture-check` | ドラッグ必須で代替なし |
+| 2.5.8 | ターゲットサイズを測定 | スクショ/計測 + `target-size-check` | 最低サイズを満たさない |
 
-### `motion-actuation-check` CLIチェック
+### `motion-actuation-check`（2.5.4）
+- 実行: `--checks motion-actuation-check`
+- 副作用: `window` に listener がある型には合成の動きイベントを送る（DOM が変わるかを証跡にする）。ページの状態が変わりうる。
+- 人が確かめること: 候補ごとに、画面の部品による代替と、動きでの起動を止める手段があるか（必須・支援技術対応の例外を含む）。合成イベントは `isTrusted: false` なので「変化なし」でも候補は残る。
 
-`motion-actuation-check` で、端末の動き・傾きに反応する処理（`window` / `document` の `devicemotion` / `deviceorientation` / `deviceorientationabsolute` の listener）を CDP で取り出し、`incomplete` の候補として報告します（Chromium のみ。それ以外では取り出せないため `incomplete`）。
+### `pointer-gesture-check`（2.5.1 / 2.5.7）
+- 実行: `--checks pointer-gesture-check`
+- 副作用: なし（イベントを送らず、ページの状態を変えない）。
+- 人が確かめること: 候補ごとに、1 点の操作（ボタンやクリック）で同じことができるか、必須の操作の例外に当たるか。実際にドラッグ・スワイプして動くか。ページ単位の「手で確かめて」node（委譲先・`window` / `document` の listener）。
 
-- 自動で見るのは「動きに反応する処理があるか」まで。画面の部品による代替と、動きでの起動を止める手段があるか（必須・支援技術対応の例外を含む）は、候補ごとに人が確かめる。
-- `window` に listener がある型には合成イベントを送り、DOM が変わるか（`domMutations`）を証跡にする。合成イベントは `isTrusted: false` なので、信頼されたイベントしか受けない処理や canvas に描くだけの処理は「変化なし」になる。それでも listener がある限り候補には出る。
-- `document` にだけ付いた listener は、ブラウザが `window` にしか送らないので動かない可能性がある（送信しない）。
-- 実行: `npx -y @a11y-skills/audit --url "<url>" --checks motion-actuation-check`
+### `pointer-cancellation-check`（2.5.2）
+- 実行: `--checks pointer-cancellation-check`
+- 副作用: 操作できる要素ごとに押し下げのイベント（`pointerdown` / `mousedown`）を合成して送る。押し下げで送信や保存をするページでは実行される。
+- 人が確かめること: 候補ごとに、離したときに実行されるか、途中でやめられるか、取り消せるか、押し下げでの実行が必須の例外に当たるか。ページ単位の「手で確かめて」node。
 
-### `pointer-gesture-check` CLIチェック
-
-`pointer-gesture-check` で、ドラッグ・スワイプ・複数の指の操作で動きそうな部品を `incomplete` の候補として報告します（2.5.1 は `a11y-skills/pointer-gestures`、2.5.7 は `a11y-skills/dragging-movements`）。
-
-- 拾うもの: `draggable="true"`、`dragstart` / `drop` の listener、同じ要素に「押す」と「動かす」の両方の listener があるもの、複数の指を見る listener（`touches.length` など）、`role="slider"` の自作スライダー、並べ替え・カルーセル・地図の部品のしるし。listener は CDP で取り出す（Chromium のみ。それ以外では属性と部品のしるしだけで候補を出し、手で確かめるよう促す）。
-- 候補にしないもの: 動かす listener だけの要素（hover 効果など）、20 種類以上の listener を持つ委譲先の要素（React の根など）。後者はルールごとに 1 つのページ単位の「手で確かめて」node になる。委譲で作られたドラッグ・ジェスチャは listener からは拾えない。
-- 候補はすべて `incomplete`。1 点の操作（ボタンやクリック）で同じことができるか、必須の操作という例外に当たるかは、候補ごとに人が確かめる。実際にドラッグ・スワイプして動くかは確かめない。
-- 実行: `npx -y @a11y-skills/audit --url "<url>" --checks pointer-gesture-check`
-
-### `pointer-cancellation-check` CLIチェック
-
-`pointer-cancellation-check` で、押し下げだけで動く部品を `incomplete` の候補として報告します（`a11y-skills/pointer-cancellation`）。
-
-- 操作できる要素ごとに押し下げのイベント（`pointerdown` と `mousedown`）だけを合成して送り、離さない。ページの移動・新しいウィンドウ・ダイアログ・フォーカスの移動（押した要素自身へのものを除く）・DOM の変化（`style` 属性を除く）が起きたら候補。確認のあとは `pointercancel` を送る。ページが何もしなくても DOM を変えているときは、DOM の変化を根拠にしない。
-- 押す listener（`pointerdown` / `mousedown` / `touchstart`）だけを持ち、離す・クリックの listener を要素自身に持たず、押しても変化が見えなかった要素も、見えない処理をしている根拠として候補に出す（CDP は Chromium のみ。それ以外では listener の根拠が付かず、手で確かめる node が付く）。委譲先の要素（20 種類以上の listener）や `window` / `document` の押す listener があるときも、要素に帰属できず、役割やインラインの属性を持たない要素は押していないので、ページ単位の「手で確かめて」node が付く。
-- 候補はすべて `incomplete`。離したときに実行されるか、途中でやめられるか、取り消せるか、押し下げでの実行が必須という例外に当たるかは、候補ごとに人が確かめる。合成イベントなので `isTrusted` を確かめる処理は反応しない。送信や保存を押し下げで行うページでは実際に実行される。
-- 実行: `npx -y @a11y-skills/audit --url "<url>" --checks pointer-cancellation-check`
-
-### `target-size-check` CLIチェック
-
-`target-size-check` チェックを使用して、WCAG 2.5.8（AA: 24px）および 2.5.5（AAA: 44px）に基づくタップ/クリックターゲットのサイズを自動測定できます。
-
-**機能:**
-- すべてのインタラクティブ要素を検出（リンク、ボタン、入力、ARIAウィジェット）
-- `getBoundingClientRect()` でバウンディングボックスサイズを測定
-- Playwright の `ariaSnapshot()` API でアクセシブル名を取得
-- WCAG 2.5.8 例外を判定: inline, redundant, ua-control, spacing
-- spacing 例外は WCAG の定義どおり幾何的に判定: 24px 未満の各ターゲットのバウンディングボックス中心に直径 24px の円を置き、他のターゲット（および他の 24px 未満ターゲットの円）と交差しなければ成立
-- `label`（`for` 指定と、コントロールを包む暗黙のラベルの両方）とその対象コントロール、および同じコントロールを指す複数のラベルは同一ターゲットとして扱う。入れ子になったインタラクティブ要素は別のターゲットなので、大きなクリック領域の中にある小さなコントロールは spacing 例外にならない
-- ビューポートに固定された `position: fixed` のターゲットは、固定ターゲットどうしではそのまま比較する。通常フローのターゲットとは、両者が最も離れるスクロール位置で比較する（固定ターゲットが上にあれば位置 0、下にあればページ最下部）。固定ヘッダーの直下や、スクロールしきってもページトップボタンに近いリンクは不適合になり、スクロールの途中で固定要素の下を通るだけの場合は不適合にしない（呼び出し時のスクロール位置に依存しない）。transform などで包含ブロックを持つ祖先の下にある fixed 要素と `position: sticky` はページと一緒にスクロールするため通常フローとして扱う
-- 祖先の `overflow: hidden` / `clip`（軸ごと）、`contain: paint`、`content-visibility: auto`、インラインの `<svg>` で切り取られた部分はターゲットの範囲に数えず、見えている部分だけで大きさと間隔を測る（折りたたんだコードブロックの、見えない下の部分が近くのリンクに重なったと判定しない）。`position: absolute` / `fixed` で祖先の外に出る要素は、その祖先では切り取らない。`overflow: auto` / `scroll` のスクロール領域は、スクロールすれば中身が見えるので切り取らない（そのため、スクロール領域の外にはみ出した中身の位置は今も範囲に数える）。`overflow-clip-margin` の分は見える範囲に含める。`<html>` の overflow と、ページのスクロールに引き継がれるときの `<body>` の overflow は切り取りとみなさない（どちらもペイント包含は切り取りとみなす）。`clip-path` と `clip` は見ない。回転・傾け・反転した祖先は、外側を囲む四角形で近似する
-- 他の要素に覆われたターゲットはスクロールしながら最前面判定して除外し、全体が切り取られて見えないターゲットとあわせて件数を `details.occludedTargets` に記録
-- AA（24px）と AAA（44px）の両レベルで問題を報告
-- 色分けハイライトと 24px 円付きの全ページスクリーンショットを生成
-
-**使用方法:**
-```bash
-npx -y @a11y-skills/audit --url "https://example.com" --checks target-size-check
-```
-
-**出力:**
-- `target-size-result.json` - すべてのターゲットと問題を含む完全な結果
-- `target-size-screenshot.png` - ハイライト付き全ページスクリーンショット:
-  - **緑 (PASS)**: 44px以上（AA合格、AAA合格）
-  - **オレンジ (AA Pass)**: 24-43px（AA合格、AAA不合格）
-  - **赤 (AA Fail)**: 24px未満（AA不合格、AAA不合格）
-  - **青 (Spacing OK)**: 24px未満だが spacing 例外が幾何的に成立（2.5.8 適合）
-  - **青 (Exception)**: 例外の可能性あり（手動レビュー必要）
-  - **円**: 24px未満の各ターゲットの 24px 円。緑＝他のターゲットと交差なし、赤＝交差あり
-
-**検出される例外:**
-| 例外 | 検出方法 |
-|---|---|
-| inline | 段落/リスト内のリンクで周囲テキストが10文字以上 |
-| redundant | 同じhrefを持つ別のターゲットがサイズ要件を満たしている |
-| ua-control | ネイティブフォームコントロール（checkbox, radio, select）でデフォルト外観 |
-| spacing | ターゲット中心の 24px 円が他のターゲットや他の 24px 未満ターゲットの円と交差しない（`exceptionAssessment: "verified"`、不成立時は `spacing.intersections` に相手のセレクターと距離を記録） |
-| essential | 自動検出不可（手動レビュー対象としてマーク） |
-
-spacing 例外の幾何判定は他のヒューリスティック例外より優先されます。成立したターゲットは 2.5.8 の手動確認対象から外れ、`target-size-minimum` は passes になります（件数は `summary.verifiedCount`）。ただし 2.5.5 には spacing 例外がないため、`target-size-enhanced` の incomplete として報告されます。
-
-**制限事項:**
-- essential 例外は手動判断が必要
-- クリック領域を拡張するCSS疑似要素は完全に検出できない
-- CSS transform の効果は測定に含まれる（getBoundingClientRect は変換後のサイズを返す）
-- スクリプトでのみクリックハンドラを付けた要素（`onclick` 属性・role・tabindex なし）はターゲットとして検出されないため、spacing 例外の判定相手からも漏れる
-- Shadow DOM と iframe の中は検査しない
-
-**手動確認が必要な項目:**
-- essential 例外の確認（例: 地図のピン、ゲームコントロール）
-- spacing 例外が成立したターゲットの近くに、検出されない種類のターゲットがないか
-- インタラクション後にのみ表示されるターゲット（ドロップダウン、モーダル）
+### `target-size-check`（2.5.8 / 2.5.5）
+- 実行: `--checks target-size-check`（ハイライト付きの全ページスクリーンショットも出る）
+- 副作用: なし（表示の変更のみ。ページをスクロールして最前面を判定し、元の位置に戻す）。
+- 人が確かめること: `exception: "inline"` の候補が本当に文中か。essential 例外（地図のピン、ゲームコントロール）。spacing 例外が成立したターゲットの近くに、検出されない種類のターゲット（スクリプトだけでクリックを付けた要素）がないか。インタラクション後にだけ表示されるターゲット（ドロップダウン、モーダル）。Shadow DOM / iframe の中。
 
 ## ホバー/フォーカス表示
 | 基準 | 操作 | 証跡 | Fail条件 |
 |---|---|---|---|
 | 1.4.13 | ホバー/フォーカスで出るコンテンツを閉じ/保持可能 | 操作ログ/動画 + `content-on-hover-check` | 逃げ場なし、意図せず消える |
 
-### `content-on-hover-check` CLIチェック
-
-CSS の `:hover` / `:focus` 規則（後ろに結合子があるもの）と、要素自身に付いた mouseenter / mouseover / focus などの listener から、中身を出しそうな要素を探してホバー・フォーカスし、新しく見えた要素が (1) 数秒たっても見えているか (2) Escape で消えるか（フォーカスを動かさずに）(3) ホバーのとき、ポインタを載せても消えないか、を測ります。
-
-```bash
-npx -y @a11y-skills/audit --url "https://example.com" --checks content-on-hover-check
-```
-
-- 外れた条件は常に incomplete です。入力エラーを伝える中身と、ほかの中身を隠さない・置き換えない中身は消せなくてよいので、例外に当たるかは人手で確認します。Escape 以外の消し方があるか、`persistMs`（既定 3 秒）より長く出ていれば足りる中身かも確認します。
-- 候補は CSS と listener の 2 つだけから集めます。`title` / `aria-describedby` / `aria-haspopup` だけの要素、別オリジンの CSS から出る中身、iframe の中は見落とします。shadow root の中の listener は試さず、数えて 3 ルールに page node で知らせます（`details.shadowTriggersSkipped`）。listener の取り出しは Chromium のみです。
-- `document` やフレームワークのルート要素にまとめて付いた listener は、どの要素に反応するか分からないので試さず、`content-on-hover-result.json` の `details.delegationRoots` に記録して 3 ルールに page node を出します。このページでは、ボタンやリンクに実際にホバー・フォーカスして確かめます。
-- **実際にフォーカスする**ので、フォーカスで遷移するページでは遷移が起きます（`details.untested` に `navigated`）。クリックはしません。
+### `content-on-hover-check`（1.4.13）
+- 実行: `--checks content-on-hover-check`
+- 副作用: 候補の要素に実際にホバー・フォーカスし、Escape を押す。フォーカスで遷移するページでは遷移が起きる（`details.untested` に `navigated`）。クリックはしない。
+- 人が確かめること: 外れた条件が例外（入力エラーを伝える中身、ほかの中身を隠さない・置き換えない中身）に当たるか。Escape 以外の消し方があるか。`persistMs`（既定 3 秒）より長く出ていれば足りる中身か。`details.delegationRoots` のページ（ボタンやリンクに実際にホバー・フォーカスする）。`title` / `aria-describedby` / `aria-haspopup` だけの要素、別オリジンの CSS から出る中身、iframe の中、shadow root の中。
 
 ## エラー処理
 | 基準 | 操作 | 証跡 | Fail条件 |
@@ -233,20 +107,16 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks content-on-hover-
 
 ### 3.3.1 エラーの特定チェック
 
-**概要:** 入力エラーが自動的に検出された場合、エラーとなっている項目がテキストで識別され、そのエラーがユーザーに説明される必要がある。
+入力エラーが自動的に検出された場合、エラーとなっている項目がテキストで識別され、そのエラーがユーザーに説明される必要がある。
 
-> **Note:** 3.3.1をテストする際、以下も同時に確認:
-> - **3.3.2 ラベルまたは説明** — エラーを発生させる前に、フォーム入力にアクセシブル名と説明があるかチェック。3.3.2の詳細は [automated-checks.ja.md](./automated-checks.ja.md) を参照。
-> - **3.3.3 エラー修正の提案** — エラーメッセージに修正方法の提案があるかチェック（例:「name@example.com のような有効なメールアドレスを入力してください」）。
+> **Note:** 3.3.1 をテストする際、以下も同時に確認する。
+> - **3.3.2 ラベルまたは説明** — エラーを発生させる前に、フォーム入力にアクセシブル名と説明があるか。詳細は [automated-checks.ja.md](./automated-checks.ja.md)。
+> - **3.3.3 エラー修正の提案** — エラーメッセージに修正方法の提案があるか（例:「name@example.com のような有効なメールアドレスを入力してください」）。
 
 **テスト手順:**
 
-1. **ページ内のフォームを検出:**
-   - `<form>` 要素を検出
-   - 入力フィールド（`input`, `select`, `textarea`）を検出
-   - 必須フィールドを確認（`required` 属性、`aria-required="true"`、または視覚的インジケーター）
-
-2. **意図的にエラーを発生させる:**
+1. フォーム（`<form>`、`input` / `select` / `textarea`、必須フィールド）を検出する。
+2. 意図的にエラーを発生させる（**フォームを送信するので、副作用を許せると確かめられた環境だけ**）。
 
    | エラータイプ | 方法 |
    |------------|--------|
@@ -257,7 +127,7 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks content-on-hover-
    | 範囲外の値 | min/max 制限外の値を入力 |
    | パターン不一致 | `pattern` 属性に合わない値を入力 |
 
-3. **エラーの識別を確認:**
+3. エラーの識別を確認する。
 
    | チェック項目 | Pass条件 | Fail条件 |
    |-------|---------------|----------------|
@@ -265,118 +135,27 @@ npx -y @a11y-skills/audit --url "https://example.com" --checks content-on-hover-
    | エラー箇所の明示 | どのフィールドがエラーかテキストから明確 | 色や位置のみに依存 |
    | プログラム的関連付け | `aria-describedby`, `aria-errormessage`, `aria-invalid` がある | エラーとフィールド間のプログラム的なリンクがない |
 
-4. **a11y tree での確認:**
-   - エラーフィールドに `aria-invalid="true"` があるか確認
-   - `aria-describedby` または `aria-errormessage` がエラーテキストを指しているか確認
-   - エラーメッセージがa11y treeに公開されているか確認（ATから隠されていない）
+4. a11y tree で、エラーフィールドの `aria-invalid="true"`、`aria-describedby` / `aria-errormessage` の指す先（ariaSnapshot には出ないので属性で読む）、エラーメッセージが ATから隠されていないことを確認する。
 
-**Playwright テストフローの例:**
-```typescript
-// 1. フォームと必須入力を検出
-const form = page.locator('form').first();
-const requiredInput = form.locator('input[required], input[aria-required="true"]').first();
-
-// 2. 入力をクリアして送信しエラーを発生
-await requiredInput.fill('');
-await form.locator('button[type="submit"], input[type="submit"]').click();
-
-// 3. エラー表示を確認
-// エラーメッセージのテキストがツリーに出ているか
-const a11ySnapshot = await form.ariaSnapshot();
-// aria-invalid と、aria-describedby / aria-errormessage が指す先（ariaSnapshot には出ないので属性で読む）
-const invalid = await requiredInput.getAttribute('aria-invalid');
-const describedBy = await requiredInput.getAttribute('aria-describedby');
-const errorMessage = await requiredInput.getAttribute('aria-errormessage');
-```
-
-**Passの条件:**
-- エラーメッセージがテキストで表示される
-- エラーメッセージがどのフィールドにエラーがあるか識別している
-- エラーがフィールドとプログラム的に関連付けられている（推奨）
-
-**Failの条件:**
-- エラーメッセージが表示されない
-- エラーが色のみで示される（テキスト説明なしの赤い枠/文字）
-- エラーメッセージがどのフィールドのエラーか示していない
-- エラーメッセージがATで認識できない（例: 視覚的アイコンのみ）
+**Fail の条件:** エラーメッセージが表示されない／色のみで示される／どのフィールドのエラーか示していない／ATで認識できない（視覚的アイコンのみなど）。
 
 ## 認証
 | 基準 | 操作 | 証跡 | Fail条件 |
 |---|---|---|---|
-| 3.3.8 | 認証で認知負荷のみを要求しない | 画面キャプチャ | 認知テストのみで代替なし |
+| 3.3.8 | 認証で認知負荷のみを要求しない | 画面キャプチャ + `accessible-authentication-check` | 認知テストのみで代替なし |
 
-### `accessible-authentication-check` CLIチェック
-
-`accessible-authentication-check` で、メイン文書のパスワード・確認コード・ユーザー名の欄と CAPTCHA らしき要素を調べ、次の 3 点を `incomplete` の候補として報告します。
-
-- **貼り付けの禁止**（`a11y-skills/auth-paste-blocked`）: パスワード・確認コード欄に短いテキストをキーボードで貼り付け、入るかを実測する。入らなければ候補。実測できなかった欄（見えない・操作できない・遷移・時間切れ）も要確認として出る。
-- **autocomplete の off**（`a11y-skills/auth-autocomplete`）: 認証の欄が `autocomplete="off"`、または欄の種類に合わない値のとき候補。属性が無い欄と `on` だけの欄は報告しない（パスワード管理ソフトは欄の種類から推定して動くことが多い。名前が 1.3.5 のパターンに当たる欄なら `autocomplete-audit` の `autocomplete-missing` が報告しうるが、当たらない欄はどちらも報告しない）。
-- **CAPTCHA らしき要素**（`a11y-skills/auth-captcha`）: 名前（`captcha`・`g-recaptcha`・`cf-turnstile` など）で探す。見えない（スコア型の）ものも候補に出る。
-
-貼り付けの実測には副作用がある: 呼び出し側の context にクリップボードの権限を付け、クリップボードを上書きし、短時間だけ補助ページを開く。欄の値は元に戻すが、期限切れ（timeout）の欄は戻さない。`input` などのイベントでページが変えた状態は戻らない。同じ page を使い回すときは `paste: false`（関数 API）にする。CLI はチェックごとに新しい context を使うので影響しない。
-
-- 自動で見るのは上の 3 点まで。パスキー・SSO・メールのリンクなど認知機能テストを使わない別の手段があるか、自動入力などの支援の仕組みが使えるか、CAPTCHA が物の認識・本人が用意した内容の識別にとどまるかは、候補ごとに人が確かめる。
-- 見落とし: iframe と shadow root の中の欄、ログインボタンを押してから出るフォーム（開いた状態の page を渡す必要がある）、`captcha` を名前に含まない独自の CAPTCHA。
-- 実行: `npx -y @a11y-skills/audit --url "<url>" --checks accessible-authentication-check`
+### `accessible-authentication-check`（3.3.8）
+- 実行: `--checks accessible-authentication-check`
+- 副作用: パスワード・確認コード欄に短いテキストをキーボードで貼り付ける。クリップボードの権限を付けて上書きし、補助ページを短時間開く。欄の値は元に戻すが、期限切れ（timeout）の欄と、`input` などでページが変えた状態は戻らない。関数 API では `paste: false` で止められる。
+- 人が確かめること: パスキー・SSO・メールのリンクなど認知機能テストを使わない別の手段があるか。自動入力などの支援が使えるか。CAPTCHA が物の認識・本人が用意した内容の識別にとどまるか。iframe・shadow root の中の欄、ログインボタンを押してから出るフォーム、`captcha` を名前に含まない独自の CAPTCHA。
 
 ## 自動再生検出
+| 基準 | 操作 | 証跡 | Fail条件 |
+|---|---|---|---|
+| 1.4.2 | 自動再生音声を停止/制御できる | `auto-play-detection` + 聴覚確認 | 3 秒超の音を止められない |
+| 2.2.2 | 自動更新コンテンツを一時停止/停止できる | `auto-play-detection` | 5 秒超動き、止められない |
 
-対象基準:
-- **1.4.2** (音声の制御): 自動再生音声を停止/制御できる
-- **2.2.2** (一時停止、停止、非表示): 自動更新コンテンツを一時停止/停止できる
-
-### `auto-play-detection` CLIチェック
-
-`auto-play-detection` チェックを使用して、ピクセルレベルのスクリーンショット比較による自動再生コンテンツの検出（2.2.2）と、メディアの再生状態の測定（1.4.2）ができます。
-
-**機能:**
-- 2秒間隔でスクリーンショットを撮影（0秒, 2秒, 4秒, 6秒）
-- ピクセルレベルの差分検出（pixelmatch）で正確な比較
-- 5秒以上コンテンツが継続するかを検出（WCAG 2.2.2 の閾値）
-- ページ内の一時停止/停止コントロールを自動検出
-- 一時停止コントロールをクリックして実際に機能するか検証
-- 変化箇所をハイライトした差分画像を生成
-- アクセシビリティ推奨事項を含むレポートを出力
-- ページと iframe（入れ子・shadow root の中も含む）の `<audio>`・`<video>` を検査の開始時・スクリーンショットのたび・再生／停止／消音／速度変更のたびに記録し、音ありで鳴った秒数（`audibleSeconds`）が3秒を超えるもの、または最後の測定で音ありで再生中で、この先も3秒を超えて鳴るもの（`loop`・終わりのない配信・残りを再生速度で割った実時間が3秒超）のうち、見える `controls` が無いものを `a11y-skills/auto-play-audio`（incomplete）として報告（1.4.2）。途中で消音・停止された音や短いループ、検査中に追加された音（追加された時点から）も数え、検査中に DOM から消えたものも `removed: true` 付きで結果に残す。iframe ごと消えたり中身が置き換わったりしたものは、消える前の最後の記録を `documentRemoved: true` 付きで残す（target は残っている親の文書の `html`、説明に元の frame の URL）。その記録で音ありの再生中だったものは、その後の再生時間が分からないので、鳴った秒数に関係なく incomplete にする
-
-**使用方法:**
-```bash
-npx -y @a11y-skills/audit --url "https://example.com" --checks auto-play-detection
-```
-
-**出力:**
-- `auto-play-screenshots/` - 以下を含むディレクトリ:
-  - `screenshot-0s.png` ～ `screenshot-6s.png` - 比較用スクリーンショット
-  - `diff-*-vs-*.png` - 変化したピクセルを示す差分画像
-  - `detection-result.json` - 完全な検出結果:
-    - 各間隔の変化率
-    - 5秒以内に停止するか
-    - 検出された一時停止コントロール（アクセシビリティ情報付き）
-    - 一時停止コントロールの検証結果
-    - `mediaElements` - 各メディア要素の再生状態と、同じ frame で見つかった停止・消音部品
-
-**一時停止コントロール検出:**
-スクリプトは以下の方法で一時停止/停止コントロールを自動検索します:
-- 一時停止関連キーワードを含むアクセシブル名（英語/日本語対応）
-- クラス名パターン（pause, play, stop, toggle, switch, control）
-- コンテキスト認識（カルーセル要素近くのコントロールを優先）
-
-**一時停止コントロール検証:**
-自動再生が検出され、5秒以上継続する場合:
-1. 一時停止コントロールが見つかった → クリック実行
-2. クリック前後でスクリーンショットを撮影
-3. 比較してアニメーションが実際に停止したか確認
-4. コントロールが機能するかどうかをレポート
-
-**制限事項:**
-- 画面比較（2.2.2）は視覚的変化のみ検出（カルーセル、アニメーション、動画再生）
-- 音声（1.4.2）は再生状態を測るだけで、実際に音が聞こえるかは手動確認が必要（聴覚確認）。音声用の停止・消音部品は名前で探すだけでクリックして確かめず、親フレームやページの別の場所の部品は探さない
-- 音声は検査を始めてから約2秒ごとに測るので、それより前に鳴った音は数えない。最後の測定の直前に鳴り始めた音は、この先も3秒を超えて鳴るなら候補にするが、残りが3秒以下なら数えない
-- `controls` が見えているかは大きさ・`display`・`visibility`・`opacity`（親の iframe 要素も含む）と表示上の祖先（slot に割り当てられた要素は slot 側）で判断する。`overflow` が `hidden`・`clip` の祖先の枠線より内側の領域と重ならなければ見えないとし、`clip-path`・`clip` があるとき、重ならない祖先がスクロールできるとき、`fixed`・`absolute` の箱がはみ出しうるとき、`transform` などで領域の位置が決まらないときは決めきれないとして incomplete にする。一部だけの切り取りや画面外の位置までは見ない
-- Web Audio API など `<audio>`・`<video>` を使わない音は測れない
-- 0.1%未満の小さなアニメーションは検出されない場合あり
-
-**手動確認が必要な項目:**
-- 一時停止/停止コントロールがキーボードでアクセス可能か確認
-- 音声の自動再生を聴覚で確認（スクリーンショットでは検出不可）
-- 一時停止コントロール検証が失敗した場合、手動でコントロール機能を確認
+### `auto-play-detection`（1.4.2 / 2.2.2）
+- 実行: `--checks auto-play-detection`（スクリーンショットと差分画像を `auto-play-screenshots/` に書く。`pixelmatch` と `pngjs` が無いとスキップ）
+- 副作用: 動くコンテンツが 5 秒以上続くとき、見つけた一時停止コントロールをクリックして実際に止まるかを確かめる。
+- 人が確かめること: 一時停止/停止コントロールがキーボードで使えるか。音が実際に聞こえるか（聴覚）。コントロール検証が失敗したとき、手動で機能するか。Web Audio API など `<audio>`・`<video>` を使わない音。0.1% 未満の小さなアニメーション。

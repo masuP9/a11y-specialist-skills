@@ -2,7 +2,7 @@
 name: reviewing-a11y
 description: Webページ、コード実装、デザインモックアップや仕様書のアクセシビリティをレビューし、重大度別の問題と修正案を報告する。準拠状況を全達成基準について判定する正式監査には auditing-wcag を使用する。
 argument-hint: URL, file path, or Figma URL to review
-allowed-tools: Read Grep Glob WebFetch Task mcp__playwright__browser_snapshot mcp__playwright__browser_navigate mcp__playwright__browser_click
+allowed-tools: Read Grep Glob WebFetch Agent Bash(npx -y @a11y-skills/audit:*) Bash(npx playwright install:*) mcp__playwright__browser_snapshot mcp__plugin_playwright_playwright__browser_snapshot mcp__playwright__browser_navigate mcp__plugin_playwright_playwright__browser_navigate mcp__playwright__browser_click mcp__plugin_playwright_playwright__browser_click mcp__playwright__browser_press_key mcp__plugin_playwright_playwright__browser_press_key mcp__playwright__browser_take_screenshot mcp__plugin_playwright_playwright__browser_take_screenshot
 ---
 
 [English](./SKILL.md)

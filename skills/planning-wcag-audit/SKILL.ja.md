@@ -2,7 +2,7 @@
 name: planning-wcag-audit
 description: WAIC試験実施ガイドラインに基づき、特定サイトのWCAG監査範囲、対象ページ、試験環境、実施計画を策定する。組織全体の中長期改善計画には planning-a11y-improvement を使用する。
 argument-hint: Site URL or description (optional)
-allowed-tools: Read Grep Glob AskUserQuestion Write
+allowed-tools: Read Grep Glob AskUserQuestion Write WebFetch
 ---
 
 [English](./SKILL.md)
@@ -59,7 +59,7 @@ WAICガイドラインに基づき、以下の方式から選定します。
 
 ユーザーがURL一覧を持っていない場合は、ガイドの Step 1〜6 に従ってURL収集・サンプリングを実施します：
 
-1. sitemap.xml またはPlaywrightでURL一覧を取得
+1. sitemap.xml またはブラウザ操作でURL一覧を取得
 2. 除外パターンの適用（ユーザー指定）
 3. 代表ページの特定
 4. ランダムサンプリング（代表ページを除外して重複回避）
@@ -116,3 +116,4 @@ WAICガイドラインに基づき、以下の方式から選定します。
 - 不明点は「未確定」として明示し、ユーザーに追加入力を求める
 - 代表ページ選定では、主要なユーザーフローを優先する
 - ランダム抽出は再現可能な方法（乱数シード、抽出手順）を記録する
+- 計画ができたら、対象ページ一覧（1 行 1 URL）を auditing-wcag に渡して監査する
