@@ -28,7 +28,7 @@
 | 1.4.4 | 自動+手動 | `zoom-200-check` **[CLI]** + スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.4.ja.md) |
 | 1.4.5 | 手動+コンテンツ | スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.5.ja.md) |
 | 1.4.10 | 自動+手動 | `reflow-check` **[CLI]** + スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.10.ja.md) |
-| 1.4.11 | 自動の候補+手動 | `non-text-contrast-check` **[CLI]** + スクショ | 部品の境界・アイコンが3:1未満でFail。状態ごとの見た目・グラフ・画像の背景は手動 |
+| 1.4.11 | 自動の候補+手動 | `non-text-contrast-check` **[CLI]** + スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.11.ja.md)。必要な表示・隣接色・例外を確認して判定 |
 | 1.4.12 | 自動+手動 | `text-spacing-check` **[CLI]** + スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.12.ja.md) |
 | 1.4.13 | インタラクティブ+自動の候補 | `content-on-hover-check` **[CLI]** + 動画/ログ | 解除/保持不可でFail |
 
@@ -49,7 +49,8 @@
 | 2.4.6 | 自動+コンテンツ | a11y tree/文面 | 見出し/ラベルが不明瞭でFail |
 | 2.4.7 | インタラクティブ | スクショ | [線引き](../../a11y-knowledge/references/criteria/2.4.7.ja.md) |
 | 2.4.11 | 自動+インタラクティブ | `focus-indicator-check` **[CLI]** + スクショ | [線引き](../../a11y-knowledge/references/criteria/2.4.11.ja.md) |
-| 2.4.12 (AAA) | 自動+インタラクティブ | `focus-indicator-check` **[CLI]** + スクショ | フォーカスが一部でも隠れるとFail |
+| 2.4.12 (AAA) | 自動+インタラクティブ | `focus-indicator-check` **[CLI]** + スクショ | [線引き](../../a11y-knowledge/references/criteria/2.4.12.ja.md) |
+| 2.4.13 (AAA) | 実測 + 手動 | 同じ位置の前後の色・有効面積 | [線引き](../../a11y-knowledge/references/criteria/2.4.13.ja.md) |
 | 2.5.1 | インタラクティブ+自動の候補 | `pointer-gesture-check` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.5.1.ja.md) |
 | 2.5.2 | インタラクティブ+自動の候補 | `pointer-cancellation-check` **[CLI]** + 操作ログ | 誤作動/キャンセル不可でFail |
 | 2.5.3 | 自動+手動 | a11y name比較（axe `label-content-name-mismatch` は実験的ルールのため既定では未実行） | ラベル文字列不一致でFail |

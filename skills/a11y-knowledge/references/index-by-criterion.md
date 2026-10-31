@@ -25,6 +25,7 @@
 | 1.4.4     | Resize Text                               | Measurement           | [1.4.4](./criteria/1.4.4.md)                  |
 | 1.4.5     | Images of Text                            | Element               | [1.4.5](./criteria/1.4.5.md)                  |
 | 1.4.10    | Reflow                                    | Measurement           | [1.4.10](./criteria/1.4.10.md)                |
+| 1.4.11 | Non-text Contrast | Measurement + Visual | [1.4.11](./criteria/1.4.11.md) |
 | 1.4.12    | Text Spacing                              | Measurement           | [1.4.12](./criteria/1.4.12.md)                |
 | 2.1.1     | Keyboard                                  | Element + Measurement | [2.1.1](./criteria/2.1.1.md)                  |
 | 2.2.1     | Timing Adjustable                         | Measurement           | [2.2.1](./criteria/2.2.1.md)                  |
@@ -35,6 +36,8 @@
 | 2.4.4     | Link Purpose (In Context)                 | Element               | [2.4.4](./criteria/2.4.4.md)                  |
 | 2.4.7     | Focus Visible                             | Measurement           | [2.4.7](./criteria/2.4.7.md)                  |
 | 2.4.11    | Focus Not Obscured (Minimum)              | Measurement           | [2.4.11](./criteria/2.4.11.md)                |
+| 2.4.12 | Focus Not Obscured (Enhanced), AAA | Measurement + Visual | [2.4.12](./criteria/2.4.12.md) |
+| 2.4.13 | Focus Appearance, AAA | Measurement + Visual | [2.4.13](./criteria/2.4.13.md) |
 | 2.5.1     | Pointer Gestures                          | Measurement           | [2.5.1](./criteria/2.5.1.md)                  |
 | 2.5.5     | Target Size (Enhanced) AAA                | Measurement           | [2.5.5](./criteria/2.5.5.md)                  |
 | 2.5.7     | Dragging Movements                        | Measurement           | [2.5.7](./criteria/2.5.7.md)                  |

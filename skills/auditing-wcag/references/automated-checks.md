@@ -31,7 +31,7 @@ The material collected from the page as loaded (accessibility tree, DOM, screens
 | 1.3.5 | `autocomplete-audit` **[CLI]** | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.5.md) |
 | 1.4.1 | Screenshots, tree text, axe `link-in-text-block` | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.1.md) |
 | 1.4.3 | axe `color-contrast` | Fail below 4.5:1 (3:1 for large text). Where axe could not compute (image or gradient backgrounds), NT until measured |
-| 1.4.11 | `non-text-contrast-check` **[CLI]** (component boundaries, icon-only buttons) | Fail below 3:1. States, charts, and image backgrounds are manual |
+| 1.4.11 | `non-text-contrast-check` **[CLI]** (component boundaries, icon-only buttons) | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.11.md); verify required cues, adjacent colors, and exceptions |
 | 2.4.1 | Skip links, landmarks, and headings in the tree | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.1.md) |
 | 2.4.2 | `document.title`, axe `document-title` | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.2.md) |
 | 2.4.4 | Link names in the tree and the sentence, paragraph, list item, or table cell containing the link | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.4.md) |

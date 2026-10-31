@@ -31,7 +31,7 @@
 | 1.3.5 | `autocomplete-audit` **[CLI]** | [線引き](../../a11y-knowledge/references/criteria/1.3.5.ja.md) |
 | 1.4.1 | スクリーンショット、ツリーのテキスト、axe `link-in-text-block` | [線引き](../../a11y-knowledge/references/criteria/1.4.1.ja.md) |
 | 1.4.3 | axe `color-contrast` | 4.5:1 未満（大きな文字は 3:1 未満）で Fail。axe が計算できなかった箇所（画像・グラデーションの背景）は実測するまで NT |
-| 1.4.11 | `non-text-contrast-check` **[CLI]**（部品の境界・アイコンだけのボタン） | 3:1 未満で Fail。状態ごとの見た目・グラフ・画像の背景は手動 |
+| 1.4.11 | `non-text-contrast-check` **[CLI]**（部品の境界・アイコンだけのボタン） | [線引き](../../a11y-knowledge/references/criteria/1.4.11.ja.md)。必要な表示・隣接色・例外を確認して判定 |
 | 2.4.1 | ツリーのスキップリンク・ランドマーク・見出し | [線引き](../../a11y-knowledge/references/criteria/2.4.1.ja.md) |
 | 2.4.2 | `document.title`、axe `document-title` | [線引き](../../a11y-knowledge/references/criteria/2.4.2.ja.md) |
 | 2.4.4 | ツリーのリンクの名前と、リンクを含む文・段落・リスト項目・表のセル | [線引き](../../a11y-knowledge/references/criteria/2.4.4.ja.md) |
