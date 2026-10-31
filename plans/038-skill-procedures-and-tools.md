@@ -80,12 +80,15 @@
 日本語版を先に直し、英語版に同じ変更を入れる。frontmatter は日英で同じにする。
 
 1. **auditing-wcag の自動チェックの順番を入れ替える**（`SKILL.ja.md` 3. 自動チェック）
-   1. シェルが使えるなら `npx -y @a11y-skills/audit --url <url> --checks all --output-dir <dir>` を流す（`page-snapshot` を含む）
+   0. **CLI を流す前に、副作用を許せる環境かを確かめる**。`2. スコープ契約` に「対象環境（本番／検証環境）と、キー入力・値の変更・送信が起きてよいか」の項目を足し、ユーザーに確かめる。副作用のあるチェックは `character-key-shortcut-check`（実際にキーを押す）、`change-on-input-check`（値を変えて `change` を起こす）、`focus-order-check`（開くボタンで Enter を押す）、`pointer-cancellation-check`（押し下げで実行される操作が実際に動く）の 4 つ（今の `interactive-checks.ja.md` の記述による）。
+      - 副作用を許せると確かめられた場合だけ `--checks all` にする。
+      - 確かめられない・許せない場合は、この 4 つを除いたチェックを `--checks` に並べて流し、除いたチェックの達成基準は NT（未テスト）にして制限事項に理由を書く。
+   1. シェルが使えるなら `npx -y @a11y-skills/audit --url <url> --checks <0 で決めた値> --output-dir <dir>` を流す（`page-snapshot` を含む）
    2. 結果は a11y-knowledge の checks-axe / checks-audit で確定と要確認に仕分ける（今の記述を活かす）
    3. ブラウザ操作は、要確認の候補を確かめるのと、4. インタラクティブチェックに使う
    4. シェルが使えないときは、ブラウザ操作で 1 の代わりをし、カバーできなかったチェックを制限事項に書く
    5. どちらも無いときは Web 取得（今と同じ）
-2. **reviewing-a11y の page-review に CLI を足す**: 「ツール選択」の表の先頭に「シェル（`@a11y-skills/audit` CLI）」を足す。レビューでは `--checks axe-audit,page-snapshot` を既定にし、ページの性質に応じて足す（フォームがあれば autocomplete-audit など）と書く。結果の読み方は checks-audit を参照させる。
+2. **reviewing-a11y の page-review に CLI を足す**: 「ツール選択」の表の先頭に「シェル（`@a11y-skills/audit` CLI）」を足す。レビューでは `--checks axe-audit,page-snapshot` を既定にし、ページの性質に応じて足す（フォームがあれば autocomplete-audit など）と書く。上の 4 つの副作用のあるチェックを足すときは、副作用を許せる環境かをユーザーに確かめる、と書く。結果の読み方は checks-audit を参照させる。
 3. **`allowed-tools` を更新する**（日英とも同じ値）
    - auditing-wcag: `Read Grep Glob Write WebFetch Agent Bash(npx -y @a11y-skills/audit:*) Bash(npx playwright install:*)` と、Playwright MCP の `browser_snapshot` `browser_navigate` `browser_click` `browser_type` `browser_press_key` `browser_hover` `browser_evaluate` `browser_take_screenshot` `browser_wait_for` `browser_resize` を `mcp__playwright__` と `mcp__plugin_playwright_playwright__` の両方の接頭辞で
    - reviewing-a11y: `Read Grep Glob WebFetch Agent Bash(npx -y @a11y-skills/audit:*)` と、Playwright MCP の `browser_snapshot` `browser_navigate` `browser_click` `browser_press_key` `browser_take_screenshot` を両方の接頭辞で
@@ -104,6 +107,8 @@
 
 - `grep -rn "mcp__playwright__\|Task" skills/*/SKILL*.md` の結果が、両方の接頭辞のペアだけになっている（`Task` は 0 件）
 - auditing-wcag の手順で、CLI がブラウザ操作より前にある
+- auditing-wcag のスコープ契約に副作用を許せるかの確認があり、許せない場合に副作用のある 4 チェックを外して NT・制限事項に書く分岐がある
+- reviewing-a11y の page-review の既定（`axe-audit,page-snapshot`）に副作用のあるチェックが入っておらず、足すときは副作用を確かめるよう書いてある
 - `page-review.ja.md` に CLI が出てくる
 - `interactive-checks.ja.md` が 200 行以下で、各 CLI チェックの節に「副作用」と「人が確かめること」が残っている
 - `grep -n "grep -oP\|shuf\|openssl" skills/planning-wcag-audit -r` が 0 件
