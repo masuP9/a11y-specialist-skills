@@ -11,7 +11,7 @@ Items requiring human judgment. Use screenshots/video/notes as evidence for visu
 ## Text/Layout
 | Criterion | Check | Evidence | Fail rule |
 |---|---|---|---|
-| 1.4.4 | No information/functionality loss while resizing up to 200% | screenshot | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.4.md) |
+| 1.4.4 | No information/functionality loss at the standard 200% test point; no exhaustive intermediate-scale testing | screenshot | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.4.md) |
 | 1.4.5 | Avoid text in images | screenshot | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.5.md) |
 | 1.4.10 | Read each non-excepted section in one direction; retain information/functionality | screenshot | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.10.md) |
 | 1.4.12 | Content/functionality remains available after appropriate spacing changes | screenshot | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.12.md) |
