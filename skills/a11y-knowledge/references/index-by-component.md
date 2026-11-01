@@ -20,7 +20,7 @@ When writing or reviewing code, look up, from the component type, the success cr
 | radio                    | radio                                                              | 1.3.1, 2.1.1, 2.4.3, 2.4.7, 2.5.8, 3.2.2, 3.3.2, 4.1.2                          |
 | switch                   | switch                                                             | 1.3.1, 2.1.1, 2.4.3, 2.4.7, 2.5.8, 3.2.2, 3.3.2, 4.1.2                          |
 | combobox                 | combobox                                                           | 1.3.1, 1.3.5, 2.1.1, 2.4.3, 2.4.7, 2.5.8, 3.2.2, 3.3.2, 4.1.2                   |
-| listbox                  | listbox                                                            | 1.3.1, 2.1.1, 2.4.3, 2.4.7, 3.3.2, 4.1.2                                        |
+| listbox                  | listbox                                                            | 1.3.1, 1.3.5, 2.1.1, 2.4.3, 2.4.7, 3.3.2, 4.1.2                                        |
 | slider                   | slider                                                             | 1.3.1, 2.1.1, 2.4.3, 2.4.7, 2.5.8, 3.3.2, 4.1.2                                 |
 | tab                      | tab                                                                | 2.1.1, 2.4.7, 2.5.8, 4.1.2                                                      |
 | tablist                  | tablist                                                            | 1.3.1, 2.1.1, 4.1.2                                                             |

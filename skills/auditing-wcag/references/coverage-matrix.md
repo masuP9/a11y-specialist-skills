@@ -17,11 +17,11 @@ When the "Judgment Rule" column says **Judgment lines**, judge with the "Judgmen
 | 1.2.3 | Automated + Content | track elements + transcript links | Fail if no media alternative |
 | 1.2.4 | Content | capture | Fail if live captions missing |
 | 1.2.5 | Automated + Content | track elements | Fail if audio description missing |
-| 1.3.1 | Automated | a11y tree snippet | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.1.md) |
+| 1.3.1 | Automated + Content comparison | Compare visual/auditory presentation with DOM/tree relationships | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.1.md) |
 | 1.3.2 | Automated | a11y tree + DOM order | Fail if meaningful order breaks |
 | 1.3.3 | Automated + Content | a11y tree text + excerpts | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.3.md) |
 | 1.3.4 | Automated + Manual | `orientation-check` **[CLI]** + captures | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.4.md) |
-| 1.3.5 | Automated | `autocomplete-audit` **[CLI]** | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.5.md) |
+| 1.3.5 | Automated + Content comparison | `autocomplete-audit` **[CLI]** plus user-information scope, actual purpose, and exceptions | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.5.md) |
 | 1.4.1 | Automated + Manual | a11y tree text + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.1.md) |
 | 1.4.2 | Automated + Manual | `auto-play-detection` **[CLI]** (`a11y-skills/auto-play-audio`) + logs | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.2.md) |
 | 1.4.3 | Automated | axe color-contrast | Fail below AA |
@@ -61,7 +61,7 @@ When the "Judgment Rule" column says **Judgment lines**, judge with the "Judgmen
 ## 3. Understandable
 | Criterion | Test Method | Evidence | Judgment Rule |
 |---|---|---|---|
-| 3.1.1 | Automated | DOM attribute | [Judgment lines](../../a11y-knowledge/references/criteria/3.1.1.md) |
+| 3.1.1 | Automated + Content comparison | lang / xml:lang, axe, and representative content language | [Judgment lines](../../a11y-knowledge/references/criteria/3.1.1.md) |
 | 3.1.2 | Automated + Content | axe valid-lang + text analysis | Fail if language of parts not identified |
 | 3.2.1 | Automated + Interactive | `focus-indicator-check` **[CLI]** + DOM diff | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.1.md) |
 | 3.2.2 | Interactive + automated candidates | `change-on-input-check` **[CLI]** + DOM diff | Fail if input triggers submit/navigation without prior advice |
