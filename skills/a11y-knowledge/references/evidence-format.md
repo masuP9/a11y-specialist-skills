@@ -18,6 +18,12 @@ Make each item a condition that changes the verdict rather than restating defini
 
 Reference evidence IDs from each judgment line. Mark operational decisions as `[Our interpretation: reason. Evidence: …]`. Retain deliberately adopted author policies as [Our interpretation], with reasons, scope, and reporting treatment; do not present them as official interpretations. For source claims, if a source cannot be retrieved or supporting text cannot be found, mark `[Unverified: missing evidence]` and do not use it to settle a verdict.
 
+## Write to support decisions
+
+- State the default judgment for ordinary cases first, followed by concrete conditions that change it and the evidence to check. Do not stop at “it depends” or “needs review.”
+- Do not turn a source’s examples of conformance or exceptions into exhaustive necessary conditions. When adopting a broader operational policy, distinguish it as [Our interpretation] with its rationale and scope.
+- Do not return cases covered by an adopted default to review merely because of abstract uncertainty. Tie further review to concrete signs that the default does not apply or to specific missing information.
+
 ## Handling sources
 
 - Use WCAG itself as the normative reference; distinguish Understanding, Techniques, and ACT as supporting material.
