@@ -27,6 +27,7 @@ ACTの根拠は検査範囲の考え方に使う。axeが同一ルールを完�
 - `document-title` の pass は 2.4.2 の適合にしない。タイトルがあることと、主題を表していることは別（[2.4.2](./criteria/2.4.2.ja.md)）。
 - `video-caption` の pass（captions の track がある）は 1.2.2 の適合にしない。字幕の中身が音声に合っているかは見ていない（[1.2.2](./criteria/1.2.2.ja.md)）。
 - `label` の pass も violation も3.3.2へ直接転記しない。axe-core 4.14.0では4.1.2の名前チェックで、placeholderだけでも通過し得る。全利用者へのラベル・説明の提示を別途確認する（[3.3.2-E01と線引き](./criteria/3.3.2.ja.md)）。
+- `label` を1.3.1へも直接転記しない。可視ラベル・構造との関係を照合する。`autocomplete-valid` のpassも本人の情報・実際の目的との一致を保証しない（[1.3.1](./criteria/1.3.1.ja.md)、[1.3.5](./criteria/1.3.5.ja.md)）。
 
 - `bypass` のpassは、ページ内リンク・見出し・main等の検出の証拠にとどめ、反復ブロックを実際に飛ばせるか確認する。`link-name` のpassもリンクの目的の説明性まで確定しない（[2.4.1](./criteria/2.4.1.ja.md)、[2.4.4](./criteria/2.4.4.ja.md)）。
 
@@ -36,13 +37,14 @@ ACTの根拠は検査範囲の考え方に使う。axeが同一ルールを完�
 | ------------------ | -------- | ------------------------------------------------ |
 | `document-title`   | 2.4.2    | `<title>` が無い・空                             |
 | `html-has-lang`    | 3.1.1    | `html` に lang が無い・空                        |
-| `html-lang-valid`  | 3.1.1    | lang の書き方が不正                              |
+| `html-lang-valid`  | 3.1.1    | 主言語部分が無効（タグ全体の構文検証ではない）                              |
 | `image-alt`        | 1.1.1    | 対象画像に有効な代替・無視できる実装が無いことを確認した場合。alt欠落だけとは扱わない（[1.1.1-E02–E04](./criteria/1.1.1.ja.md)） |
 | `link-in-text-block` | 1.4.1 | 検出範囲内のviolationsを不適合として扱い、incompleteは要確認。周囲の文字との3:1・スタイル差と、背景とのコントラストを区別する。[1.4.1](./criteria/1.4.1.ja.md) |
 
 ## ベストプラクティスとして扱う規則
 
 - `region`: axe-core 4.14.0ではbest-practiceで、auditの既定WCAGタグでは実行対象外。この違反だけで2.4.1をFailにしない（[2.4.1](./criteria/2.4.1.ja.md)）。
+- `landmark-*`: axe-core 4.14.0ではbest-practice。1.3.1へ一律に違反を転記しない（[1.3.1](./criteria/1.3.1.ja.md)）。
 
 - `aria-dialog-name`: dialog / alertdialog 自身の名前の欠落は、達成基準を付けない改善候補として報告する。この結果だけで4.1.2をFailやNTにしない。[独自: 著者の監査方針。詳細は [4.1.2-E05と線引き](./criteria/4.1.2.ja.md)]
 

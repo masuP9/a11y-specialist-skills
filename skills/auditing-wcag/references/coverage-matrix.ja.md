@@ -17,11 +17,11 @@
 | 1.2.3 | 自動+コンテンツ | track要素 + トランスクリプトリンク | 代替なしでFail |
 | 1.2.4 | コンテンツ | 画面キャプチャ | ライブ字幕なしでFail |
 | 1.2.5 | 自動+コンテンツ | track要素 | 音声解説なしでFail |
-| 1.3.1 | 自動 | a11y tree断片 | [線引き](../../a11y-knowledge/references/criteria/1.3.1.ja.md) |
+| 1.3.1 | 自動＋内容照合 | 画面・音の提示とDOM・ツリーの関係を照合 | [線引き](../../a11y-knowledge/references/criteria/1.3.1.ja.md) |
 | 1.3.2 | 自動 | a11y tree + DOM順 | 意味順序が崩れるとFail |
 | 1.3.3 | 自動+コンテンツ | a11y treeテキスト + 文面抜粋 | [線引き](../../a11y-knowledge/references/criteria/1.3.3.ja.md) |
 | 1.3.4 | 自動+手動 | `orientation-check` **[CLI]** + 画面キャプチャ | [線引き](../../a11y-knowledge/references/criteria/1.3.4.ja.md) |
-| 1.3.5 | 自動 | `autocomplete-audit` **[CLI]** | [線引き](../../a11y-knowledge/references/criteria/1.3.5.ja.md) |
+| 1.3.5 | 自動＋内容照合 | `autocomplete-audit` **[CLI]** と本人情報・実際の目的・例外 | [線引き](../../a11y-knowledge/references/criteria/1.3.5.ja.md) |
 | 1.4.1 | 自動+手動 | a11y treeテキスト + スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.1.ja.md) |
 | 1.4.2 | 自動+手動 | `auto-play-detection` **[CLI]**（`a11y-skills/auto-play-audio`）+ 操作ログ | [線引き](../../a11y-knowledge/references/criteria/1.4.2.ja.md) |
 | 1.4.3 | 自動 | axe color-contrast | AA未満でFail |
@@ -61,7 +61,7 @@
 ## 3. 理解可能
 | 基準 | テスト方法 | 証跡 | 判定ルール |
 |---|---|---|---|
-| 3.1.1 | 自動 | DOM属性 | [線引き](../../a11y-knowledge/references/criteria/3.1.1.ja.md) |
+| 3.1.1 | 自動＋内容照合 | lang / xml:lang、axeと代表的な本文の言語 | [線引き](../../a11y-knowledge/references/criteria/3.1.1.ja.md) |
 | 3.1.2 | 自動+コンテンツ | axe valid-lang + テキスト分析 | 部分言語未指定でFail |
 | 3.2.1 | 自動+インタラクティブ | `focus-indicator-check` **[CLI]** + DOM差分 | [線引き](../../a11y-knowledge/references/criteria/3.2.1.ja.md) |
 | 3.2.2 | インタラクティブ+自動の候補 | `change-on-input-check` **[CLI]** + DOM差分 | 入力のみで送信/遷移（事前の説明なし）でFail |
