@@ -45,7 +45,7 @@
 |---|---|---|---|
 | 1.3.4 | 縦横どちらでも利用可能 | スクショ | [線引き](../../a11y-knowledge/references/criteria/1.3.4.ja.md) |
 
-> **CLIチェック:** `orientation-check` - 画面の向き制限メッセージと縦横でのコンテンツ表示差異を検出。
+> **CLIチェック:** `orientation-check` - 画面の向き制限メッセージと縦横でのコンテンツ表示差異を検出。 ビューポートごとの推定なので、実際の制限・切替操作・必須の条件を確認する。OSの固定や単なるレイアウト差と区別する。
 >
 > 実行: `npx -y @a11y-skills/audit --url "<url>" --checks orientation-check`
 
