@@ -59,14 +59,14 @@ The material collected from the page as loaded (accessibility tree, DOM, screens
 
 ## Cross-Page Checks
 
-Judge after collecting material (`page-snapshot`) from all audit target pages. For 3.2.3 / 3.2.4 / 3.2.6, read [cross-page.md](../../a11y-knowledge/references/cross-page.md) first and judge with each criterion's judgment lines.
+Judge after collecting material (`page-snapshot`) from all audit target pages. For 3.2.3 / 3.2.4 / 3.2.6, read [cross-page.md](../../a11y-knowledge/references/cross-page.md) first and judge with each criterion's judgment lines. `page-snapshot` itself provides no verdict. Supplement material for visual order under 3.2.3; visible labels, icons, and same-page repetition under 3.2.4; and expanded help routes under 3.2.6.
 
 | Criterion | Material | Judgment |
 |---|---|---|
 | 2.4.5 | Search forms, links to a site map, links between pages | "2.4.5" below |
 | 3.2.3 | Contents of `banner` / `navigation` / `contentinfo` on each page | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.3.md) |
-| 3.2.4 | Role and name of components with the same function | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.4.md) |
-| 3.2.6 | Presence and position of help mechanisms (contact, FAQ, etc.) | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.6.md) |
+| 3.2.4 | Roles, names, visible labels, and icons of the same repeated function | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.4.md) |
+| 3.2.6 | Help mechanisms and routes, serial order relative to shared content, matching presentation conditions | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.6.md) |
 
 ### 2.4.5
 

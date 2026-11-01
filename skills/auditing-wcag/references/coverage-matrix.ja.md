@@ -65,9 +65,9 @@
 | 3.1.2 | 自動+コンテンツ | axe valid-lang + テキスト分析 | 部分言語未指定でFail |
 | 3.2.1 | 自動+インタラクティブ | `focus-indicator-check` **[CLI]** + DOM差分 | [線引き](../../a11y-knowledge/references/criteria/3.2.1.ja.md) |
 | 3.2.2 | インタラクティブ+自動の候補 | `change-on-input-check` **[CLI]** + DOM差分 | 入力のみで送信/遷移（事前の説明なし）でFail |
-| 3.2.3 | 自動 | 全ページa11y tree比較 | [線引き](../../a11y-knowledge/references/criteria/3.2.3.ja.md) |
-| 3.2.4 | 自動 | 全ページa11y tree比較 | [線引き](../../a11y-knowledge/references/criteria/3.2.4.ja.md) |
-| 3.2.6 | 自動 | 全ページa11y tree比較 | [線引き](../../a11y-knowledge/references/criteria/3.2.6.ja.md) |
+| 3.2.3 | コンテンツ比較（自動は材料収集） | ページ間のツリー・画面・表示条件 | [線引き](../../a11y-knowledge/references/criteria/3.2.3.ja.md) |
+| 3.2.4 | コンテンツ比較（自動は材料収集） | 反復部品の機能・名前・可視の識別 | [線引き](../../a11y-knowledge/references/criteria/3.2.4.ja.md) |
+| 3.2.6 | コンテンツ比較（自動は材料収集） | ヘルプ経路・共通内容との直列順・表示条件 | [線引き](../../a11y-knowledge/references/criteria/3.2.6.ja.md) |
 | 3.3.1 | インタラクティブ | スクショ | [線引き](../../a11y-knowledge/references/criteria/3.3.1.ja.md) |
 | 3.3.2 | コンテンツ（自動は名前の材料） | 可視ラベル・説明/入力中の画面/受入条件 | [線引き](../../a11y-knowledge/references/criteria/3.3.2.ja.md) |
 | 3.3.3 | インタラクティブ | スクショ | [線引き](../../a11y-knowledge/references/criteria/3.3.3.ja.md) |

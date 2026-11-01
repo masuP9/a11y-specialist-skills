@@ -65,9 +65,9 @@ When the "Judgment Rule" column says **Judgment lines**, judge with the "Judgmen
 | 3.1.2 | Automated + Content | axe valid-lang + text analysis | Fail if language of parts not identified |
 | 3.2.1 | Automated + Interactive | `focus-indicator-check` **[CLI]** + DOM diff | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.1.md) |
 | 3.2.2 | Interactive + automated candidates | `change-on-input-check` **[CLI]** + DOM diff | Fail if input triggers submit/navigation without prior advice |
-| 3.2.3 | Automated | a11y tree comparison across pages | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.3.md) |
-| 3.2.4 | Automated | a11y tree comparison across pages | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.4.md) |
-| 3.2.6 | Automated | a11y tree comparison across pages | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.6.md) |
+| 3.2.3 | Content comparison (automated material collection) | Cross-page trees, screens, presentation conditions | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.3.md) |
+| 3.2.4 | Content comparison (automated material collection) | Repeated functions, names, visual identification | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.4.md) |
+| 3.2.6 | Content comparison (automated material collection) | Help routes, serial order relative to shared content, presentation conditions | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.6.md) |
 | 3.3.1 | Interactive | screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/3.3.1.md) |
 | 3.3.2 | Content (automation supplies name evidence) | Visible labels/instructions, screen during input, accepted values | [Judgment lines](../../a11y-knowledge/references/criteria/3.3.2.md) |
 | 3.3.3 | Interactive | screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/3.3.3.md) |

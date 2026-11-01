@@ -59,14 +59,14 @@
 
 ## ページ横断チェック
 
-全監査対象ページの材料（`page-snapshot`）を集めてから判定する。3.2.3 / 3.2.4 / 3.2.6 は、先に [cross-page.ja.md](../../a11y-knowledge/references/cross-page.ja.md) を読み、各達成基準の線引きで判定する。
+全監査対象ページの材料（`page-snapshot`）を集めてから判定する。3.2.3 / 3.2.4 / 3.2.6 は、先に [cross-page.ja.md](../../a11y-knowledge/references/cross-page.ja.md) を読み、各達成基準の線引きで判定する。`page-snapshot`自体は合否を出さない。3.2.3の視覚的順序、3.2.4の可視ラベル・アイコン・同一ページ内の反復、3.2.6の開閉後の経路は必要な材料を追加する。
 
 | 基準 | 材料 | 判定 |
 |---|---|---|
 | 2.4.5 | 検索フォーム、サイトマップへのリンク、ページ間のリンク | 下の「2.4.5」 |
 | 3.2.3 | 各ページの `banner` / `navigation` / `contentinfo` の中身 | [線引き](../../a11y-knowledge/references/criteria/3.2.3.ja.md) |
-| 3.2.4 | 同じ機能の部品の役割と名前 | [線引き](../../a11y-knowledge/references/criteria/3.2.4.ja.md) |
-| 3.2.6 | ヘルプの手段（問い合わせ・FAQ など）の有無と位置 | [線引き](../../a11y-knowledge/references/criteria/3.2.6.ja.md) |
+| 3.2.4 | 同じ反復機能の役割・名前・可視ラベル・アイコン | [線引き](../../a11y-knowledge/references/criteria/3.2.4.ja.md) |
+| 3.2.6 | ヘルプの手段と経路、共通内容との直列順、同じ表示条件 | [線引き](../../a11y-knowledge/references/criteria/3.2.6.ja.md) |
 
 ### 2.4.5
 
