@@ -69,7 +69,7 @@
 | 3.2.4 | 自動 | 全ページa11y tree比較 | [線引き](../../a11y-knowledge/references/criteria/3.2.4.ja.md) |
 | 3.2.6 | 自動 | 全ページa11y tree比較 | [線引き](../../a11y-knowledge/references/criteria/3.2.6.ja.md) |
 | 3.3.1 | インタラクティブ | スクショ | [線引き](../../a11y-knowledge/references/criteria/3.3.1.ja.md) |
-| 3.3.2 | 自動+コンテンツ | a11y tree/文面 | [線引き](../../a11y-knowledge/references/criteria/3.3.2.ja.md) |
+| 3.3.2 | コンテンツ（自動は名前の材料） | 可視ラベル・説明/入力中の画面/受入条件 | [線引き](../../a11y-knowledge/references/criteria/3.3.2.ja.md) |
 | 3.3.3 | インタラクティブ | スクショ | [線引き](../../a11y-knowledge/references/criteria/3.3.3.ja.md) |
 | 3.3.4 | インタラクティブ | 操作ログ | [線引き](../../a11y-knowledge/references/criteria/3.3.4.ja.md) |
 | 3.3.7 | 手動+自動の候補 | `redundant-entry-check` **[CLI]** + 操作ログ | 同一情報の再入力を要求でFail |

@@ -26,7 +26,7 @@ ACTの根拠は検査範囲の考え方に使う。axeが同一ルールを完�
 - `html-has-lang` の pass は 3.1.1 の適合にしない。lang があることと、lang が本文の言語と合っていることは別（[3.1.1](./criteria/3.1.1.ja.md)）。
 - `document-title` の pass は 2.4.2 の適合にしない。タイトルがあることと、主題を表していることは別（[2.4.2](./criteria/2.4.2.ja.md)）。
 - `video-caption` の pass（captions の track がある）は 1.2.2 の適合にしない。字幕の中身が音声に合っているかは見ていない（[1.2.2](./criteria/1.2.2.ja.md)）。
-- `label` の pass は 3.3.2 の適合にしない。ラベルが placeholder だけでも名前は付く。
+- `label` の pass も violation も3.3.2へ直接転記しない。axe-core 4.14.0では4.1.2の名前チェックで、placeholderだけでも通過し得る。全利用者へのラベル・説明の提示を別途確認する（[3.3.2-E01と線引き](./criteria/3.3.2.ja.md)）。
 
 ## 違反を確定にしてよい規則の例
 

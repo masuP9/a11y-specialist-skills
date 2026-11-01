@@ -39,7 +39,7 @@
 | 2.5.3 | 見えているラベルの文字列とアクセシブルネーム | ラベルの文字列が名前に含まれなければ Fail（axe `label-content-name-mismatch` は実験的ルールのため既定では未実行） |
 | 3.1.1 | `<html lang>`、axe `html-has-lang` / `html-lang-valid` | [線引き](../../a11y-knowledge/references/criteria/3.1.1.ja.md) |
 | 3.1.2 | ページの主言語と異なる言語で書かれた箇所、axe `valid-lang` | 下の「部分の言語」 |
-| 3.3.2 | 入力欄の名前・見えているラベル・説明 | [線引き](../../a11y-knowledge/references/criteria/3.3.2.ja.md) |
+| 3.3.2 | 見えるラベル・説明と入力条件（名前チェックだけでは確定しない） | [線引き](../../a11y-knowledge/references/criteria/3.3.2.ja.md) |
 | 4.1.2 | 操作できる要素の役割・名前・状態 | [線引き](../../a11y-knowledge/references/criteria/4.1.2.ja.md) |
 | 4.1.3 | 状態の変化を伝えるメッセージと、そのロール（`status` / `alert` / `log` など） | 利用者の操作の結果や処理の状態を伝えるメッセージが、フォーカスを動かさずに支援技術に伝わらなければ Fail |
 
