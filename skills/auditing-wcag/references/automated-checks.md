@@ -39,7 +39,7 @@ The material collected from the page as loaded (accessibility tree, DOM, screens
 | 2.5.3 | Visible label text vs. accessible name | Fail if the label text is not contained in the name (axe `label-content-name-mismatch` is experimental and not run by default) |
 | 3.1.1 | `<html lang>`, axe `html-has-lang` / `html-lang-valid` | [Judgment lines](../../a11y-knowledge/references/criteria/3.1.1.md) |
 | 3.1.2 | Passages in a language other than the page's primary language, axe `valid-lang` | "Language of parts" below |
-| 3.3.2 | Input names, visible labels, and instructions | [Judgment lines](../../a11y-knowledge/references/criteria/3.3.2.md) |
+| 3.3.2 | Visible labels, instructions, and input requirements (name checks alone do not settle this) | [Judgment lines](../../a11y-knowledge/references/criteria/3.3.2.md) |
 | 4.1.2 | Role, name, and state of operable elements | [Judgment lines](../../a11y-knowledge/references/criteria/4.1.2.md) |
 | 4.1.3 | Messages reporting a change of state and their role (`status` / `alert` / `log`, etc.) | Fail if a message reporting the result of a user action or the state of a process does not reach assistive technology without moving focus |
 

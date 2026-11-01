@@ -102,8 +102,8 @@ Criteria judged by reproducing user interaction through browser interaction: key
 ## Error Handling
 | Criterion | Action | Evidence | Fail condition |
 |---|---|---|---|
-| 3.3.1 | Error is identified on invalid input | Screenshot | Error location unclear |
-| 3.3.3 | Correction suggestion is shown | Screenshot | No concrete suggestion |
+| 3.3.1 | Check the item and nature of automatically detected errors | Screen/text alternatives/validation response | [3.3.1 conditions](../../a11y-knowledge/references/criteria/3.3.1.md) |
+| 3.3.3 | Check known corrections, presentation, and exceptions | Screen/accepted values/exception reasons | [3.3.3 conditions](../../a11y-knowledge/references/criteria/3.3.3.md) |
 | 3.3.4 | Important actions can be confirmed/cancelled | Action log | No cancel/confirm |
 
 ### 3.3.1 Error Identification Check
@@ -111,8 +111,8 @@ Criteria judged by reproducing user interaction through browser interaction: key
 When an input error is detected automatically, the item in error must be identified in text and the error described to the user.
 
 > **Note:** When testing 3.3.1, also check the following.
-> - **3.3.2 Labels or Instructions** — before triggering errors, whether form inputs have an accessible name and instructions. See [automated-checks.md](./automated-checks.md).
-> - **3.3.3 Error Suggestion** — whether the error message suggests how to fix it (e.g., "Enter a valid email address such as name@example.com").
+> - **3.3.2 Labels or Instructions** — before triggering errors, whether form inputs have labels or instructions presented to all users (do not decide from accessible names alone). See [automated-checks.md](./automated-checks.md).
+> - **3.3.3 Error Suggestion** — whether correction suggestions are provided when corrections are known and no exception applies (e.g., "Enter a valid email address such as name@example.com").
 
 **Test procedure:**
 
@@ -132,13 +132,12 @@ When an input error is detected automatically, the item in error must be identif
 
    | Check | Pass condition | Fail condition |
    |-------|---------------|----------------|
-   | Error message exists | A text message describes the error | No message, or only visual cues (color/icon) |
-   | Error location is explicit | The text makes clear which field is in error | Relies only on color or position |
-   | Programmatic association | `aria-describedby`, `aria-errormessage` or `aria-invalid` is present | No programmatic link between error and field |
+   | Error message exists | Text or a text alternative describes the error | No explanation; color/icons only, without text alternatives |
+   | Error location is explicit | The explanation and its presentation identify the field | The field cannot be identified even with the explanation |
 
-4. In the a11y tree, check `aria-invalid="true"` on the field in error, the target of `aria-describedby` / `aria-errormessage` (it does not show in ariaSnapshot, so read the attributes), and that the error message is not hidden from AT.
+4. Also check text alternatives, AT presentation, native validation, and explanations after automatic correction. For implementations using ARIA, inspect post-validation `aria-invalid` and the targets of `aria-describedby` / `aria-errormessage` through attributes. Missing specific attributes alone does not fail 3.3.1. Assess associations, states, and notifications under the conditions of applicable separate criteria.
 
-**Fail when:** no error message is shown / the error is shown by color only / the message does not say which field is in error / AT cannot perceive it (visual icon only, etc.).
+**Judgment:** Follow [3.3.1-E01–E03](../../a11y-knowledge/references/criteria/3.3.1.md) to assess whether text or a text alternative communicates the item and nature of the detected error. Leave untested states as needs review with the required reproduction steps.
 
 ## Authentication
 | Criterion | Action | Evidence | Fail condition |

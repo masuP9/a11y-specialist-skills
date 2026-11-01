@@ -69,7 +69,7 @@ When the "Judgment Rule" column says **Judgment lines**, judge with the "Judgmen
 | 3.2.4 | Automated | a11y tree comparison across pages | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.4.md) |
 | 3.2.6 | Automated | a11y tree comparison across pages | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.6.md) |
 | 3.3.1 | Interactive | screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/3.3.1.md) |
-| 3.3.2 | Automated + Content | a11y tree/excerpts | [Judgment lines](../../a11y-knowledge/references/criteria/3.3.2.md) |
+| 3.3.2 | Content (automation supplies name evidence) | Visible labels/instructions, screen during input, accepted values | [Judgment lines](../../a11y-knowledge/references/criteria/3.3.2.md) |
 | 3.3.3 | Interactive | screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/3.3.3.md) |
 | 3.3.4 | Interactive | logs | [Judgment lines](../../a11y-knowledge/references/criteria/3.3.4.md) |
 | 3.3.7 | Manual + automated candidates | `redundant-entry-check` **[CLI]** + logs | Fail if redundant entry required |
