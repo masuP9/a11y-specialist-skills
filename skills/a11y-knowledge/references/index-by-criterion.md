@@ -28,6 +28,7 @@
 | 1.4.11 | Non-text Contrast | Measurement + Visual | [1.4.11](./criteria/1.4.11.md) |
 | 1.4.12    | Text Spacing                              | Measurement           | [1.4.12](./criteria/1.4.12.md)                |
 | 2.1.1     | Keyboard                                  | Element + Measurement | [2.1.1](./criteria/2.1.1.md)                  |
+| 2.1.4 | Character Key Shortcuts | Measurement | [2.1.4](./criteria/2.1.4.md) |
 | 2.2.1     | Timing Adjustable                         | Measurement           | [2.2.1](./criteria/2.2.1.md)                  |
 | 2.2.2     | Pause, Stop, Hide                         | Measurement           | [2.2.2](./criteria/2.2.2.md)                  |
 | 2.4.1     | Bypass Blocks                             | Whole page            | [2.4.1](./criteria/2.4.1.md)                  |
@@ -39,6 +40,8 @@
 | 2.4.12 | Focus Not Obscured (Enhanced), AAA | Measurement + Visual | [2.4.12](./criteria/2.4.12.md) |
 | 2.4.13 | Focus Appearance, AAA | Measurement + Visual | [2.4.13](./criteria/2.4.13.md) |
 | 2.5.1     | Pointer Gestures                          | Measurement           | [2.5.1](./criteria/2.5.1.md)                  |
+| 2.5.2 | Pointer Cancellation | Measurement | [2.5.2](./criteria/2.5.2.md) |
+| 2.5.4 | Motion Actuation | Measurement | [2.5.4](./criteria/2.5.4.md) |
 | 2.5.5     | Target Size (Enhanced) AAA                | Measurement           | [2.5.5](./criteria/2.5.5.md)                  |
 | 2.5.7     | Dragging Movements                        | Measurement           | [2.5.7](./criteria/2.5.7.md)                  |
 | 2.5.8     | Target Size (Minimum)                     | Measurement + Element | [2.5.8](./criteria/2.5.8.md)                  |

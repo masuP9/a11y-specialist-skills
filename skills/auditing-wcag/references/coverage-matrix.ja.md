@@ -37,7 +37,7 @@
 |---|---|---|---|
 | 2.1.1 | 自動+インタラクティブ | `keyboard-reachability-check` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.1.1.ja.md) |
 | 2.1.2 | 自動+インタラクティブ | `keyboard-trap-check` **[CLI]** + 操作ログ | トラップでFail |
-| 2.1.4 | インタラクティブ+自動の候補 | `character-key-shortcut-check` **[CLI]** + 操作ログ | 単一キー回避不可でFail |
+| 2.1.4 | インタラクティブ+自動の候補 | `character-key-shortcut-check` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.1.4.ja.md) |
 | 2.2.1 | 自動+手動 | `time-limit-detector` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.2.1.ja.md) |
 | 2.2.2 | 自動+インタラクティブ | `auto-play-detection` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.2.2.ja.md) |
 | 2.3.1 | 手動 | 動画 | 点滅閾値超でFail |
@@ -52,9 +52,9 @@
 | 2.4.12 (AAA) | 自動+インタラクティブ | `focus-indicator-check` **[CLI]** + スクショ | [線引き](../../a11y-knowledge/references/criteria/2.4.12.ja.md) |
 | 2.4.13 (AAA) | 実測 + 手動 | 同じ位置の前後の色・有効面積 | [線引き](../../a11y-knowledge/references/criteria/2.4.13.ja.md) |
 | 2.5.1 | インタラクティブ+自動の候補 | `pointer-gesture-check` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.5.1.ja.md) |
-| 2.5.2 | インタラクティブ+自動の候補 | `pointer-cancellation-check` **[CLI]** + 操作ログ | 誤作動/キャンセル不可でFail |
+| 2.5.2 | インタラクティブ+自動の候補 | `pointer-cancellation-check` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.5.2.ja.md) |
 | 2.5.3 | 自動+手動 | a11y name比較（axe `label-content-name-mismatch` は実験的ルールのため既定では未実行） | ラベル文字列不一致でFail |
-| 2.5.4 | インタラクティブ+自動の候補 | `motion-actuation-check` **[CLI]** + 操作ログ | 動作検知のみでFail |
+| 2.5.4 | インタラクティブ+自動の候補 | `motion-actuation-check` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.5.4.ja.md) |
 | 2.5.7 | インタラクティブ+自動の候補 | `pointer-gesture-check` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.5.7.ja.md) |
 | 2.5.8 | 自動 | `target-size-check` **[CLI]** | [線引き](../../a11y-knowledge/references/criteria/2.5.8.ja.md) |
 

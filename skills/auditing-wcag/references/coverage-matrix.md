@@ -37,7 +37,7 @@ When the "Judgment Rule" column says **Judgment lines**, judge with the "Judgmen
 |---|---|---|---|
 | 2.1.1 | Automated + Interactive | `keyboard-reachability-check` **[CLI]** + logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.1.1.md) |
 | 2.1.2 | Automated + Interactive | `keyboard-trap-check` **[CLI]** + logs | Fail on keyboard trap |
-| 2.1.4 | Interactive + automated candidates | `character-key-shortcut-check` **[CLI]** + logs | Fail if single-key shortcuts cannot be mitigated |
+| 2.1.4 | Interactive + automated candidates | `character-key-shortcut-check` **[CLI]** + logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.1.4.md) |
 | 2.2.1 | Automated + Manual | `time-limit-detector` **[CLI]** + logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.2.1.md) |
 | 2.2.2 | Automated + Interactive | `auto-play-detection` **[CLI]** + logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.2.2.md) |
 | 2.3.1 | Manual | video | Fail if flashing exceeds threshold |
@@ -52,9 +52,9 @@ When the "Judgment Rule" column says **Judgment lines**, judge with the "Judgmen
 | 2.4.12 (AAA) | Automated + Interactive | `focus-indicator-check` **[CLI]** + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.12.md) |
 | 2.4.13 (AAA) | Measurement + manual | Colors at identical positions before/after focus; qualifying area | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.13.md) |
 | 2.5.1 | Interactive + automated candidates | `pointer-gesture-check` **[CLI]** + logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.5.1.md) |
-| 2.5.2 | Interactive + automated candidates | `pointer-cancellation-check` **[CLI]** + logs | Fail if cancellation unavailable |
+| 2.5.2 | Interactive + automated candidates | `pointer-cancellation-check` **[CLI]** + logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.5.2.md) |
 | 2.5.3 | Automated + Manual | a11y name diff (axe `label-content-name-mismatch` is experimental and not run by default) | Fail if label text not in accessible name |
-| 2.5.4 | Interactive + automated candidates | `motion-actuation-check` **[CLI]** + logs | Fail if motion-only activation |
+| 2.5.4 | Interactive + automated candidates | `motion-actuation-check` **[CLI]** + logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.5.4.md) |
 | 2.5.7 | Interactive + automated candidates | `pointer-gesture-check` **[CLI]** + logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.5.7.md) |
 | 2.5.8 | Automated | `target-size-check` **[CLI]** | [Judgment lines](../../a11y-knowledge/references/criteria/2.5.8.md) |
 
