@@ -36,7 +36,7 @@ Use ACT evidence to understand check scope. Do not assume axe completely impleme
 | `html-has-lang`      | 3.1.1     | `html` has no lang or it is empty                                                     |
 | `html-lang-valid`    | 3.1.1     | The lang value is malformed                                                           |
 | `image-alt`          | 1.1.1     | Confirmed absence of a valid alternative or ignorable implementation for the target image, not merely missing alt ([1.1.1-E02–E04](./criteria/1.1.1.md))          |
-| `link-in-text-block` | 1.4.1     | A link in running text is distinguished from the surrounding text by color alone      |
+| `link-in-text-block` | 1.4.1 | Treat violations within the detected scope as failures and incomplete as needs review. Distinguish 3:1 against surrounding text / style cues from contrast against the background. [1.4.1](./criteria/1.4.1.md) |
 
 ## Rules treated as best practice
 

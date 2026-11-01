@@ -27,9 +27,9 @@
 | 1.2.2 | `<track kind="captions">`、axe `video-caption` | [線引き](../../a11y-knowledge/references/criteria/1.2.2.ja.md) |
 | 1.3.1 | 見出し・ランドマーク・リスト・表・フォームの関係がツリーに出ているか | [線引き](../../a11y-knowledge/references/criteria/1.3.1.ja.md) |
 | 1.3.2 | ツリーの順序と見た目の順序 | 順序を入れ替えると意味が変わる箇所で、ツリーの順序が見た目の意味と食い違えば Fail |
-| 1.3.3 | ツリーのテキストのうち、位置・形・大きさ・音で対象を指す指示 | [線引き](../../a11y-knowledge/references/criteria/1.3.3.ja.md) |
+| 1.3.3 | 指示の文章、対象のラベル・機能・記号の代替、読む順。「以下」も曖昧でないか確認 | [線引き](../../a11y-knowledge/references/criteria/1.3.3.ja.md) |
 | 1.3.5 | `autocomplete-audit` **[CLI]** | [線引き](../../a11y-knowledge/references/criteria/1.3.5.ja.md) |
-| 1.4.1 | スクリーンショット、ツリーのテキスト、axe `link-in-text-block` | [線引き](../../a11y-knowledge/references/criteria/1.4.1.ja.md) |
+| 1.4.1 | スクリーンショット、ツリーのテキスト、axe `link-in-text-block` | [線引き](../../a11y-knowledge/references/criteria/1.4.1.ja.md)。明るさの境界は測定し、同じ情報の可視の手がかり・訪問済みリンクの扱いを確認 |
 | 1.4.3 | axe `color-contrast` | 4.5:1 未満（大きな文字は 3:1 未満）で Fail。axe が計算できなかった箇所（画像・グラデーションの背景）は実測するまで NT |
 | 1.4.11 | `non-text-contrast-check` **[CLI]**（部品の境界・アイコンだけのボタン） | [線引き](../../a11y-knowledge/references/criteria/1.4.11.ja.md)。必要な表示・隣接色・例外を確認して判定 |
 | 2.4.1 | ツリーのスキップリンク・ランドマーク・見出し | [線引き](../../a11y-knowledge/references/criteria/2.4.1.ja.md) |

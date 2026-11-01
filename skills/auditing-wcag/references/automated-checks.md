@@ -27,9 +27,9 @@ The material collected from the page as loaded (accessibility tree, DOM, screens
 | 1.2.2 | `<track kind="captions">`, axe `video-caption` | [Judgment lines](../../a11y-knowledge/references/criteria/1.2.2.md) |
 | 1.3.1 | Whether headings, landmarks, lists, tables, and form relationships appear in the tree | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.1.md) |
 | 1.3.2 | Tree order vs. visual order | Fail where reordering changes meaning and the tree order contradicts the visual meaning |
-| 1.3.3 | Instructions in the tree text that point to things by position, shape, size, or sound | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.3.md) |
+| 1.3.3 | Instructions, target labels/functions, symbol alternatives, and reading order; check ambiguity even for “below” | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.3.md) |
 | 1.3.5 | `autocomplete-audit` **[CLI]** | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.5.md) |
-| 1.4.1 | Screenshots, tree text, axe `link-in-text-block` | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.1.md) |
+| 1.4.1 | Screenshots, tree text, axe `link-in-text-block` | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.1.md). Measure uncertain lightness distinctions; check visible cues conveying the same information and visited-link treatment |
 | 1.4.3 | axe `color-contrast` | Fail below 4.5:1 (3:1 for large text). Where axe could not compute (image or gradient backgrounds), NT until measured |
 | 1.4.11 | `non-text-contrast-check` **[CLI]** (component boundaries, icon-only buttons) | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.11.md); verify required cues, adjacent colors, and exceptions |
 | 2.4.1 | Skip links, landmarks, and headings in the tree | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.1.md) |

@@ -45,7 +45,7 @@ Items requiring human judgment. Use screenshots/video/notes as evidence for visu
 |---|---|---|---|
 | 1.3.4 | Works in both portrait/landscape | screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.4.md) |
 
-> **CLI Check:** `orientation-check` - Detects orientation lock messages and content visibility differences between portrait/landscape.
+> **CLI Check:** `orientation-check` - Detects orientation lock messages and content visibility differences between portrait/landscape. These are viewport-based inferences; verify actual restrictions, switching controls, and essentiality. Distinguish OS locks and layout differences alone.
 >
 > Run via: `npx -y @a11y-skills/audit --url "<url>" --checks orientation-check`
 
