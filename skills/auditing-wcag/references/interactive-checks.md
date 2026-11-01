@@ -19,7 +19,7 @@ Criteria judged by reproducing user interaction through browser interaction: key
 |---|---|---|---|
 | 2.1.1 | Operate all functions with the keyboard only | Action log/video | Click-only operation exists |
 | 2.1.2 | Focus can always be moved away | Action log | A focus trap exists |
-| 2.1.4 | Character-key shortcuts can be turned off / remapped / limited to focus | Action log + `character-key-shortcut-check` | A shortcut fires by mistake and cannot be avoided |
+| 2.1.4 | Disablement, remapping, or focus restriction for character-only shortcuts, including sequences | Action log + `character-key-shortcut-check` | None is satisfied; an actual accidental activation is not required |
 
 ### `keyboard-reachability-check` (2.1.1)
 - Run: `--checks keyboard-reachability-check`
@@ -34,7 +34,7 @@ Criteria judged by reproducing user interaction through browser interaction: key
 ### `character-key-shortcut-check` (2.1.4)
 - Run: `--checks character-key-shortcut-check`
 - Side effects: with focus on `<body>`, actually presses the 94 printable characters. On pages with shortcuts that delete or submit, those run.
-- Verify by hand: whether a reacting key has a way to turn it off or remap it; whether it works only while a component has focus (exception); keydown handlers on an element wrapping the whole app and shortcuts that work only while a component has focus (not examined); for doubtful keys, narrow the function API's `keys` to one character and retry (the CLI has no setting to limit the keys pressed).
+- Verify by hand: whether a reacting key has a way to turn it off or remap it; whether it works only while a component has focus (exception); keydown handlers on an element wrapping the whole app and shortcuts that work only while a component has focus (not examined); for doubtful keys, narrow the function API's `keys` to one character and retry (the CLI has no setting to limit the keys pressed). Include character sequences and symbols produced with Shift or similar keys; remapping must include a non-printable key. [2.1.4](../../a11y-knowledge/references/criteria/2.1.4.md)
 
 ## Focus
 | Criterion | Action | Evidence | Fail condition |
@@ -64,15 +64,15 @@ Criteria judged by reproducing user interaction through browser interaction: key
 | Criterion | Action | Evidence | Fail condition |
 |---|---|---|---|
 | 2.5.1 | Check for a single-pointer alternative without a path to multipoint/path-based operations | Action log + `pointer-gesture-check` | Nonessential operation has no alternative; keyboard support alone is insufficient |
-| 2.5.2 | Down-event alone does not run a function (runs on release / can be aborted / can be undone) | Action log + `pointer-cancellation-check` | Runs on the down-event alone with no abort or undo |
-| 2.5.4 | Shake / tilt operations have an on-screen alternative and motion activation can be turned off | Action log + `motion-actuation-check` | Only operable by motion, or it cannot be turned off |
+| 2.5.2 | Check completion timing, abort/undo, up reversal, and essentiality | Action log + `pointer-cancellation-check` | None of the normative alternatives is satisfied |
+| 2.5.4 | Check equivalent controls, motion disablement, and exceptions | Action log + `motion-actuation-check` | Not excepted and either alternative operation or disablement is missing |
 | 2.5.7 | Check that a single pointer operates the same function without dragging | Action log + `pointer-gesture-check` | No alternative and neither essential nor UA exception applies |
 | 2.5.8 | Measure target size | Screenshot/measurement + `target-size-check` | Minimum size not met |
 
 ### `motion-actuation-check` (2.5.4)
 - Run: `--checks motion-actuation-check`
 - Side effects: sends synthetic motion events to types whose listener is on `window` (whether the DOM changes is the evidence). The page state may change.
-- Verify by hand: for each candidate, whether there is an on-screen alternative and a way to turn off motion activation (including the essential and AT-supported exceptions). Synthetic events have `isTrusted: false`, so a candidate remains even when "no change" is shown.
+- Verify by hand: for each candidate, whether there is an on-screen alternative and a way to turn off motion activation (including the essential and AT-supported exceptions). Synthetic events have `isTrusted: false`, so a candidate remains even when "no change" is shown. An OS setting can qualify; verify its actual effect. Cameras, Generic Sensor API, and post-permission states are outside automated detection. [2.5.4](../../a11y-knowledge/references/criteria/2.5.4.md)
 
 ### `pointer-gesture-check` (2.5.1 / 2.5.7)
 - Run: `--checks pointer-gesture-check`
@@ -82,7 +82,7 @@ Criteria judged by reproducing user interaction through browser interaction: key
 ### `pointer-cancellation-check` (2.5.2)
 - Run: `--checks pointer-cancellation-check`
 - Side effects: sends synthetic down-events (`pointerdown` / `mousedown`) to each operable element. On pages that submit or save on the down-event, that runs.
-- Verify by hand: for each candidate, whether it runs on release, whether it can be aborted, whether it can be undone, and whether the essential down-event exception applies; the page-level "verify manually" nodes.
+- Verify by hand: for each candidate, whether it runs on release, whether it can be aborted, whether it can be undone, and whether the essential down-event exception applies; the page-level "verify manually" nodes. Focus movement on press alone is not Fail. Check up reversal as well; Undo alone does not remove the need to establish completion timing. [2.5.2](../../a11y-knowledge/references/criteria/2.5.2.md)
 
 ### `target-size-check` (2.5.8 / 2.5.5)
 - Run: `--checks target-size-check` (also writes a highlighted full-page screenshot)

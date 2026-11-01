@@ -30,8 +30,9 @@
 | time-limit-detector        | 2.2.1          | 時間制限の候補                                                       | 延長・解除の手段があるかは判断が要る                                                             |
 | auto-play-detection        | 2.2.2、1.4.2   | 動く・鳴るものの候補                                                 | 1.4.2 は不適合を付けない（止める・音量を変える手段を確かめていない）。候補が 1 件以上なら要確認、`<audio>` / `<video>` が無ければ対象外、あって候補が無ければ適合 |
 | pointer-gesture-check | 2.5.1、2.5.7 | 複数点・軌跡・ドラッグで操作しそうな候補 | 候補またはページ単位の要確認nodeがあれば要確認。両方なければ検出範囲内で対象外。キーボード対応だけを代替にしない。[2.5.1](./criteria/2.5.1.ja.md)、[2.5.7](./criteria/2.5.7.ja.md)参照 |
-| pointer-cancellation-check | 2.5.2          | 候補を挙げる                                                         | 判断が要る                                                                                      |
-| character-key-shortcut-check | 2.1.4        | 候補を挙げる                                                         | 判断が要る                                                                                      |
+| motion-actuation-check | 2.5.4 | 動きのリスナーと合成イベントの反応 | 例外、同じ機能の代替操作と動きの無効化の両方を確認。無反応だけではPassにしない。[2.5.4](./criteria/2.5.4.ja.md) |
+| pointer-cancellation-check | 2.5.2 | 押し下げでの変化・リスナーの候補 | 完了時点、中止・取り消し・離したときの復元、必須の条件を確認。候補だけでFailにしない。[2.5.2](./criteria/2.5.2.ja.md) |
+| character-key-shortcut-check | 2.1.4 | body上での単発文字への反応 | 無効化・非印字キーを含む再割当・部品へのフォーカス限定を確認。連続文字や別状態は別途確認。[2.1.4](./criteria/2.1.4.ja.md) |
 | content-on-hover-check     | 1.4.13         | 候補を挙げる                                                         | 判断が要る                                                                                      |
 | non-text-contrast-check    | 1.4.11         | 候補を挙げる                                                         | [1.4.11の条件](./criteria/1.4.11.ja.md) |
 
