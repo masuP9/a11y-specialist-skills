@@ -32,9 +32,9 @@
 | 1.4.1 | スクリーンショット、ツリーのテキスト、axe `link-in-text-block` | [線引き](../../a11y-knowledge/references/criteria/1.4.1.ja.md)。明るさの境界は測定し、同じ情報の可視の手がかり・訪問済みリンクの扱いを確認 |
 | 1.4.3 | axe `color-contrast` | 4.5:1 未満（大きな文字は 3:1 未満）で Fail。axe が計算できなかった箇所（画像・グラデーションの背景）は実測するまで NT |
 | 1.4.11 | `non-text-contrast-check` **[CLI]**（部品の境界・アイコンだけのボタン） | [線引き](../../a11y-knowledge/references/criteria/1.4.11.ja.md)。必要な表示・隣接色・例外を確認して判定 |
-| 2.4.1 | ツリーのスキップリンク・ランドマーク・見出し | [線引き](../../a11y-knowledge/references/criteria/2.4.1.ja.md) |
-| 2.4.2 | `document.title`、axe `document-title` | [線引き](../../a11y-knowledge/references/criteria/2.4.2.ja.md) |
-| 2.4.4 | ツリーのリンクの名前と、リンクを含む文・段落・リスト項目・表のセル | [線引き](../../a11y-knowledge/references/criteria/2.4.4.ja.md) |
+| 2.4.1 | 反復ブロックと迂回先の構造。リンクに依存する場合は起動後の到達も確認 | [線引き](../../a11y-knowledge/references/criteria/2.4.1.ja.md) |
+| 2.4.2 | 現在の `document.title` と主題・目的、axe `document-title`（空でないこと） | [線引き](../../a11y-knowledge/references/criteria/2.4.2.ja.md) |
+| 2.4.4 | リンク名とDOM上の文・段落・リスト項目・表見出し・ARIA参照。直前見出しは著者方針 | [線引き](../../a11y-knowledge/references/criteria/2.4.4.ja.md) |
 | 2.4.6 | 見出しとラベルのテキスト | 見出し・ラベルが主題や目的を表していなければ Fail（有無は問わない。無いことは 1.3.1 / 3.3.2） |
 | 2.5.3 | 見えているラベルの文字列とアクセシブルネーム | ラベルの文字列が名前に含まれなければ Fail（axe `label-content-name-mismatch` は実験的ルールのため既定では未実行） |
 | 3.1.1 | `<html lang>`、axe `html-has-lang` / `html-lang-valid` | [線引き](../../a11y-knowledge/references/criteria/3.1.1.ja.md) |

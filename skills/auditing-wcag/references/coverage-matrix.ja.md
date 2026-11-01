@@ -41,8 +41,8 @@
 | 2.2.1 | 自動+手動 | `time-limit-detector` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.2.1.ja.md) |
 | 2.2.2 | 自動+インタラクティブ | `auto-play-detection` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.2.2.ja.md) |
 | 2.3.1 | 手動 | 動画 | 点滅閾値超でFail |
-| 2.4.1 | 自動 | a11y tree | [線引き](../../a11y-knowledge/references/criteria/2.4.1.ja.md) |
-| 2.4.2 | 自動 | `document.title` | [線引き](../../a11y-knowledge/references/criteria/2.4.2.ja.md) |
+| 2.4.1 | 構造+必要に応じ操作 | 反復ブロック・迂回先・到達動作 | [線引き](../../a11y-knowledge/references/criteria/2.4.1.ja.md) |
+| 2.4.2 | 自動+コンテンツ | 現在のtitleと本文・目的 | [線引き](../../a11y-knowledge/references/criteria/2.4.2.ja.md) |
 | 2.4.3 | インタラクティブ+自動の候補 | `focus-order-check` **[CLI]** + フォーカス順ログ | [線引き](../../a11y-knowledge/references/criteria/2.4.3.ja.md) |
 | 2.4.4 | 自動+コンテンツ | a11y tree + 文面抜粋 | [線引き](../../a11y-knowledge/references/criteria/2.4.4.ja.md) |
 | 2.4.5 | 自動+コンテンツ | リンクグラフ + 検索/サイトマップ検出 | 複数手段なしでFail |

@@ -32,9 +32,9 @@ The material collected from the page as loaded (accessibility tree, DOM, screens
 | 1.4.1 | Screenshots, tree text, axe `link-in-text-block` | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.1.md). Measure uncertain lightness distinctions; check visible cues conveying the same information and visited-link treatment |
 | 1.4.3 | axe `color-contrast` | Fail below 4.5:1 (3:1 for large text). Where axe could not compute (image or gradient backgrounds), NT until measured |
 | 1.4.11 | `non-text-contrast-check` **[CLI]** (component boundaries, icon-only buttons) | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.11.md); verify required cues, adjacent colors, and exceptions |
-| 2.4.1 | Skip links, landmarks, and headings in the tree | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.1.md) |
-| 2.4.2 | `document.title`, axe `document-title` | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.2.md) |
-| 2.4.4 | Link names in the tree and the sentence, paragraph, list item, or table cell containing the link | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.4.md) |
+| 2.4.1 | Repeated blocks and bypass destination structure; check arrival after activation when relying on links | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.1.md) |
+| 2.4.2 | Current `document.title` and topic/purpose; axe `document-title` (non-empty) | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.2.md) |
+| 2.4.4 | Link names and DOM sentences, paragraphs, list items, table headers, and ARIA references; preceding headings follow author policy | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.4.md) |
 | 2.4.6 | Heading and label text | Fail if a heading or label does not describe its topic or purpose (presence is not judged here; missing ones belong to 1.3.1 / 3.3.2) |
 | 2.5.3 | Visible label text vs. accessible name | Fail if the label text is not contained in the name (axe `label-content-name-mismatch` is experimental and not run by default) |
 | 3.1.1 | `<html lang>`, axe `html-has-lang` / `html-lang-valid` | [Judgment lines](../../a11y-knowledge/references/criteria/3.1.1.md) |

@@ -28,6 +28,8 @@ Use ACT evidence to understand check scope. Do not assume axe completely impleme
 - A pass on `video-caption` (a captions track exists) does not make 1.2.2 conformant. It does not check whether the caption content matches the audio ([1.2.2](./criteria/1.2.2.md)).
 - Do not transfer `label` passes or violations directly to 3.3.2. In axe-core 4.14.0 this is a 4.1.2 name check, and a placeholder alone can pass. Separately inspect labels and instructions presented to all users ([3.3.2-E01 and judgment lines](./criteria/3.3.2.md)).
 
+- A `bypass` pass only supplies evidence of internal links, headings, main, or similar structures; check whether repeated blocks can actually be bypassed. A `link-name` pass does not settle descriptive link purpose ([2.4.1](./criteria/2.4.1.md), [2.4.4](./criteria/2.4.4.md)).
+
 ## Examples of rules whose violation may be settled
 
 | axe rule             | Criterion | What is settled                                                                       |
@@ -40,6 +42,8 @@ Use ACT evidence to understand check scope. Do not assume axe completely impleme
 
 ## Rules treated as best practice
 
+- `region`: best practice in axe-core 4.14.0, outside audit's default WCAG tags. This violation alone does not fail 2.4.1 ([2.4.1](./criteria/2.4.1.md)).
+
 - `aria-dialog-name`: report a missing name on dialog / alertdialog itself as an improvement candidate without assigning a success criterion. Do not mark 4.1.2 Fail or NT solely from this result. [Our interpretation: author’s audit policy. See [4.1.2-E05 and judgment lines](./criteria/4.1.2.md)]
 
 ## Rules that stay as needs review even when violated
@@ -50,6 +54,8 @@ Use ACT evidence to understand check scope. Do not assume axe completely impleme
 | `meta-refresh` | 2.2.1 | Delay checks do not verify turn-off, adjustment, extension, or exceptions; review required. Do not automatically fail delays within 20 seconds |
 
 ## Common incomplete results
+
+- `bypass` (2.4.1): axe-core 4.14.0 sets `reviewOnFail: true`. Keep incomplete as needs review and inspect repeated blocks and alternative bypass mechanisms.
 
 - `color-contrast` (1.4.3): the background is an image or gradient and the ratio cannot be computed. Decide by visual inspection or measurement.
 - `video-caption` (1.2.2): there is no captions track. Burned-in captions are possible, so do not mark it non-conformant.
