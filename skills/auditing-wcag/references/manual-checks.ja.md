@@ -26,8 +26,8 @@
 ## タイミング
 | 基準 | 確認内容 | 証跡 | Fail条件 |
 |---|---|---|---|
-| 2.2.1 | 時間制限の延長/解除 | 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.2.1.ja.md) |
-| 2.2.2 | 自動更新/アニメの停止 | 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.2.2.ja.md) |
+| 2.2.1 | 時間制限の解除・事前調整・延長と例外 | 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.2.1.ja.md) |
+| 2.2.2 | 自動更新/アニメの停止等（自動更新に5秒条件なし） | 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.2.2.ja.md) |
 
 > **CLIチェック:**
 > - `time-limit-detector` - meta refresh、setTimeout/setInterval、カウントダウン表示を検出（2.2.1）

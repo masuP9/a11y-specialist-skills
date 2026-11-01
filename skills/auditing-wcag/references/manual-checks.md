@@ -26,8 +26,8 @@ Items requiring human judgment. Use screenshots/video/notes as evidence for visu
 ## Timing
 | Criterion | Check | Evidence | Fail rule |
 |---|---|---|---|
-| 2.2.1 | Time limits can be extended/disabled | logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.2.1.md) |
-| 2.2.2 | Auto-updating content can be paused/stopped | logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.2.2.md) |
+| 2.2.1 | Time-limit turn-off, prior adjustment, extension, and exceptions | logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.2.1.md) |
+| 2.2.2 | Pause/stop or other controls for automatic updates/animation (no five-second condition for updates) | logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.2.2.md) |
 
 > **CLI Checks:**
 > - `time-limit-detector` - Detects meta refresh, setTimeout/setInterval, countdown indicators (2.2.1)

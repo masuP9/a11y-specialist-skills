@@ -153,10 +153,11 @@ When an input error is detected automatically, the item in error must be identif
 ## Auto-play Detection
 | Criterion | Action | Evidence | Fail condition |
 |---|---|---|---|
-| 1.4.2 | Auto-playing audio can be stopped/controlled | `auto-play-detection` + listening | Audio over 3 seconds cannot be stopped |
-| 2.2.2 | Auto-updating content can be paused/stopped | `auto-play-detection` | Moves over 5 seconds with no way to stop it |
+| 1.4.2 | Check intentional initiation and stop/pause or independent volume control | `auto-play-detection` + actual sound/control checks | Automatic sound over three seconds has neither stop/pause nor independent volume control down to zero |
+| 2.2.2 | Separate movement and updates; check controls and the essential exception | `auto-play-detection` + control checks | Automatically starts alongside other content, is not essential, and either movement over five seconds lacks pause/stop/hide, or automatic updates lack pause/stop/hide/frequency control (no five-second condition) |
 
 ### `auto-play-detection` (1.4.2 / 2.2.2)
 - Run: `--checks auto-play-detection` (writes screenshots and diff images to `auto-play-screenshots/`; skipped when `pixelmatch` and `pngjs` are missing)
 - Side effects: when moving content lasts 5 seconds or more, clicks the pause control it found to see whether it actually stops.
 - Verify by hand: whether the pause / stop control is usable with the keyboard; whether sound is actually audible (listening); whether the control works by hand when the control verification failed; audio that does not use `<audio>` / `<video>` (Web Audio API, etc.); small animations under 0.1%.
+- Check that other content remains usable while paused. Do not automatically exempt loading indicators; check whether all users are unable to interact. Do not extend no detection during about six seconds to slow updates, other states, or unmeasured iframes. See [2.2.2](../../a11y-knowledge/references/criteria/2.2.2.md) and [1.4.2](../../a11y-knowledge/references/criteria/1.4.2.md) for judgment boundaries.
