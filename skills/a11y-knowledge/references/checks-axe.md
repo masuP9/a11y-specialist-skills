@@ -46,7 +46,8 @@ Use ACT evidence to understand check scope. Do not assume axe completely impleme
 
 | axe rule            | Criterion | Reason                                                                                                                                        |
 | ------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `no-autoplay-audio` | 1.4.2     | Only looks at the `controls` attribute. It reports a violation even when there is a mechanism elsewhere on the page to stop or change the volume, so non-conformance cannot be asserted |
+| `no-autoplay-audio` | 1.4.2 | Checks controls, playback duration, loop, and related conditions, but does not verify external stop or independent volume controls; review required |
+| `meta-refresh` | 2.2.1 | Delay checks do not verify turn-off, adjustment, extension, or exceptions; review required. Do not automatically fail delays within 20 seconds |
 
 ## Common incomplete results
 
