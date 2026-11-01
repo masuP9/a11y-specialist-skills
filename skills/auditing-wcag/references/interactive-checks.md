@@ -63,10 +63,10 @@ Criteria judged by reproducing user interaction through browser interaction: key
 ## Pointer
 | Criterion | Action | Evidence | Fail condition |
 |---|---|---|---|
-| 2.5.1 | Pinch, swipe and other multi-finger or path gestures have a single-point alternative | Action log + `pointer-gesture-check` | Only operable by multiple fingers or paths |
+| 2.5.1 | Check for a single-pointer alternative without a path to multipoint/path-based operations | Action log + `pointer-gesture-check` | Nonessential operation has no alternative; keyboard support alone is insufficient |
 | 2.5.2 | Down-event alone does not run a function (runs on release / can be aborted / can be undone) | Action log + `pointer-cancellation-check` | Runs on the down-event alone with no abort or undo |
 | 2.5.4 | Shake / tilt operations have an on-screen alternative and motion activation can be turned off | Action log + `motion-actuation-check` | Only operable by motion, or it cannot be turned off |
-| 2.5.7 | Provide a non-dragging alternative | Action log + `pointer-gesture-check` | Dragging required with no alternative |
+| 2.5.7 | Check that a single pointer operates the same function without dragging | Action log + `pointer-gesture-check` | No alternative and neither essential nor UA exception applies |
 | 2.5.8 | Measure target size | Screenshot/measurement + `target-size-check` | Minimum size not met |
 
 ### `motion-actuation-check` (2.5.4)
@@ -77,7 +77,7 @@ Criteria judged by reproducing user interaction through browser interaction: key
 ### `pointer-gesture-check` (2.5.1 / 2.5.7)
 - Run: `--checks pointer-gesture-check`
 - Side effects: none (it sends no events and does not change the page state).
-- Verify by hand: for each candidate, whether a single-point operation (button or click) does the same thing, and whether the essential-operation exception applies; whether it actually works by dragging or swiping; the page-level "verify manually" nodes (delegation roots, `window` / `document` listeners).
+- Verify by hand: whether a path or dragging is actually required, whether a single pointer performs the same function, and whether an essential or UA exception applies. Keyboard-only alternatives are insufficient, but a value input can qualify. Retain page-level manual-review nodes (delegation, inspection failure, truncation, etc.) even with zero candidates. See [2.5.1](../../a11y-knowledge/references/criteria/2.5.1.md) and [2.5.7](../../a11y-knowledge/references/criteria/2.5.7.md).
 
 ### `pointer-cancellation-check` (2.5.2)
 - Run: `--checks pointer-cancellation-check`
@@ -87,7 +87,7 @@ Criteria judged by reproducing user interaction through browser interaction: key
 ### `target-size-check` (2.5.8 / 2.5.5)
 - Run: `--checks target-size-check` (also writes a highlighted full-page screenshot)
 - Side effects: none (display change only: it scrolls the page to test what is on top and restores the position).
-- Verify by hand: whether an `exception: "inline"` candidate is really inside text; the essential exception (map pins, game controls); whether any undetected kind of target (an element with a script-only click handler) is near a target that passed the spacing exception; targets shown only after interaction (dropdowns, modals); Shadow DOM / iframe contents.
+- Verify by hand: whether an `exception: "inline"` candidate is really inside text; the essential exception (map pins, game controls); whether any undetected kind of target (an element with a script-only click handler) is near a target that passed the spacing exception; targets shown only after interaction (dropdowns, modals); Shadow DOM / iframe contents. For 2.5.5, also verify that a same-page equivalent target is at least 44×44 CSS px. Evaluate its sentence/block-of-text exception separately from 2.5.8 and do not apply the spacing exception.
 
 ## Hover/Focus Content
 | Criterion | Action | Evidence | Fail condition |

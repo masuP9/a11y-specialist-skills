@@ -21,7 +21,7 @@
 | focus-order-check          | 2.4.3          | 候補を挙げる                                                         | 読む順との食い違いが意味や操作を損なうかは判断が要る                                             |
 | keyboard-reachability-check | 2.1.1         | Tab・矢印キー・activedescendant で届くかの実測                       | 届いても Enter・スペースで動くかは別。届かない要素は要確認（別の経路がありうる）                 |
 | keyboard-trap-check        | 2.1.2          | 抜けられない要素                                                     | —                                                                                              |
-| target-size-check | 2.5.8、2.5.5 | 2.5.8: `exceptionAssessment: "verified"` は検出範囲内の間隔の証拠。`intersections` は間隔の例外を否定する材料 | `possible` / `not-assessed`、他の例外、未検出の対象・状態・形状は確認が要る。[2.5.8](./criteria/2.5.8.ja.md)参照。2.5.5には別の例外条件を適用し、2.5.8の間隔の例外を流用しない |
+| target-size-check | 2.5.8、2.5.5 | 2.5.8: `exceptionAssessment: "verified"` は検出範囲内の間隔の証拠。`intersections` は間隔の例外を否定する材料 | `possible` / `not-assessed`、他の例外、未検出の対象・状態・形状は確認が要る。[2.5.8](./criteria/2.5.8.ja.md)参照。2.5.5には別の例外条件を適用し、2.5.8の間隔の例外を流用しない。[2.5.5](./criteria/2.5.5.ja.md)は同等ターゲットの44pxと文・テキストブロックの例外も別に確認する |
 | autocomplete-audit         | 1.3.5          | 目的を推定できた欄の無効な値は不適合。有効な値があれば適合           | `missing`（autocomplete が無い）と、目的を推定できなかった欄の無効な値は、本人の情報の欄かを見て決める |
 | reflow-check | 1.4.10 | 候補を挙げる | 例外の範囲、領域内を読む方向、折り畳み後の到達経路を確認。ページの横スクロールだけでは決めない。[1.4.10](./criteria/1.4.10.ja.md) |
 | text-spacing-check | 1.4.12 | 正しく適用した上書きで内容・機能が失われ、全文表示等でも回復できないことを確認して不適合 | `clippedElements`だけでは確定しない。検出0件は適切な上書きと確認範囲を前提に独自運用で適合。重なり・他レイアウトは未検証と記す。[1.4.12](./criteria/1.4.12.ja.md) |
@@ -29,7 +29,7 @@
 | orientation-check          | 1.3.4          | 向きを固定しているか                                                 | 固定が必須の例外に当たるかは判断が要る                                                           |
 | time-limit-detector        | 2.2.1          | 時間制限の候補                                                       | 延長・解除の手段があるかは判断が要る                                                             |
 | auto-play-detection        | 2.2.2、1.4.2   | 動く・鳴るものの候補                                                 | 1.4.2 は不適合を付けない（止める・音量を変える手段を確かめていない）。候補が 1 件以上なら要確認、`<audio>` / `<video>` が無ければ対象外、あって候補が無ければ適合 |
-| pointer-gesture-check      | 2.5.1、2.5.7   | 複数の指・軌跡・ドラッグで操作しそうな要素の候補                     | 適合も不適合も付けない。候補が 1 件以上なら要確認、0 件なら対象外                               |
+| pointer-gesture-check | 2.5.1、2.5.7 | 複数点・軌跡・ドラッグで操作しそうな候補 | 候補またはページ単位の要確認nodeがあれば要確認。両方なければ検出範囲内で対象外。キーボード対応だけを代替にしない。[2.5.1](./criteria/2.5.1.ja.md)、[2.5.7](./criteria/2.5.7.ja.md)参照 |
 | pointer-cancellation-check | 2.5.2          | 候補を挙げる                                                         | 判断が要る                                                                                      |
 | character-key-shortcut-check | 2.1.4        | 候補を挙げる                                                         | 判断が要る                                                                                      |
 | content-on-hover-check     | 1.4.13         | 候補を挙げる                                                         | 判断が要る                                                                                      |
