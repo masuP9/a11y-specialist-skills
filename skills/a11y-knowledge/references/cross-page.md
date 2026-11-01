@@ -11,6 +11,8 @@ Judgment rules shared by 3.2.3 (Consistent Navigation), 3.2.4 (Consistent Identi
 
 Sources checked: 2026-11-02. Majority and candidate extraction below are author inspection/reporting policies, not WCAG conformance conditions. See evidence in [3.2.3](./criteria/3.2.3.md), [3.2.4](./criteria/3.2.4.md), and [3.2.6](./criteria/3.2.6.md).
 
+For 2.4.2, use only the procedure for collecting duplicate titles as comparison candidates. Compare each title with its own page topic or purpose; do not apply majority/tie assignment below. [2.4.2-E01–E03](./criteria/2.4.2.md)
+
 ## Judgment rules
 
 - **Establish set boundaries first, then compare tested pages within the set.** A shared domain alone does not define a set. Record purpose, authorship, and functional grouping; do not extend results to untested pages. [Our interpretation: inspection scope policy. See each criterion for official scope]

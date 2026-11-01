@@ -41,8 +41,8 @@ When the "Judgment Rule" column says **Judgment lines**, judge with the "Judgmen
 | 2.2.1 | Automated + Manual | `time-limit-detector` **[CLI]** + logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.2.1.md) |
 | 2.2.2 | Automated + Interactive | `auto-play-detection` **[CLI]** + logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.2.2.md) |
 | 2.3.1 | Manual | video | Fail if flashing exceeds threshold |
-| 2.4.1 | Automated | a11y tree | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.1.md) |
-| 2.4.2 | Automated | `document.title` | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.2.md) |
+| 2.4.1 | Structure + interaction as needed | Repeated blocks, bypass destinations and behavior | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.1.md) |
+| 2.4.2 | Automated + Content | Current title, content, and purpose | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.2.md) |
 | 2.4.3 | Interactive + automated candidates | `focus-order-check` **[CLI]** + focus order log | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.3.md) |
 | 2.4.4 | Automated + Content | a11y tree + excerpts | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.4.md) |
 | 2.4.5 | Automated + Content | link graph + search/sitemap detection | Fail if only one way provided |
