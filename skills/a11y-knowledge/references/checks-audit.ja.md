@@ -20,7 +20,8 @@
 | focus-indicator-check      | 2.4.7、2.4.11、2.4.12、3.2.1、2.4.3 | 3.2.1: origin / pathname変化は既定で不適合とする著者方針。単なるhistory更新や別原因の証拠があれば照合（[3.2.1](./criteria/3.2.1.ja.md)）。2.4.11: 実表示の完全遮蔽と注記の不成立を確認して不適合（[2.4.11](./criteria/2.4.11.ja.md)） | 2.4.7 はスタイル差分だけで不適合にしない。実表示の不可視・時間制限による消失は確定できる（[2.4.7](./criteria/2.4.7.ja.md)）。`fullyObscured` は99%以上の検出候補であり、完全遮蔽と例外条件の確認が要る。query / hash だけの変化は要確認。飛ばした要素・途中で止まった実測では適合を付けない  2.4.12は部分遮蔽も確認。候補0件で適合にしない（[2.4.12](./criteria/2.4.12.ja.md)）。 |
 | focus-order-check          | 2.4.3          | 候補を挙げる                                                         | 読む順との食い違いが意味や操作を損なうかは判断が要る                                             |
 | keyboard-reachability-check | 2.1.1         | Tab・矢印キー・activedescendant で届くかの実測                       | 到達と機能の実行は別。同等機能の別経路・経路依存の例外を確認（[2.1.1](./criteria/2.1.1.ja.md)）                 |
-| keyboard-trap-check        | 2.1.2          | 抜けられない要素                                                     | —                                                                                              |
+| keyboard-trap-check | 2.1.2 | Escape・Shift+Tab・閉じる部品へのDOM clickの試行結果 | violationsも別の脱出キーと案内を照合。クリック成功はキーボード脱出の証明ではない。tabWalkCappedと未検査状態を確認。[2.1.2](./criteria/2.1.2.ja.md) |
+| change-on-input-check | 3.2.2 | 値変更後の遷移・フォーカス移動等の候補 | 実際の状況変化と事前案内、未対応部品・別値・遅延反応を確認。[3.2.2](./criteria/3.2.2.ja.md) |
 | target-size-check | 2.5.8、2.5.5 | 2.5.8: `exceptionAssessment: "verified"` は検出範囲内の間隔の証拠。`intersections` は間隔の例外を否定する材料 | `possible` / `not-assessed`、他の例外、未検出の対象・状態・形状は確認が要る。[2.5.8](./criteria/2.5.8.ja.md)参照。2.5.5には別の例外条件を適用し、2.5.8の間隔の例外を流用しない。[2.5.5](./criteria/2.5.5.ja.md)は同等ターゲットの44pxと文・テキストブロックの例外も別に確認する |
 | autocomplete-audit | 1.3.5 | 属性構文と目的の推定結果。violationも本人情報・目的一覧・例外を照合して判定 | 有効な値や検出ゼロでも目的の一致は未検査。`on`・誤った有効トークン・未列挙の欄を確認（[1.3.5](./criteria/1.3.5.ja.md)） |
 | reflow-check | 1.4.10 | 候補を挙げる | 例外の範囲、領域内を読む方向、折り畳み後の到達経路を確認。ページの横スクロールだけでは決めない。[1.4.10](./criteria/1.4.10.ja.md) |
@@ -33,7 +34,7 @@
 | motion-actuation-check | 2.5.4 | 動きのリスナーと合成イベントの反応 | 例外、同じ機能の代替操作と動きの無効化の両方を確認。無反応だけではPassにしない。[2.5.4](./criteria/2.5.4.ja.md) |
 | pointer-cancellation-check | 2.5.2 | 押し下げでの変化・リスナーの候補 | 完了時点、中止・取り消し・離したときの復元、必須の条件を確認。候補だけでFailにしない。[2.5.2](./criteria/2.5.2.ja.md) |
 | character-key-shortcut-check | 2.1.4 | body上での単発文字への反応 | 無効化・非印字キーを含む再割当・部品へのフォーカス限定を確認。連続文字や別状態は別途確認。[2.1.4](./criteria/2.1.4.ja.md) |
-| content-on-hover-check     | 1.4.13         | 候補を挙げる                                                         | 判断が要る                                                                                      |
+| content-on-hover-check | 1.4.13 | Escape・直線のポインタ移動・一定時間の測定結果 | 消去条件だけの例外、別の消去手段・経路、表示継続の条件、未検査状態を照合。3秒のpassだけで適合にしない。[1.4.13](./criteria/1.4.13.ja.md) |
 | non-text-contrast-check    | 1.4.11         | 候補を挙げる                                                         | [1.4.11の条件](./criteria/1.4.11.ja.md) |
 
 ## 複数ページの材料

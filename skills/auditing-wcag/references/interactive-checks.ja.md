@@ -18,7 +18,7 @@
 | 基準 | 操作 | 証跡 | Fail条件 |
 |---|---|---|---|
 | 2.1.1 | 同等機能の別経路と例外を含めキーボードのみで実行 | 操作ログ/動画 | [2.1.1の条件](../../a11y-knowledge/references/criteria/2.1.1.ja.md) |
-| 2.1.2 | すべてのフォーカスを抜けられる | 操作ログ | フォーカストラップがある |
+| 2.1.2 | すべてのフォーカスを抜けられる | 操作ログ | [2.1.2](../../a11y-knowledge/references/criteria/2.1.2.ja.md) |
 | 2.1.4 | 文字のみのショートカット（連続文字も含む）の無効化・再割当・フォーカス限定 | 操作ログ + `character-key-shortcut-check` | いずれも満たさない。実際の誤発火は判定の前提ではない |
 
 ### `keyboard-reachability-check`（2.1.1）
@@ -29,7 +29,7 @@
 ### `keyboard-trap-check`（2.1.2）
 - 実行: `--checks keyboard-trap-check`
 - 副作用: Tab を要素数の 2 倍 + 10 回（上限 600 回）押して一巡し、トラップの疑いがあれば Escape・Shift+Tab を押す。さらに、トラップ内の要素を含む親で、名前が「close / 閉じる / dismiss」に当たるボタンを DOM の `click()` で押す（実際のクリック。閉じる以外の動作を兼ねるボタンだと実行される）。
-- 人が確かめること: `role="dialog"` + `aria-modal="true"` の中で Escape が効く場合は報告されない。Escape 以外の抜け方（`needs-review`）が、案内された方法で本当に抜けられるか。`details.tabWalkCapped` で打ち切られたときの残りの範囲。iframe の中・Shadow DOM。
+- 人が確かめること: violationsも、案内された別キー・標準の脱出方法を照合する。閉じる部品をキーボードで到達・起動して外へ戻れるか。`details.tabWalkCapped`、iframe・Shadow DOM、開いた別状態。[2.1.2](../../a11y-knowledge/references/criteria/2.1.2.ja.md)
 
 ### `character-key-shortcut-check`（2.1.4）
 - 実行: `--checks character-key-shortcut-check`
@@ -40,6 +40,7 @@
 | 基準 | 操作 | 証跡 | Fail条件 |
 |---|---|---|---|
 | 3.2.1 | フォーカスと起動を分け、画面・フォーカス・URLの変化を確認 | 操作ログ + `focus-indicator-check` | [3.2.1の条件](../../a11y-knowledge/references/criteria/3.2.1.ja.md) |
+| 3.2.2 | 設定・値変更と事前案内を照合 | 操作前の説明 + 操作ログ + `change-on-input-check` | [3.2.2](../../a11y-knowledge/references/criteria/3.2.2.ja.md) |
 | 2.4.3 | 実際の順序を内容の関係と照合 | フォーカス順ログ + `focus-order-check` | 意味や操作性を損なう順序（視覚順との差だけでは決めない） |
 | 2.4.7 | フォーカス可視化を確認 | スクショ/動画 | フォーカスが視認不可 |
 | 2.4.11 | フォーカスを受けた部品自身の可視部分を確認 | スクショ/計測 + 覆いの発生経路・露出操作 | 作者の内容で部品が完全に隠れ、注記の条件にも該当しない |
@@ -56,7 +57,7 @@
 ### `change-on-input-check`（3.2.2）
 - 実行: `--checks change-on-input-check`
 - 副作用: 欄の値を実際に変えて `change` を起こす（テキスト系は固定の値を入れて blur）。自動保存・自動送信のあるページでは通信が起きる。値はイベントなしで戻すが、ページの内部状態は戻らない。
-- 人が確かめること: 候補ごとに、変える前の説明（「選ぶとすぐ移動します」など）があるか。`details.untested` の欄。iframe・shadow root・独自部品。
+- 人が確かめること: 値変更による実際の状況変化と、部品の使用前に提供された案内（先行ステップも含む）。`details.untested`、トグルボタン・独自部品、別の値、遅延反応、iframe・shadow root。フォーカスだけの変化は3.2.1と分ける。[3.2.2](../../a11y-knowledge/references/criteria/3.2.2.ja.md)
 
 ### `focus-order-check`（2.4.3）
 - 実行: `--checks focus-order-check`
@@ -95,12 +96,12 @@
 ## ホバー/フォーカス表示
 | 基準 | 操作 | 証跡 | Fail条件 |
 |---|---|---|---|
-| 1.4.13 | ホバー/フォーカスで出るコンテンツを閉じ/保持可能 | 操作ログ/動画 + `content-on-hover-check` | 逃げ場なし、意図せず消える |
+| 1.4.13 | ホバー/フォーカスで出るコンテンツを閉じ/保持可能 | 操作ログ/動画 + `content-on-hover-check` | [1.4.13](../../a11y-knowledge/references/criteria/1.4.13.ja.md) |
 
 ### `content-on-hover-check`（1.4.13）
 - 実行: `--checks content-on-hover-check`
 - 副作用: 候補の要素に実際にホバー・フォーカスし、Escape を押す。フォーカスで遷移するページでは遷移が起きる（`details.untested` に `navigated`）。クリックはしない。
-- 人が確かめること: 外れた条件が例外（入力エラーを伝える中身、ほかの中身を隠さない・置き換えない中身）に当たるか。Escape 以外の消し方があるか。`persistMs`（既定 3 秒）より長く出ていれば足りる中身か。`details.delegationRoots` のページ（ボタンやリンクに実際にホバー・フォーカスする）。`title` / `aria-describedby` / `aria-haspopup` だけの要素、別オリジンの CSS から出る中身、iframe の中、shadow root の中。
+- 人が確かめること: 消去条件だけの例外（入力エラー、他の内容を覆わず置換もしないもの）と、別の消去方法。追加内容へ移る経路と、消去・きっかけ除去・情報の無効化まで表示が続くか。`persistMs`（既定3秒）は適合閾値ではない。委譲・未検査の候補、属性だけの要素、別オリジンCSS・iframe・shadow root。[1.4.13](../../a11y-knowledge/references/criteria/1.4.13.ja.md)
 
 ## エラー処理
 | 基準 | 操作 | 証跡 | Fail条件 |

@@ -31,7 +31,9 @@
 | 1.4.10    | Reflow                                    | Measurement           | [1.4.10](./criteria/1.4.10.md)                |
 | 1.4.11 | Non-text Contrast | Measurement + Visual | [1.4.11](./criteria/1.4.11.md) |
 | 1.4.12    | Text Spacing                              | Measurement           | [1.4.12](./criteria/1.4.12.md)                |
+| 1.4.13 | Content on Hover or Focus | Measurement + Visual | [1.4.13](./criteria/1.4.13.md) |
 | 2.1.1     | Keyboard                                  | Element + Measurement | [2.1.1](./criteria/2.1.1.md)                  |
+| 2.1.2 | No Keyboard Trap | Measurement + Visual | [2.1.2](./criteria/2.1.2.md) |
 | 2.1.4 | Character Key Shortcuts | Measurement | [2.1.4](./criteria/2.1.4.md) |
 | 2.2.1     | Timing Adjustable                         | Measurement           | [2.2.1](./criteria/2.2.1.md)                  |
 | 2.2.2     | Pause, Stop, Hide                         | Measurement           | [2.2.2](./criteria/2.2.2.md)                  |
@@ -51,7 +53,7 @@
 | 2.5.8     | Target Size (Minimum)                     | Measurement + Element | [2.5.8](./criteria/2.5.8.md)                  |
 | 3.1.1     | Language of Page                          | Whole page            | [3.1.1](./criteria/3.1.1.md)                  |
 | 3.2.1     | On Focus                                  | Measurement           | [3.2.1](./criteria/3.2.1.md)                  |
-| 3.2.2     | On Input                                  | Visual                | (Not written. Cannot be decided without entering input and watching the behavior) |
+| 3.2.2 | On Input | Measurement + Visual | [3.2.2](./criteria/3.2.2.md) |
 | 3.2.3     | Consistent Navigation                     | Multiple pages        | [3.2.3](./criteria/3.2.3.md)                  |
 | 3.2.4     | Consistent Identification                 | Multiple pages        | [3.2.4](./criteria/3.2.4.md)                  |
 | 3.2.6     | Consistent Help                           | Multiple pages        | [3.2.6](./criteria/3.2.6.md)                  |

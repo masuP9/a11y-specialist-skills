@@ -18,7 +18,7 @@ Criteria judged by reproducing user interaction through browser interaction: key
 | Criterion | Action | Evidence | Fail condition |
 |---|---|---|---|
 | 2.1.1 | Execute functions by keyboard, including equivalent paths and exceptions | Interaction logs/video | [2.1.1 conditions](../../a11y-knowledge/references/criteria/2.1.1.md) |
-| 2.1.2 | Focus can always be moved away | Action log | A focus trap exists |
+| 2.1.2 | Focus can always be moved away | Action log | [2.1.2](../../a11y-knowledge/references/criteria/2.1.2.md) |
 | 2.1.4 | Disablement, remapping, or focus restriction for character-only shortcuts, including sequences | Action log + `character-key-shortcut-check` | None is satisfied; an actual accidental activation is not required |
 
 ### `keyboard-reachability-check` (2.1.1)
@@ -29,7 +29,7 @@ Criteria judged by reproducing user interaction through browser interaction: key
 ### `keyboard-trap-check` (2.1.2)
 - Run: `--checks keyboard-trap-check`
 - Side effects: presses Tab 2 x the element count + 10 times (capped at 600) to walk the page, then Escape and Shift+Tab if a trap is suspected. It also clicks, with the DOM `click()` (a real click), a button inside a parent of the trapped element whose name matches "close / 閉じる / dismiss" (a button that also does something other than closing will run).
-- Verify by hand: an Escape that works inside `role="dialog"` + `aria-modal="true"` is not reported; whether the exits other than Escape (`needs-review`) really let you out in the way indicated; the remaining range when `details.tabWalkCapped` cut the walk short; iframes and Shadow DOM.
+- Verify by hand: compare violations with instructed alternative keys and standard exits; reach and activate close controls by keyboard and confirm exit. Check `details.tabWalkCapped`, iframe/Shadow DOM, and other opened states. [2.1.2](../../a11y-knowledge/references/criteria/2.1.2.md)
 
 ### `character-key-shortcut-check` (2.1.4)
 - Run: `--checks character-key-shortcut-check`
@@ -40,6 +40,7 @@ Criteria judged by reproducing user interaction through browser interaction: key
 | Criterion | Action | Evidence | Fail condition |
 |---|---|---|---|
 | 3.2.1 | Separate focus from activation; inspect display, focus, and URL changes | Interaction logs + `focus-indicator-check` | [3.2.1 conditions](../../a11y-knowledge/references/criteria/3.2.1.md) |
+| 3.2.2 | Compare setting/value changes with prior advice | Prior instructions + interaction logs + `change-on-input-check` | [3.2.2](../../a11y-knowledge/references/criteria/3.2.2.md) |
 | 2.4.3 | Compare actual order with content relationships | Focus order log + `focus-order-check` | Order harms meaning or operability; visual differences alone are insufficient |
 | 2.4.7 | Check that focus is visible | Screenshot/video | Focus is not visible |
 | 2.4.11 | Check visible portions of the focused component itself | Screenshot/measurement + covering origin and reveal interaction | Author-created content entirely hides the component and the notes do not apply |
@@ -56,7 +57,7 @@ Criteria judged by reproducing user interaction through browser interaction: key
 ### `change-on-input-check` (3.2.2)
 - Run: `--checks change-on-input-check`
 - Side effects: actually changes field values and fires `change` (text fields get a fixed value and blur). On pages with autosave or auto-submit, requests go out. Values are restored without events, but the page's internal state is not.
-- Verify by hand: for each candidate, whether an explanation was given before the change ("selecting moves you immediately", etc.); the fields in `details.untested`; iframes, shadow roots and custom widgets.
+- Verify by hand: actual context changes from value changes and advice provided before use, including preceding steps. Check `details.untested`, toggles/custom widgets, other values, delayed reactions, iframe/shadow roots. Separate focus-only changes under 3.2.1. [3.2.2](../../a11y-knowledge/references/criteria/3.2.2.md)
 
 ### `focus-order-check` (2.4.3)
 - Run: `--checks focus-order-check`
@@ -95,12 +96,12 @@ Criteria judged by reproducing user interaction through browser interaction: key
 ## Hover/Focus Content
 | Criterion | Action | Evidence | Fail condition |
 |---|---|---|---|
-| 1.4.13 | Content shown on hover/focus can be dismissed and persists | Action log/video + `content-on-hover-check` | No way out, or disappears unintentionally |
+| 1.4.13 | Content shown on hover/focus can be dismissed and persists | Action log/video + `content-on-hover-check` | [1.4.13](../../a11y-knowledge/references/criteria/1.4.13.md) |
 
 ### `content-on-hover-check` (1.4.13)
 - Run: `--checks content-on-hover-check`
 - Side effects: actually hovers and focuses candidate elements and presses Escape. On pages where focus causes navigation, the navigation happens (`navigated` in `details.untested`). It does not click.
-- Verify by hand: whether a failed condition falls under an exception (content that conveys an input error, content that neither hides nor replaces other content); whether there is a way to dismiss other than Escape; whether content shown longer than `persistMs` (default 3 s) is enough; the pages in `details.delegationRoots` (actually hover and focus buttons and links); elements with only `title` / `aria-describedby` / `aria-haspopup`, content from cross-origin CSS, inside iframes, inside shadow roots.
+- Verify by hand: dismissal-only exceptions (input errors, content neither obscuring nor replacing other content) and alternative dismissal. Check the route onto content and persistence until dismissal, trigger removal, or invalidation. `persistMs` (default three seconds) is not a conformance threshold. Inspect delegated/untested candidates, attribute-only elements, cross-origin CSS, iframe/shadow roots. [1.4.13](../../a11y-knowledge/references/criteria/1.4.13.md)
 
 ## Error Handling
 | Criterion | Action | Evidence | Fail condition |

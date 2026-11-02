@@ -30,13 +30,13 @@
 | 1.4.10 | 自動+手動 | `reflow-check` **[CLI]** + スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.10.ja.md) |
 | 1.4.11 | 自動の候補+手動 | `non-text-contrast-check` **[CLI]** + スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.11.ja.md)。必要な表示・隣接色・例外を確認して判定 |
 | 1.4.12 | 自動+手動 | `text-spacing-check` **[CLI]** + スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.12.ja.md) |
-| 1.4.13 | インタラクティブ+自動の候補 | `content-on-hover-check` **[CLI]** + 動画/ログ | 解除/保持不可でFail |
+| 1.4.13 | インタラクティブ+自動の候補 | `content-on-hover-check` **[CLI]** + 動画/ログ | [1.4.13](../../a11y-knowledge/references/criteria/1.4.13.ja.md) |
 
 ## 2. 操作可能
 | 基準 | テスト方法 | 証跡 | 判定ルール |
 |---|---|---|---|
 | 2.1.1 | 自動+インタラクティブ | `keyboard-reachability-check` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.1.1.ja.md) |
-| 2.1.2 | 自動+インタラクティブ | `keyboard-trap-check` **[CLI]** + 操作ログ | トラップでFail |
+| 2.1.2 | 自動+インタラクティブ | `keyboard-trap-check` **[CLI]** + 操作ログ | [2.1.2](../../a11y-knowledge/references/criteria/2.1.2.ja.md) |
 | 2.1.4 | インタラクティブ+自動の候補 | `character-key-shortcut-check` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.1.4.ja.md) |
 | 2.2.1 | 自動+手動 | `time-limit-detector` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.2.1.ja.md) |
 | 2.2.2 | 自動+インタラクティブ | `auto-play-detection` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.2.2.ja.md) |
@@ -64,7 +64,7 @@
 | 3.1.1 | 自動＋内容照合 | lang / xml:lang、axeと代表的な本文の言語 | [線引き](../../a11y-knowledge/references/criteria/3.1.1.ja.md) |
 | 3.1.2 | 自動+コンテンツ | axe valid-lang + テキスト分析 | 部分言語未指定でFail |
 | 3.2.1 | 自動+インタラクティブ | `focus-indicator-check` **[CLI]** + 起動との区別・画面・フォーカス | [線引き](../../a11y-knowledge/references/criteria/3.2.1.ja.md) |
-| 3.2.2 | インタラクティブ+自動の候補 | `change-on-input-check` **[CLI]** + DOM差分 | 入力のみで送信/遷移（事前の説明なし）でFail |
+| 3.2.2 | インタラクティブ+自動の候補 | `change-on-input-check` **[CLI]** + DOM差分 | [3.2.2](../../a11y-knowledge/references/criteria/3.2.2.ja.md) |
 | 3.2.3 | コンテンツ比較（自動は材料収集） | ページ間のツリー・画面・表示条件 | [線引き](../../a11y-knowledge/references/criteria/3.2.3.ja.md) |
 | 3.2.4 | コンテンツ比較（自動は材料収集） | 反復部品の機能・名前・可視の識別 | [線引き](../../a11y-knowledge/references/criteria/3.2.4.ja.md) |
 | 3.2.6 | コンテンツ比較（自動は材料収集） | ヘルプ経路・共通内容との直列順・表示条件 | [線引き](../../a11y-knowledge/references/criteria/3.2.6.ja.md) |
