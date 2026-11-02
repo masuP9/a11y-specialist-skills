@@ -30,13 +30,13 @@ When the "Judgment Rule" column says **Judgment lines**, judge with the "Judgmen
 | 1.4.10 | Automated + Manual | `reflow-check` **[CLI]** + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.10.md) |
 | 1.4.11 | Automated candidates + manual | `non-text-contrast-check` **[CLI]** + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.11.md); verify required cues, adjacent colors, and exceptions |
 | 1.4.12 | Automated + Manual | `text-spacing-check` **[CLI]** + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.12.md) |
-| 1.4.13 | Interactive + automated candidates | `content-on-hover-check` **[CLI]** + video/logs | Fail if hover/focus content cannot be dismissed/retained |
+| 1.4.13 | Interactive + automated candidates | `content-on-hover-check` **[CLI]** + video/logs | [1.4.13](../../a11y-knowledge/references/criteria/1.4.13.md) |
 
 ## 2. Operable
 | Criterion | Test Method | Evidence | Judgment Rule |
 |---|---|---|---|
 | 2.1.1 | Automated + Interactive | `keyboard-reachability-check` **[CLI]** + logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.1.1.md) |
-| 2.1.2 | Automated + Interactive | `keyboard-trap-check` **[CLI]** + logs | Fail on keyboard trap |
+| 2.1.2 | Automated + Interactive | `keyboard-trap-check` **[CLI]** + logs | [2.1.2](../../a11y-knowledge/references/criteria/2.1.2.md) |
 | 2.1.4 | Interactive + automated candidates | `character-key-shortcut-check` **[CLI]** + logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.1.4.md) |
 | 2.2.1 | Automated + Manual | `time-limit-detector` **[CLI]** + logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.2.1.md) |
 | 2.2.2 | Automated + Interactive | `auto-play-detection` **[CLI]** + logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.2.2.md) |
@@ -64,7 +64,7 @@ When the "Judgment Rule" column says **Judgment lines**, judge with the "Judgmen
 | 3.1.1 | Automated + Content comparison | lang / xml:lang, axe, and representative content language | [Judgment lines](../../a11y-knowledge/references/criteria/3.1.1.md) |
 | 3.1.2 | Automated + Content | axe valid-lang + text analysis | Fail if language of parts not identified |
 | 3.2.1 | Automated + Interactive | `focus-indicator-check` **[CLI]** + activation distinction, display, and focus | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.1.md) |
-| 3.2.2 | Interactive + automated candidates | `change-on-input-check` **[CLI]** + DOM diff | Fail if input triggers submit/navigation without prior advice |
+| 3.2.2 | Interactive + automated candidates | `change-on-input-check` **[CLI]** + DOM diff | [3.2.2](../../a11y-knowledge/references/criteria/3.2.2.md) |
 | 3.2.3 | Content comparison (automated material collection) | Cross-page trees, screens, presentation conditions | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.3.md) |
 | 3.2.4 | Content comparison (automated material collection) | Repeated functions, names, visual identification | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.4.md) |
 | 3.2.6 | Content comparison (automated material collection) | Help routes, serial order relative to shared content, presentation conditions | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.6.md) |
