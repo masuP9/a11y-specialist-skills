@@ -25,10 +25,10 @@ The material collected from the page as loaded (accessibility tree, DOM, screens
 | 1.1.1 | Image names in the tree, axe `image-alt` and related rules | [Judgment lines](../../a11y-knowledge/references/criteria/1.1.1.md) |
 | 1.2.1 / 1.2.3 / 1.2.5 | `<video>` / `<audio>` / embedded players, `<track kind="descriptions">`, links to nearby alternatives | "Time-based media" below |
 | 1.2.2 | `<track kind="captions">`, axe `video-caption` | [Judgment lines](../../a11y-knowledge/references/criteria/1.2.2.md) |
-| 1.3.1 | Whether headings, landmarks, lists, tables, and form relationships appear in the tree | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.1.md) |
+| 1.3.1 | Compare visual/auditory presentation with DOM/tree relationships | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.1.md) |
 | 1.3.2 | Tree order vs. visual order | Fail where reordering changes meaning and the tree order contradicts the visual meaning |
 | 1.3.3 | Instructions, target labels/functions, symbol alternatives, and reading order; check ambiguity even for “below” | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.3.md) |
-| 1.3.5 | `autocomplete-audit` **[CLI]** | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.5.md) |
+| 1.3.5 | `autocomplete-audit` **[CLI]** plus user-information scope, actual purpose, and exceptions | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.5.md) |
 | 1.4.1 | Screenshots, tree text, axe `link-in-text-block` | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.1.md). Measure uncertain lightness distinctions; check visible cues conveying the same information and visited-link treatment |
 | 1.4.3 | axe `color-contrast` | Fail below 4.5:1 (3:1 for large text). Where axe could not compute (image or gradient backgrounds), NT until measured |
 | 1.4.11 | `non-text-contrast-check` **[CLI]** (component boundaries, icon-only buttons) | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.11.md); verify required cues, adjacent colors, and exceptions |
@@ -37,7 +37,7 @@ The material collected from the page as loaded (accessibility tree, DOM, screens
 | 2.4.4 | Link names and DOM sentences, paragraphs, list items, table headers, and ARIA references; preceding headings follow author policy | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.4.md) |
 | 2.4.6 | Heading and label text | Fail if a heading or label does not describe its topic or purpose (presence is not judged here; missing ones belong to 1.3.1 / 3.3.2) |
 | 2.5.3 | Visible label text vs. accessible name | Fail if the label text is not contained in the name (axe `label-content-name-mismatch` is experimental and not run by default) |
-| 3.1.1 | `<html lang>`, axe `html-has-lang` / `html-lang-valid` | [Judgment lines](../../a11y-knowledge/references/criteria/3.1.1.md) |
+| 3.1.1 | lang / xml:lang, axe, and representative content language | [Judgment lines](../../a11y-knowledge/references/criteria/3.1.1.md) |
 | 3.1.2 | Passages in a language other than the page's primary language, axe `valid-lang` | "Language of parts" below |
 | 3.3.2 | Visible labels, instructions, and input requirements (name checks alone do not settle this) | [Judgment lines](../../a11y-knowledge/references/criteria/3.3.2.md) |
 | 4.1.2 | Role, name, and state of operable elements | [Judgment lines](../../a11y-knowledge/references/criteria/4.1.2.md) |

@@ -25,10 +25,10 @@
 | 1.1.1 | ツリーの画像の名前、axe `image-alt` ほか | [線引き](../../a11y-knowledge/references/criteria/1.1.1.ja.md) |
 | 1.2.1 / 1.2.3 / 1.2.5 | `<video>` / `<audio>` / 埋め込みプレーヤー、`<track kind="descriptions">`、近くの代替へのリンク | 下の「時間依存メディア」 |
 | 1.2.2 | `<track kind="captions">`、axe `video-caption` | [線引き](../../a11y-knowledge/references/criteria/1.2.2.ja.md) |
-| 1.3.1 | 見出し・ランドマーク・リスト・表・フォームの関係がツリーに出ているか | [線引き](../../a11y-knowledge/references/criteria/1.3.1.ja.md) |
+| 1.3.1 | 画面・音の提示とDOM・ツリーの関係を照合 | [線引き](../../a11y-knowledge/references/criteria/1.3.1.ja.md) |
 | 1.3.2 | ツリーの順序と見た目の順序 | 順序を入れ替えると意味が変わる箇所で、ツリーの順序が見た目の意味と食い違えば Fail |
 | 1.3.3 | 指示の文章、対象のラベル・機能・記号の代替、読む順。「以下」も曖昧でないか確認 | [線引き](../../a11y-knowledge/references/criteria/1.3.3.ja.md) |
-| 1.3.5 | `autocomplete-audit` **[CLI]** | [線引き](../../a11y-knowledge/references/criteria/1.3.5.ja.md) |
+| 1.3.5 | `autocomplete-audit` **[CLI]** と本人情報・実際の目的・例外 | [線引き](../../a11y-knowledge/references/criteria/1.3.5.ja.md) |
 | 1.4.1 | スクリーンショット、ツリーのテキスト、axe `link-in-text-block` | [線引き](../../a11y-knowledge/references/criteria/1.4.1.ja.md)。明るさの境界は測定し、同じ情報の可視の手がかり・訪問済みリンクの扱いを確認 |
 | 1.4.3 | axe `color-contrast` | 4.5:1 未満（大きな文字は 3:1 未満）で Fail。axe が計算できなかった箇所（画像・グラデーションの背景）は実測するまで NT |
 | 1.4.11 | `non-text-contrast-check` **[CLI]**（部品の境界・アイコンだけのボタン） | [線引き](../../a11y-knowledge/references/criteria/1.4.11.ja.md)。必要な表示・隣接色・例外を確認して判定 |
@@ -37,7 +37,7 @@
 | 2.4.4 | リンク名とDOM上の文・段落・リスト項目・表見出し・ARIA参照。直前見出しは著者方針 | [線引き](../../a11y-knowledge/references/criteria/2.4.4.ja.md) |
 | 2.4.6 | 見出しとラベルのテキスト | 見出し・ラベルが主題や目的を表していなければ Fail（有無は問わない。無いことは 1.3.1 / 3.3.2） |
 | 2.5.3 | 見えているラベルの文字列とアクセシブルネーム | ラベルの文字列が名前に含まれなければ Fail（axe `label-content-name-mismatch` は実験的ルールのため既定では未実行） |
-| 3.1.1 | `<html lang>`、axe `html-has-lang` / `html-lang-valid` | [線引き](../../a11y-knowledge/references/criteria/3.1.1.ja.md) |
+| 3.1.1 | lang / xml:lang、axeと代表的な本文の言語 | [線引き](../../a11y-knowledge/references/criteria/3.1.1.ja.md) |
 | 3.1.2 | ページの主言語と異なる言語で書かれた箇所、axe `valid-lang` | 下の「部分の言語」 |
 | 3.3.2 | 見えるラベル・説明と入力条件（名前チェックだけでは確定しない） | [線引き](../../a11y-knowledge/references/criteria/3.3.2.ja.md) |
 | 4.1.2 | 操作できる要素の役割・名前・状態 | [線引き](../../a11y-knowledge/references/criteria/4.1.2.ja.md) |
