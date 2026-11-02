@@ -35,13 +35,13 @@
 | 2.4.1 | 反復ブロックと迂回先の構造。リンクに依存する場合は起動後の到達も確認 | [線引き](../../a11y-knowledge/references/criteria/2.4.1.ja.md) |
 | 2.4.2 | 現在の `document.title` と主題・目的、axe `document-title`（空でないこと） | [線引き](../../a11y-knowledge/references/criteria/2.4.2.ja.md) |
 | 2.4.4 | リンク名とDOM上の文・段落・リスト項目・表見出し・ARIA参照。直前見出しは著者方針 | [線引き](../../a11y-knowledge/references/criteria/2.4.4.ja.md) |
-| 2.4.6 | 見出しとラベルのテキスト | 見出し・ラベルが主題や目的を表していなければ Fail（有無は問わない。無いことは 1.3.1 / 3.3.2） |
-| 2.5.3 | 見えているラベルの文字列とアクセシブルネーム | ラベルの文字列が名前に含まれなければ Fail（axe `label-content-name-mismatch` は実験的ルールのため既定では未実行） |
+| 2.4.6 | 見出し・ラベルと実際の本文・機能（画像ラベルも含む） | [2.4.6](../../a11y-knowledge/references/criteria/2.4.6.ja.md) |
+| 2.5.3 | 個別の可視ラベル・文字画像と計算名（axe 4.14.0では既定の対象だが部分検査） | [2.5.3](../../a11y-knowledge/references/criteria/2.5.3.ja.md) |
 | 3.1.1 | lang / xml:lang、axeと代表的な本文の言語 | [線引き](../../a11y-knowledge/references/criteria/3.1.1.ja.md) |
 | 3.1.2 | ページの主言語と異なる言語で書かれた箇所、axe `valid-lang` | 下の「部分の言語」 |
 | 3.3.2 | 見えるラベル・説明と入力条件（名前チェックだけでは確定しない） | [線引き](../../a11y-knowledge/references/criteria/3.3.2.ja.md) |
 | 4.1.2 | 操作できる要素の役割・名前・状態 | [線引き](../../a11y-knowledge/references/criteria/4.1.2.ja.md) |
-| 4.1.3 | 状態の変化を伝えるメッセージと、そのロール（`status` / `alert` / `log` など） | 利用者の操作の結果や処理の状態を伝えるメッセージが、フォーカスを動かさずに支援技術に伝わらなければ Fail |
+| 4.1.3 | 状態通知への該当、更新前後、フォーカス、通知実装・支援技術の出力 | [4.1.3](../../a11y-knowledge/references/criteria/4.1.3.ja.md) |
 
 ## 時間依存メディア（1.2.1 / 1.2.3 / 1.2.5）
 

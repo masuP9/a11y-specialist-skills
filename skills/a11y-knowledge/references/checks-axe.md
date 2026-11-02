@@ -18,6 +18,7 @@ How to map axe-core results (`violations` / `passes` / `incomplete` / `inapplica
 | `button-name` / `link-name` / `input-button-name` | 4.1.2 | Naming checks. They do not settle role, required states, values, or notification of changes ([4.1.2-E01–E04](./criteria/4.1.2.md)) |
 | `image-alt` / `input-image-alt` / `role-img-alt` | 1.1.1 | Implementation checks for alternatives, names, and similar information. Adequacy, decorative treatment, and out-of-scope content remain ([1.1.1-E01–E04](./criteria/1.1.1.md)) |
 | `target-size` | 2.5.8 | Read within the measured targets and states. Check undetected targets, exceptions, and shape limitations ([2.5.8-E01–E04](./criteria/2.5.8.md)) |
+| `label-content-name-mismatch` (axe 4.14.0) | 2.5.3 | Check individual label scope, symbols, and parenthetical information. External labels, images of text, and changed states need separate inspection. Selected by default WCAG tags. [2.5.3](./criteria/2.5.3.md) |
 
 Use ACT evidence to understand check scope. Do not assume axe completely implements identical rules.
 
@@ -65,3 +66,7 @@ Use ACT evidence to understand check scope. Do not assume axe completely impleme
 - For `video-caption` incomplete, also check open captions, `subtitles` conveying required audio information, and the media-alternative-to-text exception. Do not exclude media based only on `muted` or absent `controls`. Settle the SC verdict after playback checks ([1.2.2-E01–E03](./criteria/1.2.2.md)).
 
 - Do not reuse `video-caption` results to establish alternatives for audio-only/video-only media or adequate audio description. Assess presentation type and content separately under [1.2.1](./criteria/1.2.1.md), [1.2.3](./criteria/1.2.3.md), and [1.2.5](./criteria/1.2.5.md).
+
+- `label-content-name-mismatch` (2.5.3): Mismatches on switches and similar controls that may show values can yield incomplete. Distinguish values from labels and compare the actual name. [2.5.3](./criteria/2.5.3.md)
+
+Do not transfer name-presence or ARIA syntax results to 2.4.6 descriptiveness or 4.1.3 notification conformance. [2.4.6](./criteria/2.4.6.md) / [4.1.3](./criteria/4.1.3.md)

@@ -46,14 +46,14 @@
 | 2.4.3 | インタラクティブ+自動の候補 | `focus-order-check` **[CLI]** + フォーカス順ログ | [線引き](../../a11y-knowledge/references/criteria/2.4.3.ja.md) |
 | 2.4.4 | 自動+コンテンツ | a11y tree + 文面抜粋 | [線引き](../../a11y-knowledge/references/criteria/2.4.4.ja.md) |
 | 2.4.5 | 自動+コンテンツ | リンクグラフ + 検索/サイトマップ検出 | 複数手段なしでFail |
-| 2.4.6 | 自動+コンテンツ | a11y tree/文面 | 見出し/ラベルが不明瞭でFail |
+| 2.4.6 | 自動+コンテンツ | 見出し・ラベルと実際の本文・機能（画像ラベルも含む） | [2.4.6](../../a11y-knowledge/references/criteria/2.4.6.ja.md) |
 | 2.4.7 | インタラクティブ | スクショ | [線引き](../../a11y-knowledge/references/criteria/2.4.7.ja.md) |
 | 2.4.11 | 自動+インタラクティブ | `focus-indicator-check` **[CLI]** + スクショ | [線引き](../../a11y-knowledge/references/criteria/2.4.11.ja.md) |
 | 2.4.12 (AAA) | 自動+インタラクティブ | `focus-indicator-check` **[CLI]** + スクショ | [線引き](../../a11y-knowledge/references/criteria/2.4.12.ja.md) |
 | 2.4.13 (AAA) | 実測 + 手動 | 同じ位置の前後の色・有効面積 | [線引き](../../a11y-knowledge/references/criteria/2.4.13.ja.md) |
 | 2.5.1 | インタラクティブ+自動の候補 | `pointer-gesture-check` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.5.1.ja.md) |
 | 2.5.2 | インタラクティブ+自動の候補 | `pointer-cancellation-check` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.5.2.ja.md) |
-| 2.5.3 | 自動+手動 | a11y name比較（axe `label-content-name-mismatch` は実験的ルールのため既定では未実行） | ラベル文字列不一致でFail |
+| 2.5.3 | 自動+手動 | 個別の可視ラベル・文字画像と計算名（axe 4.14.0では既定の対象だが部分検査） | [2.5.3](../../a11y-knowledge/references/criteria/2.5.3.ja.md) |
 | 2.5.4 | インタラクティブ+自動の候補 | `motion-actuation-check` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.5.4.ja.md) |
 | 2.5.7 | インタラクティブ+自動の候補 | `pointer-gesture-check` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.5.7.ja.md) |
 | 2.5.8 | 自動 | `target-size-check` **[CLI]** | [線引き](../../a11y-knowledge/references/criteria/2.5.8.ja.md) |
@@ -80,7 +80,7 @@
 |---|---|---|---|
 | 4.1.1 | — | — | WCAG 2.2 で廃止。判定対象・サマリーの件数に含めない（WCAG 2.0 / 2.1 の監査では、HTML・XML は常に満たすものとして扱う） |
 | 4.1.2 | 自動 | a11y tree | [線引き](../../a11y-knowledge/references/criteria/4.1.2.ja.md) |
-| 4.1.3 | 自動+インタラクティブ | a11y tree/ログ | 状態メッセージが露出しない場合Fail |
+| 4.1.3 | 自動+インタラクティブ | 状態通知への該当、更新前後、フォーカス、通知実装・支援技術の出力 | [4.1.3](../../a11y-knowledge/references/criteria/4.1.3.ja.md) |
 
 ## 利用可能なCLIチェック
 
