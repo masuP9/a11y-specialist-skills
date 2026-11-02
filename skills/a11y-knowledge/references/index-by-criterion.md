@@ -54,7 +54,7 @@
 | 3.3.1     | Error Identification                      | Element               | [3.3.1](./criteria/3.3.1.md)                  |
 | 3.3.2     | Labels or Instructions                    | Element               | [3.3.2](./criteria/3.3.2.md)                  |
 | 3.3.3     | Error Suggestion                          | Element               | [3.3.3](./criteria/3.3.3.md)                  |
-| 3.3.4     | Error Prevention (Legal, Financial, Data) | Element               | [3.3.4](./criteria/3.3.4.md)                  |
+| 3.3.4     | Error Prevention (Legal, Financial, Data) | Consequences/process + Measurement | [3.3.4](./criteria/3.3.4.md)                  |
 | 4.1.2     | Name, Role, Value                         | Element               | [4.1.2](./criteria/4.1.2.md)                  |
 
 Success criteria not listed here do not yet have judgment lines written. Read the Understanding document to judge, and add a file once the judgment lines are settled.
