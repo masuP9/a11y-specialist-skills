@@ -15,7 +15,7 @@ Checks that depend on content quality and availability. Validate presence and ad
 | Criterion | Check | Evidence | Fail rule |
 |---|---|---|---|
 | 1.2.1 | Alternatives for audio-only/video-only | links/notes | No alternative provided |
-| 1.2.2 | Captions for prerecorded video | screenshot | [Judgment lines](../../a11y-knowledge/references/criteria/1.2.2.md) |
+| 1.2.2 | Prerecorded captions, audio synchronization, exceptions | Video/caption references + timestamps + audio/caption comparison | [Judgment lines](../../a11y-knowledge/references/criteria/1.2.2.md) |
 | 1.2.3 | Media alternative (audio description or text) | links/notes | No alternative |
 | 1.2.4 | Live captions provided | capture | No live captions |
 | 1.2.5 | Audio description provided | capture | No audio description |
