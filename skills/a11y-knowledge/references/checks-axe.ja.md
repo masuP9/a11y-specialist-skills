@@ -63,3 +63,5 @@ ACTの根拠は検査範囲の考え方に使う。axeが同一ルールを完�
 - `video-caption`（1.2.2）: captions の track が無い。焼き込み字幕がありうるので不適合にしない。
 
 - `video-caption` のincompleteは焼き込み字幕・必要な音声情報を含む `subtitles`・テキスト代替の例外も照合する。`muted` や `controls` の欠落だけで対象外にしない。再生確認後はSCの判定を行う（[1.2.2-E01–E03](./criteria/1.2.2.ja.md)）。
+
+- `video-caption` の結果を、音声のみ・映像のみの代替や音声解説の充足へ流用しない。[1.2.1](./criteria/1.2.1.ja.md)・[1.2.3](./criteria/1.2.3.ja.md)・[1.2.5](./criteria/1.2.5.ja.md)は提示形式と内容を別に照合する。

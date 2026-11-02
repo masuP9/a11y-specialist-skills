@@ -12,11 +12,11 @@ When the "Judgment Rule" column says **Judgment lines**, judge with the "Judgmen
 | Criterion | Test Method | Evidence | Judgment Rule |
 |---|---|---|---|
 | 1.1.1 | Automated + Content | a11y tree/image list | [Judgment lines](../../a11y-knowledge/references/criteria/1.1.1.md) |
-| 1.2.1 | Automated + Content | DOM media detection + transcript links | Fail if no alternative |
+| 1.2.1 | Automated candidates + Content comparison | Media/alternative + timestamps + content/interaction comparison | [1.2.1](../../a11y-knowledge/references/criteria/1.2.1.md) |
 | 1.2.2 | Automated + Content | axe video-caption + playback, caption content, exceptions | [Judgment lines](../../a11y-knowledge/references/criteria/1.2.2.md) |
-| 1.2.3 | Automated + Content | track elements + transcript links | Fail if no media alternative |
+| 1.2.3 | Automated candidates + Content comparison | Media/alternative + timestamps + content/interaction comparison | [1.2.3](../../a11y-knowledge/references/criteria/1.2.3.md) |
 | 1.2.4 | Content | capture | Fail if live captions missing |
-| 1.2.5 | Automated + Content | track elements | Fail if audio description missing |
+| 1.2.5 | Automated candidates + Content comparison | Media/alternative + timestamps + content/interaction comparison | [1.2.5](../../a11y-knowledge/references/criteria/1.2.5.md) |
 | 1.3.1 | Automated + Content comparison | Compare visual/auditory presentation with DOM/tree relationships | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.1.md) |
 | 1.3.2 | Automated | a11y tree + DOM order | Fail if meaningful order breaks |
 | 1.3.3 | Automated + Content | a11y tree text + excerpts | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.3.md) |

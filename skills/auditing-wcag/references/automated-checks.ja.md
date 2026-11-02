@@ -23,7 +23,7 @@
 | 基準 | 材料 | 判定 |
 |---|---|---|
 | 1.1.1 | ツリーの画像の名前、axe `image-alt` ほか | [線引き](../../a11y-knowledge/references/criteria/1.1.1.ja.md) |
-| 1.2.1 / 1.2.3 / 1.2.5 | `<video>` / `<audio>` / 埋め込みプレーヤー、`<track kind="descriptions">`、近くの代替へのリンク | 下の「時間依存メディア」 |
+| 1.2.1 / 1.2.3 / 1.2.5 | `<video>` / `<audio>` / 埋め込みプレーヤー、`<track kind="descriptions">`、近くの代替へのリンク | [1.2.1](../../a11y-knowledge/references/criteria/1.2.1.ja.md) / [1.2.3](../../a11y-knowledge/references/criteria/1.2.3.ja.md) / [1.2.5](../../a11y-knowledge/references/criteria/1.2.5.ja.md) |
 | 1.2.2 | `<track kind="captions">`、axe `video-caption` | [線引き](../../a11y-knowledge/references/criteria/1.2.2.ja.md) |
 | 1.3.1 | 画面・音の提示とDOM・ツリーの関係を照合 | [線引き](../../a11y-knowledge/references/criteria/1.3.1.ja.md) |
 | 1.3.2 | ツリーの順序と見た目の順序 | 順序を入れ替えると意味が変わる箇所で、ツリーの順序が見た目の意味と食い違えば Fail |
@@ -45,11 +45,10 @@
 
 ## 時間依存メディア（1.2.1 / 1.2.3 / 1.2.5）
 
-- `<video>`・`<audio>`・埋め込みプレーヤー（`<iframe>` の YouTube / Vimeo など）を探し、近くに文字起こしなどの代替があるかを文脈で確かめる（リンク、`aria-describedby`、すぐ後の本文）。
-- 1.2.3: 音声解説（`<track kind="descriptions">` や音声解説版）か、メディアの代替テキストがあれば Pass。
-- 1.2.5: 音声解説が無ければ Fail。映像の情報がすべて音声で語られていれば不要。
-- 埋め込みプレーヤーは独自の字幕・音声解説を持つことがあるので、見つからなければ NT にして手動確認に回す。
-- 代替の中身が映像・音声と合っているかは、自動では決まらない。
+1. `<video>`・`<audio>`・埋め込みプレイヤーを抽出し、音声・映像・時間依存の操作を実際に確認して分類する。`muted`だけで映像のみとしない。
+2. 文字起こし・音声による代替・音声解説版・静的説明と、それぞれへの到達手段を集める。trackやリンクの存在をSCのPassへ変換しない。
+3. [1.2.1](../../a11y-knowledge/references/criteria/1.2.1.ja.md)・[1.2.3](../../a11y-knowledge/references/criteria/1.2.3.ja.md)・[1.2.5](../../a11y-knowledge/references/criteria/1.2.5.ja.md)の線引きで、例外・内容・順序・操作・実際の再生を照合する。埋め込み先の選択メニューも調べる。
+4. 未取得の内容は必要な材料とともにNTへ残し、手動確認で条件が揃ったものは判定する。メディア・代替のURL、再生時刻、伝わらない情報を証跡にする。
 
 ## 部分の言語（3.1.2）
 

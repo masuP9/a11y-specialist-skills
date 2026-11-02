@@ -36,7 +36,8 @@ When writing or reviewing code, look up, from the component type, the success cr
 | rowheader / columnheader | rowheader, columnheader                                            | 1.3.1                                                                           |
 | table                    | table, rowgroup, cell                                              | 1.3.1, 1.3.2                                                                    |
 | image                    | img, figure                                                        | 1.1.1, 1.4.5                                                                    |
-| video                    | `<video>` element (no ARIA role)                                   | 1.2.2, 1.4.2 (when it autoplays)                                                |
+| video / embedded video | Classify by actual media presentation | 1.1.1, 1.2.1, 1.2.2, 1.2.3, 1.2.5, 1.4.2 (when it autoplays) |
+| audio | Check audio-only versus synchronized media | 1.1.1, 1.2.1, 1.4.2 (when it autoplays) |
 | heading                  | heading                                                            | 1.3.1, 2.4.6                                                                    |
 | landmark                 | banner, main, contentinfo, complementary, region, search           | 1.3.1, 2.4.1                                                                    |
 | navigation               | navigation                                                         | 1.3.1, 2.4.1, 2.4.5, 3.2.3 (multiple pages)                                     |
@@ -48,3 +49,5 @@ When writing or reviewing code, look up, from the component type, the success cr
 | progress                 | progressbar                                                        | 4.1.2, 4.1.3                                                                    |
 
 This table indexes criteria to check by component. It is neither an exhaustive WCAG mapping nor evidence for exemptions.
+
+- For prerecorded media, check actual format and conformance routes in [1.2.1](./criteria/1.2.1.md), [1.2.3](./criteria/1.2.3.md), and [1.2.5](./criteria/1.2.5.md). An audio element synchronized with other information or time-based interaction is not automatically audio-only.

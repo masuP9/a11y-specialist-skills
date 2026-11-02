@@ -36,7 +36,8 @@
 | rowheader / columnheader | rowheader、columnheader                                        | 1.3.1                                                                           |
 | table                | table、rowgroup、cell                                              | 1.3.1、1.3.2                                                                    |
 | image                | img、figure                                                        | 1.1.1、1.4.5                                                                    |
-| video                | `<video>` 要素（ARIA の役割は無い）                                | 1.2.2、1.4.2（自動再生するとき）                                                |
+| video / 埋め込み動画 | メディアの実際の提示形式で分類 | 1.1.1、1.2.1、1.2.2、1.2.3、1.2.5、1.4.2（自動再生するとき） |
+| audio | 音声のみか同期したメディアかを確認 | 1.1.1、1.2.1、1.4.2（自動再生するとき） |
 | heading              | heading                                                            | 1.3.1、2.4.6                                                                    |
 | landmark             | banner、main、contentinfo、complementary、region、search           | 1.3.1、2.4.1                                                                    |
 | navigation           | navigation                                                         | 1.3.1、2.4.1、2.4.5、3.2.3（複数ページ）                                          |
@@ -48,3 +49,5 @@
 | progress             | progressbar                                                        | 4.1.2、4.1.3                                                                    |
 
 この表は部品ごとに確認する達成基準の索引であり、WCAG全体の網羅表や適用除外の根拠ではない。
+
+- 収録済みメディアは[1.2.1](./criteria/1.2.1.ja.md)・[1.2.3](./criteria/1.2.3.ja.md)・[1.2.5](./criteria/1.2.5.ja.md)で実際の形式と達成経路を確認する。audio要素でも他の情報や時間依存の操作と同期する提示なら、音声のみと決めない。
