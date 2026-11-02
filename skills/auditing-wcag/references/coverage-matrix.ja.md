@@ -13,7 +13,7 @@
 |---|---|---|---|
 | 1.1.1 | 自動+コンテンツ | a11y tree/画像一覧 | [線引き](../../a11y-knowledge/references/criteria/1.1.1.ja.md) |
 | 1.2.1 | 自動+コンテンツ | DOMメディア検出 + トランスクリプトリンク | 代替がない場合Fail |
-| 1.2.2 | 自動+コンテンツ | axe video-caption + track要素 | [線引き](../../a11y-knowledge/references/criteria/1.2.2.ja.md) |
+| 1.2.2 | 自動+コンテンツ | axe video-caption + 再生・字幕内容・例外の確認 | [線引き](../../a11y-knowledge/references/criteria/1.2.2.ja.md) |
 | 1.2.3 | 自動+コンテンツ | track要素 + トランスクリプトリンク | 代替なしでFail |
 | 1.2.4 | コンテンツ | 画面キャプチャ | ライブ字幕なしでFail |
 | 1.2.5 | 自動+コンテンツ | track要素 | 音声解説なしでFail |
@@ -26,7 +26,7 @@
 | 1.4.2 | 自動+手動 | `auto-play-detection` **[CLI]**（`a11y-skills/auto-play-audio`）+ 操作ログ | [線引き](../../a11y-knowledge/references/criteria/1.4.2.ja.md) |
 | 1.4.3 | 自動 | axe color-contrast | AA未満でFail |
 | 1.4.4 | 自動+手動 | `zoom-200-check` **[CLI]** + スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.4.ja.md) |
-| 1.4.5 | 手動+コンテンツ | スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.5.ja.md) |
+| 1.4.5 | 手動+コンテンツ | 画像と文脈 + 可視テキスト/表示切替 | [線引き](../../a11y-knowledge/references/criteria/1.4.5.ja.md) |
 | 1.4.10 | 自動+手動 | `reflow-check` **[CLI]** + スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.10.ja.md) |
 | 1.4.11 | 自動の候補+手動 | `non-text-contrast-check` **[CLI]** + スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.11.ja.md)。必要な表示・隣接色・例外を確認して判定 |
 | 1.4.12 | 自動+手動 | `text-spacing-check` **[CLI]** + スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.12.ja.md) |

@@ -13,7 +13,7 @@ When the "Judgment Rule" column says **Judgment lines**, judge with the "Judgmen
 |---|---|---|---|
 | 1.1.1 | Automated + Content | a11y tree/image list | [Judgment lines](../../a11y-knowledge/references/criteria/1.1.1.md) |
 | 1.2.1 | Automated + Content | DOM media detection + transcript links | Fail if no alternative |
-| 1.2.2 | Automated + Content | axe video-caption + track elements | [Judgment lines](../../a11y-knowledge/references/criteria/1.2.2.md) |
+| 1.2.2 | Automated + Content | axe video-caption + playback, caption content, exceptions | [Judgment lines](../../a11y-knowledge/references/criteria/1.2.2.md) |
 | 1.2.3 | Automated + Content | track elements + transcript links | Fail if no media alternative |
 | 1.2.4 | Content | capture | Fail if live captions missing |
 | 1.2.5 | Automated + Content | track elements | Fail if audio description missing |
@@ -26,7 +26,7 @@ When the "Judgment Rule" column says **Judgment lines**, judge with the "Judgmen
 | 1.4.2 | Automated + Manual | `auto-play-detection` **[CLI]** (`a11y-skills/auto-play-audio`) + logs | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.2.md) |
 | 1.4.3 | Automated | axe color-contrast | Fail below AA |
 | 1.4.4 | Automated + Manual | `zoom-200-check` **[CLI]** + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.4.md) |
-| 1.4.5 | Manual + Content | screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.5.md) |
+| 1.4.5 | Manual + Content | Image/context + visible text/presentation switching | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.5.md) |
 | 1.4.10 | Automated + Manual | `reflow-check` **[CLI]** + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.10.md) |
 | 1.4.11 | Automated candidates + manual | `non-text-contrast-check` **[CLI]** + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.11.md); verify required cues, adjacent colors, and exceptions |
 | 1.4.12 | Automated + Manual | `text-spacing-check` **[CLI]** + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.12.md) |

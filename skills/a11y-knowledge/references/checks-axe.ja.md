@@ -61,3 +61,5 @@ ACTの根拠は検査範囲の考え方に使う。axeが同一ルールを完�
 
 - `color-contrast`（1.4.3）: 背景が画像やグラデーションで比を計算できない。目視か実測で決める。
 - `video-caption`（1.2.2）: captions の track が無い。焼き込み字幕がありうるので不適合にしない。
+
+- `video-caption` のincompleteは焼き込み字幕・必要な音声情報を含む `subtitles`・テキスト代替の例外も照合する。`muted` や `controls` の欠落だけで対象外にしない。再生確認後はSCの判定を行う（[1.2.2-E01–E03](./criteria/1.2.2.ja.md)）。
