@@ -63,7 +63,7 @@ When the "Judgment Rule" column says **Judgment lines**, judge with the "Judgmen
 |---|---|---|---|
 | 3.1.1 | Automated + Content comparison | lang / xml:lang, axe, and representative content language | [Judgment lines](../../a11y-knowledge/references/criteria/3.1.1.md) |
 | 3.1.2 | Automated + Content | axe valid-lang + text analysis | Fail if language of parts not identified |
-| 3.2.1 | Automated + Interactive | `focus-indicator-check` **[CLI]** + DOM diff | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.1.md) |
+| 3.2.1 | Automated + Interactive | `focus-indicator-check` **[CLI]** + activation distinction, display, and focus | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.1.md) |
 | 3.2.2 | Interactive + automated candidates | `change-on-input-check` **[CLI]** + DOM diff | Fail if input triggers submit/navigation without prior advice |
 | 3.2.3 | Content comparison (automated material collection) | Cross-page trees, screens, presentation conditions | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.3.md) |
 | 3.2.4 | Content comparison (automated material collection) | Repeated functions, names, visual identification | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.4.md) |

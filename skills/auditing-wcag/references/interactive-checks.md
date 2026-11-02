@@ -17,14 +17,14 @@ Criteria judged by reproducing user interaction through browser interaction: key
 ## Keyboard
 | Criterion | Action | Evidence | Fail condition |
 |---|---|---|---|
-| 2.1.1 | Operate all functions with the keyboard only | Action log/video | Click-only operation exists |
+| 2.1.1 | Execute functions by keyboard, including equivalent paths and exceptions | Interaction logs/video | [2.1.1 conditions](../../a11y-knowledge/references/criteria/2.1.1.md) |
 | 2.1.2 | Focus can always be moved away | Action log | A focus trap exists |
 | 2.1.4 | Disablement, remapping, or focus restriction for character-only shortcuts, including sequences | Action log + `character-key-shortcut-check` | None is satisfied; an actual accidental activation is not required |
 
 ### `keyboard-reachability-check` (2.1.1)
 - Run: `--checks keyboard-reachability-check`
 - Side effects: actually presses Tab, arrow keys and ArrowDown (to open popups).
-- Verify by hand: whether an unreachable element has another route (another element, a custom shortcut); whether a reachable element also works with Enter / Space; second-level submenus, popups opened by Enter / Space, elements shown after load, grid / treegrid, Shadow DOM / iframe; popups recorded as `opened-not-entered`.
+- Verify by hand: whether an unreachable element has another route (another element, a custom shortcut); whether a reachable element executes its function using the provided keys (both Enter and Space are not universally required); second-level submenus, popups opened by Enter / Space, elements shown after load, grid / treegrid, Shadow DOM / iframe; popups recorded as `opened-not-entered`.
 
 ### `keyboard-trap-check` (2.1.2)
 - Run: `--checks keyboard-trap-check`
@@ -39,6 +39,7 @@ Criteria judged by reproducing user interaction through browser interaction: key
 ## Focus
 | Criterion | Action | Evidence | Fail condition |
 |---|---|---|---|
+| 3.2.1 | Separate focus from activation; inspect display, focus, and URL changes | Interaction logs + `focus-indicator-check` | [3.2.1 conditions](../../a11y-knowledge/references/criteria/3.2.1.md) |
 | 2.4.3 | Compare actual order with content relationships | Focus order log + `focus-order-check` | Order harms meaning or operability; visual differences alone are insufficient |
 | 2.4.7 | Check that focus is visible | Screenshot/video | Focus is not visible |
 | 2.4.11 | Check visible portions of the focused component itself | Screenshot/measurement + covering origin and reveal interaction | Author-created content entirely hides the component and the notes do not apply |
@@ -49,6 +50,8 @@ Criteria judged by reproducing user interaction through browser interaction: key
 - Run: `--checks focus-indicator-check` (`--screenshot` adds an annotated full-page screenshot)
 - Side effects: moves focus to every element with Tab. On pages where focus causes navigation, the navigation happens (it is detected, the check returns to the original page and records an interruption).
 - Verify by hand: visibility and persistence for 2.4.7 (style differences alone cannot establish invisibility); treat 2.4.11 `fullyObscured` as a candidate and check actual complete obscuration of the component, initial positions of movable coverings, and whether user-opened coverings allow revealing it without advancing focus (see [2.4.11](../../a11y-knowledge/references/criteria/2.4.11.md)); navigation that changes only the query / hash; elements skipped because of an interruption or a limit; fixed / sticky elements and the inside of iframes.
+
+- Additional 3.2.1 review: dialogs/focus moves without URL changes, pointer-induced focus, and display-neutral history updates or independent timers. State the scope of Tab-walk passes. [3.2.1](../../a11y-knowledge/references/criteria/3.2.1.md)
 
 ### `change-on-input-check` (3.2.2)
 - Run: `--checks change-on-input-check`
@@ -104,7 +107,7 @@ Criteria judged by reproducing user interaction through browser interaction: key
 |---|---|---|---|
 | 3.3.1 | Check the item and nature of automatically detected errors | Screen/text alternatives/validation response | [3.3.1 conditions](../../a11y-knowledge/references/criteria/3.3.1.md) |
 | 3.3.3 | Check known corrections, presentation, and exceptions | Screen/accepted values/exception reasons | [3.3.3 conditions](../../a11y-knowledge/references/criteria/3.3.3.md) |
-| 3.3.4 | Important actions can be confirmed/cancelled | Action log | No cancel/confirm |
+| 3.3.4 | Verify reversal, validation/correction, or precommitment confirmation for in-scope actions | Interaction logs and cancellation conditions | [3.3.4 conditions](../../a11y-knowledge/references/criteria/3.3.4.md) |
 
 ### 3.3.1 Error Identification Check
 

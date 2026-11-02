@@ -11,6 +11,8 @@ When writing or reviewing code, look up, from the component type, the success cr
 
 - Also check [1.4.11](./criteria/1.4.11.md) for component/state cues and meaningful graphics. For components receiving focus, read [2.4.11](./criteria/2.4.11.md) and, when assessing AAA, [2.4.12](./criteria/2.4.12.md) / [2.4.13](./criteria/2.4.13.md).
 
+- Check [3.2.1](./criteria/3.2.1.md) for components receiving focus, not only inputs. Check [3.3.4](./criteria/3.3.4.md) for in-scope consequences even on deletion buttons outside forms.
+
 | Component type           | Role                                                               | Success criteria that apply                                                     |
 | ------------------------ | ------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
 | button                   | button                                                             | 1.1.1 (when non-text), 1.3.1, 2.1.1, 2.4.3, 2.4.7, 2.5.5, 2.5.8, 4.1.2 |
