@@ -63,3 +63,5 @@ Use ACT evidence to understand check scope. Do not assume axe completely impleme
 - `video-caption` (1.2.2): there is no captions track. Burned-in captions are possible, so do not mark it non-conformant.
 
 - For `video-caption` incomplete, also check open captions, `subtitles` conveying required audio information, and the media-alternative-to-text exception. Do not exclude media based only on `muted` or absent `controls`. Settle the SC verdict after playback checks ([1.2.2-E01–E03](./criteria/1.2.2.md)).
+
+- Do not reuse `video-caption` results to establish alternatives for audio-only/video-only media or adequate audio description. Assess presentation type and content separately under [1.2.1](./criteria/1.2.1.md), [1.2.3](./criteria/1.2.3.md), and [1.2.5](./criteria/1.2.5.md).

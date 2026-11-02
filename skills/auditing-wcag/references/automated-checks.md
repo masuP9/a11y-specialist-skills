@@ -23,7 +23,7 @@ The material collected from the page as loaded (accessibility tree, DOM, screens
 | Criterion | Material | Judgment |
 |---|---|---|
 | 1.1.1 | Image names in the tree, axe `image-alt` and related rules | [Judgment lines](../../a11y-knowledge/references/criteria/1.1.1.md) |
-| 1.2.1 / 1.2.3 / 1.2.5 | `<video>` / `<audio>` / embedded players, `<track kind="descriptions">`, links to nearby alternatives | "Time-based media" below |
+| 1.2.1 / 1.2.3 / 1.2.5 | `<video>` / `<audio>` / embedded players, `<track kind="descriptions">`, links to nearby alternatives | [1.2.1](../../a11y-knowledge/references/criteria/1.2.1.md) / [1.2.3](../../a11y-knowledge/references/criteria/1.2.3.md) / [1.2.5](../../a11y-knowledge/references/criteria/1.2.5.md) |
 | 1.2.2 | `<track kind="captions">`, axe `video-caption` | [Judgment lines](../../a11y-knowledge/references/criteria/1.2.2.md) |
 | 1.3.1 | Compare visual/auditory presentation with DOM/tree relationships | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.1.md) |
 | 1.3.2 | Tree order vs. visual order | Fail where reordering changes meaning and the tree order contradicts the visual meaning |
@@ -45,11 +45,10 @@ The material collected from the page as loaded (accessibility tree, DOM, screens
 
 ## Time-based media (1.2.1 / 1.2.3 / 1.2.5)
 
-- Find `<video>`, `<audio>`, and embedded players (`<iframe>` with YouTube / Vimeo, etc.) and check from context whether a transcript or other alternative is nearby (a link, `aria-describedby`, the text right after it).
-- 1.2.3: Pass with an audio description (`<track kind="descriptions">` or a described version) or a media alternative in text.
-- 1.2.5: Fail without an audio description. Not needed when all visual information is already spoken in the audio.
-- Embedded players may carry their own captions and descriptions; if none are found, mark NT and send to manual review.
-- Whether the alternative matches the media cannot be decided automatically.
+1. Collect `<video>`, `<audio>`, and embedded players, then classify actual audio, video, and time-based interaction. `muted` alone does not establish video-only content.
+2. Collect transcripts, audio alternatives, described versions, static descriptions, and access routes. Do not convert track or link presence into an SC Pass.
+3. Apply [1.2.1](../../a11y-knowledge/references/criteria/1.2.1.md), [1.2.3](../../a11y-knowledge/references/criteria/1.2.3.md), and [1.2.5](../../a11y-knowledge/references/criteria/1.2.5.md) to compare exceptions, content, sequence, interaction, and actual playback. Inspect selection menus in embedded players too.
+4. Leave unavailable content as NT with the evidence needed; settle the verdict once manual checks establish the conditions. Record media/alternative URLs, timestamps, and missing information.
 
 ## Language of parts (3.1.2)
 

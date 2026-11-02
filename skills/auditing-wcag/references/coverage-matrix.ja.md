@@ -12,11 +12,11 @@
 | 基準 | テスト方法 | 証跡 | 判定ルール |
 |---|---|---|---|
 | 1.1.1 | 自動+コンテンツ | a11y tree/画像一覧 | [線引き](../../a11y-knowledge/references/criteria/1.1.1.ja.md) |
-| 1.2.1 | 自動+コンテンツ | DOMメディア検出 + トランスクリプトリンク | 代替がない場合Fail |
+| 1.2.1 | 自動候補 + 内容照合 | メディア/代替 + 再生時刻 + 内容・操作の照合 | [1.2.1](../../a11y-knowledge/references/criteria/1.2.1.ja.md) |
 | 1.2.2 | 自動+コンテンツ | axe video-caption + 再生・字幕内容・例外の確認 | [線引き](../../a11y-knowledge/references/criteria/1.2.2.ja.md) |
-| 1.2.3 | 自動+コンテンツ | track要素 + トランスクリプトリンク | 代替なしでFail |
+| 1.2.3 | 自動候補 + 内容照合 | メディア/代替 + 再生時刻 + 内容・操作の照合 | [1.2.3](../../a11y-knowledge/references/criteria/1.2.3.ja.md) |
 | 1.2.4 | コンテンツ | 画面キャプチャ | ライブ字幕なしでFail |
-| 1.2.5 | 自動+コンテンツ | track要素 | 音声解説なしでFail |
+| 1.2.5 | 自動候補 + 内容照合 | メディア/代替 + 再生時刻 + 内容・操作の照合 | [1.2.5](../../a11y-knowledge/references/criteria/1.2.5.ja.md) |
 | 1.3.1 | 自動＋内容照合 | 画面・音の提示とDOM・ツリーの関係を照合 | [線引き](../../a11y-knowledge/references/criteria/1.3.1.ja.md) |
 | 1.3.2 | 自動 | a11y tree + DOM順 | 意味順序が崩れるとFail |
 | 1.3.3 | 自動+コンテンツ | a11y treeテキスト + 文面抜粋 | [線引き](../../a11y-knowledge/references/criteria/1.3.3.ja.md) |

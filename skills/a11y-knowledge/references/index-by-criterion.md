@@ -11,11 +11,15 @@
 | Multiple pages | Cannot be decided without comparing multiple pages. Read [cross-page](./cross-page.md) first                     |
 | Measurement    | Needs results of operating and measuring in a browser (`@a11y-skills/audit`). Without them, leave as needs review |
 | Visual         | Needs the runtime appearance or operation, and cannot be decided from the tree or measurement                    |
+| Content comparison | Play media and compare audio, video, alternatives, and interaction |
 
 | Criterion | Name (short)                              | Nature                | File                                          |
 | --------- | ----------------------------------------- | --------------------- | --------------------------------------------- |
 | 1.1.1     | Non-text Content                          | Element               | [1.1.1](./criteria/1.1.1.md)                  |
-| 1.2.2     | Captions (Prerecorded)                    | Element               | [1.2.2](./criteria/1.2.2.md)                  |
+| 1.2.1 | Audio-only and Video-only (Prerecorded) | Content comparison | [1.2.1](./criteria/1.2.1.md) |
+| 1.2.2     | Captions (Prerecorded)                    | Content comparison | [1.2.2](./criteria/1.2.2.md)                  |
+| 1.2.3 | Audio Description or Media Alternative (Prerecorded) | Content comparison | [1.2.3](./criteria/1.2.3.md) |
+| 1.2.5 | Audio Description (Prerecorded) | Content comparison | [1.2.5](./criteria/1.2.5.md) |
 | 1.3.1     | Info and Relationships                    | Element               | [1.3.1](./criteria/1.3.1.md)                  |
 | 1.3.3     | Sensory Characteristics                   | Whole page            | [1.3.3](./criteria/1.3.3.md)                  |
 | 1.3.4     | Orientation                               | Measurement           | [1.3.4](./criteria/1.3.4.md)                  |
