@@ -22,6 +22,20 @@ adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - CLI: a check named more than once in `--checks` now runs once.
+- `focus-indicator-check`: a navigation that lands after the wait following a
+  Tab is no longer missed (3.2.1). Before, the destination's URL became the new
+  starting point, so the result could show no violation, or blame an element of
+  the destination, and the rest of the original page went unmeasured. The check
+  now compares against the URL the walk started on, replays the walk to find
+  which Tab leads to the navigation, and carries on with that element skipped.
+  It also waits 1 second after the last Tab (up to 5 seconds when a focus
+  handler already started a navigation), and a screenshot in progress
+  (`screenshotDiff`) no longer stalls for about 30 seconds on a navigation. If
+  the element cannot be identified, `unidentifiedNavigation` is `true` and 3.2.1
+  is `incomplete`. A completed walk now takes about 1 second longer, and each
+  delayed navigation adds page loads. Heads-up: the check keeps acting on the
+  live page during those replays. A navigation that happens with no Tab at all
+  is not treated as a violation.
 
 ## 0.18.0 — 2026-10-25
 

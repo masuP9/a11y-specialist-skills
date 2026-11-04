@@ -37,6 +37,9 @@ import {
   FOCUS_STYLE_PROPERTIES,
   EXTRA_TAB_ITERATIONS,
   FOCUS_INDICATOR_NAVIGATION_SETTLE_MS,
+  FOCUS_NAVIGATION_END_OF_WALK_MS,
+  FOCUS_NAVIGATION_PENDING_MS,
+  FOCUS_NAVIGATION_REPLAY_MARGIN_MS,
   DEFAULT_FOCUS_RESULT_FILE,
   DEFAULT_FOCUS_SCREENSHOT_FILE,
   FOCUS_OBSCURED_FULL_RATIO,
@@ -208,10 +211,11 @@ export interface RunFocusIndicatorCheckOptions
    */
   contextOptions?: BrowserContextOptions;
   /**
-   * Milliseconds to wait after each Tab press for a focus-triggered navigation
-   * to surface (default: 25). A navigation that fires after this window may be
-   * missed or attributed to a neighboring element — raise this value when
-   * auditing pages with debounced or otherwise delayed focus handlers.
+   * Milliseconds to wait after each Tab press (default: 25). A navigation that
+   * lands after this wait is still found: the check replays the walk to learn
+   * which element's focus started it, which costs extra page loads. It has no
+   * other effect on 3.2.1. A larger value gives a page more time to show an
+   * element before it is measured again.
    */
   navigationSettleMs?: number;
   /**
@@ -320,6 +324,30 @@ export async function runFocusIndicatorCheck(
   let retryCount = 0;
   // Whether the latest navigation's element could not be identified.
   let unidentifiedNavigation = false;
+  // A navigation not tied to a focus handler (e.g. started by a timer) can come
+  // from any element focused earlier. Attempts then replay the walk at the same
+  // pace, stopping after `stopAfter` Tabs, to find the fewest Tabs that still
+  // lead to it. Limitation: this assumes the page behaves the same on each load
+  // and that the replay is at most about twice as slow as the first walk; a
+  // page that is slower still can get a later element blamed.
+  let replay: {
+    fromUrl: string;
+    toUrl: string;
+    /** When each Tab was pressed; [0] is the start of the walk. */
+    timeline: number[];
+    landedAt: number;
+    /** The focused element per Tab press (1-based). */
+    elements: Map<number, FocusElementRef>;
+    stopAfter: number;
+    /** Fewest Tabs seen to lead to the navigation. */
+    navigatesAfter: number;
+    /** Most Tabs seen not to lead to it; -1 until one is seen. */
+    staysAfter: number;
+    backStep: number;
+  } | null = null;
+  // Waited before the walk once a page turned out to navigate without any Tab,
+  // so the walk starts on the page it ends up on.
+  let preWalkWaitMs = 0;
   let finalPage: Page | null = null;
   // The context for the current attempt. Held outside the loop so it is always
   // closed in `finally`, including if an attempt throws mid-way.
@@ -357,18 +385,29 @@ export async function runFocusIndicatorCheck(
       context = await newContext();
       const page = await context.newPage();
 
-      // Track main-frame navigations (WCAG 3.2.1). Catches URL changes that
-      // commit and revert within a single settle window (which the before/after
-      // URL diff alone would miss). A navigation landing between iterations is
-      // absorbed into the next urlBeforeTab and is NOT caught by this listener —
-      // raise navigationSettleMs for pages with slow focus-triggered handlers.
-      // Reset after the initial goto; checked alongside the URL diff.
-      let lateNavigationUrl: string | null = null;
+      // Track main-frame navigations (WCAG 3.2.1) against the URL the walk
+      // started on, so that one landing at any moment of the walk is caught,
+      // including between two Tabs. Only the first one counts: what follows is
+      // the destination's doing.
+      let walkUrl: string | null = null;
+      let landed: { url: string; at: number } | null = null;
+      let announceLanding = () => {};
+      const landing = new Promise<void>((resolve) => {
+        announceLanding = resolve;
+      });
       page.on('framenavigated', (frame) => {
-        if (frame === page.mainFrame()) {
-          lateNavigationUrl = frame.url();
+        if (
+          frame === page.mainFrame() &&
+          walkUrl !== null &&
+          landed === null &&
+          frame.url() !== walkUrl
+        ) {
+          landed = { url: frame.url(), at: Date.now() };
+          announceLanding();
         }
       });
+      const waitForLanding = (ms: number) =>
+        Promise.race([landing, page.waitForTimeout(ms)]);
 
       const focusHistory: FocusRecord[] = [];
       // Elements before the violating one are focused again on every attempt,
@@ -381,7 +420,6 @@ export async function runFocusIndicatorCheck(
         documentToken: string;
         localId: number;
       }[] = [];
-      let navigationDetected = false;
       // True from a Tab press until its report window ends, so only a focusin
       // caused by that press gets a tabStep (autofocus and scripted focus get
       // null). Counted here, not per document, so it holds across iframes.
@@ -473,6 +511,7 @@ export async function runFocusIndicatorCheck(
 
       // Navigate to target page
       await gotoAndSettle(page, targetUrl);
+      if (preWalkWaitMs > 0) await page.waitForTimeout(preWalkWaitMs);
 
       // Initialize the focus tracker in every frame (it records each frame's
       // elements' styles before focus) and add up the element counts. A frame
@@ -556,10 +595,6 @@ export async function runFocusIndicatorCheck(
         }
       }
 
-      // Reset the late-navigation flag so the initial goto and skip-element
-      // setup above don't produce false positives in the Tab loop.
-      lateNavigationUrl = null;
-
       // Baseline for screenshotDiff: the whole page before anything is focused.
       let baseline: Buffer | null = null;
       if (imageCompare) {
@@ -570,22 +605,36 @@ export async function runFocusIndicatorCheck(
         }
       }
 
+      // A navigation before the first Tab is not caused by this walk: the walk
+      // starts from wherever the page is by now.
+      walkUrl = page.url();
+      const timeline = [Date.now()];
+      const elementByTab = new Map<number, FocusElementRef>();
+      const documentTokens = new Set<string>();
+
       // Tab through all elements with navigation detection
       for (let i = 0; i < count + EXTRA_TAB_ITERATIONS; i++) {
+        // Before the limits, so a limit cannot hide a navigation already seen.
+        if (landed) break;
+
         const reason = limitReached();
         if (reason) {
           aborted = abortWalk(reason, page.url(), focusHistory.length, count);
           break;
         }
 
-        const urlBeforeTab = page.url();
         const recordedBeforeTab = focusHistory.length;
-        const documentTokens = await readDocumentTokens();
+        const tokensNow = await readDocumentTokens();
+
+        // Landed since the last check. Tokens read now may already be the
+        // destination's, so stop before they are trusted.
+        if (landed || (replay && attemptTabPresses >= replay.stopAfter)) break;
+        tokensNow.forEach((token) => documentTokens.add(token));
 
         tabPresses++;
         attemptTabPresses++;
         tabPending = true;
-        navigationReports.length = 0;
+        timeline.push(Date.now());
         await page.keyboard.press('Tab');
 
         // Get currently focused element IMMEDIATELY after Tab. An answer from
@@ -631,63 +680,21 @@ export async function runFocusIndicatorCheck(
         await page.waitForTimeout(navigationSettleMs);
         tabPending = false;
 
-        // Check if navigation occurred (either within the settle window or late)
-        const urlAfterTab = page.url();
-        const lateNav =
-          lateNavigationUrl !== null && lateNavigationUrl !== urlBeforeTab;
-        if (urlAfterTab !== urlBeforeTab || lateNav) {
-          // 3.2.1 violation detected!
-          navigationDetected = true;
+        // What this Tab focused, as far as the documents being walked tell:
+        // the answer above, or the focus reports, which can be lost in a
+        // navigation while the page it leads to reports its own focus
+        // (autofocus). Limitation: a page that delays its own reports (e.g. by
+        // wrapping reportFocus) can pass off an earlier element's report as
+        // this Tab's.
+        const focusedByTab =
+          currentFocusedElement ??
+          focusReports
+            .slice(recordedBeforeTab)
+            .filter((report) => documentTokens.has(report.documentToken))
+            .at(-1)?.ref;
+        if (focusedByTab) elementByTab.set(attemptTabPresses, focusedByTab);
 
-          // The navigate-event report names the element focused when the
-          // navigation started. Without it, fall back to the focused-element
-          // answer and the focus reports, which can be lost in the navigation
-          // while the page it leads to can report its own focus (autofocus).
-          // Use only reports that arrived after this Tab from the documents
-          // being walked; otherwise the culprit is unknown and the attempt
-          // restarts without recording or skipping anything. Limitation: a
-          // page that delays its own reports (e.g. by wrapping reportFocus)
-          // can pass off an earlier element's report as this Tab's.
-          const fromWalked = (report: {
-            ref: FocusElementRef;
-            documentToken: string;
-          }) => documentTokens.has(report.documentToken);
-          const culprit =
-            navigationReports.filter(fromWalked).at(-1)?.ref ??
-            currentFocusedElement ??
-            focusReports.slice(recordedBeforeTab).filter(fromWalked).at(-1)
-              ?.ref ??
-            null;
-          unidentifiedNavigation = !culprit;
-          if (!culprit) {
-            out.warn(
-              `\n⚠️  Focus caused navigation from ${urlBeforeTab}, but the element could not be identified. Restarting test...`,
-            );
-          } else if (!skipSelectors.includes(culprit.selector)) {
-            const toUrl =
-              urlAfterTab !== urlBeforeTab
-                ? urlAfterTab
-                : (lateNavigationUrl ?? urlAfterTab);
-            onFocusViolations.push({
-              element: culprit,
-              fromUrl: urlBeforeTab,
-              toUrl,
-              changeType: 'navigation',
-            });
-            skipSelectors.push(culprit.selector);
-
-            out.warn(
-              `\n⚠️  WCAG 3.2.1 Violation: Focus on element caused navigation!`,
-            );
-            out.warn(`    Element: <${culprit.tag}> "${culprit.name}"`);
-            out.warn(`    Selector: ${culprit.selector}`);
-            out.warn(`    From: ${urlBeforeTab}`);
-            out.warn(`    To: ${toUrl}`);
-            out.warn(`    Restarting test with this element skipped...`);
-          }
-          lateNavigationUrl = null;
-          break;
-        }
+        if (landed) break;
 
         // Measure again what was not visible at focus: the page may have shown
         // it during the settle wait. Keeps the first record when the frame is
@@ -732,23 +739,137 @@ export async function runFocusIndicatorCheck(
           // cannot be cut out of the main-page baseline; leave visualDiff null.
           focusedRecord.frame === null
         ) {
-          focusedRecord.visualDiff = await measureVisualDiff(
-            page,
-            imageCompare,
-            baseline,
-            focusedRecord.rect,
+          // A capture can stall while the page is being replaced, so stop
+          // waiting for it as soon as the navigation lands.
+          focusedRecord.visualDiff = await Promise.race([
+            measureVisualDiff(page, imageCompare, baseline, focusedRecord.rect),
+            landing.then(() => null),
+          ]);
+        }
+      }
+
+      // The Tabs are done; give what they started time to land. A replay waits
+      // for as long as the navigation took to land from this point before.
+      // Limitation: a plain walk stops waiting after a fixed time, so a handler
+      // slower than the rest of the walk plus that time goes unseen.
+      if (!aborted && !landed) {
+        if (replay) {
+          const stoppedAt = replay.timeline[replay.stopAfter]!;
+          await waitForLanding(
+            (replay.landedAt - stoppedAt) * 2 +
+              FOCUS_NAVIGATION_REPLAY_MARGIN_MS,
+          );
+        } else {
+          await waitForLanding(
+            navigationReports.length > 0
+              ? FOCUS_NAVIGATION_PENDING_MS
+              : FOCUS_NAVIGATION_END_OF_WALK_MS,
           );
         }
       }
 
-      if (!navigationDetected) {
-        // Test completed successfully without navigation
+      if (aborted || (!landed && !replay)) {
+        // Stopped by a limit, or completed without navigation
         finalFocusHistory = focusHistory;
         finalPage = page;
         break;
       }
 
-      retryCount++;
+      // Either the outcome of a replay, or a navigation found by a plain walk.
+      // TypeScript cannot see that the listener above assigns `landed`.
+      const found = landed as { url: string; at: number } | null;
+      let culprit: FocusElementRef | null = null;
+      let resolved = true;
+      if (replay) {
+        elementByTab.forEach((ref, tab) => replay!.elements.set(tab, ref));
+        if (found) replay.navigatesAfter = attemptTabPresses;
+        else replay.staysAfter = attemptTabPresses;
+        const { navigatesAfter, staysAfter } = replay;
+        if (navigatesAfter - staysAfter > 1) {
+          // Step back quickly from where the navigation landed (usually near
+          // its element), then bisect once the range is closed.
+          replay.stopAfter =
+            staysAfter >= 0
+              ? Math.floor((staysAfter + navigatesAfter) / 2)
+              : Math.max(0, navigatesAfter - replay.backStep);
+          replay.backStep *= 2;
+          unidentifiedNavigation = true;
+          resolved = false;
+        } else if (navigatesAfter === 0) {
+          // It happens with no Tab at all, so focus is not the cause. Walk the
+          // page it ends up on, as for a navigation before the first Tab.
+          preWalkWaitMs =
+            (replay.landedAt - replay.timeline[0]!) * 2 +
+            FOCUS_NAVIGATION_REPLAY_MARGIN_MS;
+          unidentifiedNavigation = false;
+          out.warn(
+            `\n⚠️  ${replay.fromUrl} navigated to ${replay.toUrl} without any focus change. Measuring the page it leads to.`,
+          );
+          replay = null;
+          retryCount++;
+          resolved = false;
+        } else {
+          culprit = replay.elements.get(navigatesAfter) ?? null;
+        }
+      } else {
+        // A report from the page's navigate event names the element focused
+        // when the navigation started, however late it lands; anything else
+        // takes a replay.
+        const started = navigationReports
+          .filter((report) => documentTokens.has(report.documentToken))
+          .at(-1)?.ref;
+        if (started) {
+          culprit = started;
+        } else {
+          replay = {
+            fromUrl: walkUrl,
+            toUrl: found!.url,
+            timeline,
+            landedAt: found!.at,
+            elements: elementByTab,
+            stopAfter: Math.max(0, attemptTabPresses - 1),
+            navigatesAfter: attemptTabPresses,
+            staysAfter: -1,
+            backStep: 2,
+          };
+          // Until the replays are over, this navigation has no known element.
+          unidentifiedNavigation = true;
+          resolved = false;
+        }
+      }
+
+      if (resolved) {
+        const fromUrl: string = replay?.fromUrl ?? walkUrl;
+        const toUrl: string = replay?.toUrl ?? found!.url;
+        replay = null;
+        // 3.2.1 violation detected, unless the element stays unknown: the
+        // attempt then restarts without recording or skipping anything.
+        unidentifiedNavigation = !culprit;
+        if (!culprit) {
+          out.warn(
+            `\n⚠️  Focus caused navigation from ${fromUrl}, but the element could not be identified. Restarting test...`,
+          );
+        } else if (!skipSelectors.includes(culprit.selector)) {
+          onFocusViolations.push({
+            element: culprit,
+            fromUrl,
+            toUrl,
+            changeType: 'navigation',
+          });
+          skipSelectors.push(culprit.selector);
+
+          out.warn(
+            `\n⚠️  WCAG 3.2.1 Violation: Focus on element caused navigation!`,
+          );
+          out.warn(`    Element: <${culprit.tag}> "${culprit.name}"`);
+          out.warn(`    Selector: ${culprit.selector}`);
+          out.warn(`    From: ${fromUrl}`);
+          out.warn(`    To: ${toUrl}`);
+          out.warn(`    Restarting test with this element skipped...`);
+        }
+        retryCount++;
+      }
+
       if (retryCount >= MAX_RETRIES) {
         out.warn(
           `\n⚠️  Max retries (${MAX_RETRIES}) reached. Some elements may not have been tested.`,

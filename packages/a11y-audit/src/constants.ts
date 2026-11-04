@@ -102,6 +102,25 @@ export const EXTRA_TAB_ITERATIONS = 10;
  */
 export const FOCUS_INDICATOR_NAVIGATION_SETTLE_MS = 25;
 
+/**
+ * focus-indicator-check: wait after the last Tab press for a navigation started
+ * by a delayed handler. A handler slower than the rest of the walk plus this
+ * wait is still missed.
+ */
+export const FOCUS_NAVIGATION_END_OF_WALK_MS = 1_000;
+
+/**
+ * focus-indicator-check: longer end-of-walk wait when a focus handler has
+ * already started a navigation and only the server's answer is outstanding.
+ */
+export const FOCUS_NAVIGATION_PENDING_MS = 5_000;
+
+/**
+ * focus-indicator-check: slack added when a replay waits for a navigation seen
+ * in an earlier attempt, on top of twice the time that navigation took.
+ */
+export const FOCUS_NAVIGATION_REPLAY_MARGIN_MS = 200;
+
 // =============================================================================
 // Focus Obscured Detection Constants (WCAG 2.4.11 / 2.4.12)
 // =============================================================================

@@ -704,7 +704,16 @@ are kept in the result JSON:
   attributed through the page's `navigate` event (Navigation API), which
   records the element focused at that moment, so the element is identified
   regardless of `navigationSettleMs` or machine load. A navigation started
-  later (e.g. by a timer) is still looked for within the settle window.
+  later (e.g. by a timer) is found at any point of the walk, including between
+  two Tabs. The check then replays the walk at the same pace in a fresh page to
+  learn after how many Tabs it happens, and blames that Tab's element. Replays
+  add page loads and count toward `maxTabPresses` and `timeBudgetMs`. A
+  navigation that happens with no Tab at all is not attributed to focus: no
+  violation is recorded and the page it leads to is measured. Limits: the check
+  waits 1 second after the last Tab (up to 5 seconds for the server's answer
+  when a focus handler already started a navigation), so anything later is not
+  found; on a page that behaves differently on each load, or when a replay is
+  more than twice as slow as the first walk, a later element can be blamed.
 - focus-indicator / keyboard-reachability: see "Time and Tab-press limits"
   below for what happens when a limit is hit.
 
