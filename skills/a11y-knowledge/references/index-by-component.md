@@ -53,3 +53,5 @@ This table indexes criteria to check by component. It is neither an exhaustive W
 - For prerecorded media, check actual format and conformance routes in [1.2.1](./criteria/1.2.1.md), [1.2.3](./criteria/1.2.3.md), and [1.2.5](./criteria/1.2.5.md). An audio element synchronized with other information or time-based interaction is not automatically audio-only.
 
 - [2.1.2](./criteria/2.1.2.md) checks exit from keyboard-entered regions beyond modals. [1.4.13](./criteria/1.4.13.md) checks additional hover/focus content regardless of component type. [3.2.2](./criteria/3.2.2.md) includes setting changes such as toggle buttons, not just fields; distinguish ordinary submit/open-button activation.
+
+- Compare visible headings/labels with content/functions under 2.4.6, individual visible text labels with names under 2.5.3, and interaction-triggered status notifications under 4.1.3. [2.4.6](./criteria/2.4.6.md) / [2.5.3](./criteria/2.5.3.md) / [4.1.3](./criteria/4.1.3.md)

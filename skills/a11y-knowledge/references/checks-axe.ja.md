@@ -18,6 +18,7 @@ axe-core の結果（`violations` / `passes` / `incomplete` / `inapplicable`）�
 | `button-name` / `link-name` / `input-button-name` | 4.1.2 | 名前のチェック。役割、必要な状態・値、変更通知まで適合とはしない（[4.1.2-E01–E04](./criteria/4.1.2.ja.md)） |
 | `image-alt` / `input-image-alt` / `role-img-alt` | 1.1.1 | 代替や名前等の実装チェック。内容の十分さ、装飾判断、対象外の内容は残る（[1.1.1-E01–E04](./criteria/1.1.1.ja.md)） |
 | `target-size` | 2.5.8 | 測定対象・状態の範囲で読む。未検出の対象や例外、形状の限界を確認する（[2.5.8-E01–E04](./criteria/2.5.8.ja.md)） |
+| `label-content-name-mismatch` (axe 4.14.0) | 2.5.3 | 個別ラベルの範囲・記号・括弧内の補足を確認して判定する。外部ラベル・文字画像・状態切替後の表示は別途確認。既定のWCAGタグで実行対象。 [2.5.3](./criteria/2.5.3.ja.md) |
 
 ACTの根拠は検査範囲の考え方に使う。axeが同一ルールを完全に実装していると推定しない。
 
@@ -65,3 +66,7 @@ ACTの根拠は検査範囲の考え方に使う。axeが同一ルールを完�
 - `video-caption` のincompleteは焼き込み字幕・必要な音声情報を含む `subtitles`・テキスト代替の例外も照合する。`muted` や `controls` の欠落だけで対象外にしない。再生確認後はSCの判定を行う（[1.2.2-E01–E03](./criteria/1.2.2.ja.md)）。
 
 - `video-caption` の結果を、音声のみ・映像のみの代替や音声解説の充足へ流用しない。[1.2.1](./criteria/1.2.1.ja.md)・[1.2.3](./criteria/1.2.3.ja.md)・[1.2.5](./criteria/1.2.5.ja.md)は提示形式と内容を別に照合する。
+
+- `label-content-name-mismatch`（2.5.3）: 値表示の可能性があるswitch等の不一致はincompleteになり得る。値とラベルを区別し、実際の名前と照合する。 [2.5.3](./criteria/2.5.3.ja.md)
+
+名前の存在やARIAの構文チェックを、2.4.6の説明性・4.1.3の通知成立へ転記しない。 [2.4.6](./criteria/2.4.6.ja.md) / [4.1.3](./criteria/4.1.3.ja.md)

@@ -35,13 +35,13 @@ The material collected from the page as loaded (accessibility tree, DOM, screens
 | 2.4.1 | Repeated blocks and bypass destination structure; check arrival after activation when relying on links | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.1.md) |
 | 2.4.2 | Current `document.title` and topic/purpose; axe `document-title` (non-empty) | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.2.md) |
 | 2.4.4 | Link names and DOM sentences, paragraphs, list items, table headers, and ARIA references; preceding headings follow author policy | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.4.md) |
-| 2.4.6 | Heading and label text | Fail if a heading or label does not describe its topic or purpose (presence is not judged here; missing ones belong to 1.3.1 / 3.3.2) |
-| 2.5.3 | Visible label text vs. accessible name | Fail if the label text is not contained in the name (axe `label-content-name-mismatch` is experimental and not run by default) |
+| 2.4.6 | Headings/labels and actual content/functions, including image labels | [2.4.6](../../a11y-knowledge/references/criteria/2.4.6.md) |
+| 2.5.3 | Individual visible labels/images of text and computed names (selected by default in axe 4.14.0, with partial coverage) | [2.5.3](../../a11y-knowledge/references/criteria/2.5.3.md) |
 | 3.1.1 | lang / xml:lang, axe, and representative content language | [Judgment lines](../../a11y-knowledge/references/criteria/3.1.1.md) |
 | 3.1.2 | Passages in a language other than the page's primary language, axe `valid-lang` | "Language of parts" below |
 | 3.3.2 | Visible labels, instructions, and input requirements (name checks alone do not settle this) | [Judgment lines](../../a11y-knowledge/references/criteria/3.3.2.md) |
 | 4.1.2 | Role, name, and state of operable elements | [Judgment lines](../../a11y-knowledge/references/criteria/4.1.2.md) |
-| 4.1.3 | Messages reporting a change of state and their role (`status` / `alert` / `log`, etc.) | Fail if a message reporting the result of a user action or the state of a process does not reach assistive technology without moving focus |
+| 4.1.3 | Status-message applicability, before/after states, focus, notification mechanisms, and AT output | [4.1.3](../../a11y-knowledge/references/criteria/4.1.3.md) |
 
 ## Time-based media (1.2.1 / 1.2.3 / 1.2.5)
 

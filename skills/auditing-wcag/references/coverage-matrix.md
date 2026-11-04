@@ -46,14 +46,14 @@ When the "Judgment Rule" column says **Judgment lines**, judge with the "Judgmen
 | 2.4.3 | Interactive + automated candidates | `focus-order-check` **[CLI]** + focus order log | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.3.md) |
 | 2.4.4 | Automated + Content | a11y tree + excerpts | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.4.md) |
 | 2.4.5 | Automated + Content | link graph + search/sitemap detection | Fail if only one way provided |
-| 2.4.6 | Automated + Content | a11y tree/excerpts | Fail if headings/labels are unclear |
+| 2.4.6 | Automated + Content | Headings/labels and actual content/functions, including image labels | [2.4.6](../../a11y-knowledge/references/criteria/2.4.6.md) |
 | 2.4.7 | Interactive | screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.7.md) |
 | 2.4.11 | Automated + Interactive | `focus-indicator-check` **[CLI]** + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.11.md) |
 | 2.4.12 (AAA) | Automated + Interactive | `focus-indicator-check` **[CLI]** + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.12.md) |
 | 2.4.13 (AAA) | Measurement + manual | Colors at identical positions before/after focus; qualifying area | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.13.md) |
 | 2.5.1 | Interactive + automated candidates | `pointer-gesture-check` **[CLI]** + logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.5.1.md) |
 | 2.5.2 | Interactive + automated candidates | `pointer-cancellation-check` **[CLI]** + logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.5.2.md) |
-| 2.5.3 | Automated + Manual | a11y name diff (axe `label-content-name-mismatch` is experimental and not run by default) | Fail if label text not in accessible name |
+| 2.5.3 | Automated + Manual | Individual visible labels/images of text and computed names (selected by default in axe 4.14.0, with partial coverage) | [2.5.3](../../a11y-knowledge/references/criteria/2.5.3.md) |
 | 2.5.4 | Interactive + automated candidates | `motion-actuation-check` **[CLI]** + logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.5.4.md) |
 | 2.5.7 | Interactive + automated candidates | `pointer-gesture-check` **[CLI]** + logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.5.7.md) |
 | 2.5.8 | Automated | `target-size-check` **[CLI]** | [Judgment lines](../../a11y-knowledge/references/criteria/2.5.8.md) |
@@ -80,7 +80,7 @@ When the "Judgment Rule" column says **Judgment lines**, judge with the "Judgmen
 |---|---|---|---|
 | 4.1.1 | — | — | Obsolete and removed in WCAG 2.2. Do not judge it or count it in the summary (for WCAG 2.0 / 2.1 audits, treat it as always satisfied for HTML and XML) |
 | 4.1.2 | Automated | a11y tree | [Judgment lines](../../a11y-knowledge/references/criteria/4.1.2.md) |
-| 4.1.3 | Automated + Interactive | a11y tree/logs | Fail if status messages not exposed |
+| 4.1.3 | Automated + Interactive | Status-message applicability, before/after states, focus, notification mechanisms, and AT output | [4.1.3](../../a11y-knowledge/references/criteria/4.1.3.md) |
 
 ## Available CLI Checks
 
