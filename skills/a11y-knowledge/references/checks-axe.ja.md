@@ -25,6 +25,7 @@ ACTの根拠は検査範囲の考え方に使う。axeが同一ルールを完�
 **適合に数えない pass の例**（よく間違える）:
 
 - `html-has-lang` の pass は 3.1.1 の適合にしない。lang があることと、lang が本文の言語と合っていることは別（[3.1.1](./criteria/3.1.1.ja.md)）。
+- `valid-lang` の pass は 3.1.2 の適合にしない。言語タグの値を見るだけで、指定漏れや内容との不一致は見ていない（[3.1.2-E06](./criteria/3.1.2.ja.md)）。
 - `document-title` の pass は 2.4.2 の適合にしない。タイトルがあることと、主題を表していることは別（[2.4.2](./criteria/2.4.2.ja.md)）。
 - `video-caption` の pass（captions の track がある）は 1.2.2 の適合にしない。字幕の中身が音声に合っているかは見ていない（[1.2.2](./criteria/1.2.2.ja.md)）。
 - `label` の pass も violation も3.3.2へ直接転記しない。axe-core 4.14.0では4.1.2の名前チェックで、placeholderだけでも通過し得る。全利用者へのラベル・説明の提示を別途確認する（[3.3.2-E01と線引き](./criteria/3.3.2.ja.md)）。
@@ -39,6 +40,7 @@ ACTの根拠は検査範囲の考え方に使う。axeが同一ルールを完�
 | `document-title`   | 2.4.2    | `<title>` が無い・空                             |
 | `html-has-lang`    | 3.1.1    | `html` に lang が無い・空                        |
 | `html-lang-valid`  | 3.1.1    | 主言語部分が無効（タグ全体の構文検証ではない）                              |
+| `valid-lang` | 3.1.2 | 自然言語を示す `lang` の主言語が無効。プログラミング言語を示す `lang` は除く（[3.1.2-E06](./criteria/3.1.2.ja.md)） |
 | `image-alt`        | 1.1.1    | 対象画像に有効な代替・無視できる実装が無いことを確認した場合。alt欠落だけとは扱わない（[1.1.1-E02–E04](./criteria/1.1.1.ja.md)） |
 | `link-in-text-block` | 1.4.1 | 検出範囲内のviolationsを不適合として扱い、incompleteは要確認。周囲の文字との3:1・スタイル差と、背景とのコントラストを区別する。[1.4.1](./criteria/1.4.1.ja.md) |
 
