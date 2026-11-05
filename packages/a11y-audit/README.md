@@ -114,9 +114,9 @@ reports `incomplete` candidates under three rules:
 `a11y-skills/auth-autocomplete` (an authentication field with
 `autocomplete="off"` or a value that does not suit it) and
 `a11y-skills/auth-captcha`. None is a `violation`, because 3.3.8 is met when
-another method without a cognitive function test (passkey, SSO, ...) or an
-assistive mechanism such as autofill is available, and that needs a human. A
-field with no attribute (`autocompleteStatus: 'missing'`) stays in `details` but
+another method without a cognitive function test (passkey, SSO, ...) is
+available, and that needs a human. Working autofill alone does not excuse blocked
+paste. A field with no attribute (`autocompleteStatus: 'missing'`) stays in `details` but
 is not reported: password managers usually infer the purpose from the control
 type, so it does not stop them the way "off" does; a field with only "on" is
 treated the same way. If the field's name matches the 1.3.5 patterns,

@@ -92,8 +92,8 @@ form で最初のパスワード欄の直前にある文字入力欄）を集め
 CAPTCHA の iframe。入れ子は外側の 1 件だけ）と合わせて、3 つのルールで `incomplete` の候補にします:
 `a11y-skills/auth-paste-blocked`（貼り付けが効かない欄）、`a11y-skills/auth-autocomplete`
 （認証の欄が `autocomplete="off"`、または欄の種類に合わない値）、`a11y-skills/auth-captcha`。
-どれも、認知機能テストを使わない別の手段（パスキー・SSO など）や自動入力の支援があれば満たせるため、
-`violation` にはせず人が確かめます。属性が無い欄（`autocompleteStatus: 'missing'`）は `details` に
+どれも、認知機能テストを使わない別の手段（パスキー・SSO など）があれば満たせるため、
+`violation` にはせず人が確かめます。貼り付けの禁止は、自動入力が動くだけでは満たせません。属性が無い欄（`autocompleteStatus: 'missing'`）は `details` に
 残しますが報告しません（パスワード管理ソフトは欄の種類から推定して動くことが多く、`off` のように
 明示的に止めてはいないため。`on` だけの欄も同じ扱いです。名前が 1.3.5 のパターンに当たる欄なら
 `autocomplete-audit` の `autocomplete-missing` が報告しうるので、当たらない欄はどちらも報告しません）。貼り付けは、
