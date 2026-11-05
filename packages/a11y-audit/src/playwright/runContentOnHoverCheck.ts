@@ -115,7 +115,7 @@ export interface RunContentOnHoverCheckOptions
   settleMs?: number;
   /** How long shown content must stay (default: CONTENT_ON_HOVER_PERSIST_MS). */
   persistMs?: number;
-  /** Wall-clock budget for the whole check (default: CONTENT_ON_HOVER_TIMEOUT_MS). */
+  /** Time budget for the whole check (default: CONTENT_ON_HOVER_TIMEOUT_MS). */
   timeBudgetMs?: number;
   /** Upper bound on candidate triggers (default: CONTENT_ON_HOVER_MAX_TRIGGERS). */
   maxTriggers?: number;
@@ -934,7 +934,7 @@ export async function runContentOnHoverCheck(
 
   const stateKey = `__a11yContentOnHover_${randomUUID()}`;
   const nodesKey = `__a11yContentOnHoverNodes_${randomUUID()}`;
-  const startedAt = Date.now();
+  const startedAt = performance.now();
   let startUrl = targetUrl;
   // Held outside so it is closed in `finally` even if a step throws.
   let context: BrowserContext | null = null;
@@ -1074,7 +1074,7 @@ export async function runContentOnHoverCheck(
      * be opened; false then.
      */
     const tryReload = async (remaining: readonly Pair[]): Promise<boolean> => {
-      if (Date.now() - startedAt > timeBudgetMs) {
+      if (performance.now() - startedAt > timeBudgetMs) {
         abort('timeout', remaining);
         return false;
       }
@@ -1254,7 +1254,7 @@ export async function runContentOnHoverCheck(
 
     for (let i = 0; i < pairs.length; i += 1) {
       const pair = pairs[i] as Pair;
-      if (Date.now() - startedAt > timeBudgetMs) {
+      if (performance.now() - startedAt > timeBudgetMs) {
         abort('timeout', pairs.slice(i));
         return;
       }

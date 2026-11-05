@@ -353,11 +353,14 @@ export async function runFocusIndicatorCheck(
   // closed in `finally`, including if an attempt throws mid-way.
   let context: BrowserContext | null = null;
 
-  const startedAt = Date.now();
+  const startedAt = performance.now();
   let tabPresses = 0;
   let aborted: FocusCheckDetails['aborted'] = null;
   const limitReached = (): 'timeout' | 'tab-limit' | null => {
-    if (timeBudgetMs !== undefined && Date.now() - startedAt > timeBudgetMs) {
+    if (
+      timeBudgetMs !== undefined &&
+      performance.now() - startedAt > timeBudgetMs
+    ) {
       return 'timeout';
     }
     if (maxTabPresses !== undefined && tabPresses >= maxTabPresses) {
@@ -402,7 +405,7 @@ export async function runFocusIndicatorCheck(
           landed === null &&
           frame.url() !== walkUrl
         ) {
-          landed = { url: frame.url(), at: Date.now() };
+          landed = { url: frame.url(), at: performance.now() };
           announceLanding();
         }
       });
@@ -608,7 +611,7 @@ export async function runFocusIndicatorCheck(
       // A navigation before the first Tab is not caused by this walk: the walk
       // starts from wherever the page is by now.
       walkUrl = page.url();
-      const timeline = [Date.now()];
+      const timeline = [performance.now()];
       const elementByTab = new Map<number, FocusElementRef>();
       const documentTokens = new Set<string>();
 
@@ -634,7 +637,7 @@ export async function runFocusIndicatorCheck(
         tabPresses++;
         attemptTabPresses++;
         tabPending = true;
-        timeline.push(Date.now());
+        timeline.push(performance.now());
         await page.keyboard.press('Tab');
 
         // Get currently focused element IMMEDIATELY after Tab. An answer from

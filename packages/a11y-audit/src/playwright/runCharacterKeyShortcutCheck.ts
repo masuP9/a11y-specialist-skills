@@ -100,7 +100,7 @@ export interface RunCharacterKeyShortcutCheckOptions
   contextOptions?: BrowserContextOptions;
   /** Wait after each key (default: CHARACTER_KEY_SHORTCUT_SETTLE_MS). */
   settleMs?: number;
-  /** Wall-clock budget for the whole check (default: CHARACTER_KEY_SHORTCUT_TIMEOUT_MS). */
+  /** Time budget for the whole check (default: CHARACTER_KEY_SHORTCUT_TIMEOUT_MS). */
   timeBudgetMs?: number;
   /** Keys to press, each a single printable non-space character (default: CHARACTER_KEY_SHORTCUT_KEYS). */
   keys?: readonly string[];
@@ -302,7 +302,7 @@ export async function runCharacterKeyShortcutCheck(
   });
 
   const stateKey = `__a11yCharKey_${randomUUID()}`;
-  const startedAt = Date.now();
+  const startedAt = performance.now();
   let startUrl = targetUrl;
   // Held outside so it is closed in `finally` even if a step throws.
   let context: BrowserContext | null = null;
@@ -463,7 +463,7 @@ export async function runCharacterKeyShortcutCheck(
     const tryReload = async (
       remaining: readonly string[],
     ): Promise<boolean> => {
-      if (Date.now() - startedAt > timeBudgetMs) {
+      if (performance.now() - startedAt > timeBudgetMs) {
         abort('timeout', remaining);
         return false;
       }
@@ -496,7 +496,7 @@ export async function runCharacterKeyShortcutCheck(
       let replaced = false;
       try {
         for (let w = 0; w < CHARACTER_KEY_BASELINE_WINDOWS; w += 1) {
-          const remaining = timeBudgetMs - (Date.now() - startedAt);
+          const remaining = timeBudgetMs - (performance.now() - startedAt);
           if (remaining <= 0) break;
           const zeroed = await page.evaluate(resetObserver, stateKey);
           await page.waitForTimeout(Math.min(settleMs, remaining));
@@ -519,7 +519,7 @@ export async function runCharacterKeyShortcutCheck(
       if (!(await tryReload(keys))) return;
     }
     details.baselineDomMutations = baselineMutations;
-    if (Date.now() - startedAt >= timeBudgetMs) {
+    if (performance.now() - startedAt >= timeBudgetMs) {
       abort('timeout', keys);
       return;
     }
@@ -556,7 +556,7 @@ export async function runCharacterKeyShortcutCheck(
     try {
       for (let i = 0; i < keys.length; i += 1) {
         const key = keys[i] as string;
-        if (Date.now() - startedAt > timeBudgetMs) {
+        if (performance.now() - startedAt > timeBudgetMs) {
           abort('timeout', keys.slice(i));
           return;
         }

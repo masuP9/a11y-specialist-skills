@@ -92,7 +92,7 @@ export interface RunFocusOrderCheckOptions
   contextOptions?: BrowserContextOptions;
   /** Wait after each Tab press (default: FOCUS_ORDER_SETTLE_MS). */
   settleMs?: number;
-  /** Wall-clock budget for the whole check (default: FOCUS_ORDER_TIMEOUT_MS). */
+  /** Time budget for the whole check (default: FOCUS_ORDER_TIMEOUT_MS). */
   timeBudgetMs?: number;
   /** Cap on Tab presses (default: FOCUS_ORDER_MAX_TAB_PRESSES). */
   maxTabPresses?: number;
@@ -589,8 +589,8 @@ export async function runFocusOrderCheck(
     defaultFile: DEFAULT_FOCUS_ORDER_RESULT_FILE,
   });
 
-  const startedAt = Date.now();
-  const timedOut = (): boolean => Date.now() - startedAt > timeBudgetMs;
+  const startedAt = performance.now();
+  const timedOut = (): boolean => performance.now() - startedAt > timeBudgetMs;
   // Held outside `try` so it is closed in `finally` even if a step throws.
   let context: BrowserContext | null = null;
 

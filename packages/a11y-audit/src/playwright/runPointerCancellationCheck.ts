@@ -48,7 +48,7 @@
  *   evidence and the rule gets a manual-check note.
  * - Elements inside iframes are not examined; closed shadow roots are not
  *   visible.
- * - Limits: POINTER_CANCELLATION_MAX_TARGETS elements, a wall-clock budget, and
+ * - Limits: POINTER_CANCELLATION_MAX_TARGETS elements, a time budget, and
  *   POINTER_CANCELLATION_MAX_RESTARTS restarts. A handler that never returns is
  *   cut off after `stepTimeoutMs`, the context is closed and the check
  *   restarts; the element is reported as untested (`incomplete`).
@@ -118,7 +118,7 @@ export interface RunPointerCancellationCheckOptions
   contextOptions?: BrowserContextOptions;
   /** Wait after each press for a change to surface (default: POINTER_CANCELLATION_SETTLE_MS). */
   settleMs?: number;
-  /** Wall-clock budget for the whole check (default: POINTER_CANCELLATION_TIMEOUT_MS). */
+  /** Time budget for the whole check (default: POINTER_CANCELLATION_TIMEOUT_MS). */
   timeBudgetMs?: number;
   /** Targets to press before stopping (default: POINTER_CANCELLATION_MAX_TARGETS). */
   maxTargets?: number;
@@ -740,7 +740,7 @@ export async function runPointerCancellationCheck(
   let aborted: PointerCancellationCheckDetails['aborted'] = null;
   // Held outside the loop so it is closed in `finally` even if an attempt throws.
   let context: BrowserContext | null = null;
-  const startedAt = Date.now();
+  const startedAt = performance.now();
 
   const abort = (
     reason: NonNullable<PointerCancellationCheckDetails['aborted']>['reason'],
@@ -926,7 +926,7 @@ export async function runPointerCancellationCheck(
         for (const [index, target] of targets.entries()) {
           const key = JSON.stringify([...target.shadowHosts, target.selector]);
           if (tried.has(key)) continue;
-          if (Date.now() - startedAt > timeBudgetMs) {
+          if (performance.now() - startedAt > timeBudgetMs) {
             abort('timeout');
             break;
           }

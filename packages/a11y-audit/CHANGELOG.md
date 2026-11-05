@@ -3,6 +3,21 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixed
+
+- `focus-indicator-check`: on a machine whose wall clock runs slow, stops or goes
+  back, the wait in a replay came out too short (or negative, with a
+  `TimeoutNegativeWarning`), and a 3.2.1 violation could be reported on an element
+  that did not start the navigation, or not at all. Elapsed times now come from a
+  clock that only moves forward (`performance.now()`).
+- `timeBudgetMs` of `focus-indicator-check`, `keyboard-reachability-check`,
+  `focus-order-check`, `change-on-input-check`, `pointer-cancellation-check`,
+  `character-key-shortcut-check` and `content-on-hover-check`, and the durations
+  the CLI prints, use the same clock: a wall clock jump no longer ends a check
+  early, keeps it from timing out, or prints a negative duration.
+
 ## 0.19.0 — 2026-11-05
 
 ### Changed
