@@ -90,7 +90,7 @@ export interface RunChangeOnInputCheckOptions
    * The wait after focusing a control is never shorter than CHANGE_ON_INPUT_FOCUS_SETTLE_MS.
    */
   settleMs?: number;
-  /** Wall-clock budget for the whole check (default: CHANGE_ON_INPUT_TIMEOUT_MS). */
+  /** Time budget for the whole check (default: CHANGE_ON_INPUT_TIMEOUT_MS). */
   timeBudgetMs?: number;
   /** Controls to try before stopping (default: CHANGE_ON_INPUT_MAX_CONTROLS). */
   maxControls?: number;
@@ -549,7 +549,7 @@ export async function runChangeOnInputCheck(
   let aborted: ChangeOnInputCheckDetails['aborted'] = null;
   // Held outside the loop so it is closed in `finally` even if an attempt throws.
   let context: BrowserContext | null = null;
-  const startedAt = Date.now();
+  const startedAt = performance.now();
 
   const abort = (
     reason: NonNullable<ChangeOnInputCheckDetails['aborted']>['reason'],
@@ -625,7 +625,7 @@ export async function runChangeOnInputCheck(
       let navigated = false;
       for (const control of controls) {
         if (tried.has(control.selector)) continue;
-        if (Date.now() - startedAt > timeBudgetMs) {
+        if (performance.now() - startedAt > timeBudgetMs) {
           abort('timeout');
           break;
         }

@@ -621,7 +621,7 @@ async function main(): Promise<void> {
   let hasErrors = false;
 
   const runOne = async (check: CheckEntry): Promise<void> => {
-    const start = Date.now();
+    const start = performance.now();
 
     // page-based checks get a fresh context + navigated page
     let context: BrowserContext | null = null;
@@ -642,7 +642,7 @@ async function main(): Promise<void> {
             summaries.push({
               name: check.name,
               status: 'ERROR',
-              durationMs: Date.now() - start,
+              durationMs: performance.now() - start,
               error: msg,
             });
             hasErrors = true;
@@ -661,7 +661,7 @@ async function main(): Promise<void> {
         quiet: effectiveConcurrency > 1,
       });
 
-      const durationMs = Date.now() - start;
+      const durationMs = performance.now() - start;
       const summary = result.summary;
 
       const violationCount = summary?.violationCount ?? 0;
@@ -686,7 +686,7 @@ async function main(): Promise<void> {
         passCount,
       });
     } catch (err) {
-      const durationMs = Date.now() - start;
+      const durationMs = performance.now() - start;
       const msg = err instanceof Error ? err.message : String(err);
 
       // auto-play-detection: optional dep missing → SKIPPED, not ERROR
@@ -738,7 +738,7 @@ async function main(): Promise<void> {
           ...selectedChecks.filter((c) => !c.slow),
         ]
       : [...selectedChecks];
-  const startedAt = Date.now();
+  const startedAt = performance.now();
   await Promise.all(
     Array.from({ length: effectiveConcurrency }, async () => {
       for (let next = queue.shift(); next; next = queue.shift()) {
@@ -755,7 +755,7 @@ async function main(): Promise<void> {
   }
 
   // --- Summary ---
-  const totalMs = Date.now() - startedAt;
+  const totalMs = performance.now() - startedAt;
   const doneCount = summaries.filter((s) => s.status === 'DONE').length;
   const skippedCount = summaries.filter((s) => s.status === 'SKIPPED').length;
   const errorCount = summaries.filter((s) => s.status === 'ERROR').length;

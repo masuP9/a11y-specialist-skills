@@ -784,7 +784,7 @@ export const KEYBOARD_REACHABILITY_MAX_ARROW_PRESSES_PER_COMPOSITE = 100;
 export const KEYBOARD_REACHABILITY_MAX_ARROW_PRESSES_TOTAL = 1000;
 /** Added+removed nodes during one composite's exploration before it is stopped. */
 export const KEYBOARD_REACHABILITY_MAX_DOM_MUTATIONS = 200;
-/** Wall-clock budget for the whole check; checked before each key press. */
+/** Time budget for the whole check; checked before each key press. */
 export const KEYBOARD_REACHABILITY_TIMEOUT_MS = 60_000;
 /**
  * Wait after each key press. 25 ms gave the same results as the shared 50 ms on
@@ -1033,7 +1033,7 @@ export const DEFAULT_FOCUS_ORDER_RESULT_FILE = 'focus-order-result.json';
  * non-navigation reaction is attributed to the next target.
  */
 export const POINTER_CANCELLATION_SETTLE_MS = 150;
-/** Wall-clock budget for the whole check. */
+/** Time budget for the whole check. */
 export const POINTER_CANCELLATION_TIMEOUT_MS = 60_000;
 /** Minimum time to watch the page for changes of its own before the first press. */
 export const POINTER_CANCELLATION_BACKGROUND_MS = 1_000;

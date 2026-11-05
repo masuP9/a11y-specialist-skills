@@ -859,9 +859,9 @@ export async function runKeyboardReachabilityCheck(
         url: run.navigatedTo ?? page.url(),
       };
     };
-    const startedAt = Date.now();
+    const startedAt = performance.now();
     const timedOut = (): boolean => {
-      if (Date.now() - startedAt <= timeBudgetMs) {
+      if (performance.now() - startedAt <= timeBudgetMs) {
         return false;
       }
       run.aborted ??= { reason: 'timeout', url: page.url() };
