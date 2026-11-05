@@ -146,12 +146,12 @@ When an input error is detected automatically, the item in error must be identif
 ## Authentication
 | Criterion | Action | Evidence | Fail condition |
 |---|---|---|---|
-| 3.3.8 | Authentication does not require a cognitive function test alone | Screen capture + `accessible-authentication-check` | Cognitive test only with no alternative |
+| 3.3.8 | Check cognitive function tests and whether an exception holds on every authentication step | Screen capture + `accessible-authentication-check` | [Judgment lines](../../a11y-knowledge/references/criteria/3.3.8.md) |
 
 ### `accessible-authentication-check` (3.3.8)
 - Run: `--checks accessible-authentication-check`
 - Side effects: pastes a short text into password and one-time-code fields with the keyboard. It grants the clipboard permission, overwrites the clipboard and briefly opens a helper page. Field values are restored, but not for fields that timed out, nor state the page changed through `input` and similar events. The function API can stop it with `paste: false`.
-- Verify by hand: whether an alternative that avoids a cognitive function test exists (passkey, SSO, email link); whether assistance such as autofill is available; whether a CAPTCHA stays within object recognition or identifying the user's own content; fields inside iframes and shadow roots, forms shown only after pressing the login button, custom CAPTCHAs without `captcha` in the name.
+- Verify by hand: whether an alternative that avoids a cognitive function test exists (passkey, SSO, email link); whether autofill actually works (not a reason to excuse blocked paste); whether the whole code can be pasted (`inserted` is a result from a short string); whether a CAPTCHA stays within object recognition or identifying the user's own content; fields inside iframes and shadow roots, forms shown only after pressing the login button, custom CAPTCHAs without `captcha` in the name, later authentication steps, and recovery paths.
 
 ## Auto-play Detection
 | Criterion | Action | Evidence | Fail condition |

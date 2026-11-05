@@ -72,8 +72,8 @@
 | 3.3.2 | コンテンツ（自動は名前の材料） | 可視ラベル・説明/入力中の画面/受入条件 | [線引き](../../a11y-knowledge/references/criteria/3.3.2.ja.md) |
 | 3.3.3 | インタラクティブ | スクショ | [線引き](../../a11y-knowledge/references/criteria/3.3.3.ja.md) |
 | 3.3.4 | インタラクティブ | 操作ログ | [線引き](../../a11y-knowledge/references/criteria/3.3.4.ja.md) |
-| 3.3.7 | 手動+自動の候補 | `redundant-entry-check` **[CLI]** + 操作ログ | 同一情報の再入力を要求でFail |
-| 3.3.8 | インタラクティブ+自動の候補 | `accessible-authentication-check` **[CLI]** + 画面キャプチャ | 貼り付けの禁止は別の手段が無ければFail、CAPTCHA・別の手段は要確認 |
+| 3.3.7 | 手動+自動の候補 | `redundant-entry-check` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/3.3.7.ja.md) |
+| 3.3.8 | インタラクティブ+自動の候補 | `accessible-authentication-check` **[CLI]** + 画面キャプチャ | [線引き](../../a11y-knowledge/references/criteria/3.3.8.ja.md) |
 
 ## 4. 堅牢
 | 基準 | テスト方法 | 証跡 | 判定ルール |
