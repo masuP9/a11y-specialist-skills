@@ -36,6 +36,8 @@ What each check in [`@a11y-skills/audit`](../../../packages/a11y-audit/README.md
 | character-key-shortcut-check | 2.1.4 | Reactions to individual characters on body | Check disablement, remapping with non-printable keys, or component-focus restriction; inspect sequences and other states separately. [2.1.4](./criteria/2.1.4.md) |
 | content-on-hover-check | 1.4.13 | Escape, straight-line pointer movement, and timed measurements | Check dismissal-only exceptions, other dismissal/routes, persistence conditions, and untested states. A three-second pass does not settle conformance. [1.4.13](./criteria/1.4.13.md) |
 | non-text-contrast-check      | 1.4.11                      | Lists candidates                                                                                                    | [1.4.11 conditions](./criteria/1.4.11.md) |
+| redundant-entry-check | 3.3.7 | Candidates for inputs with overlapping purposes within one page | Check whether values copy, can be selected, or an exception holds. Multi-page flows are not detected. Zero candidates is not Pass. [3.3.7](./criteria/3.3.7.md) |
+| accessible-authentication-check | 3.3.8 | Measured paste, autocomplete, and CAPTCHA-like candidates | Check alternatives, actual autofill, and the challenge. `inserted` does not prove whole-value paste. Some paths are not found, so zero candidates is not Pass. [3.3.8](./criteria/3.3.8.md) |
 
 ## Input for multiple pages
 

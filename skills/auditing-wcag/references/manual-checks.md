@@ -52,7 +52,7 @@ Items requiring human judgment. Use screenshots/video/notes as evidence for visu
 ## Redundant Entry
 | Criterion | Check | Evidence | Fail rule |
 |---|---|---|---|
-| 3.3.7 | No required re-entry of known information | logs | Re-entry required without valid reason |
+| 3.3.7 | Check auto-population, same-page selection, and exceptions for known information | logs | [Judgment lines](../../a11y-knowledge/references/criteria/3.3.7.md) |
 
 > **CLI Check:** `redundant-entry-check` - Reports fields in the same form that ask for the same information (the `autocomplete` purpose, or a purpose inferred from the name/label), plus controls that probably copy or select the earlier entry ("same as ..."), as candidates (incomplete). It only finds overlaps **within a single page**. Forms whose steps span several pages are out of scope and must be checked manually. It does not verify that the value is actually copied.
 >

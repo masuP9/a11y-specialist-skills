@@ -36,6 +36,8 @@
 | character-key-shortcut-check | 2.1.4 | body上での単発文字への反応 | 無効化・非印字キーを含む再割当・部品へのフォーカス限定を確認。連続文字や別状態は別途確認。[2.1.4](./criteria/2.1.4.ja.md) |
 | content-on-hover-check | 1.4.13 | Escape・直線のポインタ移動・一定時間の測定結果 | 消去条件だけの例外、別の消去手段・経路、表示継続の条件、未検査状態を照合。3秒のpassだけで適合にしない。[1.4.13](./criteria/1.4.13.ja.md) |
 | non-text-contrast-check    | 1.4.11         | 候補を挙げる                                                         | [1.4.11の条件](./criteria/1.4.11.ja.md) |
+| redundant-entry-check | 3.3.7 | 1ページ内で目的が重なる欄の候補 | 値が写るか、選べるか、例外を確認。複数ページの手順は検出しない。候補0件で適合にしない。[3.3.7](./criteria/3.3.7.ja.md) |
+| accessible-authentication-check | 3.3.8 | 貼り付けの実測、autocomplete、CAPTCHAらしき要素の候補 | 別の手段、実際の自動入力、出題内容を確認。`inserted`は全体の貼り付けの証明ではない。見つからない経路があるので候補0件で適合にしない。[3.3.8](./criteria/3.3.8.ja.md) |
 
 ## 複数ページの材料
 

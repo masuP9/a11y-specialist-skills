@@ -41,7 +41,7 @@
 | heading              | heading                                                            | 1.3.1、2.4.6                                                                    |
 | landmark             | banner、main、contentinfo、complementary、region、search           | 1.3.1、2.4.1                                                                    |
 | navigation           | navigation                                                         | 1.3.1、2.4.1、2.4.5、3.2.3（複数ページ）                                          |
-| form                 | form                                                               | 1.3.1、3.3.1、3.3.2、3.3.3、3.3.4                                               |
+| form                 | form                                                               | 1.3.1、3.3.1、3.3.2、3.3.3、3.3.4、3.3.7、3.3.8（認証のとき）                     |
 | modal                | dialog、alertdialog                                                | 1.3.1、2.1.1、2.1.2、2.4.3 |
 | list                 | list                                                               | 1.3.1                                                                           |
 | article              | article                                                            | 1.3.1                                                                           |
