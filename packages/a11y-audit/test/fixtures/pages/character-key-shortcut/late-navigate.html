@@ -21,8 +21,8 @@
       document.addEventListener('keydown', (e) => {
         if (e.key === 'g') {
           setTimeout(() => {
-            const end = Date.now() + 250;
-            while (Date.now() < end);
+            const end = performance.now() + 250;
+            while (performance.now() < end);
             location.assign('none.html');
           }, 50);
         }

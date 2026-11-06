@@ -263,13 +263,13 @@ test.describe('Tab walk', () => {
     page,
     browser,
   }, testInfo) => {
-    const startedAt = Date.now();
+    const startedAt = performance.now();
     const { details, bucketOf } = await run('none.html', baseUrl, {
       page,
       browser,
       testInfo,
     });
-    expect(Date.now() - startedAt).toBeLessThan(10_000);
+    expect(performance.now() - startedAt).toBeLessThan(10_000);
     expect(details.stops).toEqual([]);
     expect(bucketOf(VISUAL)).toBe('inapplicable');
     expect(bucketOf(DIALOG)).toBe('inapplicable');

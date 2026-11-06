@@ -51,7 +51,7 @@ test('スクリプトも CSS もないページは何も操作せず inapplicabl
   browser,
   baseUrl,
 }, testInfo) => {
-  const startedAt = Date.now();
+  const startedAt = performance.now();
   const result = await runHover(
     'none.html',
     { page, browser, testInfo },
@@ -64,7 +64,7 @@ test('スクリプトも CSS もないページは何も操作せず inapplicabl
   expect(result.inapplicable.map((r) => r.id).sort()).toEqual(
     [DISMISSIBLE, HOVERABLE, PERSISTENT].sort(),
   );
-  expect(Date.now() - startedAt).toBeLessThan(3_000);
+  expect(performance.now() - startedAt).toBeLessThan(3_000);
 });
 
 test('自分の見た目を変えるだけの :hover 規則は候補にならない', async ({

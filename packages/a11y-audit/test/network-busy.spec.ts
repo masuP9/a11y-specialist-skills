@@ -30,7 +30,7 @@ test('runTimeLimitDetector returns within 15s on a page whose network never goes
   page,
   baseUrl,
 }, testInfo) => {
-  const startedAt = Date.now();
+  const startedAt = performance.now();
   const result = await runTimeLimitDetector({
     page,
     targetUrl: `${baseUrl}/${BUSY_PAGE}`,
@@ -38,77 +38,77 @@ test('runTimeLimitDetector returns within 15s on a page whose network never goes
     outputDir: testInfo.outputDir,
   });
   expect(result.source).toBe('time-limit-detector');
-  expect(Date.now() - startedAt).toBeLessThan(15_000);
+  expect(performance.now() - startedAt).toBeLessThan(15_000);
 });
 
 test('runOrientationCheck returns within 20s on a page whose network never goes idle', async ({
   page,
   baseUrl,
 }, testInfo) => {
-  const startedAt = Date.now();
+  const startedAt = performance.now();
   const result = await runOrientationCheck({
     page,
     targetUrl: `${baseUrl}/${BUSY_PAGE}`,
     outputDir: testInfo.outputDir,
   });
   expect(result.source).toBe('orientation-check');
-  expect(Date.now() - startedAt).toBeLessThan(20_000);
+  expect(performance.now() - startedAt).toBeLessThan(20_000);
 });
 
 test('runFocusIndicatorCheck returns within 20s on a page whose network never goes idle', async ({
   browser,
   baseUrl,
 }, testInfo) => {
-  const startedAt = Date.now();
+  const startedAt = performance.now();
   const result = await runFocusIndicatorCheck({
     browser,
     targetUrl: `${baseUrl}/${BUSY_PAGE}`,
     outputDir: testInfo.outputDir,
   });
   expect(result.source).toBe('focus-indicator-check');
-  expect(Date.now() - startedAt).toBeLessThan(20_000);
+  expect(performance.now() - startedAt).toBeLessThan(20_000);
 });
 
 test('runKeyboardTrapCheck returns within 20s on a page whose network never goes idle', async ({
   browser,
   baseUrl,
 }, testInfo) => {
-  const startedAt = Date.now();
+  const startedAt = performance.now();
   const result = await runKeyboardTrapCheck({
     browser,
     targetUrl: `${baseUrl}/${BUSY_PAGE}`,
     outputDir: testInfo.outputDir,
   });
   expect(result.source).toBe('keyboard-trap-check');
-  expect(Date.now() - startedAt).toBeLessThan(20_000);
+  expect(performance.now() - startedAt).toBeLessThan(20_000);
 });
 
 test('runKeyboardReachabilityCheck returns within 20s on a page whose network never goes idle', async ({
   browser,
   baseUrl,
 }, testInfo) => {
-  const startedAt = Date.now();
+  const startedAt = performance.now();
   const result = await runKeyboardReachabilityCheck({
     browser,
     targetUrl: `${baseUrl}/${BUSY_PAGE}`,
     outputDir: testInfo.outputDir,
   });
   expect(result.source).toBe('keyboard-reachability-check');
-  expect(Date.now() - startedAt).toBeLessThan(20_000);
+  expect(performance.now() - startedAt).toBeLessThan(20_000);
 });
 
 test('runZoomCheck with a targetUrl returns within 20s on a page whose network never goes idle', async ({
   page,
   baseUrl,
 }, testInfo) => {
-  const startedAt = Date.now();
+  const startedAt = performance.now();
   const result = await runZoomCheck({
     page,
     targetUrl: `${baseUrl}/${BUSY_PAGE}`,
     outputDir: testInfo.outputDir,
   });
   expect(result.source).toBe('zoom-200-check');
-  expect(Date.now() - startedAt).toBeLessThan(20_000);
+  expect(performance.now() - startedAt).toBeLessThan(20_000);
 });
 
 test('the CLI audits a page whose network never goes idle without a navigation failure', async ({
@@ -136,7 +136,7 @@ test('gotoAndSettle skips the network-idle grace period for file: URLs', async (
     './fixtures/pages/network-busy/busy.html',
     import.meta.url,
   ).href;
-  const startedAt = Date.now();
+  const startedAt = performance.now();
   await gotoAndSettle(page, fileUrl);
-  expect(Date.now() - startedAt).toBeLessThan(2_000);
+  expect(performance.now() - startedAt).toBeLessThan(2_000);
 });

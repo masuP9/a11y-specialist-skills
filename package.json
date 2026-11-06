@@ -18,7 +18,7 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present --",
     "test:validator": "node --test scripts/validate-skills.test.mjs",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "validate:skills": "node scripts/validate-skills.mjs",

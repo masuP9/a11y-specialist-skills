@@ -697,14 +697,14 @@ test('listener のある要素が 5000 個あるページでも 20 秒以内に�
     }
   });
 
-  const started = Date.now();
+  const started = performance.now();
   const result = (await (
     await import('../dist/playwright/index.js')
   ).runPointerGestureCheck({
     page,
     outputDir: testInfo.outputDir,
   })) as PointerGestureCheckResult;
-  const elapsed = Date.now() - started;
+  const elapsed = performance.now() - started;
 
   expect(elapsed).toBeLessThan(20_000);
   expect(result.details.listenerNodesTruncated).toBe(true);

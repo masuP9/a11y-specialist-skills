@@ -237,7 +237,7 @@ test('戻らない listener があっても期限内に結果を返し、timeout
   baseUrl,
 }, testInfo) => {
   test.setTimeout(20_000);
-  const startedAt = Date.now();
+  const startedAt = performance.now();
 
   const result = await runMotion(
     'hangs.html',
@@ -245,7 +245,7 @@ test('戻らない listener があっても期限内に結果を返し、timeout
     baseUrl,
   );
 
-  expect(Date.now() - startedAt).toBeLessThan(
+  expect(performance.now() - startedAt).toBeLessThan(
     MOTION_SIMULATION_TIMEOUT_MS + 5_000,
   );
   const simulated = result.details.simulation.results[0];

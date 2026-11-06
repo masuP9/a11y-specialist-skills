@@ -260,7 +260,7 @@ test('最後の要素のフォーカスから 500ms 後の遷移も、残りの 
 test('画面撮影を有効にしても、onfocus から 50ms 後に遷移するページの検査は撮影で詰まらない', async ({
   browser,
 }, testInfo) => {
-  const startedAt = Date.now();
+  const startedAt = performance.now();
   const result = await runFocusIndicatorCheck({
     browser,
     targetUrl: `http://127.0.0.1:${port}/delay/50`,
@@ -272,5 +272,5 @@ test('画面撮影を有効にしても、onfocus から 50ms 後に遷移する
   expect(
     result.details.onFocusViolations.map((v) => v.element.selector),
   ).toEqual(['#jump']);
-  expect(Date.now() - startedAt).toBeLessThan(15_000);
+  expect(performance.now() - startedAt).toBeLessThan(15_000);
 });
