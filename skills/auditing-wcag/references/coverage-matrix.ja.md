@@ -18,7 +18,7 @@
 | 1.2.4 | コンテンツ | 画面キャプチャ | ライブ字幕なしでFail |
 | 1.2.5 | 自動候補 + 内容照合 | メディア/代替 + 再生時刻 + 内容・操作の照合 | [1.2.5](../../a11y-knowledge/references/criteria/1.2.5.ja.md) |
 | 1.3.1 | 自動＋内容照合 | 画面・音の提示とDOM・ツリーの関係を照合 | [線引き](../../a11y-knowledge/references/criteria/1.3.1.ja.md) |
-| 1.3.2 | 自動 | a11y tree + DOM順 | 意味順序が崩れるとFail |
+| 1.3.2 | コンテンツ（ツリーは材料） | スクショ + a11y tree/DOM順 + 語の中の空白 | [線引き](../../a11y-knowledge/references/criteria/1.3.2.ja.md) |
 | 1.3.3 | 自動+コンテンツ | a11y treeテキスト + 文面抜粋 | [線引き](../../a11y-knowledge/references/criteria/1.3.3.ja.md) |
 | 1.3.4 | 自動+手動 | `orientation-check` **[CLI]** + 画面キャプチャ | [線引き](../../a11y-knowledge/references/criteria/1.3.4.ja.md) |
 | 1.3.5 | 自動＋内容照合 | `autocomplete-audit` **[CLI]** と本人情報・実際の目的・例外 | [線引き](../../a11y-knowledge/references/criteria/1.3.5.ja.md) |
@@ -45,7 +45,7 @@
 | 2.4.2 | 自動+コンテンツ | 現在のtitleと本文・目的 | [線引き](../../a11y-knowledge/references/criteria/2.4.2.ja.md) |
 | 2.4.3 | インタラクティブ+自動の候補 | `focus-order-check` **[CLI]** + フォーカス順ログ | [線引き](../../a11y-knowledge/references/criteria/2.4.3.ja.md) |
 | 2.4.4 | 自動+コンテンツ | a11y tree + 文面抜粋 | [線引き](../../a11y-knowledge/references/criteria/2.4.4.ja.md) |
-| 2.4.5 | 自動+コンテンツ | リンクグラフ + 検索/サイトマップ検出 | 複数手段なしでFail |
+| 2.4.5 | 手動（ツリーは材料） | ナビゲーション・検索・サイトマップと実際の到達結果 | [線引き](../../a11y-knowledge/references/criteria/2.4.5.ja.md) |
 | 2.4.6 | 自動+コンテンツ | 見出し・ラベルと実際の本文・機能（画像ラベルも含む） | [2.4.6](../../a11y-knowledge/references/criteria/2.4.6.ja.md) |
 | 2.4.7 | インタラクティブ | スクショ | [線引き](../../a11y-knowledge/references/criteria/2.4.7.ja.md) |
 | 2.4.11 | 自動+インタラクティブ | `focus-indicator-check` **[CLI]** + スクショ | [線引き](../../a11y-knowledge/references/criteria/2.4.11.ja.md) |
@@ -62,7 +62,7 @@
 | 基準 | テスト方法 | 証跡 | 判定ルール |
 |---|---|---|---|
 | 3.1.1 | 自動＋内容照合 | lang / xml:lang、axeと代表的な本文の言語 | [線引き](../../a11y-knowledge/references/criteria/3.1.1.ja.md) |
-| 3.1.2 | 自動+コンテンツ | axe valid-lang + テキスト分析 | 部分言語未指定でFail |
+| 3.1.2 | 自動の部分検査+コンテンツ | axe valid-lang + DOMの`lang`と本文の言語 | [線引き](../../a11y-knowledge/references/criteria/3.1.2.ja.md) |
 | 3.2.1 | 自動+インタラクティブ | `focus-indicator-check` **[CLI]** + 起動との区別・画面・フォーカス | [線引き](../../a11y-knowledge/references/criteria/3.2.1.ja.md) |
 | 3.2.2 | インタラクティブ+自動の候補 | `change-on-input-check` **[CLI]** + DOM差分 | [3.2.2](../../a11y-knowledge/references/criteria/3.2.2.ja.md) |
 | 3.2.3 | コンテンツ比較（自動は材料収集） | ページ間のツリー・画面・表示条件 | [線引き](../../a11y-knowledge/references/criteria/3.2.3.ja.md) |

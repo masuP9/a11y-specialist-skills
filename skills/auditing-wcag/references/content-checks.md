@@ -36,5 +36,5 @@ Checks that depend on content quality and availability. Validate presence and ad
 ## Navigation
 | Criterion | Check | Evidence | Fail rule |
 |---|---|---|---|
-| 2.4.5 | Multiple ways to reach content (search/site map) | capture | Only one way provided |
+| 2.4.5 | Multiple ways to reach content (search/site map) and where they actually lead | capture + logs | [2.4.5](../../a11y-knowledge/references/criteria/2.4.5.md) |
 | 2.4.6 | Headings/labels and actual content/functions, including image labels | Content, screen, and component behavior | [2.4.6](../../a11y-knowledge/references/criteria/2.4.6.md) |

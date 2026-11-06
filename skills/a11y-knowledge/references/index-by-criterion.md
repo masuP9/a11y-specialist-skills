@@ -9,6 +9,7 @@
 | Element        | Decided by the element's role, name, and attributes, and the surrounding tree                                    |
 | Whole page     | Needs the structure of the whole page (landmarks, headings, title, lang) or an image of the whole page           |
 | Multiple pages | Cannot be decided without comparing multiple pages. Read [cross-page](./cross-page.md) first                     |
+| Whole site | Needs the extent of the set of pages and how to reach each page. Does not use the cross-page comparison rules |
 | Measurement    | Needs results of operating and measuring in a browser (`@a11y-skills/audit`). Without them, leave as needs review |
 | Visual         | Needs the runtime appearance or operation, and cannot be decided from the tree or measurement                    |
 | Content comparison | Compare text/images with actual content or functions; for media, play and compare audio, video, alternatives, and interaction |
@@ -21,6 +22,7 @@
 | 1.2.3 | Audio Description or Media Alternative (Prerecorded) | Content comparison | [1.2.3](./criteria/1.2.3.md) |
 | 1.2.5 | Audio Description (Prerecorded) | Content comparison | [1.2.5](./criteria/1.2.5.md) |
 | 1.3.1     | Info and Relationships                    | Element               | [1.3.1](./criteria/1.3.1.md)                  |
+| 1.3.2 | Meaningful Sequence | Content comparison + Visual | [1.3.2](./criteria/1.3.2.md) |
 | 1.3.3     | Sensory Characteristics                   | Whole page            | [1.3.3](./criteria/1.3.3.md)                  |
 | 1.3.4     | Orientation                               | Measurement           | [1.3.4](./criteria/1.3.4.md)                  |
 | 1.3.5     | Identify Input Purpose                    | Measurement + Element | [1.3.5](./criteria/1.3.5.md)                  |
@@ -41,6 +43,7 @@
 | 2.4.2     | Page Titled                               | Whole page            | [2.4.2](./criteria/2.4.2.md)                  |
 | 2.4.3     | Focus Order                               | Measurement           | [2.4.3](./criteria/2.4.3.md)                  |
 | 2.4.4     | Link Purpose (In Context)                 | Element               | [2.4.4](./criteria/2.4.4.md)                  |
+| 2.4.5 | Multiple Ways | Whole site + Interaction | [2.4.5](./criteria/2.4.5.md) |
 | 2.4.6 | Headings and Labels | Content comparison | [2.4.6](./criteria/2.4.6.md) |
 | 2.4.7     | Focus Visible                             | Measurement           | [2.4.7](./criteria/2.4.7.md)                  |
 | 2.4.11    | Focus Not Obscured (Minimum)              | Measurement           | [2.4.11](./criteria/2.4.11.md)                |
@@ -54,6 +57,7 @@
 | 2.5.7     | Dragging Movements                        | Measurement           | [2.5.7](./criteria/2.5.7.md)                  |
 | 2.5.8     | Target Size (Minimum)                     | Measurement + Element | [2.5.8](./criteria/2.5.8.md)                  |
 | 3.1.1     | Language of Page                          | Whole page            | [3.1.1](./criteria/3.1.1.md)                  |
+| 3.1.2 | Language of Parts | Content comparison | [3.1.2](./criteria/3.1.2.md) |
 | 3.2.1     | On Focus                                  | Measurement           | [3.2.1](./criteria/3.2.1.md)                  |
 | 3.2.2 | On Input | Measurement + Visual | [3.2.2](./criteria/3.2.2.md) |
 | 3.2.3     | Consistent Navigation                     | Multiple pages        | [3.2.3](./criteria/3.2.3.md)                  |

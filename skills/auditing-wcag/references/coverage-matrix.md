@@ -18,7 +18,7 @@ When the "Judgment Rule" column says **Judgment lines**, judge with the "Judgmen
 | 1.2.4 | Content | capture | Fail if live captions missing |
 | 1.2.5 | Automated candidates + Content comparison | Media/alternative + timestamps + content/interaction comparison | [1.2.5](../../a11y-knowledge/references/criteria/1.2.5.md) |
 | 1.3.1 | Automated + Content comparison | Compare visual/auditory presentation with DOM/tree relationships | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.1.md) |
-| 1.3.2 | Automated | a11y tree + DOM order | Fail if meaningful order breaks |
+| 1.3.2 | Content (tree as material) | Screenshots + a11y tree/DOM order + white space inside words | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.2.md) |
 | 1.3.3 | Automated + Content | a11y tree text + excerpts | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.3.md) |
 | 1.3.4 | Automated + Manual | `orientation-check` **[CLI]** + captures | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.4.md) |
 | 1.3.5 | Automated + Content comparison | `autocomplete-audit` **[CLI]** plus user-information scope, actual purpose, and exceptions | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.5.md) |
@@ -45,7 +45,7 @@ When the "Judgment Rule" column says **Judgment lines**, judge with the "Judgmen
 | 2.4.2 | Automated + Content | Current title, content, and purpose | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.2.md) |
 | 2.4.3 | Interactive + automated candidates | `focus-order-check` **[CLI]** + focus order log | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.3.md) |
 | 2.4.4 | Automated + Content | a11y tree + excerpts | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.4.md) |
-| 2.4.5 | Automated + Content | link graph + search/sitemap detection | Fail if only one way provided |
+| 2.4.5 | Manual (tree as material) | Navigation, search, site map, and where they actually lead | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.5.md) |
 | 2.4.6 | Automated + Content | Headings/labels and actual content/functions, including image labels | [2.4.6](../../a11y-knowledge/references/criteria/2.4.6.md) |
 | 2.4.7 | Interactive | screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.7.md) |
 | 2.4.11 | Automated + Interactive | `focus-indicator-check` **[CLI]** + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.11.md) |
@@ -62,7 +62,7 @@ When the "Judgment Rule" column says **Judgment lines**, judge with the "Judgmen
 | Criterion | Test Method | Evidence | Judgment Rule |
 |---|---|---|---|
 | 3.1.1 | Automated + Content comparison | lang / xml:lang, axe, and representative content language | [Judgment lines](../../a11y-knowledge/references/criteria/3.1.1.md) |
-| 3.1.2 | Automated + Content | axe valid-lang + text analysis | Fail if language of parts not identified |
+| 3.1.2 | Partial automated check + Content | axe valid-lang + DOM `lang` and content language | [Judgment lines](../../a11y-knowledge/references/criteria/3.1.2.md) |
 | 3.2.1 | Automated + Interactive | `focus-indicator-check` **[CLI]** + activation distinction, display, and focus | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.1.md) |
 | 3.2.2 | Interactive + automated candidates | `change-on-input-check` **[CLI]** + DOM diff | [3.2.2](../../a11y-knowledge/references/criteria/3.2.2.md) |
 | 3.2.3 | Content comparison (automated material collection) | Cross-page trees, screens, presentation conditions | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.3.md) |

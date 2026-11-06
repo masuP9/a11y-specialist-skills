@@ -26,7 +26,7 @@ The material collected from the page as loaded (accessibility tree, DOM, screens
 | 1.2.1 / 1.2.3 / 1.2.5 | `<video>` / `<audio>` / embedded players, `<track kind="descriptions">`, links to nearby alternatives | [1.2.1](../../a11y-knowledge/references/criteria/1.2.1.md) / [1.2.3](../../a11y-knowledge/references/criteria/1.2.3.md) / [1.2.5](../../a11y-knowledge/references/criteria/1.2.5.md) |
 | 1.2.2 | `<track kind="captions">`, axe `video-caption` | [Judgment lines](../../a11y-knowledge/references/criteria/1.2.2.md) |
 | 1.3.1 | Compare visual/auditory presentation with DOM/tree relationships | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.1.md) |
-| 1.3.2 | Tree order vs. visual order | Fail where reordering changes meaning and the tree order contradicts the visual meaning |
+| 1.3.2 | Tree and DOM order vs. on-screen order, white space inside words | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.2.md) |
 | 1.3.3 | Instructions, target labels/functions, symbol alternatives, and reading order; check ambiguity even for “below” | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.3.md) |
 | 1.3.5 | `autocomplete-audit` **[CLI]** plus user-information scope, actual purpose, and exceptions | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.5.md) |
 | 1.4.1 | Screenshots, tree text, axe `link-in-text-block` | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.1.md). Measure uncertain lightness distinctions; check visible cues conveying the same information and visited-link treatment |
@@ -38,7 +38,7 @@ The material collected from the page as loaded (accessibility tree, DOM, screens
 | 2.4.6 | Headings/labels and actual content/functions, including image labels | [2.4.6](../../a11y-knowledge/references/criteria/2.4.6.md) |
 | 2.5.3 | Individual visible labels/images of text and computed names (selected by default in axe 4.14.0, with partial coverage) | [2.5.3](../../a11y-knowledge/references/criteria/2.5.3.md) |
 | 3.1.1 | lang / xml:lang, axe, and representative content language | [Judgment lines](../../a11y-knowledge/references/criteria/3.1.1.md) |
-| 3.1.2 | Passages in a language other than the page's primary language, axe `valid-lang` | "Language of parts" below |
+| 3.1.2 | Phrases and attribute values in a language different from their surroundings, DOM `lang`, axe `valid-lang` | [Judgment lines](../../a11y-knowledge/references/criteria/3.1.2.md) |
 | 3.3.2 | Visible labels, instructions, and input requirements (name checks alone do not settle this) | [Judgment lines](../../a11y-knowledge/references/criteria/3.3.2.md) |
 | 4.1.2 | Role, name, and state of operable elements | [Judgment lines](../../a11y-knowledge/references/criteria/4.1.2.md) |
 | 4.1.3 | Status-message applicability, before/after states, focus, notification mechanisms, and AT output | [4.1.3](../../a11y-knowledge/references/criteria/4.1.3.md) |
@@ -50,25 +50,13 @@ The material collected from the page as loaded (accessibility tree, DOM, screens
 3. Apply [1.2.1](../../a11y-knowledge/references/criteria/1.2.1.md), [1.2.3](../../a11y-knowledge/references/criteria/1.2.3.md), and [1.2.5](../../a11y-knowledge/references/criteria/1.2.5.md) to compare exceptions, content, sequence, interaction, and actual playback. Inspect selection menus in embedded players too.
 4. Leave unavailable content as NT with the evidence needed; settle the verdict once manual checks establish the conditions. Record media/alternative URLs, timestamps, and missing information.
 
-## Language of parts (3.1.2)
-
-- Find sentences and phrases in a language other than the page's primary language from context, and check that the element or an ancestor has a correct `lang`.
-- Proper names, technical terms, and loanwords established in the primary language are out of scope.
-- Fail if a passage in another language has no `lang`.
-
 ## Cross-Page Checks
 
 Judge after collecting material (`page-snapshot`) from all audit target pages. For 3.2.3 / 3.2.4 / 3.2.6, read [cross-page.md](../../a11y-knowledge/references/cross-page.md) first and judge with each criterion's judgment lines. `page-snapshot` itself provides no verdict. Supplement material for visual order under 3.2.3; visible labels, icons, and same-page repetition under 3.2.4; and expanded help routes under 3.2.6.
 
 | Criterion | Material | Judgment |
 |---|---|---|
-| 2.4.5 | Search forms, links to a site map, links between pages | "2.4.5" below |
+| 2.4.5 | Search forms, links to a site map, links between pages, and where they actually lead | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.5.md) |
 | 3.2.3 | Contents of `banner` / `navigation` / `contentinfo` on each page | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.3.md) |
 | 3.2.4 | Roles, names, visible labels, and icons of the same repeated function | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.4.md) |
 | 3.2.6 | Help mechanisms and routes, serial order relative to shared content, matching presentation conditions | [Judgment lines](../../a11y-knowledge/references/criteria/3.2.6.md) |
-
-### 2.4.5
-
-- Pass if pages can be reached in two or more ways among search, site map, cross-links between pages, table of contents, and so on.
-- Pages that are a step in a process (e.g. step 2 of checkout) are out of scope.
-- Fail if some page can be reached only one way. Including the site map page in the audit targets is recommended.
