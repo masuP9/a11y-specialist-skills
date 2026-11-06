@@ -42,7 +42,7 @@ test('スクリプトが無いページは listener が無いのでキーを送�
   browser,
   baseUrl,
 }, testInfo) => {
-  const startedAt = Date.now();
+  const startedAt = performance.now();
   const result = await runKeys(
     'none.html',
     { page, browser, testInfo },
@@ -53,7 +53,7 @@ test('スクリプトが無いページは listener が無いのでキーを送�
   expect(result.details.keyProbe).toBe('skipped-no-listeners');
   expect(result.details.keysTried).toEqual([]);
   expect(result.inapplicable.map((r) => r.id)).toEqual([RULE_ID]);
-  expect(Date.now() - startedAt).toBeLessThan(5_000);
+  expect(performance.now() - startedAt).toBeLessThan(5_000);
 });
 
 test('Escape だけに反応するページは 94 キーすべてを押して、どれにも反応せず passes になる', async ({
@@ -297,7 +297,7 @@ test('settleMs が 5000 で timeBudgetMs が 1000 のとき、baseline の途中
   browser,
   baseUrl,
 }, testInfo) => {
-  const startedAt = Date.now();
+  const startedAt = performance.now();
   const result = await runKeys(
     'escape-only.html',
     { page, browser, testInfo },
@@ -305,7 +305,7 @@ test('settleMs が 5000 で timeBudgetMs が 1000 のとき、baseline の途中
     { settleMs: 5000, timeBudgetMs: 1000 },
   );
 
-  expect(Date.now() - startedAt).toBeLessThan(10_000);
+  expect(performance.now() - startedAt).toBeLessThan(10_000);
   expect(result.details.aborted?.reason).toBe('timeout');
   expect(result.details.keysTried).toEqual([]);
   expect(result.details.untested).toHaveLength(94);

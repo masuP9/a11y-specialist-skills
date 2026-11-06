@@ -706,7 +706,7 @@ test('ボタンが 150 個あるページは、既定の設定で 100 個押し�
   baseUrl,
 }, testInfo) => {
   test.setTimeout(120_000);
-  const startedAt = Date.now();
+  const startedAt = performance.now();
 
   const result = await runCancel(
     'many.html',
@@ -714,7 +714,7 @@ test('ボタンが 150 個あるページは、既定の設定で 100 個押し�
     baseUrl,
   );
 
-  expect(Date.now() - startedAt).toBeLessThan(80_000);
+  expect(performance.now() - startedAt).toBeLessThan(80_000);
   expect(result.details.aborted?.reason).toBe('target-limit');
   expect(result.details.targetsTested).toBe(100);
 });

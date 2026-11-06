@@ -288,7 +288,7 @@ test('paste handler が戻らないページでも期限内に結果を返し、
   baseUrl,
 }, testInfo) => {
   test.setTimeout(30_000);
-  const startedAt = Date.now();
+  const startedAt = performance.now();
 
   const result = await runAuth(
     'hangs.html',
@@ -296,7 +296,7 @@ test('paste handler が戻らないページでも期限内に結果を返し、
     baseUrl,
   );
 
-  expect(Date.now() - startedAt).toBeLessThan(
+  expect(performance.now() - startedAt).toBeLessThan(
     AUTH_PASTE_FIELD_TIMEOUT_MS + 5_000,
   );
   const password = result.details.fields.find((f) => f.kind === 'password');
@@ -310,7 +310,7 @@ test('合成 paste イベントの段で戻らなくなっても期限内に結�
   baseUrl,
 }, testInfo) => {
   test.setTimeout(30_000);
-  const startedAt = Date.now();
+  const startedAt = performance.now();
 
   const result = await runAuth(
     'hangs-synthetic.html',
@@ -318,7 +318,7 @@ test('合成 paste イベントの段で戻らなくなっても期限内に結�
     baseUrl,
   );
 
-  expect(Date.now() - startedAt).toBeLessThan(
+  expect(performance.now() - startedAt).toBeLessThan(
     AUTH_PASTE_FIELD_TIMEOUT_MS + 5_000,
   );
   const [first, second] = result.details.fields;
