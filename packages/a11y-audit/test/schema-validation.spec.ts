@@ -250,6 +250,7 @@ test('target-size-check envelope validates against its schema', () => {
             { selector: '#b2', kind: 'circle', distance: 20, required: 24 },
           ],
         },
+        hitTested: true,
       },
     ],
     failAAAOnly: [],

@@ -10,7 +10,8 @@
  * Note: when `screenshot` is enabled this function appends an annotation
  * overlay to the page DOM before capturing the screenshot. Collecting targets
  * also scrolls the page (to hit-test targets outside the initial viewport)
- * and restores the original scroll position afterwards.
+ * and restores the original scroll position afterwards, unless
+ * `scrollToHitTest` is `false`.
  *
  * Spacing exception (SC 2.5.8): evaluated geometrically per the WCAG
  * definition — a 24px-diameter circle centered on each undersized target's
@@ -112,6 +113,8 @@ interface BasicTargetInfo {
    * its control, and every label of that same control.
    */
   sameTargetIndices: number[];
+  /** `true` when the painted center was hit-tested and found uncovered. */
+  hitTested: boolean;
 }
 
 interface CollectedTargets {
@@ -131,13 +134,16 @@ interface CollectedTargets {
  * Collect basic target information from DOM (runs in browser context).
  *
  * Scrolls the page to hit-test every target's painted center and restores
- * the original scroll position before returning.
+ * the original scroll position before returning. With `scrollToHitTest:
+ * false` it never scrolls: targets whose center is outside the viewport are
+ * kept without a hit-test (`hitTested: false`).
  */
 function collectBasicTargetInfo(args: {
   interactiveSelector: string;
   htmlSnippetMaxLength: number;
+  scrollToHitTest: boolean;
 }): CollectedTargets {
-  const { interactiveSelector, htmlSnippetMaxLength } = args;
+  const { interactiveSelector, htmlSnippetMaxLength, scrollToHitTest } = args;
 
   function getHtmlSnippet(element: Element): {
     html: string;
@@ -514,7 +520,7 @@ function collectBasicTargetInfo(args: {
   // pointer targets and are dropped. Scroll only when the point is outside
   // the current viewport; visit candidates in document order to minimise
   // scrolling.
-  const canScroll = typeof window.scrollTo === 'function';
+  const canScroll = scrollToHitTest && typeof window.scrollTo === 'function';
   // `behavior: 'instant'` bypasses CSS `scroll-behavior: smooth`, which
   // would otherwise animate asynchronously and leave the synchronous
   // re-measure below looking at the old position.
@@ -549,6 +555,7 @@ function collectBasicTargetInfo(args: {
   };
 
   const occluded = new Set<number>();
+  const hitTested = new Set<number>();
   for (const i of order) {
     const candidate = candidates[i];
     if (!candidate) {
@@ -583,6 +590,8 @@ function collectBasicTargetInfo(args: {
     const hit = document.elementFromPoint(point.x, point.y);
     if (hit && hit !== el && !el.contains(hit)) {
       occluded.add(i);
+    } else {
+      hitTested.add(i);
     }
   }
 
@@ -591,7 +600,9 @@ function collectBasicTargetInfo(args: {
   }
 
   // Pass 3: build the target list with relations.
-  const kept = candidates.filter((_, i) => !occluded.has(i));
+  const kept = candidates
+    .map((c, i) => ({ ...c, hitTested: hitTested.has(i) }))
+    .filter((_, i) => !occluded.has(i));
   const indexByElement = new Map<Element, number>();
   kept.forEach((c, index) => indexByElement.set(c.el, index));
 
@@ -651,6 +662,7 @@ function collectBasicTargetInfo(args: {
       clientRects: c.clientRects,
       fixed: c.fixed,
       sameTargetIndices: sameTarget[index] ?? [],
+      hitTested: c.hitTested,
     };
   });
 
@@ -948,6 +960,7 @@ function analyzeTargets(
       exceptionAssessment,
       href: target.href,
       spacing,
+      hitTested: target.hitTested,
     };
 
     if (exception) {
@@ -978,6 +991,14 @@ export interface RunTargetSizeCheckOptions extends AuditOutputOptions {
    * `accessibleName` is `null` for every target.
    */
   resolveAccessibleNames?: boolean;
+  /**
+   * Whether to scroll the page to hit-test targets whose center is outside
+   * the viewport (default: true). When `false`, the page is never scrolled
+   * (use it when scrolling would close the content being measured, e.g. an
+   * open menu or popover); such targets are kept without checking whether
+   * another element covers them, with `hitTested: false`.
+   */
+  scrollToHitTest?: boolean;
 }
 
 /**
@@ -993,6 +1014,7 @@ export async function runTargetSizeCheck(
     aaaThreshold = TARGET_SIZE_AAA,
     screenshot = false,
     resolveAccessibleNames = true,
+    scrollToHitTest = true,
     ...location
   } = options;
   const out = createAuditOutput({
@@ -1009,6 +1031,7 @@ export async function runTargetSizeCheck(
   } = await page.evaluate(collectBasicTargetInfo, {
     interactiveSelector: INTERACTIVE_SELECTOR,
     htmlSnippetMaxLength: HTML_SNIPPET_MAX_LENGTH,
+    scrollToHitTest,
   });
 
   // Enhance with accessible names via ariaSnapshot() (optional: one

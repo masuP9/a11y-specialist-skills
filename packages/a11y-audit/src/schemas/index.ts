@@ -550,6 +550,7 @@ export const TARGET_SIZE_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
             'level',
             'exceptionAssessment',
             'spacing',
+            'hitTested',
           ],
           properties: {
             ...ELEMENT_EVIDENCE_PROPS,
@@ -569,6 +570,7 @@ export const TARGET_SIZE_CHECK_RESULT_SCHEMA: JsonSchema = buildEnvelopeSchema({
               enum: ['ruled-out', 'verified', 'possible', 'not-assessed'],
             },
             href: { type: ['string', 'null'] },
+            hitTested: { type: 'boolean' },
             spacing: {
               type: ['object', 'null'],
               required: ['diameter', 'center', 'applies', 'intersections'],

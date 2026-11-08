@@ -7,6 +7,7 @@
  * inline links measured by line box, and targets beyond the initial viewport.
  */
 
+import type { Page } from '@playwright/test';
 import { test, expect } from './helpers/fixtures.js';
 import { runTargetSizeCheck } from '../dist/playwright/index.js';
 import type { TargetSizeCheckResult, TargetSizeIssue } from '../dist/index.js';
@@ -660,4 +661,106 @@ test('target-size-check — a fixed target under a paint-contained root scrolls 
     ...result.details.exceptedTargets,
   ].find((i) => i.selector === '#pinned');
   expect(pinned?.spacing?.center).toEqual({ x: 20, y: 20 });
+});
+
+test.describe('target-size-check — scrollToHitTest', () => {
+  const allIssues = (r: TargetSizeCheckResult): TargetSizeIssue[] => [
+    ...r.details.failAA,
+    ...r.details.failAAAOnly,
+    ...r.details.exceptedTargets,
+  ];
+  const find = (
+    r: TargetSizeCheckResult,
+    selector: string,
+  ): TargetSizeIssue | undefined =>
+    allIssues(r).find((i) => i.selector === selector);
+
+  test.beforeEach(async ({ baseUrl, page }) => {
+    await page.goto(`${baseUrl}/target-size/no-scroll.html`, {
+      waitUntil: 'networkidle',
+    });
+    // Count every window.scrollTo call the check makes.
+    await page.evaluate(() => {
+      const w = window as unknown as { scrollToCalls: number };
+      w.scrollToCalls = 0;
+      const original = window.scrollTo.bind(window);
+      window.scrollTo = ((...args: Parameters<typeof window.scrollTo>) => {
+        w.scrollToCalls++;
+        original(...(args as [ScrollToOptions]));
+      }) as typeof window.scrollTo;
+    });
+  });
+
+  const scrollToCalls = (page: Page): Promise<number> =>
+    page.evaluate(
+      () => (window as unknown as { scrollToCalls: number }).scrollToCalls,
+    );
+
+  test('by default the page is scrolled to hit-test targets below the fold', async ({
+    page,
+  }, testInfo) => {
+    await runTargetSizeCheck({
+      page,
+      outputDir: testInfo.outputDir,
+      quiet: true,
+    });
+
+    expect(await scrollToCalls(page)).toBeGreaterThan(0);
+  });
+
+  test('scrollToHitTest: false never scrolls the page', async ({
+    page,
+  }, testInfo) => {
+    await runTargetSizeCheck({
+      page,
+      outputDir: testInfo.outputDir,
+      quiet: true,
+      scrollToHitTest: false,
+    });
+
+    expect(await scrollToCalls(page)).toBe(0);
+  });
+
+  test('by default a covered target below the fold is dropped and a visible one is hitTested: true', async ({
+    page,
+  }, testInfo) => {
+    const result = await runTargetSizeCheck({
+      page,
+      outputDir: testInfo.outputDir,
+      quiet: true,
+    });
+
+    expect(find(result, '#far-covered')).toBeUndefined();
+    expect(find(result, '#far')?.hitTested).toBe(true);
+    expect(result.details.occludedTargets).toBe(2);
+  });
+
+  test('scrollToHitTest: false keeps targets below the fold, covered or not, with hitTested: false', async ({
+    page,
+  }, testInfo) => {
+    const result = await runTargetSizeCheck({
+      page,
+      outputDir: testInfo.outputDir,
+      quiet: true,
+      scrollToHitTest: false,
+    });
+
+    expect(find(result, '#far-covered')?.hitTested).toBe(false);
+    expect(find(result, '#far')?.hitTested).toBe(false);
+  });
+
+  test('scrollToHitTest: false still drops a covered target inside the viewport and marks a visible one hitTested: true', async ({
+    page,
+  }, testInfo) => {
+    const result = await runTargetSizeCheck({
+      page,
+      outputDir: testInfo.outputDir,
+      quiet: true,
+      scrollToHitTest: false,
+    });
+
+    expect(find(result, '#covered-in-view')).toBeUndefined();
+    expect(find(result, '#in-view')?.hitTested).toBe(true);
+    expect(result.details.occludedTargets).toBe(1);
+  });
 });
