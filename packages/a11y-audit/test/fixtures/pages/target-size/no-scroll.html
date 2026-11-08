@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>target-size without scrolling to hit-test</title>
+    <style>
+      /*
+       * 20x20 buttons far apart (each one's spacing exception holds), in a
+       * 720px viewport. Two are below the fold at document y 2000 and 2100.
+       * Coordinates are document CSS px.
+       */
+      body {
+        margin: 0;
+        font-family: sans-serif;
+        min-height: 3000px;
+      }
+      .t {
+        position: absolute;
+        box-sizing: border-box;
+        width: 20px;
+        height: 20px;
+        padding: 0;
+        border: 0;
+        margin: 0;
+        background: #cde;
+        font-size: 10px;
+        display: block;
+      }
+      .cover {
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        background: #333;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Inside the initial viewport. -->
+    <button id="in-view" class="t" style="left: 10px; top: 10px">i</button>
+    <button id="covered-in-view" class="t" style="left: 200px; top: 10px">
+      c
+    </button>
+    <div class="cover" style="left: 180px; top: 0"></div>
+
+    <!-- Below the fold: one visible, one covered by a panel. -->
+    <button id="far" class="t" style="left: 10px; top: 2000px">f</button>
+    <button id="far-covered" class="t" style="left: 200px; top: 2100px">
+      x
+    </button>
+    <div class="cover" style="left: 180px; top: 2080px"></div>
+  </body>
+</html>

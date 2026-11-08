@@ -678,6 +678,9 @@ before the check starts, even with `writeResult: false`.
 | Option | Default | Effect |
 |---|---|---|
 | `resolveAccessibleNames` | `true` | When `false`, skips the per-target `locator.ariaSnapshot()` call and sets every `accessibleName` to `null`. On a page with 300 links: ~1.1 s → ~0.06 s. |
+| `scrollToHitTest` | `true` | Scrolls the page to bring a target whose center is outside the viewport into view and checks that no other element covers it. When `false`, the page is never scrolled (for measuring a menu or popover that closes on scroll while it stays open); targets outside the viewport are kept without checking whether they are covered, with `hitTested: false`. |
+
+Each target's `hitTested` is `true` when its center was checked and no other element covers it, and `false` when it was kept without that check (outside the viewport with `scrollToHitTest: false`, or inside an inner scroll container). A target with `hitTested: false` may be covered; check it by eye before treating it as a failure.
 
 ```ts
 const result = await runTargetSizeCheck({

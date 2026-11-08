@@ -3,6 +3,21 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Added
+
+- `target-size-check`: `scrollToHitTest` option (default `true`). When
+  `false`, the check never scrolls the page, so a menu or popover that closes
+  on scroll stays open while it is measured. Targets whose center is outside
+  the viewport are then kept without checking whether another element covers
+  them.
+- `target-size-check`: each target has `hitTested` — `true` when its center
+  was checked and no other element covers it, `false` when it was kept
+  without that check (outside the viewport with `scrollToHitTest: false`, or
+  inside an inner scroll container). A target with `hitTested: false` may be
+  covered.
+
 ## 0.19.1 — 2026-11-05
 
 ### Fixed

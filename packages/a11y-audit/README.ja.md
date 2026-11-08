@@ -557,6 +557,9 @@ context でページを開くため、属性はページの読み込み時点で
 | オプション | 既定 | 内容 |
 |---|---|---|
 | `resolveAccessibleNames` | `true` | `false` のときターゲットごとの `locator.ariaSnapshot()` を省き、`accessibleName` をすべて `null` にする。リンク 300 件のページで約 1.1 秒 → 約 0.06 秒。 |
+| `scrollToHitTest` | `true` | 中心が画面の外にあるターゲットを、ページをスクロールして画面に入れ、他の要素に覆われていないか確かめる。`false` のときページを一度もスクロールしない（スクロールで閉じるメニューやポップオーバーを開いたまま測るとき）。画面の外のターゲットは覆われているかを確かめずに残し、`hitTested: false` にする。 |
+
+各ターゲットの `hitTested` は、中心が他の要素に覆われていないと確かめたとき `true`、確かめられずに残したとき（`scrollToHitTest: false` で画面の外にある、中のスクロール枠の中にある）`false` です。`false` のターゲットは覆われていることがあるので、不適合と決める前に目で確かめてください。
 
 ```ts
 const result = await runTargetSizeCheck({

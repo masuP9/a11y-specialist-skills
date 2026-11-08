@@ -43,6 +43,7 @@ const targetSizeIssue = (
   exceptionAssessment: 'not-assessed',
   href: null,
   spacing: null,
+  hitTested: true,
   ...overrides,
 });
 

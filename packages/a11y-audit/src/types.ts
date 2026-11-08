@@ -534,6 +534,13 @@ export interface TargetSizeIssue {
    * targets that meet the AA threshold.
    */
   spacing: TargetSpacingResult | null;
+  /**
+   * `true` when the target's painted center was hit-tested and no other
+   * element covers it. `false` when it could not be hit-tested (its center
+   * is outside the viewport with `scrollToHitTest: false`, or inside an
+   * inner scroll container): the target may be covered.
+   */
+  hitTested: boolean;
 }
 
 export interface TargetSizeSummary {
