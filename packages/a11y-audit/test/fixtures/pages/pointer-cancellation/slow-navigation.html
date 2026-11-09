@@ -1,7 +1,10 @@
 <!doctype html>
 <!--
-  A button navigates 600ms after mousedown, later than the settleMs the test passes (300ms). The
-  next button reacts to click only.
+  A button navigates 450ms after mousedown, later than the settleMs the test passes (300ms). The
+  next button reacts to click only. 450ms lands in the middle of the next
+  button's observation (about 310-620ms after this mousedown), so the
+  navigation commits while #after is pressed. 600ms landed at the end of that
+  window and sometimes committed after it, leaving no restart (#169).
   Expected: the late navigation is not reported as 'element-gone' for #after;
   nothing is untested; the check restarts and #after is tested.
 -->
@@ -17,7 +20,7 @@
       document.getElementById('slow').addEventListener('mousedown', () => {
         setTimeout(() => {
           location.href = 'landing.html';
-        }, 600);
+        }, 450);
       });
       document.getElementById('after').addEventListener('click', () => {});
     </script>
