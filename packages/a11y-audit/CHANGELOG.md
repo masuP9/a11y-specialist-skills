@@ -3,6 +3,17 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixed
+
+- `character-key-shortcut-check`: on a busy machine, a page that changes its
+  own DOM about once a second (a clock, a counter) could be measured as quiet
+  before any key was pressed, and keys pressed afterwards were then reported as
+  causing a `dom-change`. A change made between two of the observation windows
+  before the first key was dropped; the windows now follow each other with no
+  gap, so such a change is counted as the page's own.
+
 ## 0.20.0 — 2026-11-09
 
 ### Added

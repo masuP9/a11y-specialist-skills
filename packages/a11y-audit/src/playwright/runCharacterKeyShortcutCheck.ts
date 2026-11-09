@@ -180,6 +180,22 @@ function resetObserver(
 }
 
 /**
+ * The number of DOM changes since the last reset or take, zeroed in the same
+ * step so a change between two baseline windows is not lost. Returns null if
+ * the state is gone.
+ */
+function takeMutations(stateKey: string): number | null {
+  const state = (
+    window as unknown as Record<string, ObserverState | undefined>
+  )[stateKey];
+  if (!state) return null;
+  state.mutations += state.observer.takeRecords().length;
+  const count = state.mutations;
+  state.mutations = 0;
+  return count;
+}
+
+/**
  * Put focus on <body>; true when it is there afterwards. Waits a task and a
  * frame after blur() so a page that takes focus back is noticed.
  */
@@ -483,8 +499,12 @@ export async function runCharacterKeyShortcutCheck(
     };
 
     // What the page does by itself, over several windows of the same length as
-    // the wait after a key; the largest count is the baseline. Each wait is cut
-    // to the time left; once the budget is used up no key is pressed. A page
+    // the wait after a key; the largest count is the baseline. The windows
+    // follow each other with no gap: a change made while one window is being
+    // read counts in the next one instead of being dropped, so a page that
+    // changes about once over the whole baseline is not measured as quiet
+    // (#169). Each wait is cut to the time left; once the budget is used up no
+    // key is pressed. A page
     // that replaces itself during the measurement (redirect, reload) throws the
     // attempt away: it is reopened in a fresh context and measured again, up to
     // the reload limit.
@@ -495,20 +515,20 @@ export async function runCharacterKeyShortcutCheck(
       const urlAtStart = page.url();
       let replaced = false;
       try {
-        for (let w = 0; w < CHARACTER_KEY_BASELINE_WINDOWS; w += 1) {
-          const remaining = timeBudgetMs - (performance.now() - startedAt);
-          if (remaining <= 0) break;
-          const zeroed = await page.evaluate(resetObserver, stateKey);
-          await page.waitForTimeout(Math.min(settleMs, remaining));
-          const observed = await page.evaluate(readReaction, stateKey);
-          if (zeroed === null || observed === null) {
-            replaced = true;
-            break;
+        if ((await page.evaluate(resetObserver, stateKey)) === null) {
+          replaced = true;
+        } else {
+          for (let w = 0; w < CHARACTER_KEY_BASELINE_WINDOWS; w += 1) {
+            const remaining = timeBudgetMs - (performance.now() - startedAt);
+            if (remaining <= 0) break;
+            await page.waitForTimeout(Math.min(settleMs, remaining));
+            const observed = await page.evaluate(takeMutations, stateKey);
+            if (observed === null) {
+              replaced = true;
+              break;
+            }
+            baselineMutations = Math.max(baselineMutations ?? 0, observed);
           }
-          baselineMutations = Math.max(
-            baselineMutations ?? 0,
-            observed.mutations,
-          );
         }
       } catch (error) {
         if (!NAVIGATION_ERROR.test(firstLine(error))) throw error;
