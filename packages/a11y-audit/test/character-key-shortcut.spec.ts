@@ -493,6 +493,52 @@ test('1 秒に 1 回だけ DOM を書き換えるページは、baseline が 1 �
   expect(result.details.baselineDomMutations).toBeGreaterThan(0);
 });
 
+test('キーを押す前の観察で、窓を読み終えた直後に起きた DOM の変化も、ページ自身の変化として数える', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  // A busy machine can delay a page's timer until just after the check has
+  // read a window and before it starts the next one (#169). This page does
+  // that every time: right after each read that follows a wait, it changes
+  // its DOM once.
+  const createContext = async () => {
+    const context = await browser.newContext();
+    const newPage = context.newPage.bind(context);
+    context.newPage = async () => {
+      const opened = await newPage();
+      const wait = opened.waitForTimeout.bind(opened);
+      const evaluate = opened.evaluate.bind(opened);
+      let readIsNext = false;
+      opened.waitForTimeout = async (timeout: number) => {
+        await wait(timeout);
+        readIsNext = true;
+      };
+      opened.evaluate = (async (fn: never, arg: never) => {
+        const result = await evaluate(fn, arg);
+        if (readIsNext) {
+          readIsNext = false;
+          await evaluate(() => {
+            document.getElementById('banner')?.append('.');
+          });
+        }
+        return result;
+      }) as typeof opened.evaluate;
+      return opened;
+    };
+    return context;
+  };
+
+  const result = await runKeys(
+    'escape-only.html',
+    { page, browser, testInfo },
+    baseUrl,
+    { keys: ['a'], createContext },
+  );
+
+  expect(result.details.baselineDomMutations).toBeGreaterThan(0);
+});
+
 test('blur されると input にフォーカスを戻すページは、body に置けないので全キーが focus-not-on-body で untested になる', async ({
   page,
   browser,
