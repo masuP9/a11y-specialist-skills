@@ -134,7 +134,8 @@ test('g で別ページへ移動するページは navigation を記録し、読
     },
   ]);
   expect(result.details.reacted[1]?.reactions[0]?.kind).toBe('dom-change');
-  expect(result.details.reloads).toBe(1);
+  // One after g, one to press h again: the baseline is 0 and h changes only the DOM.
+  expect(result.details.reloads).toBe(2);
   expect(result.url).toBe(`${baseUrl}/character-key-shortcut/navigate.html`);
 });
 
@@ -454,7 +455,8 @@ test('settleMs のあとに遷移が確定するページは、次のキーを�
     },
   ]);
   expect(result.details.reacted[1]?.reactions[0]?.kind).toBe('dom-change');
-  expect(result.details.reloads).toBe(1);
+  // One after g, one to press h again: the baseline is 0 and h changes only the DOM.
+  expect(result.details.reloads).toBe(2);
 });
 
 test('maxReloads が 0 のとき、遅れて起きた遷移は g に記録したうえで reload-limit で止まり h は untested になる', async ({
@@ -491,6 +493,62 @@ test('1 秒に 1 回だけ DOM を書き換えるページは、baseline が 1 �
 
   expect(result.details.reacted).toEqual([]);
   expect(result.details.baselineDomMutations).toBeGreaterThan(0);
+});
+
+test('2 秒に 1 回 DOM を書き換えるページは、押す前の観察が 0 でも、キーの窓に入った書き換えをキーの反応とみなさない', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runKeys(
+    'slow-ticker-2s.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  expect(result.details.baselineDomMutations).toBe(0);
+  expect(result.details.keysTried).toHaveLength(94);
+  expect(result.details.reacted).toEqual([]);
+  expect(result.details.aborted).toBeNull();
+});
+
+test('押す前の観察が 0 のページで DOM を変える k は、新しいページで押し直しても変わるので反応として残り、押したキーは 1 回ずつ記録される', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runKeys(
+    'toggle-panel.html',
+    { page, browser, testInfo },
+    baseUrl,
+    { keys: ['k', 'j'] },
+  );
+
+  expect(result.details.baselineDomMutations).toBe(0);
+  expect(result.details.reacted.map((r) => r.key)).toEqual(['k']);
+  expect(result.details.reacted[0]?.reactions[0]?.kind).toBe('dom-change');
+  expect(result.details.keysTried).toEqual(['k', 'j']);
+  // One to press k again, one after k changed the page again.
+  expect(result.details.reloads).toBe(2);
+});
+
+test('maxReloads が 0 で押し直せないとき、2 秒に 1 回書き換えるページのキーの窓に入った書き換えは反応として残る', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runKeys(
+    'slow-ticker-2s.html',
+    { page, browser, testInfo },
+    baseUrl,
+    { maxReloads: 0 },
+  );
+
+  expect(result.details.reacted).toHaveLength(1);
+  expect(result.details.reacted[0]?.reactions).toEqual([
+    { kind: 'dom-change', mutations: 1 },
+  ]);
+  expect(result.details.aborted?.reason).toBe('reload-limit');
 });
 
 test('キーを押す前の観察で、窓を読み終えた直後に起きた DOM の変化も、ページ自身の変化として数える', async ({

@@ -36,6 +36,15 @@
  *   play a sound, or react later than `settleMs` are not caught.
  * - A page that keeps rewriting its own DOM (clock, carousel) can hide small
  *   changes made by a key.
+ * - A page that rewrites its DOM less often than the baseline (about a second)
+ *   lasts measures a baseline of 0, and its change can land in a key's
+ *   window. Such a key (DOM change only) is pressed again first in a fresh
+ *   page and dropped when nothing changes. It is still reported when the
+ *   page's change lands in the second window too (more likely the shorter the
+ *   period or the more irregular the timer), or when it cannot be pressed
+ *   again (reload limit, time budget, focus). Pressing again costs one more
+ *   reload for a real shortcut that only changes the DOM on such a page, so
+ *   the reload limit is reached after about half as many of them.
  * - The preventDefault() record misses listeners added to `window` later than
  *   the check's own, and events stopped before they reach `window`.
  * - It reloads only after a visible reaction, so a key that changes only
@@ -573,11 +582,31 @@ export async function runCharacterKeyShortcutCheck(
       await page.keyboard.up('Shift').catch(() => {});
     };
 
+    // With a baseline of 0, one DOM change in a key's window counts, so a page
+    // that rewrites itself less often than the baseline lasts is reported for
+    // whichever key its change lands on (#179). Such a key (`dom-change` only)
+    // is pressed again as the first key of a fresh page, right after it
+    // settles: earlier after load than the first press, which came after the
+    // baseline. A change made by the key comes back; a timer of the page
+    // seldom lands in the same short window again. The entry is already in
+    // `details.reacted`: it is removed only when the second press shows no
+    // reaction, and kept when it cannot be pressed again.
+    let recheck: CharacterKeyResult | null = null;
+    const isSuspect = (reactions: readonly CharacterKeyReaction[]): boolean =>
+      baselineCount === 0 &&
+      reactions.length === 1 &&
+      reactions[0]?.kind === 'dom-change';
+    const canReload = (): boolean =>
+      performance.now() - startedAt <= timeBudgetMs &&
+      details.reloads < maxReloads;
+
     try {
       for (let i = 0; i < keys.length; i += 1) {
         const key = keys[i] as string;
+        // Keys not tried yet: a key being pressed again was already tried.
+        const notTried = (): string[] => keys.slice(recheck ? i + 1 : i);
         if (performance.now() - startedAt > timeBudgetMs) {
-          abort('timeout', keys.slice(i));
+          abort('timeout', notTried());
           return;
         }
 
@@ -620,19 +649,21 @@ export async function runCharacterKeyShortcutCheck(
             }
           }
           lastPressed = null;
-          if (!(await tryReload(keys.slice(i)))) return;
+          if (!(await tryReload(notTried()))) return;
           i -= 1;
           continue;
         }
         if (!onBody) {
           await releaseShift();
-          details.untested.push({ key, reason: 'focus-not-on-body' });
+          // A key that cannot be pressed again keeps its first reaction.
+          if (recheck) recheck = null;
+          else details.untested.push({ key, reason: 'focus-not-on-body' });
           continue;
         }
 
         resetRecords();
         const urlBefore = page.url();
-        details.keysTried.push(key);
+        if (!recheck) details.keysTried.push(key);
         lastPressed = { key, url: urlBefore };
 
         let navigated = false;
@@ -704,14 +735,32 @@ export async function runCharacterKeyShortcutCheck(
         // its keyup causes lands after this point and is dropped by the next
         // key's resetRecords / resetObserver.
         await releaseShift();
-        if (reactions.length === 0) continue;
 
-        const entry: CharacterKeyResult = { key, reactions };
-        details.reacted.push(entry);
+        const rest = keys.slice(i + 1);
+        if (recheck) {
+          const entry = recheck;
+          recheck = null;
+          if (reactions.length === 0) {
+            // The page's own change: drop the key and go on in this page.
+            details.reacted.splice(details.reacted.indexOf(entry), 1);
+            continue;
+          }
+          entry.reactions = reactions;
+        } else {
+          if (reactions.length === 0) continue;
+          const entry: CharacterKeyResult = { key, reactions };
+          details.reacted.push(entry);
+          if (isSuspect(reactions) && canReload()) {
+            lastPressed = null;
+            if (!(await tryReload(rest))) return;
+            recheck = entry;
+            i -= 1;
+            continue;
+          }
+        }
 
         // Reload only when keys remain and the page may have changed: a bare
         // preventDefault() leaves the page as it was.
-        const rest = keys.slice(i + 1);
         if (
           rest.length === 0 ||
           reactions.every((reaction) => reaction.kind === 'default-prevented')

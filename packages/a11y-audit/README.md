@@ -307,7 +307,9 @@ creates its own contexts. It puts focus on `<body>`, **actually presses** the 94
 (space excluded) one at a time (characters that need Shift on a US layout, `A`-`Z` and the shifted symbols, are sent with Shift held, so `e.code` and `e.shiftKey` match), and reports the keys that cause a navigation, a new window, a dialog, focus
 moving, a DOM change, scrolling or `preventDefault()` as `incomplete` candidates (`details.reacted`). A DOM
 change counts only when it is at least twice the largest amount counted over ten windows of the same length with no key pressed
-(`baselineDomMutations`, about a second) plus 3. Whether the shortcut can be turned off or remapped, or works only while a
+(`baselineDomMutations`, about a second) plus 3. When `baselineDomMutations` is 0, a key whose only reaction is a DOM
+change is pressed again as the first key of a fresh context and not reported when nothing changes (so a page that
+rewrites itself less often than once a second is not reported). Whether the shortcut can be turned off or remapped, or works only while a
 component has focus, is for a human to verify. The key listeners on `window` / `document` / `<html>` / `<body>`
 (the only objects a key event from `<body>` reaches) are read first through CDP (`details.listeners`); when there
 is none, no key is sent and the rule is inapplicable (`keyProbe: 'skipped-no-listeners'`). CDP is
@@ -317,7 +319,10 @@ the remaining keys are pressed in a fresh context (at most `maxReloads` times, d
 (default 100 ms) are accepted. Known limitations: keys are pressed only with focus on `<body>`, so shortcuts
 that work only while a component has focus (an exception of 2.1.4) and a keydown on a wrapper of the whole app
 (React 17+ `#root`, ...) are missed; a reload happens only after a visible reaction, so a key that changes only internal state (silently disabling shortcuts, say) leaves the next keys pressed in that state and their reactions can be missed, and the second key of a two-stroke shortcut (`g` then `i`) can be reported as a shortcut of its own (an extra candidate for a human); pass a single key in `keys` to check a suspect one alone (reloading per key is not done: it costs 0.6 s or more each, and 94 keys exceed the time budget); listeners added after the first action are not found; a page that keeps
-rewriting its own DOM can hide small changes. Pages whose shortcuts delete or submit may have side effects
+rewriting its own DOM can hide small changes; on a page that rewrites itself less often than once a second, a key
+that did nothing can still be reported when the page's change lands in the window of the second press too, or
+when the key cannot be pressed again (`maxReloads`, time budget, focus), and a real shortcut that only changes the
+DOM costs one more reload there, counted toward `maxReloads`. Pages whose shortcuts delete or submit may have side effects
 because real keys are pressed.
 
 `runContentOnHoverCheck` (1.4.13, `a11y-skills/content-on-hover-dismissible` / `-hoverable` / `-persistent`)
