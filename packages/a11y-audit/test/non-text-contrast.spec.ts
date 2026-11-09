@@ -52,6 +52,8 @@ function component(
     bestRatio: 4.54,
     indicators: [],
     otherVisuals: [],
+    otherIndicators: [],
+    otherSkipped: [],
     ...overrides,
   };
 }
@@ -119,6 +121,59 @@ test('box-shadow がある低コントラストの部品のとき、説明文に
 
   expect(buckets.incomplete[0]?.nodes[0]?.failureSummary).toContain(
     'box-shadow',
+  );
+});
+
+test('影を測った枠の無い部品のとき、説明文に影の色と比が入る', () => {
+  const buckets = normalizeNonTextContrastCheck(
+    detailsOf({
+      components: [
+        component({
+          status: 'no-boundary',
+          bestRatio: null,
+          otherVisuals: ['box-shadow'],
+          otherIndicators: [
+            {
+              part: 'box-shadow',
+              color: '#b2b2b2',
+              against: '#ffffff',
+              ratio: 2.12,
+            },
+          ],
+        }),
+      ],
+      componentCounts: {
+        boundary: { found: 1, kept: 1 },
+        icon: { found: 0, kept: 0 },
+      },
+    }),
+  );
+
+  expect(buckets.incomplete[0]?.nodes[0]?.failureSummary).toContain(
+    'box-shadow #b2b2b2 vs #ffffff 2.12:1',
+  );
+});
+
+test('ぼかしで影を測れなかった部品のとき、説明文に測れなかった理由が入る', () => {
+  const buckets = normalizeNonTextContrastCheck(
+    detailsOf({
+      components: [
+        component({
+          status: 'no-boundary',
+          bestRatio: null,
+          otherVisuals: ['box-shadow'],
+          otherSkipped: ['blurred-shadow'],
+        }),
+      ],
+      componentCounts: {
+        boundary: { found: 1, kept: 1 },
+        icon: { found: 0, kept: 0 },
+      },
+    }),
+  );
+
+  expect(buckets.incomplete[0]?.nodes[0]?.failureSummary).toContain(
+    'not measured (blurred shadow)',
   );
 });
 
@@ -243,6 +298,301 @@ test('枠も塗りも無い入力欄のとき、no-boundary になり bestRatio 
   expect(field?.status).toBe('no-boundary');
   expect(field?.bestRatio).toBeNull();
   expect(result.incomplete.map((r) => r.id)).toEqual([BOUNDARY_ID]);
+});
+
+// box-shadow / outline are measured into otherIndicators; status ignores them.
+
+function byId(
+  result: NonTextContrastCheckResult,
+  id: string,
+): NonTextContrastComponent | undefined {
+  return result.details.components.find((c) => c.selector === `#${id}`);
+}
+
+test('ぼかしの無い #b2b2b2 の 1px の影の輪だけの入力欄のとき、status は no-boundary のままで影は 2.12:1 と測る', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runNonTextContrast(
+    'shadow.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  const field = byId(result, 'light-ring');
+  expect(field?.status).toBe('no-boundary');
+  expect(field?.otherVisuals).toEqual(['box-shadow']);
+  expect(field?.otherIndicators).toEqual([
+    { part: 'box-shadow', color: '#b2b2b2', against: '#ffffff', ratio: 2.12 },
+  ]);
+  expect(field?.otherSkipped).toEqual([]);
+});
+
+test('ぼかしの無い #767676 の 1px の影の輪だけの入力欄のとき、影は 4.54:1 と測る', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runNonTextContrast(
+    'shadow.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  expect(byId(result, 'dark-ring')?.otherIndicators).toEqual([
+    { part: 'box-shadow', color: '#767676', against: '#ffffff', ratio: 4.54 },
+  ]);
+});
+
+test('下へ 1px ずらしただけの影（下線）のとき、下の辺の帯として 4.54:1 と測る', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runNonTextContrast(
+    'shadow.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  expect(byId(result, 'offset-line')?.otherIndicators).toEqual([
+    { part: 'box-shadow', color: '#767676', against: '#ffffff', ratio: 4.54 },
+  ]);
+});
+
+test('rgba(0,0,0,.6) の影の輪のとき、白に合成した #666666 として 5.74:1 と測る', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runNonTextContrast(
+    'shadow.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  expect(byId(result, 'translucent')?.otherIndicators).toEqual([
+    { part: 'box-shadow', color: '#666666', against: '#ffffff', ratio: 5.74 },
+  ]);
+});
+
+test('透明な影の層と #767676 の輪が並ぶとき（Tailwind の書き方）、透明な層は数えず輪を 4.54:1 と測る', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runNonTextContrast(
+    'shadow.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  const field = byId(result, 'tailwind-ring');
+  expect(field?.otherIndicators).toEqual([
+    { part: 'box-shadow', color: '#767676', against: '#ffffff', ratio: 4.54 },
+  ]);
+  expect(field?.otherSkipped).toEqual([]);
+});
+
+test('透明な影の層だけのとき、影は無いものとして otherVisuals に box-shadow を入れない', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runNonTextContrast(
+    'shadow.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  const field = byId(result, 'tailwind-only');
+  expect(field?.otherVisuals).toEqual([]);
+  expect(field?.otherIndicators).toEqual([]);
+  expect(field?.otherSkipped).toEqual([]);
+});
+
+test('ぼかし 4px の黒い影のとき、測らず blurred-shadow を記録する', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runNonTextContrast(
+    'shadow.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  const field = byId(result, 'blurred');
+  expect(field?.otherVisuals).toEqual(['box-shadow']);
+  expect(field?.otherIndicators).toEqual([]);
+  expect(field?.otherSkipped).toEqual(['blurred-shadow']);
+});
+
+test('白い輪が黒い輪を隠す 2 層の影のとき、測らず multiple-shadows を記録する', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runNonTextContrast(
+    'shadow.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  const field = byId(result, 'two-layers');
+  expect(field?.otherIndicators).toEqual([]);
+  expect(field?.otherSkipped).toEqual(['multiple-shadows']);
+});
+
+test('0.5px の影の輪のとき、1px に満たないので測らず thin を記録する', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runNonTextContrast(
+    'shadow.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  const field = byId(result, 'thin');
+  expect(field?.otherIndicators).toEqual([]);
+  expect(field?.otherSkipped).toEqual(['thin']);
+});
+
+test('隙間の無い overflow:hidden の親の中の影の輪のとき、全部の辺が切られるので測らず clipped を記録する', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runNonTextContrast(
+    'shadow.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  const field = byId(result, 'clipped');
+  expect(field?.otherIndicators).toEqual([]);
+  expect(field?.otherSkipped).toEqual(['clipped']);
+});
+
+test('#eee の枠の内側の inset の #767676 の輪のとき、外側の白より低い枠の色と比べて 3.91:1 と測る', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runNonTextContrast(
+    'shadow.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  const field = byId(result, 'inset-border');
+  expect(field?.status).toBe('low');
+  expect(field?.otherIndicators).toEqual([
+    { part: 'box-shadow', color: '#767676', against: '#eeeeee', ratio: 3.91 },
+  ]);
+});
+
+test('position:absolute で外側の色が決まらない入力欄のとき、undetermined のままで影は測らない', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runNonTextContrast(
+    'shadow.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  const field = byId(result, 'positioned');
+  expect(field?.status).toBe('undetermined');
+  expect(field?.undeterminedReason).toBe('out-of-flow');
+  expect(field?.otherIndicators).toEqual([]);
+});
+
+test('1px solid #767676 の輪郭線だけの入力欄のとき、status は no-boundary のままで輪郭線は 4.54:1 と測る', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runNonTextContrast(
+    'outline.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  const field = byId(result, 'dark-outline');
+  expect(field?.status).toBe('no-boundary');
+  expect(field?.otherVisuals).toEqual(['outline']);
+  expect(field?.otherIndicators).toEqual([
+    { part: 'outline', color: '#767676', against: '#ffffff', ratio: 4.54 },
+  ]);
+});
+
+test('外へ 3px 離した輪郭線のとき、間は外側の色なので外側の色と比べて 4.54:1 と測る', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runNonTextContrast(
+    'outline.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  expect(byId(result, 'offset-outline')?.otherIndicators).toEqual([
+    { part: 'outline', color: '#767676', against: '#ffffff', ratio: 4.54 },
+  ]);
+});
+
+test('点線の輪郭線のとき、点の色で 7.45:1 と測る', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runNonTextContrast(
+    'outline.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  expect(byId(result, 'dotted-outline')?.otherIndicators).toEqual([
+    { part: 'outline', color: '#555555', against: '#ffffff', ratio: 7.45 },
+  ]);
+});
+
+test('内側へ 3px 入れた輪郭線のとき、外側と接しないので測らず outline-inside を記録する', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runNonTextContrast(
+    'outline.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  const field = byId(result, 'inside-outline');
+  expect(field?.otherIndicators).toEqual([]);
+  expect(field?.otherSkipped).toEqual(['outline-inside']);
+});
+
+test('1px solid #ccc の輪郭線のとき、1.6:1 と測る', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  const result = await runNonTextContrast(
+    'outline.html',
+    { page, browser, testInfo },
+    baseUrl,
+  );
+
+  expect(byId(result, 'light-outline')?.otherIndicators).toEqual([
+    { part: 'outline', color: '#cccccc', against: '#ffffff', ratio: 1.6 },
+  ]);
 });
 
 test('半透明の背景と半透明の枠のとき、合成した色で比を出して両方 low になる', async ({
@@ -1044,6 +1394,8 @@ for (const fixture of [
   'icon-pseudo-background-image.html',
   'native-in-opacity.html',
   'native-in-gradient.html',
+  'shadow.html',
+  'outline.html',
 ]) {
   test(`${fixture} の結果は JSON Schema に適合する`, async ({
     page,

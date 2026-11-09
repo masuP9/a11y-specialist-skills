@@ -1,0 +1,67 @@
+<!doctype html>
+<!--
+  Intent: text fields whose boundary is drawn only with outline, on a white
+  page. Each field has its own id; the tests look them up one by one.
+  Expected: status stays no-boundary; otherIndicators / otherSkipped describe
+  the outline.
+    #dark-outline    1px solid #767676              -> outline 4.54:1
+    #offset-outline  2px solid #767676, offset 3px  -> outline 4.54:1
+    #dotted-outline  1px dotted #555                -> outline 7.45:1
+    #inside-outline  1px solid #000, offset -3px    -> skipped outline-inside
+    #light-outline   1px solid #ccc                 -> outline 1.6:1
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Outline boundaries</title>
+    <style>
+      body {
+        background: #fff;
+      }
+      div {
+        padding: 16px;
+      }
+      input {
+        border: 0;
+        background: transparent;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <input
+        id="dark-outline"
+        aria-label="Dark outline"
+        style="outline: 1px solid #767676"
+      />
+    </div>
+    <div>
+      <input
+        id="offset-outline"
+        aria-label="Offset outline"
+        style="outline: 2px solid #767676; outline-offset: 3px"
+      />
+    </div>
+    <div>
+      <input
+        id="dotted-outline"
+        aria-label="Dotted outline"
+        style="outline: 1px dotted #555"
+      />
+    </div>
+    <div>
+      <input
+        id="inside-outline"
+        aria-label="Inside outline"
+        style="outline: 1px solid #000; outline-offset: -3px"
+      />
+    </div>
+    <div>
+      <input
+        id="light-outline"
+        aria-label="Light outline"
+        style="outline: 1px solid #ccc"
+      />
+    </div>
+  </body>
+</html>

@@ -1069,6 +1069,8 @@ function nonTextContrastDetails(color: string): NonTextContrastCheckDetails {
       { part: 'border-top' as const, color, against: '#ffffff', ratio: 1.6 },
     ],
     otherVisuals: [],
+    otherIndicators: [],
+    otherSkipped: [],
   };
   return {
     threshold: 3,
@@ -1083,6 +1085,10 @@ function nonTextContrastDetails(color: string): NonTextContrastCheckDetails {
         bestRatio: null,
         indicators: [],
         otherVisuals: ['box-shadow', 'outline'],
+        otherIndicators: [
+          { part: 'box-shadow', color, against: '#ffffff', ratio: 1.6 },
+        ],
+        otherSkipped: ['outline-inside'],
       },
       {
         ...base,

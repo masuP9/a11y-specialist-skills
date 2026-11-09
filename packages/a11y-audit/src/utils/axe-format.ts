@@ -39,6 +39,8 @@ import type {
   NonTextContrastComponent,
   NonTextContrastComponentKind,
   NonTextContrastIndicator,
+  NonTextContrastOtherIndicator,
+  NonTextContrastOtherSkipReason,
   NonTextContrastUndeterminedReason,
   NormalizedImpact,
   NormalizedNode,
@@ -1682,8 +1684,40 @@ const NON_TEXT_CONTRAST_REASON_TEXT: Record<
   'too-many-icon-parts': `icon has more than ${NON_TEXT_CONTRAST_MAX_ICON_PARTS} elements`,
 };
 
+const NON_TEXT_CONTRAST_OTHER_SKIP_TEXT: Record<
+  NonTextContrastOtherSkipReason,
+  string
+> = {
+  'multiple-shadows': 'more than one shadow layer',
+  'blurred-shadow': 'blurred shadow',
+  thin: 'line thinner than 1px',
+  clipped: 'line cut off by an ancestor overflow',
+  'outline-inside': 'outline drawn inside the box',
+  'outline-style': 'outline style other than solid, dashed, dotted or double',
+};
+
+/** box-shadow / outline lines: measured ratios, then why the rest were not measured. */
+function describeNonTextContrastOtherLines(
+  c: NonTextContrastComponent,
+): string {
+  const measured =
+    c.otherIndicators.length > 0
+      ? ` Lines drawn with box-shadow or outline: ${describeNonTextContrastIndicators(c.otherIndicators)}.`
+      : '';
+  const skipped =
+    c.otherSkipped.length > 0
+      ? ` Other lines not measured (${c.otherSkipped.map((r) => NON_TEXT_CONTRAST_OTHER_SKIP_TEXT[r]).join(', ')}).`
+      : '';
+  if (measured || skipped) {
+    return `${measured}${skipped} Check whether they mark the boundary.`;
+  }
+  return c.otherVisuals.length > 0
+    ? ` It also has ${c.otherVisuals.join(' and ')}, which was not measured; check whether that marks the boundary.`
+    : '';
+}
+
 function describeNonTextContrastIndicators(
-  indicators: NonTextContrastIndicator[],
+  indicators: (NonTextContrastIndicator | NonTextContrastOtherIndicator)[],
 ): string {
   return indicators
     .map((i) => `${i.part} ${i.color} vs ${i.against} ${i.ratio}:1`)
@@ -1704,10 +1738,7 @@ export function normalizeNonTextContrastCheck(
 
   const summarize = (c: NonTextContrastComponent): string | null => {
     const kindLabel = NON_TEXT_CONTRAST_KIND_LABELS[c.kind];
-    const others =
-      c.otherVisuals.length > 0
-        ? ` It also has ${c.otherVisuals.join(' and ')}, which was not measured; check whether that marks the boundary.`
-        : '';
+    const others = describeNonTextContrastOtherLines(c);
     if (c.status === 'low') {
       const subject =
         c.kind === 'icon-button' ? 'icon' : `${kindLabel} boundary`;

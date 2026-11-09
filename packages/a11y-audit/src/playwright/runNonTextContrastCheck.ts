@@ -24,8 +24,15 @@
  *   non-ancestors (z-index, negative margins, transforms) are not seen; only
  *   walking through a background-less absolute / fixed element stops with
  *   `out-of-flow`.
- * - Borders drawn with `box-shadow`, `outline`, `border-image` or pseudo
- *   elements are not measured (`otherVisuals` records that they exist).
+ * - Lines drawn with `box-shadow` or `outline` are measured separately into
+ *   `otherIndicators` and do not change `status`. Only a single visible shadow
+ *   layer with no blur, sides at least 1px wide and not cut off by an
+ *   ancestor's `overflow`, and an outline that is solid / dashed / dotted /
+ *   double, at least 1px wide and not drawn inside the box, are measured;
+ *   otherwise `otherSkipped` says why. An outer shadow and an outline are
+ *   compared with the outer color, an inset shadow also with the border.
+ *   Overlaps by neighbors and `clip-path` / `contain` on ancestors are not
+ *   seen. `border-image` and pseudo element borders are not measured.
  *   `inset` / `outset` borders count as the single computed border color.
  * - Native checkboxes and radio buttons drawn by the browser (`user-agent`) are
  *   not measured; with `accent-color` they are `undetermined`. Default inputs
@@ -55,6 +62,8 @@ import type {
   NonTextContrastComponent,
   NonTextContrastComponentKind,
   NonTextContrastIndicator,
+  NonTextContrastOtherIndicator,
+  NonTextContrastOtherSkipReason,
   NonTextContrastUndeterminedReason,
 } from '../types.js';
 import {
@@ -132,8 +141,30 @@ interface RawBoundary {
   /** Hidden the sr-only way (1px box or clipped). */
   visuallyHidden: boolean;
   isInput: boolean;
-  boxShadow: boolean;
-  outline: boolean;
+  /** Visible box-shadow layers (transparent or zero-size layers dropped). */
+  shadows: RawShadow[];
+  /** A visible outline, or null. */
+  outline: RawOutline | null;
+}
+
+type Side = 'top' | 'right' | 'bottom' | 'left';
+
+/** How wide the line is on each side, and whether an ancestor's overflow cuts it off. */
+type RawSideBands = Record<Side, { width: number; clipped: boolean }>;
+
+interface RawShadow {
+  inset: boolean;
+  color: RawRgba;
+  blur: number;
+  sides: RawSideBands;
+}
+
+interface RawOutline {
+  style: string;
+  width: number;
+  offset: number;
+  color: RawRgba;
+  sides: RawSideBands;
 }
 
 interface RawIconColor {
@@ -635,8 +666,152 @@ function scanNonTextContrast(args: ScanArgs): ScanResult {
     return null;
   }
 
+  /** Split at commas / whitespace outside parentheses (computed values only). */
+  function splitTopLevel(value: string, separator: ',' | ' '): string[] {
+    const parts: string[] = [];
+    let depth = 0;
+    let current = '';
+    for (const ch of value) {
+      if (ch === '(') depth++;
+      if (ch === ')') depth--;
+      if (depth === 0 && (separator === ' ' ? /\s/.test(ch) : ch === ',')) {
+        if (current.trim()) parts.push(current.trim());
+        current = '';
+      } else {
+        current += ch;
+      }
+    }
+    if (current.trim()) parts.push(current.trim());
+    return parts;
+  }
+
+  /**
+   * Padding boxes of ancestors whose overflow cuts off what is drawn outside
+   * the component. <html> and <body> pass their overflow to the viewport, so
+   * they are skipped. A positioned component may escape an ancestor that is
+   * not its containing block; it is still treated as cut off (not measured).
+   */
+  function clipBoxes(el: Element): DOMRect[] {
+    const boxes: DOMRect[] = [];
+    for (let n = el.parentElement; n; n = n.parentElement) {
+      if (n === document.documentElement || n === document.body) continue;
+      const ncs = getComputedStyle(n);
+      if (ncs.overflowX === 'visible' && ncs.overflowY === 'visible') continue;
+      const b = n.getBoundingClientRect();
+      const left = b.left + (parseFloat(ncs.borderLeftWidth) || 0);
+      const top = b.top + (parseFloat(ncs.borderTopWidth) || 0);
+      boxes.push(
+        new DOMRect(
+          left,
+          top,
+          b.right - (parseFloat(ncs.borderRightWidth) || 0) - left,
+          b.bottom - (parseFloat(ncs.borderBottomWidth) || 0) - top,
+        ),
+      );
+    }
+    return boxes;
+  }
+
+  /**
+   * Band widths per side. `outward` bands lie outside the border box, starting
+   * `gap` px away from it; any part of them beyond a clip box marks the side
+   * as clipped.
+   */
+  function sideBands(
+    widths: Record<Side, number>,
+    rect: DOMRect,
+    clips: DOMRect[],
+    outward: boolean,
+    gap = 0,
+  ): RawSideBands {
+    const cut = (side: Side, w: number): boolean =>
+      outward &&
+      w > 0 &&
+      clips.some((c) =>
+        side === 'top'
+          ? rect.top - gap - w < c.top
+          : side === 'bottom'
+            ? rect.bottom + gap + w > c.bottom
+            : side === 'left'
+              ? rect.left - gap - w < c.left
+              : rect.right + gap + w > c.right,
+      );
+    return {
+      top: { width: widths.top, clipped: cut('top', widths.top) },
+      right: { width: widths.right, clipped: cut('right', widths.right) },
+      bottom: { width: widths.bottom, clipped: cut('bottom', widths.bottom) },
+      left: { width: widths.left, clipped: cut('left', widths.left) },
+    };
+  }
+
+  /** Visible box-shadow layers; transparent and zero-size layers are dropped. */
+  function collectShadows(
+    cs: CSSStyleDeclaration,
+    rect: DOMRect,
+    clips: DOMRect[],
+  ): RawShadow[] {
+    if (cs.boxShadow === 'none') return [];
+    const shadows: RawShadow[] = [];
+    for (const layer of splitTopLevel(cs.boxShadow, ',')) {
+      const lengths: number[] = [];
+      const colorParts: string[] = [];
+      let inset = false;
+      for (const token of splitTopLevel(layer, ' ')) {
+        if (token === 'inset') inset = true;
+        else if (/^-?[\d.]+(e-?\d+)?(px)?$/i.test(token)) {
+          lengths.push(parseFloat(token));
+        } else colorParts.push(token);
+      }
+      const [ox = 0, oy = 0, blur = 0, spread = 0] = lengths;
+      const color = toRgba(colorParts.join(' ') || cs.color);
+      // An inset shadow offset down shows a wider band at the top.
+      const s = inset ? -1 : 1;
+      const widths = {
+        top: spread - s * oy,
+        right: spread + s * ox,
+        bottom: spread + s * oy,
+        left: spread - s * ox,
+      };
+      const drawn = blur > 0 || Object.values(widths).some((w) => w > 0);
+      if (color.a === 0 || !drawn) continue;
+      shadows.push({
+        inset,
+        color,
+        blur,
+        sides: sideBands(widths, rect, clips, !inset),
+      });
+    }
+    return shadows;
+  }
+
+  function collectOutline(
+    cs: CSSStyleDeclaration,
+    rect: DOMRect,
+    clips: DOMRect[],
+  ): RawOutline | null {
+    const width = parseFloat(cs.outlineWidth) || 0;
+    if (cs.outlineStyle === 'none' || cs.outlineStyle === 'hidden') return null;
+    // `auto` is the browser's focus ring; its color is not the computed one.
+    const color =
+      cs.outlineStyle === 'auto'
+        ? { r: 0, g: 0, b: 0, a: 1 }
+        : toRgba(cs.outlineColor);
+    if (width <= 0 || color.a === 0) return null;
+    const offset = parseFloat(cs.outlineOffset) || 0;
+    const w = { top: width, right: width, bottom: width, left: width };
+    return {
+      style: cs.outlineStyle,
+      width,
+      offset,
+      color,
+      sides: sideBands(w, rect, clips, offset >= 0, Math.max(offset, 0)),
+    };
+  }
+
   function collectBoundary(el: Element): RawBoundary {
     const cs = getComputedStyle(el);
+    const rect = el.getBoundingClientRect();
+    const clips = clipBoxes(el);
     const borders = (['top', 'right', 'bottom', 'left'] as const).map(
       (side): RawBorder => ({
         side,
@@ -668,8 +843,8 @@ function scanNonTextContrast(args: ScanArgs): ScanResult {
       accentColor: cs.getPropertyValue('accent-color'),
       visuallyHidden: isVisuallyHiddenBox(el),
       isInput: el.tagName === 'INPUT',
-      boxShadow: cs.boxShadow !== 'none',
-      outline: cs.outlineStyle !== 'none',
+      shadows: collectShadows(cs, rect, clips),
+      outline: collectOutline(cs, rect, clips),
     };
   }
 
@@ -759,7 +934,7 @@ function measureBoundary(
   const component: NonTextContrastComponent = {
     ...base,
     otherVisuals: [
-      ...(b.boxShadow ? (['box-shadow'] as const) : []),
+      ...(b.shadows.length > 0 ? (['box-shadow'] as const) : []),
       ...(b.outline ? (['outline'] as const) : []),
     ],
   };
@@ -781,34 +956,122 @@ function measureBoundary(
 
   const outer = compositeLayers(b.outer.layers, WHITE);
   const fill = compositeOver(b.background, outer);
+  const borderUnder = b.backgroundClip === 'border-box' ? fill : outer;
+  const borders = b.borders
+    .filter(
+      (border) =>
+        border.width > 0 &&
+        border.style !== 'none' &&
+        border.style !== 'hidden' &&
+        border.color.a > 0,
+    )
+    .map((border) => ({
+      side: border.side,
+      color: compositeOver(border.color, borderUnder),
+    }));
   const entries: ReturnType<typeof indicatorEntry>[] = [];
   if (b.background.a > 0) {
     entries.push(indicatorEntry('background', fill, outer));
   }
-  for (const border of b.borders) {
-    if (
-      border.width > 0 &&
-      border.style !== 'none' &&
-      border.style !== 'hidden' &&
-      border.color.a > 0
-    ) {
-      const under = b.backgroundClip === 'border-box' ? fill : outer;
-      entries.push(
-        indicatorEntry(
-          `border-${border.side}`,
-          compositeOver(border.color, under),
-          outer,
-        ),
-      );
-    }
+  for (const border of borders) {
+    entries.push(indicatorEntry(`border-${border.side}`, border.color, outer));
   }
-  if (entries.length === 0) return { ...component, status: 'no-boundary' };
-  const measured = withIndicators(component, entries);
+  const withOthers = {
+    ...component,
+    ...measureOtherLines(
+      b,
+      outer,
+      fill,
+      borders.map((border) => border.color),
+    ),
+  };
+  if (entries.length === 0) return { ...withOthers, status: 'no-boundary' };
+  const measured = withIndicators(withOthers, entries);
   const best = Math.max(...entries.map((e) => e.raw));
   return {
     ...measured,
     status: best < NON_TEXT_CONTRAST_MIN_RATIO ? 'low' : 'pass',
   };
+}
+
+const MEASURED_OUTLINE_STYLES = new Set([
+  'solid',
+  'dashed',
+  'dotted',
+  'double',
+]);
+
+/** null when some side is wide enough and not cut off; otherwise why not. */
+function unusableBands(
+  sides: RawSideBands,
+): Extract<NonTextContrastOtherSkipReason, 'thin' | 'clipped'> | null {
+  const wide = Object.values(sides).filter((s) => s.width >= 1);
+  if (wide.length === 0) return 'thin';
+  return wide.every((s) => s.clipped) ? 'clipped' : null;
+}
+
+/** The lowest ratio against the given neighbors (a line must stand out from each). */
+function otherIndicator(
+  part: NonTextContrastOtherIndicator['part'],
+  color: RgbColor,
+  neighbors: RgbColor[],
+): NonTextContrastOtherIndicator {
+  const [lowest] = neighbors
+    .map((against) => ({ against, raw: contrastRatio(color, against) }))
+    .sort((x, y) => x.raw - y.raw);
+  return {
+    part,
+    color: toHexColor(color),
+    against: toHexColor(lowest!.against),
+    ratio: floorRatio(lowest!.raw),
+  };
+}
+
+/**
+ * box-shadow / outline lines (they do not change `status`). An outer shadow
+ * and an outline (offset ≥ 0) sit on the outer color; an inset shadow sits on
+ * the fill, inside the border, so it is also compared with each border color.
+ */
+function measureOtherLines(
+  b: RawBoundary,
+  outer: RgbColor,
+  fill: RgbColor,
+  borderColors: RgbColor[],
+): Pick<NonTextContrastComponent, 'otherIndicators' | 'otherSkipped'> {
+  const otherIndicators: NonTextContrastOtherIndicator[] = [];
+  const otherSkipped: NonTextContrastOtherSkipReason[] = [];
+  const [shadow, ...moreShadows] = b.shadows;
+  if (moreShadows.length > 0) {
+    otherSkipped.push('multiple-shadows');
+  } else if (shadow) {
+    const why =
+      shadow.blur > 0 ? 'blurred-shadow' : unusableBands(shadow.sides);
+    if (why) otherSkipped.push(why);
+    else {
+      otherIndicators.push(
+        otherIndicator(
+          'box-shadow',
+          compositeOver(shadow.color, shadow.inset ? fill : outer),
+          shadow.inset ? [outer, ...borderColors] : [outer],
+        ),
+      );
+    }
+  }
+  const outline = b.outline;
+  if (outline) {
+    const why = !MEASURED_OUTLINE_STYLES.has(outline.style)
+      ? 'outline-style'
+      : outline.offset < 0
+        ? 'outline-inside'
+        : unusableBands(outline.sides);
+    if (why) otherSkipped.push(why);
+    else {
+      otherIndicators.push(
+        otherIndicator('outline', compositeOver(outline.color, outer), [outer]),
+      );
+    }
+  }
+  return { otherIndicators, otherSkipped };
 }
 
 function measureIcon(
@@ -868,6 +1131,8 @@ function measureComponent(raw: RawComponent): NonTextContrastComponent {
     bestRatio: null,
     indicators: [],
     otherVisuals: [],
+    otherIndicators: [],
+    otherSkipped: [],
   };
   return raw.kind === 'icon-button'
     ? measureIcon(raw, base)

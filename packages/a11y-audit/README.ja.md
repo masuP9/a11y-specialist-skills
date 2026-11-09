@@ -205,8 +205,13 @@ iframe の中・closed shadow root は見ません。押すのは 100 要素ま�
 `visually-hidden`（opacity や sr-only で隠したネイティブ部品。代わりに描いた部品を確かめる）・`no-icon-color`（読める色が無いアイコン）。
 描かれていない部分（`display: none` など）はアイコンの元として数えず、sr-only の文字は「見える文字」に数えません。読み込んだときの見た目だけを見て、
 ホバー・フォーカス・選択済みなどの状態は見ません。外側の色は祖先の背景から決め、祖先でない要素との
-重なり（`z-index` など）は見ません。`box-shadow` / `outline` で描いた枠は測らず `otherVisuals` に
-有無だけ残します。部品の中の部分（チェックの印・つまみ）、グラフ・図、iframe・shadow root の中は
+重なり（`z-index` など）は見ません。`box-shadow` / `outline` で描いた線は `status` に入れず、
+`otherIndicators` に別に測ります（`otherVisuals` は見える影・輪郭線の有無。透明・大きさ 0 の影の層は数えません）。
+測るのは、見える影の層が 1 つでぼかしが無く、1px 以上の幅で祖先の `overflow` に切られない辺がある影と、
+solid / dashed / dotted / double で 1px 以上、内側（負の `outline-offset`）でない輪郭線だけで、
+ほかは `otherSkipped` に理由（`multiple-shadows`・`blurred-shadow`・`thin`・`clipped`・`outline-inside`・
+`outline-style`）を残します。外側の影と輪郭線は外側の色と、inset の影は外側の色と枠の色の低いほうと比べます。
+隣の要素との重なりと、祖先の `clip-path` / `contain` は見ません。部品の中の部分（チェックの印・つまみ）、グラフ・図、iframe・shadow root の中は
 見ません。部品は 300 個まで測り、超えた分は `componentCounts` に数えて手動確認の node を足します。
 色の純粋関数 `contrastRatio`・`compositeOver`・`compositeLayers`・`relativeLuminance`・`floorRatio`・
 `toHexColor`（引数は 0〜255 の `{ r, g, b }`）も export しています。

@@ -284,9 +284,18 @@ its place), `no-icon-color` (an icon with no readable color) and `svg-overlap` (
 shape is drawn over a filled shape). Parts that are not drawn (`display: none`, ...) are not counted as icon
 sources, and sr-only text does not count as visible text. Only the look at load time is seen, not
 hover, focus or checked states. The outer color comes from ancestor
-backgrounds; overlaps by non-ancestors (`z-index`, ...) are not seen. Borders
-drawn with `box-shadow` / `outline` are not measured (`otherVisuals` records
-that they exist). Parts inside a component (check mark, knob), charts and
+backgrounds; overlaps by non-ancestors (`z-index`, ...) are not seen. Lines
+drawn with `box-shadow` / `outline` do not change `status`; they are measured
+separately into `otherIndicators` (`otherVisuals` says whether a visible shadow
+or outline exists; transparent or zero-size shadow layers do not count). Only a
+single visible shadow layer with no blur and a side at least 1px wide that an
+ancestor's `overflow` does not cut off, and a solid / dashed / dotted / double
+outline at least 1px wide that is not drawn inside (negative
+`outline-offset`), are measured; otherwise `otherSkipped` gives the reason
+(`multiple-shadows`, `blurred-shadow`, `thin`, `clipped`, `outline-inside`,
+`outline-style`). Outer shadows and outlines are compared with the outer color,
+inset shadows with the lower of the outer and border colors. Overlaps by
+neighbors and `clip-path` / `contain` on ancestors are not seen. Parts inside a component (check mark, knob), charts and
 graphics, and iframes / shadow roots are not examined. Up to 300 components are
 measured; the rest are counted in `componentCounts` and a manual-check node is
 added. The color helpers `contrastRatio`, `compositeOver`, `compositeLayers`,
