@@ -3,6 +3,21 @@
 All notable changes to `@a11y-skills/audit` are documented here. This project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixed
+
+- `character-key-shortcut-check`: on a page that rewrites its own DOM less
+  often than the baseline lasts (about a second, e.g. a counter that changes
+  every 2 seconds), keys that did nothing were reported as `dom-change` when
+  the page's change landed in their window (#179). When the baseline is 0, a
+  key whose only reaction is a DOM change is now pressed again first in a
+  fresh page and dropped when nothing changes. A real shortcut that only
+  changes the DOM on such a page costs one more reload, which counts toward
+  `maxReloads`. On such a page, the second key of a two-stroke shortcut that
+  only changes the DOM, and a shortcut attached some time after the page
+  settles, are no longer reported (see Limitations).
+
 ## 0.21.0 — 2026-11-10
 
 ### Added

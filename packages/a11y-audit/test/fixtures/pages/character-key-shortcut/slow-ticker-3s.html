@@ -1,0 +1,31 @@
+<!doctype html>
+<!--
+  A counter rewrites its text every 3 seconds, starting when the page loads,
+  so it does not change during the baseline (about a second after load and
+  settle; 3 s leaves room for a slow machine) and changes again about 3
+  seconds after each reload. The only key listener reacts to Escape (#179).
+  Expected (all keys): no key is reported. The baseline is 0, so a change in a
+  key's window is checked by pressing that key again first in a fresh page,
+  where the counter does not change.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Slow ticker (3 s)</title>
+  </head>
+  <body>
+    <main>
+      <p id="counter">0</p>
+    </main>
+    <script>
+      let n = 0;
+      setInterval(() => {
+        n += 1;
+        document.getElementById('counter').textContent = String(n);
+      }, 3000);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') document.getElementById('counter').remove();
+      });
+    </script>
+  </body>
+</html>
