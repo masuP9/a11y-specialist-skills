@@ -1619,6 +1619,34 @@ export interface NonTextContrastIndicator {
   ratio: number;
 }
 
+/** A line drawn with box-shadow or outline, measured against the color next to it. */
+export interface NonTextContrastOtherIndicator {
+  part: 'box-shadow' | 'outline';
+  /** '#rrggbb' after compositing over what is behind it. */
+  color: string;
+  /** '#rrggbb' of the adjacent color it is compared with (the lower one when two touch it). */
+  against: string;
+  /** Contrast ratio rounded down to 2 decimals. */
+  ratio: number;
+}
+
+/**
+ * Why a drawn box-shadow / outline was not measured.
+ * - multiple-shadows: two or more visible shadow layers (one may hide another)
+ * - blurred-shadow: the shadow has a blur radius, so its edge fades
+ * - thin: every side of the line is narrower than 1px
+ * - clipped: every side is cut off by an ancestor's overflow
+ * - outline-inside: negative outline-offset, so the line does not touch the outside
+ * - outline-style: outline-style other than solid / dashed / dotted / double
+ */
+export type NonTextContrastOtherSkipReason =
+  | 'multiple-shadows'
+  | 'blurred-shadow'
+  | 'thin'
+  | 'clipped'
+  | 'outline-inside'
+  | 'outline-style';
+
 export interface NonTextContrastComponent {
   selector: string;
   html: string;
@@ -1635,7 +1663,16 @@ export interface NonTextContrastComponent {
   /** Highest indicator ratio (rounded down); null when there are no indicators. */
   bestRatio: number | null;
   indicators: NonTextContrastIndicator[];
+  /** A visible box-shadow layer / outline is drawn (transparent or zero-size layers do not count). */
   otherVisuals: ('box-shadow' | 'outline')[];
+  /**
+   * box-shadow / outline lines that were measured. `status` and `bestRatio`
+   * do not use them; the caller decides whether a line marks the boundary.
+   * Empty when the outer color could not be decided (undetermined, user-agent).
+   */
+  otherIndicators: NonTextContrastOtherIndicator[];
+  /** Why a drawn box-shadow / outline in `otherVisuals` was not measured. */
+  otherSkipped: NonTextContrastOtherSkipReason[];
 }
 
 export interface NonTextContrastCheckDetails {

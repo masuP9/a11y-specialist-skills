@@ -1900,6 +1900,8 @@ const NON_TEXT_CONTRAST_COMPONENT_SCHEMA: JsonSchema = {
     'bestRatio',
     'indicators',
     'otherVisuals',
+    'otherIndicators',
+    'otherSkipped',
   ],
   properties: {
     selector: { type: 'string' },
@@ -1935,6 +1937,32 @@ const NON_TEXT_CONTRAST_COMPONENT_SCHEMA: JsonSchema = {
     otherVisuals: {
       type: 'array',
       items: { enum: ['box-shadow', 'outline'] },
+    },
+    otherIndicators: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['part', 'color', 'against', 'ratio'],
+        properties: {
+          part: { enum: ['box-shadow', 'outline'] },
+          color: NON_TEXT_CONTRAST_HEX_COLOR_SCHEMA,
+          against: NON_TEXT_CONTRAST_HEX_COLOR_SCHEMA,
+          ratio: { type: 'number' },
+        },
+      },
+    },
+    otherSkipped: {
+      type: 'array',
+      items: {
+        enum: [
+          'multiple-shadows',
+          'blurred-shadow',
+          'thin',
+          'clipped',
+          'outline-inside',
+          'outline-style',
+        ],
+      },
     },
   },
 };

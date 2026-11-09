@@ -5,6 +5,22 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+### Added
+
+- `non-text-contrast-check`: lines drawn with `box-shadow` or `outline` are
+  measured into the new `otherIndicators` (part, color, against, ratio).
+  `status` and `bestRatio` do not use them, so callers decide whether such a
+  line marks the boundary. Shadows that are blurred, layered, thinner than 1px
+  or cut off by an ancestor's `overflow`, and outlines drawn inside the box or
+  in other styles, are not measured; `otherSkipped` gives the reason.
+
+### Changed
+
+- `non-text-contrast-check`: `otherVisuals` no longer lists `box-shadow` for
+  shadow layers that are transparent or have no size (such as the placeholder
+  layers some CSS frameworks add), nor `outline` for an outline with no width
+  or color.
+
 ### Fixed
 
 - `character-key-shortcut-check`: on a busy machine, a page that changes its
