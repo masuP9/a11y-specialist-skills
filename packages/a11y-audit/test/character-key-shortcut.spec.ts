@@ -495,13 +495,13 @@ test('1 秒に 1 回だけ DOM を書き換えるページは、baseline が 1 �
   expect(result.details.baselineDomMutations).toBeGreaterThan(0);
 });
 
-test('2 秒に 1 回 DOM を書き換えるページは、押す前の観察が 0 でも、キーの窓に入った書き換えをキーの反応とみなさない', async ({
+test('3 秒に 1 回 DOM を書き換えるページは、押す前の観察が 0 でも、キーの窓に入った書き換えをキーの反応とみなさない', async ({
   page,
   browser,
   baseUrl,
 }, testInfo) => {
   const result = await runKeys(
-    'slow-ticker-2s.html',
+    'slow-ticker-3s.html',
     { page, browser, testInfo },
     baseUrl,
   );
@@ -532,13 +532,37 @@ test('押す前の観察が 0 のページで DOM を変える k は、新しい
   expect(result.details.reloads).toBe(2);
 });
 
-test('maxReloads が 0 で押し直せないとき、2 秒に 1 回書き換えるページのキーの窓に入った書き換えは反応として残る', async ({
+test('最後のキー k を押し直すための読み込み直しに失敗しても、押していないキーは無いので aborted にならず、k は反応として残る', async ({
+  page,
+  browser,
+  baseUrl,
+}, testInfo) => {
+  let opened = 0;
+  const createContext = async () => {
+    opened += 1;
+    if (opened > 1) throw new Error('second context refused');
+    return browser.newContext();
+  };
+
+  const result = await runKeys(
+    'toggle-panel.html',
+    { page, browser, testInfo },
+    baseUrl,
+    { keys: ['k'], createContext },
+  );
+
+  expect(result.details.reacted.map((r) => r.key)).toEqual(['k']);
+  expect(result.details.untested).toEqual([]);
+  expect(result.details.aborted).toBeNull();
+});
+
+test('maxReloads が 0 で押し直せないとき、3 秒に 1 回書き換えるページのキーの窓に入った書き換えは反応として残る', async ({
   page,
   browser,
   baseUrl,
 }, testInfo) => {
   const result = await runKeys(
-    'slow-ticker-2s.html',
+    'slow-ticker-3s.html',
     { page, browser, testInfo },
     baseUrl,
     { maxReloads: 0 },

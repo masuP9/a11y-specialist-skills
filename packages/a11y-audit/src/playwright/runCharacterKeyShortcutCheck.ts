@@ -473,6 +473,8 @@ export async function runCharacterKeyShortcutCheck(
       >['reason'],
       remaining: readonly string[],
     ): void => {
+      // Every key was tried (a failed reload only to press the last one again).
+      if (remaining.length === 0) return;
       details.aborted = { reason, url: startUrl };
       for (const key of remaining) details.untested.push({ key, reason });
       out.warn(
@@ -742,7 +744,7 @@ export async function runCharacterKeyShortcutCheck(
           recheck = null;
           if (reactions.length === 0) {
             // The page's own change: drop the key and go on in this page.
-            details.reacted.splice(details.reacted.indexOf(entry), 1);
+            details.reacted = details.reacted.filter((r) => r !== entry);
             continue;
           }
           entry.reactions = reactions;
