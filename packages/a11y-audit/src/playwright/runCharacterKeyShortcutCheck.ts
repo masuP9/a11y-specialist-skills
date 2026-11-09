@@ -44,14 +44,19 @@
  *   period or the more irregular the timer), or when it cannot be pressed
  *   again (reload limit, time budget, focus). Pressing again costs one more
  *   reload for a real shortcut that only changes the DOM on such a page, so
- *   the reload limit is reached after about half as many of them.
+ *   the reload limit is reached after about half as many of them. The second
+ *   press comes right after the fresh page settles, so on such a page a
+ *   shortcut attached some time after scripts and network have finished
+ *   (`setTimeout` and the like) can be dropped by it.
  * - The preventDefault() record misses listeners added to `window` later than
  *   the check's own, and events stopped before they reach `window`.
  * - It reloads only after a visible reaction, so a key that changes only
  *   internal state (e.g. silently disables shortcuts) leaves the next keys
  *   pressed in that state and their reactions can be missed; the second key of
  *   a two-stroke shortcut (`g` then `i`) can be reported as a shortcut of its
- *   own (an extra candidate for a human). Pass a single key in `keys` to check
+ *   own (an extra candidate for a human), except on a page whose baseline saw
+ *   no change when that second key only changes the DOM: pressed again alone
+ *   it shows nothing, so it is not reported. Pass a single key in `keys` to check
  *   a suspect one alone. Reloading per key is not done: it costs 0.6 s or more
  *   each and 94 keys exceed the time budget.
  * - Shortcuts that work only in some states are seen in the state right after
