@@ -15,7 +15,7 @@ When the "Judgment Rule" column says **Judgment lines**, judge with the "Judgmen
 | 1.2.1 | Automated candidates + Content comparison | Media/alternative + timestamps + content/interaction comparison | [1.2.1](../../a11y-knowledge/references/criteria/1.2.1.md) |
 | 1.2.2 | Automated + Content | axe video-caption + playback, caption content, exceptions | [Judgment lines](../../a11y-knowledge/references/criteria/1.2.2.md) |
 | 1.2.3 | Automated candidates + Content comparison | Media/alternative + timestamps + content/interaction comparison | [1.2.3](../../a11y-knowledge/references/criteria/1.2.3.md) |
-| 1.2.4 | Content | capture | Fail if live captions missing |
+| 1.2.4 | Content | Screen during the stream, or a recording that keeps broadcast-time captions | [1.2.4](../../a11y-knowledge/references/criteria/1.2.4.md) |
 | 1.2.5 | Automated candidates + Content comparison | Media/alternative + timestamps + content/interaction comparison | [1.2.5](../../a11y-knowledge/references/criteria/1.2.5.md) |
 | 1.3.1 | Automated + Content comparison | Compare visual/auditory presentation with DOM/tree relationships | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.1.md) |
 | 1.3.2 | Content (tree as material) | Screenshots + a11y tree/DOM order + white space inside words | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.2.md) |
@@ -24,7 +24,7 @@ When the "Judgment Rule" column says **Judgment lines**, judge with the "Judgmen
 | 1.3.5 | Automated + Content comparison | `autocomplete-audit` **[CLI]** plus user-information scope, actual purpose, and exceptions | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.5.md) |
 | 1.4.1 | Automated + Manual | a11y tree text + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.1.md) |
 | 1.4.2 | Automated + Manual | `auto-play-detection` **[CLI]** (`a11y-skills/auto-play-audio`) + logs | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.2.md) |
-| 1.4.3 | Automated | axe color-contrast | Fail below AA |
+| 1.4.3 | Automated + Manual | axe color-contrast + measurement (placeholders, states, themes, text over images) | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.3.md) |
 | 1.4.4 | Automated + Manual | `zoom-200-check` **[CLI]** + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.4.md) |
 | 1.4.5 | Manual + Content | Image/context + visible text/presentation switching | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.5.md) |
 | 1.4.10 | Automated + Manual | `reflow-check` **[CLI]** + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.10.md) |
@@ -40,7 +40,7 @@ When the "Judgment Rule" column says **Judgment lines**, judge with the "Judgmen
 | 2.1.4 | Interactive + automated candidates | `character-key-shortcut-check` **[CLI]** + logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.1.4.md) |
 | 2.2.1 | Automated + Manual | `time-limit-detector` **[CLI]** + logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.2.1.md) |
 | 2.2.2 | Automated + Interactive | `auto-play-detection` **[CLI]** + logs | [Judgment lines](../../a11y-knowledge/references/criteria/2.2.2.md) |
-| 2.3.1 | Manual | video | Fail if flashing exceeds threshold |
+| 2.3.1 | Manual | video + playback time and scene; count, area, luminance | [2.3.1](../../a11y-knowledge/references/criteria/2.3.1.md) |
 | 2.4.1 | Structure + interaction as needed | Repeated blocks, bypass destinations and behavior | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.1.md) |
 | 2.4.2 | Automated + Content | Current title, content, and purpose | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.2.md) |
 | 2.4.3 | Interactive + automated candidates | `focus-order-check` **[CLI]** + focus order log | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.3.md) |

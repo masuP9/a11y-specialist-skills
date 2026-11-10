@@ -30,7 +30,7 @@ The material collected from the page as loaded (accessibility tree, DOM, screens
 | 1.3.3 | Instructions, target labels/functions, symbol alternatives, and reading order; check ambiguity even for “below” | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.3.md) |
 | 1.3.5 | `autocomplete-audit` **[CLI]** plus user-information scope, actual purpose, and exceptions | [Judgment lines](../../a11y-knowledge/references/criteria/1.3.5.md) |
 | 1.4.1 | Screenshots, tree text, axe `link-in-text-block` | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.1.md). Measure uncertain lightness distinctions; check visible cues conveying the same information and visited-link treatment |
-| 1.4.3 | axe `color-contrast` | Fail below 4.5:1 (3:1 for large text). Where axe could not compute (image or gradient backgrounds), NT until measured |
+| 1.4.3 | axe `color-contrast`; placeholders, hover/focus states, and other themes; text over images and gradients | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.3.md). Check exceptions, and measure where axe could not compute |
 | 1.4.11 | `non-text-contrast-check` **[CLI]** (component boundaries, icon-only buttons) | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.11.md); verify required cues, adjacent colors, and exceptions |
 | 2.4.1 | Repeated blocks and bypass destination structure; check arrival after activation when relying on links | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.1.md) |
 | 2.4.2 | Current `document.title` and topic/purpose; axe `document-title` (non-empty) | [Judgment lines](../../a11y-knowledge/references/criteria/2.4.2.md) |

@@ -15,7 +15,7 @@
 | 1.2.1 | 自動候補 + 内容照合 | メディア/代替 + 再生時刻 + 内容・操作の照合 | [1.2.1](../../a11y-knowledge/references/criteria/1.2.1.ja.md) |
 | 1.2.2 | 自動+コンテンツ | axe video-caption + 再生・字幕内容・例外の確認 | [線引き](../../a11y-knowledge/references/criteria/1.2.2.ja.md) |
 | 1.2.3 | 自動候補 + 内容照合 | メディア/代替 + 再生時刻 + 内容・操作の照合 | [1.2.3](../../a11y-knowledge/references/criteria/1.2.3.ja.md) |
-| 1.2.4 | コンテンツ | 画面キャプチャ | ライブ字幕なしでFail |
+| 1.2.4 | コンテンツ | 配信中の画面、又は配信時の字幕を残した録画 | [1.2.4](../../a11y-knowledge/references/criteria/1.2.4.ja.md) |
 | 1.2.5 | 自動候補 + 内容照合 | メディア/代替 + 再生時刻 + 内容・操作の照合 | [1.2.5](../../a11y-knowledge/references/criteria/1.2.5.ja.md) |
 | 1.3.1 | 自動＋内容照合 | 画面・音の提示とDOM・ツリーの関係を照合 | [線引き](../../a11y-knowledge/references/criteria/1.3.1.ja.md) |
 | 1.3.2 | コンテンツ（ツリーは材料） | スクショ + a11y tree/DOM順 + 語の中の空白 | [線引き](../../a11y-knowledge/references/criteria/1.3.2.ja.md) |
@@ -24,7 +24,7 @@
 | 1.3.5 | 自動＋内容照合 | `autocomplete-audit` **[CLI]** と本人情報・実際の目的・例外 | [線引き](../../a11y-knowledge/references/criteria/1.3.5.ja.md) |
 | 1.4.1 | 自動+手動 | a11y treeテキスト + スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.1.ja.md) |
 | 1.4.2 | 自動+手動 | `auto-play-detection` **[CLI]**（`a11y-skills/auto-play-audio`）+ 操作ログ | [線引き](../../a11y-knowledge/references/criteria/1.4.2.ja.md) |
-| 1.4.3 | 自動 | axe color-contrast | AA未満でFail |
+| 1.4.3 | 自動+手動 | axe color-contrast + 実測（placeholder・状態・テーマ・画像の上の文字） | [線引き](../../a11y-knowledge/references/criteria/1.4.3.ja.md) |
 | 1.4.4 | 自動+手動 | `zoom-200-check` **[CLI]** + スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.4.ja.md) |
 | 1.4.5 | 手動+コンテンツ | 画像と文脈 + 可視テキスト/表示切替 | [線引き](../../a11y-knowledge/references/criteria/1.4.5.ja.md) |
 | 1.4.10 | 自動+手動 | `reflow-check` **[CLI]** + スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.10.ja.md) |
@@ -40,7 +40,7 @@
 | 2.1.4 | インタラクティブ+自動の候補 | `character-key-shortcut-check` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.1.4.ja.md) |
 | 2.2.1 | 自動+手動 | `time-limit-detector` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.2.1.ja.md) |
 | 2.2.2 | 自動+インタラクティブ | `auto-play-detection` **[CLI]** + 操作ログ | [線引き](../../a11y-knowledge/references/criteria/2.2.2.ja.md) |
-| 2.3.1 | 手動 | 動画 | 点滅閾値超でFail |
+| 2.3.1 | 手動 | 動画 + 再生時刻・場面、回数・面積・明暗 | [2.3.1](../../a11y-knowledge/references/criteria/2.3.1.ja.md) |
 | 2.4.1 | 構造+必要に応じ操作 | 反復ブロック・迂回先・到達動作 | [線引き](../../a11y-knowledge/references/criteria/2.4.1.ja.md) |
 | 2.4.2 | 自動+コンテンツ | 現在のtitleと本文・目的 | [線引き](../../a11y-knowledge/references/criteria/2.4.2.ja.md) |
 | 2.4.3 | インタラクティブ+自動の候補 | `focus-order-check` **[CLI]** + フォーカス順ログ | [線引き](../../a11y-knowledge/references/criteria/2.4.3.ja.md) |

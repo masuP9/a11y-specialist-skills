@@ -20,6 +20,7 @@
 | 1.2.1 | Audio-only and Video-only (Prerecorded) | Content comparison | [1.2.1](./criteria/1.2.1.md) |
 | 1.2.2     | Captions (Prerecorded)                    | Content comparison | [1.2.2](./criteria/1.2.2.md)                  |
 | 1.2.3 | Audio Description or Media Alternative (Prerecorded) | Content comparison | [1.2.3](./criteria/1.2.3.md) |
+| 1.2.4 | Captions (Live) | Content comparison | [1.2.4](./criteria/1.2.4.md) |
 | 1.2.5 | Audio Description (Prerecorded) | Content comparison | [1.2.5](./criteria/1.2.5.md) |
 | 1.3.1     | Info and Relationships                    | Element               | [1.3.1](./criteria/1.3.1.md)                  |
 | 1.3.2 | Meaningful Sequence | Content comparison + Visual | [1.3.2](./criteria/1.3.2.md) |
@@ -28,6 +29,7 @@
 | 1.3.5     | Identify Input Purpose                    | Measurement + Element | [1.3.5](./criteria/1.3.5.md)                  |
 | 1.4.1     | Use of Color                              | Whole page            | [1.4.1](./criteria/1.4.1.md)                  |
 | 1.4.2     | Audio Control                             | Measurement           | [1.4.2](./criteria/1.4.2.md)                  |
+| 1.4.3 | Contrast (Minimum) | Measurement + Visual | [1.4.3](./criteria/1.4.3.md) |
 | 1.4.4     | Resize Text                               | Measurement           | [1.4.4](./criteria/1.4.4.md)                  |
 | 1.4.5     | Images of Text                            | Element               | [1.4.5](./criteria/1.4.5.md)                  |
 | 1.4.10    | Reflow                                    | Measurement           | [1.4.10](./criteria/1.4.10.md)                |
@@ -39,6 +41,7 @@
 | 2.1.4 | Character Key Shortcuts | Measurement | [2.1.4](./criteria/2.1.4.md) |
 | 2.2.1     | Timing Adjustable                         | Measurement           | [2.2.1](./criteria/2.2.1.md)                  |
 | 2.2.2     | Pause, Stop, Hide                         | Measurement           | [2.2.2](./criteria/2.2.2.md)                  |
+| 2.3.1 | Three Flashes or Below Threshold | Whole page + Visual | [2.3.1](./criteria/2.3.1.md) |
 | 2.4.1     | Bypass Blocks                             | Whole page            | [2.4.1](./criteria/2.4.1.md)                  |
 | 2.4.2     | Page Titled                               | Whole page            | [2.4.2](./criteria/2.4.2.md)                  |
 | 2.4.3     | Focus Order                               | Measurement           | [2.4.3](./criteria/2.4.3.md)                  |
