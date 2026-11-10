@@ -38,7 +38,7 @@ Items requiring human judgment. Use screenshots/video/notes as evidence for visu
 ## Flashing
 | Criterion | Check | Evidence | Fail rule |
 |---|---|---|---|
-| 2.3.1 | No flashes above threshold | video | Flashing exceeds threshold |
+| 2.3.1 | Number of flashes per second, area flashing at the same time, luminance and red conditions | video + playback time and scene | [2.3.1](../../a11y-knowledge/references/criteria/2.3.1.md) |
 
 ## Orientation
 | Criterion | Check | Evidence | Fail rule |

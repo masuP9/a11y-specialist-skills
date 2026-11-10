@@ -30,7 +30,7 @@
 | 1.3.3 | 指示の文章、対象のラベル・機能・記号の代替、読む順。「以下」も曖昧でないか確認 | [線引き](../../a11y-knowledge/references/criteria/1.3.3.ja.md) |
 | 1.3.5 | `autocomplete-audit` **[CLI]** と本人情報・実際の目的・例外 | [線引き](../../a11y-knowledge/references/criteria/1.3.5.ja.md) |
 | 1.4.1 | スクリーンショット、ツリーのテキスト、axe `link-in-text-block` | [線引き](../../a11y-knowledge/references/criteria/1.4.1.ja.md)。明るさの境界は測定し、同じ情報の可視の手がかり・訪問済みリンクの扱いを確認 |
-| 1.4.3 | axe `color-contrast` | 4.5:1 未満（大きな文字は 3:1 未満）で Fail。axe が計算できなかった箇所（画像・グラデーションの背景）は実測するまで NT |
+| 1.4.3 | axe `color-contrast`、placeholder・ホバー/フォーカス時・他のテーマの表示、画像・グラデーションの上の文字 | [線引き](../../a11y-knowledge/references/criteria/1.4.3.ja.md)。例外を照合し、axe が計算できなかった箇所は実測して判定 |
 | 1.4.11 | `non-text-contrast-check` **[CLI]**（部品の境界・アイコンだけのボタン） | [線引き](../../a11y-knowledge/references/criteria/1.4.11.ja.md)。必要な表示・隣接色・例外を確認して判定 |
 | 2.4.1 | 反復ブロックと迂回先の構造。リンクに依存する場合は起動後の到達も確認 | [線引き](../../a11y-knowledge/references/criteria/2.4.1.ja.md) |
 | 2.4.2 | 現在の `document.title` と主題・目的、axe `document-title`（空でないこと） | [線引き](../../a11y-knowledge/references/criteria/2.4.2.ja.md) |

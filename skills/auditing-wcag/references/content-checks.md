@@ -17,7 +17,7 @@ Checks that depend on content quality and availability. Validate presence and ad
 | 1.2.1 | Alternatives for audio-only/video-only | Media/alternative + timestamps + content/interaction comparison | [1.2.1](../../a11y-knowledge/references/criteria/1.2.1.md) |
 | 1.2.2 | Prerecorded captions, audio synchronization, exceptions | Video/caption references + timestamps + audio/caption comparison | [Judgment lines](../../a11y-knowledge/references/criteria/1.2.2.md) |
 | 1.2.3 | Media alternative (audio description or text) | Media/alternative + timestamps + content/interaction comparison | [1.2.3](../../a11y-knowledge/references/criteria/1.2.3.md) |
-| 1.2.4 | Live captions provided | capture | No live captions |
+| 1.2.4 | Presence, content, and presentation of captions on live streams | Screen during the stream, or a recording that keeps broadcast-time captions + date and time checked | [1.2.4](../../a11y-knowledge/references/criteria/1.2.4.md) |
 | 1.2.5 | Audio description provided | Media/alternative + timestamps + content/interaction comparison | [1.2.5](../../a11y-knowledge/references/criteria/1.2.5.md) |
 
 ## Sensory Characteristics
