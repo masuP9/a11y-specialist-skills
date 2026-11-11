@@ -213,6 +213,10 @@ solid / dashed / dotted / double で 1px 以上、内側（負の `outline-offse
 `outline-style`）を残します。外側の影と輪郭線は外側の色と、inset の影は外側の色と枠の色の低いほうと比べます。
 隣の要素との重なりと、祖先の `clip-path` / `contain` は見ません。部品の中の部分（チェックの印・つまみ）、グラフ・図、iframe・shadow root の中は
 見ません。部品は 300 個まで測り、超えた分は `componentCounts` に数えて手動確認の node を足します。
+`out-of-flow` だけで止まったアイコンボタンは、ボタンの矩形の内側 5×5 点の `document.elementsFromPoint` で下に積まれた要素を調べ、外側の色を決められるときだけ、比を `behindIndicators`（`indicators` と同じ形）に入れます。
+`status` と `undeterminedReason` は変えないので、適合にするかは使う側が決めます。値が入らず空配列になるのは、ボタンが覆われている・画面の外にある、ボタンや祖先が `fixed` / `sticky`、点ごとに下の要素が違う、アイコンがボタンからはみ出す、
+下に画像類・背景画像・描く疑似要素・枠や inset の影・`opacity` などの効果（下の要素の祖先も含む）がある、`pointer-events: none` の要素や隣の要素の影・輪郭線が描いている、暗い配色で白に落ちる、のどれかのときです。
+下の要素の文字は見ません。5×5 の点の間に収まる小さい画像は見逃します。位置を外さない疑似要素のグリフの矩形は読めないので、ボタンからのはみ出しは調べません。
 色の純粋関数 `contrastRatio`・`compositeOver`・`compositeLayers`・`relativeLuminance`・`floorRatio`・
 `toHexColor`（引数は 0〜255 の `{ r, g, b }`）も export しています。
 

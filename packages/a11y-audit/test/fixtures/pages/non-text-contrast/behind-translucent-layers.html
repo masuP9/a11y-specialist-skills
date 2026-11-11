@@ -1,0 +1,54 @@
+<!doctype html>
+<!--
+  Intent: a translucent ancestor and a translucent non-ancestor are behind the button; each counts once.
+  Expected: icon-button status undetermined, reason out-of-flow; behindIndicators has #ffffff on #3f3f3f.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+
+    <title>behind-translucent-layers</title>
+    <style>
+      body {
+        margin: 0;
+      }
+      .header {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+      }
+      #menu {
+        display: block;
+        width: 48px;
+        height: 48px;
+        padding: 6px;
+        border: 0;
+        background: transparent;
+      }
+      .under {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 200px;
+        height: 200px;
+      }
+      .wrap {
+        position: relative;
+        height: 200px;
+        background: rgba(0, 0, 0, 0.5);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="under" style="background: rgba(0, 0, 0, 0.5)"></div>
+      <div class="header">
+        <button id="menu" aria-label="Menu">
+          <svg width="36" height="36" viewBox="0 0 36 36">
+            <rect x="6" y="6" width="24" height="24" fill="#ffffff" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </body>
+</html>

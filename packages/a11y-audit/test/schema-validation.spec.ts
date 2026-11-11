@@ -1071,6 +1071,7 @@ function nonTextContrastDetails(color: string): NonTextContrastCheckDetails {
     otherVisuals: [],
     otherIndicators: [],
     otherSkipped: [],
+    behindIndicators: [],
   };
   return {
     threshold: 3,

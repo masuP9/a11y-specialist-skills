@@ -1,0 +1,50 @@
+<!doctype html>
+<!--
+  Intent: the element behind the button has a border that does not reach the button.
+  Expected: icon-button status undetermined, reason out-of-flow; behindIndicators has #ffffff on #222222.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+
+    <title>behind-border-around</title>
+    <style>
+      body {
+        margin: 0;
+      }
+      .header {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+      }
+      #menu {
+        display: block;
+        width: 48px;
+        height: 48px;
+        padding: 6px;
+        border: 0;
+        background: transparent;
+      }
+      .under {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 200px;
+        height: 200px;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      class="under"
+      style="background: #222222; border: 1px solid #ff0000"
+    ></div>
+    <div class="header">
+      <button id="menu" aria-label="Menu">
+        <svg width="36" height="36" viewBox="0 0 36 36">
+          <rect x="6" y="6" width="24" height="24" fill="#ffffff" />
+        </svg>
+      </button>
+    </div>
+  </body>
+</html>
