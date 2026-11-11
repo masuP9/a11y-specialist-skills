@@ -44,6 +44,7 @@ Use ACT evidence to understand check scope. Do not assume axe completely impleme
 | `image-alt`          | 1.1.1     | Confirmed absence of a valid alternative or ignorable implementation for the target image, not merely missing alt ([1.1.1-E02–E04](./criteria/1.1.1.md))          |
 | `link-in-text-block` | 1.4.1 | Treat violations within the detected scope as failures and incomplete as needs review. Distinguish 3:1 against surrounding text / style cues from contrast against the background. [1.4.1](./criteria/1.4.1.md) |
 | `color-contrast` | 1.4.3 | Insufficient ratio for text with no sign of an exception (a component that only looks inactive, a logo, decoration, text in a picture). If there is a sign, check the exception. A pass is evidence only for that text in the initial presentation ([1.4.3-E01, E08](./criteria/1.4.3.md)) |
+| `color-contrast-enhanced` | 1.4.6 (AAA) | Read it the same way as `color-contrast`, with thresholds of 7:1 / 4.5:1. It does not run under audit's default WCAG tags; run it by passing `tags` when evaluating AAA. Do not count its results as AA failures ([1.4.6](./criteria/1.4.6.md)) |
 
 ## Rules treated as best practice
 

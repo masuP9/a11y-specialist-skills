@@ -27,6 +27,8 @@
 | 1.4.3 | 自動+手動 | axe color-contrast + 実測（placeholder・状態・テーマ・画像の上の文字） | [線引き](../../a11y-knowledge/references/criteria/1.4.3.ja.md) |
 | 1.4.4 | 自動+手動 | `zoom-200-check` **[CLI]** + スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.4.ja.md) |
 | 1.4.5 | 手動+コンテンツ | 画像と文脈 + 可視テキスト/表示切替 | [線引き](../../a11y-knowledge/references/criteria/1.4.5.ja.md) |
+| 1.4.6 (AAA) | 自動+手動 | `runAxeAudit` に `tags` を渡した axe color-contrast-enhanced（CLIでは動かない）+ 色の組ごとの実測 | [線引き](../../a11y-knowledge/references/criteria/1.4.6.ja.md)。AAAを対象にしたときだけ評価し、AAの数に入れない |
+| 1.4.9 (AAA) | 手動+コンテンツ | 画像と文脈 + テキスト表示への切替 | [線引き](../../a11y-knowledge/references/criteria/1.4.9.ja.md)。AAAを対象にしたときだけ評価し、AAの数に入れない |
 | 1.4.10 | 自動+手動 | `reflow-check` **[CLI]** + スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.10.ja.md) |
 | 1.4.11 | 自動の候補+手動 | `non-text-contrast-check` **[CLI]** + スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.11.ja.md)。必要な表示・隣接色・例外を確認して判定 |
 | 1.4.12 | 自動+手動 | `text-spacing-check` **[CLI]** + スクショ | [線引き](../../a11y-knowledge/references/criteria/1.4.12.ja.md) |
