@@ -5,6 +5,15 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+### Added
+
+- `non-text-contrast-check`: icon buttons stopped only by `out-of-flow` now
+  report `behindIndicators` (part, color, against, ratio) when the elements
+  under the button decide the outer color. `status` and `undeterminedReason` do
+  not change, so callers decide what to do with them. The array is empty when
+  an image, effect, border, shadow or anything else that could change the color
+  is found.
+
 ### Fixed
 
 - `character-key-shortcut-check`: on a page that rewrites its own DOM less

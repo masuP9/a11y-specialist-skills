@@ -298,7 +298,20 @@ inset shadows with the lower of the outer and border colors. Overlaps by
 neighbors and `clip-path` / `contain` on ancestors are not seen. Parts inside a component (check mark, knob), charts and
 graphics, and iframes / shadow roots are not examined. Up to 300 components are
 measured; the rest are counted in `componentCounts` and a manual-check node is
-added. The color helpers `contrastRatio`, `compositeOver`, `compositeLayers`,
+added. For an icon button stopped only by `out-of-flow`, the elements under 5x5
+points inside the button are read with `document.elementsFromPoint`, and when
+they decide the outer color the ratios go into `behindIndicators` (same shape as
+`indicators`). `status` and `undeterminedReason` do not change, so the caller
+decides what to do with them. The array stays empty when the button is covered
+or off screen, the button or an ancestor is `fixed` / `sticky`, the elements
+differ between points, an icon part leaves the button, there is an image,
+background image, painting pseudo element, border or inset shadow on the button,
+or an effect such as `opacity` (ancestors of the elements under the button
+included) under the button, a `pointer-events: none` element or a neighbor's
+shadow or outline paints there, or a dark page would fall back to white. Text
+under the button is not seen, an image small enough to fit between the points is
+missed, and an in-flow pseudo element glyph has no readable box, so whether it
+leaves the button is not checked. The color helpers `contrastRatio`, `compositeOver`, `compositeLayers`,
 `relativeLuminance`, `floorRatio` and `toHexColor` (arguments are `{ r, g, b }`
 with 0-255 channels) are exported too.
 

@@ -1902,6 +1902,7 @@ const NON_TEXT_CONTRAST_COMPONENT_SCHEMA: JsonSchema = {
     'otherVisuals',
     'otherIndicators',
     'otherSkipped',
+    'behindIndicators',
   ],
   properties: {
     selector: { type: 'string' },
@@ -1962,6 +1963,19 @@ const NON_TEXT_CONTRAST_COMPONENT_SCHEMA: JsonSchema = {
           'outline-inside',
           'outline-style',
         ],
+      },
+    },
+    behindIndicators: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['part', 'color', 'against', 'ratio'],
+        properties: {
+          part: { enum: ['icon'] },
+          color: NON_TEXT_CONTRAST_HEX_COLOR_SCHEMA,
+          against: NON_TEXT_CONTRAST_HEX_COLOR_SCHEMA,
+          ratio: { type: 'number' },
+        },
       },
     },
   },

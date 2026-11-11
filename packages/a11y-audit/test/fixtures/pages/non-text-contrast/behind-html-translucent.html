@@ -1,0 +1,56 @@
+<!doctype html>
+<!--
+  Intent: html has a translucent color, so the color of a short body does not propagate.
+  Expected: icon-button status undetermined, reason out-of-flow; behindIndicators has #000000 on #ffffff.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+
+    <title>behind-html-translucent</title>
+    <style>
+      body {
+        margin: 0;
+      }
+      .header {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+      }
+      #menu {
+        display: block;
+        width: 48px;
+        height: 48px;
+        padding: 6px;
+        border: 0;
+        background: transparent;
+      }
+      .under {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 200px;
+        height: 200px;
+      }
+      html {
+        background: rgba(255, 255, 255, 0.5);
+      }
+      body {
+        height: 10px;
+        background: #000000;
+      }
+      .header {
+        top: 100px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <button id="menu" aria-label="Menu">
+        <svg width="36" height="36" viewBox="0 0 36 36">
+          <rect x="6" y="6" width="24" height="24" fill="#000000" />
+        </svg>
+      </button>
+    </div>
+  </body>
+</html>

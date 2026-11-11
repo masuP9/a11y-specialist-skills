@@ -24,6 +24,12 @@
  *   non-ancestors (z-index, negative margins, transforms) are not seen; only
  *   walking through a background-less absolute / fixed element stops with
  *   `out-of-flow`.
+ * - `behindIndicators` is filled only for icon buttons stopped by nothing but
+ *   `out-of-flow`, when the elements under 5x5 points of the button leave no
+ *   doubt about the outer color; `status` is unchanged. Text painted under the
+ *   button is not seen, an image small enough to fit between the points is
+ *   missed, and an in-flow pseudo element glyph has no readable box, so
+ *   whether it leaves the button is not checked.
  * - Lines drawn with `box-shadow` or `outline` are measured separately into
  *   `otherIndicators` and do not change `status`. Only a single visible shadow
  *   layer with no blur, sides at least 1px wide and not cut off by an
@@ -181,6 +187,45 @@ interface RawIcon {
   /** A `<use>` whose target sets its own colors (or cannot be resolved). */
   svgUse: boolean;
   colors: RawIconColor[];
+  /**
+   * For each entry of `colors`, the layers (nearest first) painted under it,
+   * read from the elements under the button; null when they cannot be decided.
+   */
+  behind: RawRgba[][] | null;
+}
+
+interface RawBox {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+}
+
+/** What `scanIcon` found, with the elements `behindLayers` needs in the page. */
+interface IconScan {
+  exists: boolean;
+  icon: RawIcon;
+  /** For each entry of `icon.colors`, where the walk to the button starts. */
+  sources: Element[];
+  /** Drawn shapes, with the stroke included. */
+  shapeRects: RawBox[];
+  /** A `::before` / `::after` glyph is absolute / fixed without an opaque background. */
+  positionedGlyph: boolean;
+}
+
+/** An outer shadow or outline, and the area it paints. */
+interface RawReach {
+  box: DOMRect;
+  paint: RawBox;
+  /** Nothing is painted inside the element's own box (false for a negative offset). */
+  ownBoxClear: boolean;
+}
+
+/** What `elementsFromPoint` cannot show; read once per page. */
+interface RawPagePaint {
+  inert: Element[];
+  reaches: RawReach[];
+  positionedInertPseudo: boolean;
 }
 
 interface RawComponent {
@@ -455,10 +500,7 @@ function scanNonTextContrast(args: ScanArgs): ScanResult {
    * Icon sources of a button (itself and its descendants). With `existsOnly`
    * it stops at the first source and collects no colors.
    */
-  function scanIcon(
-    button: Element,
-    existsOnly: boolean,
-  ): { exists: boolean; icon: RawIcon } {
+  function scanIcon(button: Element, existsOnly: boolean): IconScan {
     const elements = [button, ...Array.from(button.querySelectorAll('*'))];
     const tooMany = elements.length > maxIconParts;
     const collect = !existsOnly && !tooMany;
@@ -468,12 +510,19 @@ function scanNonTextContrast(args: ScanArgs): ScanResult {
       overlap: false,
       svgUse: false,
       colors: [],
+      behind: null,
     };
     let exists = false;
+    let positionedGlyph = false;
+    const sources: Element[] = [];
+    const addColor = (color: RawIconColor, source: Element): void => {
+      icon.colors.push(color);
+      sources.push(source);
+    };
     const shapes: {
       svg: Element | null;
       filled: boolean;
-      rect: { left: number; right: number; top: number; bottom: number };
+      rect: RawBox;
     }[] = [];
 
     for (const node of elements) {
@@ -518,24 +567,30 @@ function scanNonTextContrast(args: ScanArgs): ScanResult {
         if (!collect) continue;
         const bgc = toRgba(pcs.backgroundColor);
         const base = layersFrom(node, bgc.a === 1);
-        icon.colors.push({
-          color: toRgba(pcs.color),
-          paintServer: false,
-          bg: {
-            layers: bgc.a > 0 ? [bgc, ...base.layers] : base.layers,
-            // A positioned glyph may be drawn outside its owner, over unknown content.
-            blockedBy:
-              effectOf(pcs) ??
-              ((pcs.position === 'absolute' || pcs.position === 'fixed') &&
-              bgc.a < 1
-                ? 'out-of-flow'
-                : null) ??
-              base.blockedBy,
+        const positioned =
+          (pcs.position === 'absolute' || pcs.position === 'fixed') &&
+          bgc.a < 1;
+        if (positioned) positionedGlyph = true;
+        addColor(
+          {
+            color: toRgba(pcs.color),
+            paintServer: false,
+            bg: {
+              layers: bgc.a > 0 ? [bgc, ...base.layers] : base.layers,
+              // A positioned glyph may be drawn outside its owner, over unknown content.
+              blockedBy:
+                effectOf(pcs) ??
+                (positioned ? 'out-of-flow' : null) ??
+                base.blockedBy,
+            },
           },
-        });
+          node,
+        );
       }
 
-      if (existsOnly && exists) return { exists, icon };
+      if (existsOnly && exists) {
+        return { exists, icon, sources, shapeRects: [], positionedGlyph };
+      }
 
       if (
         !collect ||
@@ -556,21 +611,21 @@ function scanNonTextContrast(args: ScanArgs): ScanResult {
         layers: bgBase.layers,
         blockedBy: effectOf(cs) ?? bgBase.blockedBy,
       };
+      const source = node.parentElement ?? node;
       let filled = false;
       let stroked = false;
       if (tag !== 'line' && cs.fill !== 'none') {
         if (cs.fill.startsWith('url(')) {
-          icon.colors.push({
-            color: { r: 0, g: 0, b: 0, a: 1 },
-            paintServer: true,
-            bg,
-          });
+          addColor(
+            { color: { r: 0, g: 0, b: 0, a: 1 }, paintServer: true, bg },
+            source,
+          );
           filled = true;
         } else {
           const c = toRgba(cs.fill);
           c.a *= Number(cs.fillOpacity);
           if (c.a > 0) {
-            icon.colors.push({ color: c, paintServer: false, bg });
+            addColor({ color: c, paintServer: false, bg }, source);
             filled = true;
           }
         }
@@ -578,17 +633,16 @@ function scanNonTextContrast(args: ScanArgs): ScanResult {
       const strokeWidth = parseFloat(cs.strokeWidth) || 0;
       if (cs.stroke !== 'none' && strokeWidth > 0) {
         if (cs.stroke.startsWith('url(')) {
-          icon.colors.push({
-            color: { r: 0, g: 0, b: 0, a: 1 },
-            paintServer: true,
-            bg,
-          });
+          addColor(
+            { color: { r: 0, g: 0, b: 0, a: 1 }, paintServer: true, bg },
+            source,
+          );
           stroked = true;
         } else {
           const c = toRgba(cs.stroke);
           c.a *= Number(cs.strokeOpacity);
           if (c.a > 0) {
-            icon.colors.push({ color: c, paintServer: false, bg });
+            addColor({ color: c, paintServer: false, bg }, source);
             stroked = true;
           }
         }
@@ -628,7 +682,13 @@ function scanNonTextContrast(args: ScanArgs): ScanResult {
         }
       }
     });
-    return { exists, icon };
+    return {
+      exists,
+      icon,
+      sources,
+      shapeRects: shapes.map((s) => s.rect),
+      positionedGlyph,
+    };
   }
 
   function roleOf(el: Element): string {
@@ -848,6 +908,317 @@ function scanNonTextContrast(args: ScanArgs): ScanResult {
     };
   }
 
+  const boxesOverlap = (a: RawBox, b: RawBox): boolean =>
+    a.left < b.right &&
+    b.left < a.right &&
+    a.top < b.bottom &&
+    b.top < a.bottom;
+
+  const IMAGE_LIKE_TAGS = new Set([
+    'img',
+    'video',
+    'canvas',
+    'iframe',
+    'object',
+    'embed',
+    'picture',
+  ]);
+
+  /** Drawn at all (opacity: 0 and visibility count); assumed drawn if it cannot be asked. */
+  function isPainted(node: Element): boolean {
+    const probe = node as Element & {
+      checkVisibility?: (options?: object) => boolean;
+    };
+    return (
+      probe.checkVisibility?.({
+        opacityProperty: true,
+        visibilityProperty: true,
+      }) ?? true
+    );
+  }
+
+  /** A generated box paints a background; `only` narrows which pseudo elements count. */
+  function pseudoDraws(
+    node: Element,
+    only?: (pcs: CSSStyleDeclaration) => boolean,
+  ): boolean {
+    return ['::before', '::after'].some((pseudo) => {
+      const pcs = getComputedStyle(node, pseudo);
+      return (
+        pcs.display !== 'none' &&
+        pcs.visibility === 'visible' &&
+        pcs.content !== 'none' &&
+        pcs.content !== 'normal' &&
+        Number(pcs.opacity) > 0 &&
+        (pcs.backgroundImage !== 'none' || toRgba(pcs.backgroundColor).a > 0) &&
+        (!only || only(pcs))
+      );
+    });
+  }
+
+  /** An inset shadow, or a visible border band that reaches `rect`. */
+  function edgePaintsOver(
+    node: Element,
+    cs: CSSStyleDeclaration,
+    rect: DOMRect,
+  ): boolean {
+    const box = node.getBoundingClientRect();
+    if (collectShadows(cs, box, []).some((s) => s.inset)) return true;
+    return (['top', 'right', 'bottom', 'left'] as const).some((side) => {
+      const width =
+        parseFloat(cs.getPropertyValue(`border-${side}-width`)) || 0;
+      const style = cs.getPropertyValue(`border-${side}-style`);
+      if (width <= 0 || style === 'none' || style === 'hidden') return false;
+      if (
+        toRgba(cs.getPropertyValue(`border-${side}-color`)).a === 0 &&
+        cs.borderImageSource === 'none'
+      ) {
+        return false;
+      }
+      const band: RawBox = {
+        left: box.left,
+        right: box.right,
+        top: box.top,
+        bottom: box.bottom,
+      };
+      if (side === 'top') band.bottom = box.top + width;
+      if (side === 'bottom') band.top = box.bottom - width;
+      if (side === 'left') band.right = box.left + width;
+      if (side === 'right') band.left = box.right - width;
+      return boxesOverlap(band, rect);
+    });
+  }
+
+  /** Whether a `pointer-events: none` element paints something at `rect`. */
+  function inertDraws(node: Element, rect: DOMRect): boolean {
+    const cs = getComputedStyle(node);
+    return (
+      cs.backgroundImage !== 'none' ||
+      toRgba(cs.backgroundColor).a > 0 ||
+      cs.getPropertyValue('backdrop-filter') !== 'none' ||
+      IMAGE_LIKE_TAGS.has(node.localName) ||
+      node instanceof SVGElement ||
+      pseudoDraws(node) ||
+      edgePaintsOver(node, cs, rect)
+    );
+  }
+
+  let pagePaint: RawPagePaint | null = null;
+  function readPagePaint(): RawPagePaint {
+    if (pagePaint) return pagePaint;
+    const paint: RawPagePaint = {
+      inert: [],
+      reaches: [],
+      positionedInertPseudo: false,
+    };
+    for (const node of Array.from(document.querySelectorAll('*'))) {
+      if (!isPainted(node)) continue;
+      const cs = getComputedStyle(node);
+      if (cs.pointerEvents === 'none') paint.inert.push(node);
+      paint.positionedInertPseudo ||= pseudoDraws(
+        node,
+        (pcs) =>
+          pcs.pointerEvents === 'none' &&
+          (pcs.position === 'absolute' || pcs.position === 'fixed'),
+      );
+      const box = node.getBoundingClientRect();
+      for (const s of collectShadows(cs, box, [])) {
+        if (s.inset) continue;
+        paint.reaches.push({
+          box,
+          paint: {
+            left: box.left - s.sides.left.width - s.blur,
+            right: box.right + s.sides.right.width + s.blur,
+            top: box.top - s.sides.top.width - s.blur,
+            bottom: box.bottom + s.sides.bottom.width + s.blur,
+          },
+          ownBoxClear: true,
+        });
+      }
+      const outline = collectOutline(cs, box, []);
+      if (outline) {
+        const reach = outline.width + outline.offset;
+        paint.reaches.push({
+          box,
+          paint: {
+            left: box.left - reach,
+            right: box.right + reach,
+            top: box.top - reach,
+            bottom: box.bottom + reach,
+          },
+          ownBoxClear: outline.offset >= 0,
+        });
+      }
+    }
+    pagePaint = paint;
+    return paint;
+  }
+
+  /**
+   * The layers under each icon color of a button stopped only by `out-of-flow`,
+   * read from the elements under it; null when something could change the
+   * color. The page-wide part runs only for such buttons.
+   */
+  function behindLayers(button: Element, scan: IconScan): RawRgba[][] | null {
+    const { icon, sources, shapeRects } = scan;
+    if (
+      icon.tooMany ||
+      icon.hasImage ||
+      icon.svgUse ||
+      icon.overlap ||
+      scan.positionedGlyph ||
+      icon.colors.length === 0 ||
+      !icon.colors.every(
+        (c) => !c.paintServer && c.bg.blockedBy === 'out-of-flow',
+      )
+    ) {
+      return null;
+    }
+
+    const rect = button.getBoundingClientRect();
+    if (
+      shapeRects.some(
+        (s) =>
+          s.left < rect.left ||
+          s.right > rect.right ||
+          s.top < rect.top ||
+          s.bottom > rect.bottom,
+      )
+    ) {
+      return null;
+    }
+
+    // What is under a fixed or sticky box changes with scrolling.
+    for (const source of sources) {
+      for (let n: Element | null = source; n; n = n.parentElement) {
+        const position = getComputedStyle(n).position;
+        if (position === 'fixed' || position === 'sticky') return null;
+      }
+    }
+
+    const inButton = (n: Element): boolean => button.contains(n);
+    let below: Element[] | null = null;
+    // Inset from the edges so that the corner points still land on a round button.
+    for (let i = 1; i <= 5; i++) {
+      for (let j = 1; j <= 5; j++) {
+        const stack = document.elementsFromPoint(
+          rect.left + (rect.width * i) / 6,
+          rect.top + (rect.height * j) / 6,
+        );
+        const split = stack.findIndex((n) => !inButton(n));
+        // Covered, off screen, or something painted between the button and its icon.
+        if (stack.length === 0 || split <= 0) return null;
+        const rest: Element[] = stack.slice(split);
+        if (rest.some(inButton)) return null;
+        if (
+          below &&
+          (below.length !== rest.length || rest.some((n, k) => n !== below![k]))
+        ) {
+          return null;
+        }
+        below = rest;
+      }
+    }
+    const under = below!;
+
+    if (
+      [button, ...Array.from(button.querySelectorAll('*'))].some((n) =>
+        pseudoDraws(n),
+      )
+    ) {
+      return null;
+    }
+    for (const n of under) {
+      const cs = getComputedStyle(n);
+      if (
+        IMAGE_LIKE_TAGS.has(n.localName) ||
+        n instanceof SVGElement ||
+        cs.backgroundImage !== 'none' ||
+        cs.getPropertyValue('mask-image') !== 'none' ||
+        (cs.backgroundClip !== 'border-box' &&
+          toRgba(cs.backgroundColor).a > 0) ||
+        pseudoDraws(n) ||
+        edgePaintsOver(n, cs, rect)
+      ) {
+        return null;
+      }
+      // An ancestor may have no box at the point and so not be in the list.
+      for (let a: Element | null = n; a; a = a.parentElement) {
+        if (effectOf(getComputedStyle(a))) return null;
+      }
+    }
+
+    const page = readPagePaint();
+    if (
+      page.positionedInertPseudo ||
+      page.inert.some(
+        (n) =>
+          !inButton(n) &&
+          boxesOverlap(n.getBoundingClientRect(), rect) &&
+          inertDraws(n, rect),
+      ) ||
+      page.reaches.some(
+        (r) =>
+          boxesOverlap(r.paint, rect) &&
+          !(
+            r.ownBoxClear &&
+            r.box.left <= rect.left &&
+            r.box.right >= rect.right &&
+            r.box.top <= rect.top &&
+            r.box.bottom >= rect.bottom
+          ),
+      )
+    ) {
+      return null;
+    }
+
+    // <body>'s background moves to the canvas only when <html> has none, so a
+    // short body can paint where it has no box.
+    const root = document.documentElement;
+    const body = document.body;
+    if (
+      getComputedStyle(root).backgroundImage !== 'none' ||
+      (body && getComputedStyle(body).backgroundImage !== 'none')
+    ) {
+      return null;
+    }
+    const painters = [...under];
+    if (
+      body &&
+      !under.includes(body) &&
+      toRgba(getComputedStyle(root).backgroundColor).a === 0
+    ) {
+      painters.push(body);
+    }
+    if (!under.includes(root)) painters.push(root);
+
+    const outer: RawRgba[] = [];
+    let outerOpaque = false;
+    for (const n of painters) {
+      const c = toRgba(getComputedStyle(n).backgroundColor);
+      if (c.a > 0) outer.push(c);
+      if (c.a === 1) {
+        outerOpaque = true;
+        break;
+      }
+    }
+
+    const result: RawRgba[][] = [];
+    for (const source of sources) {
+      const layers: RawRgba[] = [];
+      let opaque = false;
+      for (let n: Element | null = source; n && !opaque; n = n.parentElement) {
+        const c = toRgba(getComputedStyle(n).backgroundColor);
+        if (c.a > 0) layers.push(c);
+        opaque = c.a === 1;
+        if (n === button) break;
+      }
+      if (!opaque && !outerOpaque && rootIsDark) return null;
+      result.push(opaque ? layers : [...layers, ...outer]);
+    }
+    return result;
+  }
+
   const components: RawComponent[] = [];
   const componentCounts: ScanResult['componentCounts'] = {
     boundary: { found: 0, kept: 0 },
@@ -869,12 +1240,18 @@ function scanNonTextContrast(args: ScanArgs): ScanResult {
     counts.found++;
     if (components.length >= maxComponents) continue;
     counts.kept++;
+    let icon: RawIcon | null = null;
+    if (kind === 'icon-button') {
+      const iconScan = scanIcon(el, false);
+      iconScan.icon.behind = behindLayers(el, iconScan);
+      icon = iconScan.icon;
+    }
     components.push({
       selector: scopeSelector(el),
       ...safeOuterHTML(el),
       kind,
       boundary: kind === 'icon-button' ? null : collectBoundary(el),
-      icon: kind === 'icon-button' ? scanIcon(el, false).icon : null,
+      icon,
     });
   }
   return { components, componentCounts };
@@ -1074,6 +1451,31 @@ function measureOtherLines(
   return { otherIndicators, otherSkipped };
 }
 
+type IndicatorEntry = ReturnType<typeof indicatorEntry>;
+
+function addDistinct(entries: IndicatorEntry[], entry: IndicatorEntry): void {
+  const duplicate = entries.some(
+    (e) =>
+      e.indicator.color === entry.indicator.color &&
+      e.indicator.against === entry.indicator.against,
+  );
+  if (!duplicate) entries.push(entry);
+}
+
+function measureBehind(
+  icon: RawIcon,
+): NonTextContrastComponent['behindIndicators'] {
+  const entries: IndicatorEntry[] = [];
+  icon.behind?.forEach((layers, i) => {
+    const bg = compositeLayers(layers, WHITE);
+    addDistinct(
+      entries,
+      indicatorEntry('icon', compositeOver(icon.colors[i]!.color, bg), bg),
+    );
+  });
+  return entries.map((e) => ({ ...e.indicator, part: 'icon' }));
+}
+
 function measureIcon(
   raw: RawComponent,
   base: NonTextContrastComponent,
@@ -1081,7 +1483,7 @@ function measureIcon(
   const icon = raw.icon!;
   if (icon.tooMany) return undetermined(base, 'too-many-icon-parts');
 
-  const entries: ReturnType<typeof indicatorEntry>[] = [];
+  const entries: IndicatorEntry[] = [];
   let blocked: Reason | null = null;
   for (const c of icon.colors) {
     const reason = c.paintServer ? 'svg-paint-server' : c.bg.blockedBy;
@@ -1090,24 +1492,26 @@ function measureIcon(
       continue;
     }
     const bg = compositeLayers(c.bg.layers, WHITE);
-    const entry = indicatorEntry(
-      'icon',
-      compositeOver({ ...toRgb(c.color), a: c.color.a }, bg),
-      bg,
+    addDistinct(
+      entries,
+      indicatorEntry(
+        'icon',
+        compositeOver({ ...toRgb(c.color), a: c.color.a }, bg),
+        bg,
+      ),
     );
-    const duplicate = entries.some(
-      (e) =>
-        e.indicator.color === entry.indicator.color &&
-        e.indicator.against === entry.indicator.against,
-    );
-    if (!duplicate) entries.push(entry);
   }
   const measured =
     entries.length > 0 ? withIndicators(base, entries) : { ...base };
 
   // An image may carry the meaning, and its colors cannot be read.
   if (icon.hasImage) return undetermined(measured, 'image-icon');
-  if (blocked) return undetermined(measured, blocked);
+  if (blocked) {
+    return undetermined(
+      { ...measured, behindIndicators: measureBehind(icon) },
+      blocked,
+    );
+  }
   if (icon.svgUse) return undetermined(measured, 'svg-use');
   if (icon.overlap) return undetermined(measured, 'svg-overlap');
   // Nothing measurable was drawn: do not turn that into a pass.
@@ -1133,6 +1537,7 @@ function measureComponent(raw: RawComponent): NonTextContrastComponent {
     otherVisuals: [],
     otherIndicators: [],
     otherSkipped: [],
+    behindIndicators: [],
   };
   return raw.kind === 'icon-button'
     ? measureIcon(raw, base)

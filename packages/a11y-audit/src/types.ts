@@ -1647,6 +1647,17 @@ export type NonTextContrastOtherSkipReason =
   | 'outline-inside'
   | 'outline-style';
 
+/** An icon color measured against what is painted under the button. */
+export interface NonTextContrastBehindIndicator {
+  part: 'icon';
+  /** '#rrggbb' after compositing over what is behind it. */
+  color: string;
+  /** '#rrggbb' of the color under the button. */
+  against: string;
+  /** Contrast ratio rounded down to 2 decimals. */
+  ratio: number;
+}
+
 export interface NonTextContrastComponent {
   selector: string;
   html: string;
@@ -1673,6 +1684,13 @@ export interface NonTextContrastComponent {
   otherIndicators: NonTextContrastOtherIndicator[];
   /** Why a drawn box-shadow / outline in `otherVisuals` was not measured. */
   otherSkipped: NonTextContrastOtherSkipReason[];
+  /**
+   * Icon ratios against what is painted under a positioned icon button, for
+   * buttons stopped only by `out-of-flow` whose outer color could be decided
+   * from the elements under them. `status` does not use them; the caller
+   * decides. Empty otherwise (including components that are not icon buttons).
+   */
+  behindIndicators: NonTextContrastBehindIndicator[];
 }
 
 export interface NonTextContrastCheckDetails {
