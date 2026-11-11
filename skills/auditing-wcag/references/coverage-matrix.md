@@ -27,6 +27,8 @@ When the "Judgment Rule" column says **Judgment lines**, judge with the "Judgmen
 | 1.4.3 | Automated + Manual | axe color-contrast + measurement (placeholders, states, themes, text over images) | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.3.md) |
 | 1.4.4 | Automated + Manual | `zoom-200-check` **[CLI]** + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.4.md) |
 | 1.4.5 | Manual + Content | Image/context + visible text/presentation switching | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.5.md) |
+| 1.4.6 (AAA) | Automated + Manual | axe color-contrast-enhanced via `runAxeAudit` with `tags` (does not run from the CLI) + measurement per color combination | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.6.md). Evaluate only when AAA is in scope; do not count toward AA |
+| 1.4.9 (AAA) | Manual + Content | Image/context + switching to a text presentation | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.9.md). Evaluate only when AAA is in scope; do not count toward AA |
 | 1.4.10 | Automated + Manual | `reflow-check` **[CLI]** + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.10.md) |
 | 1.4.11 | Automated candidates + manual | `non-text-contrast-check` **[CLI]** + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.11.md); verify required cues, adjacent colors, and exceptions |
 | 1.4.12 | Automated + Manual | `text-spacing-check` **[CLI]** + screenshots | [Judgment lines](../../a11y-knowledge/references/criteria/1.4.12.md) |

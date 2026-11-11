@@ -32,6 +32,8 @@
 | 1.4.3 | Contrast (Minimum) | Measurement + Visual | [1.4.3](./criteria/1.4.3.md) |
 | 1.4.4     | Resize Text                               | Measurement           | [1.4.4](./criteria/1.4.4.md)                  |
 | 1.4.5     | Images of Text                            | Element               | [1.4.5](./criteria/1.4.5.md)                  |
+| 1.4.6 | Contrast (Enhanced), AAA | Measurement + Visual | [1.4.6](./criteria/1.4.6.md) |
+| 1.4.9 | Images of Text (No Exception), AAA | Element | [1.4.9](./criteria/1.4.9.md) |
 | 1.4.10    | Reflow                                    | Measurement           | [1.4.10](./criteria/1.4.10.md)                |
 | 1.4.11 | Non-text Contrast | Measurement + Visual | [1.4.11](./criteria/1.4.11.md) |
 | 1.4.12    | Text Spacing                              | Measurement           | [1.4.12](./criteria/1.4.12.md)                |
